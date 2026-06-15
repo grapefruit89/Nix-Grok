@@ -22,6 +22,14 @@ let
   portAdguard = config.my.ports.adguard;
   portValkey = config.my.ports.valkey;
 
+  caddySnippets = import ../lib/caddy-snippets.nix {
+    inherit lib;
+    pocketIdPort =
+      if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id
+      else null;
+    lanCidr = "192.168.0.0/16";
+  };
+
 in
 {
   # ============================================================================
@@ -306,6 +314,36 @@ in
       };
 
       networking.nameservers = lib.mkForce [ "127.0.0.1" "1.1.1.1" ];
+
+      systemd.services.blocky.serviceConfig = {
+        ProtectSystem = lib.mkDefault "strict";
+        ProtectHome = lib.mkDefault true;
+        PrivateTmp = lib.mkDefault true;
+        PrivateDevices = lib.mkDefault true;
+        ProtectHostname = lib.mkDefault true;
+        ProtectClock = lib.mkDefault true;
+        ProtectKernelTunables = lib.mkDefault true;
+        ProtectKernelModules = lib.mkDefault true;
+        ProtectControlGroups = lib.mkDefault true;
+        RestrictNamespaces = lib.mkDefault true;
+        NoNewPrivileges = lib.mkDefault true;
+        PrivateNetwork = lib.mkDefault false;
+        RestrictAddressFamilies = lib.mkDefault [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        CapabilityBoundingSet = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
+        AmbientCapabilities = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
+        SystemCallFilter = lib.mkDefault [
+          "@system-service"
+          "~@privileged"
+          "~@resources"
+          "~@mount"
+        ];
+        LockPersonality = lib.mkDefault true;
+        RestrictRealtime = lib.mkDefault true;
+        RestrictSUIDSGID = lib.mkDefault true;
+        ReadWritePaths = lib.mkDefault [ "/var/lib/blocky" ];
+        MemoryHigh = lib.mkDefault "200M";
+        MemoryMax = lib.mkDefault "500M";
+      };
     })
 
     # ── TAILSCALE VPN ─────────────────────────────────────────────────────────
@@ -412,6 +450,15 @@ in
           NoNewPrivileges = true;
           PrivateTmp = true;
           PrivateDevices = true;
+          ProtectHostname = true;
+          ProtectClock = true;
+          ProtectKernelTunables = true;
+          ProtectKernelModules = true;
+          ProtectControlGroups = true;
+          RestrictNamespaces = true;
+          RestrictRealtime = true;
+          RestrictSUIDSGID = true;
+          LockPersonality = true;
           ReadWritePaths = [ config.my.services.pocket-id.dataDir ];
           OOMScoreAdjust = -900;
         }
@@ -430,27 +477,15 @@ in
 
     # ── CADDY GLOBAL CONFIG & SNIPPETS ────────────────────────────────────────
     {
-      services.caddy.extraConfig = lib.mkBefore (
+      services.caddy.logFormat = lib.mkIf config.services.caddy.enable (
+        lib.mkForce ''
+          level INFO
+          output stdout
+          format json
         ''
-          (security_headers) {
-            header {
-              Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-              X-XSS-Protection "1; mode=block"
-              X-Content-Type-Options "nosniff"
-              X-Frame-Options "DENY"
-              Referrer-Policy "strict-origin-when-cross-origin"
-              Content-Security-Policy "upgrade-insecure-requests"
-            }
-          }
-        ''
-        + lib.optionalString config.my.services.pocket-id.enable ''
-          (sso_auth) {
-            forward_auth 127.0.0.1:${toString config.my.ports.pocket-id} {
-              uri /api/auth/verify
-              copy_headers X-Forwarded-User
-            }
-          }
-        ''
+      );
+      services.caddy.extraConfig = lib.mkIf config.services.caddy.enable (
+        lib.mkBefore caddySnippets.extraConfig
       );
     }
   ];

@@ -78,7 +78,7 @@ let
         • Grok Context7 (interaktiv): set-context7-api-key → ~/.config/context7/api_key
         • Grok MCP: context7 (Key) + mcp-nixos + nixos_docs (sync-nixos-docs-db) — check-grok-mcp
 
-      Dev-Keys zentral: machines/q958/profile.nix → secrets.devKeys
+      Dev-Keys zentral: machines/q958/profile.local.nix → secrets.devKeys (gitignored)
       ══════════════════════════════════════════════════════════════════════
     '';
 in

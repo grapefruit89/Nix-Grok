@@ -37,6 +37,7 @@
 
     services.caddy.virtualHosts."${name}.${config.my.configs.identity.domain}" = {
       extraConfig = ''
+        import sso_auth
         reverse_proxy 127.0.0.1:${toString port}
       '';
     };

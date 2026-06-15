@@ -1,4 +1,17 @@
 # Einzige Quelle für alle q958-Maschinenwerte. Keine User-Daten — die liegen unter users/.
+# Secrets + Notfall-Passwort: machines/q958/profile.local.nix (gitignored)
+let
+  local =
+    if builtins.pathExists ./profile.local.nix then
+      import ./profile.local.nix
+    else
+      builtins.trace
+        "WARNUNG: profile.local.nix fehlt — cp profile.local.nix.example profile.local.nix"
+        {
+          access.emergency = { };
+          secrets.devKeys = { };
+        };
+in
 {
   meta = {
     machine = "q958";
@@ -44,8 +57,9 @@
     emergency = {
       name = "nixos";
       description = "Admin-Zugang (Notfall-Login)";
-      passwordHash =
-        "$6$J9EpX2PtQpN2.Yw3$nmm8Cuz98rMLV.kU7L/QBaUhIFeLrnLgpGpm8oLGx5yoU1hrBx2ghzW6F/wh0UQeCOTriGlG/wZeRKEUgTnHY/";
+      passwordHash = local.access.emergency.passwordHash or (
+        throw "access.emergency.passwordHash in machines/q958/profile.local.nix setzen"
+      );
       extraGroups = [ "wheel" "networkmanager" ];
     };
   };
@@ -137,24 +151,10 @@
       privadoKey = "privado_private_key";
     };
 
-    # Einzige Quelle für Dev-Platzhalter (my.mode = development, rollout.stufe < 9).
-    # VOR SOPS/Production: jeden Wert durch echtes Secret ersetzen!
-    devKeys = {
-      pocketId.encryptionKey = "q958-dev-pocket-id-key-v1"; # ≥16 Zeichen
-      grafana.secretKey = "q958-dev-grafana-secret-key-v1";
-      # Leer lassen → interaktiv: set-context7-api-key (nicht ins Git!)
-      # Oder hier eintragen für automatische Provision nach rebuild:
-      context7.apiKey = "";
-      restic.password = "q958-dev-restic-password";
-      vaultwarden.adminToken = "q958-dev-vaultwarden-admin-token";
-      media = {
-        prowlarr.apiKey = "q958-dev-prowlarr-api-key";
-        sonarr.apiKey = "q958-dev-sonarr-api-key";
-        radarr.apiKey = "q958-dev-radarr-api-key";
-        sabnzbd.apiKey = "q958-dev-sabnzbd-api-key";
-        scenenzbs.apiKey = "q958-dev-scenenzbs-api-key";
-      };
-    };
+    # Dev-Platzhalter: machines/q958/profile.local.nix (gitignored, rollout.stufe < 9)
+    devKeys = local.secrets.devKeys or (
+      throw "secrets.devKeys in machines/q958/profile.local.nix setzen"
+    );
   };
 
   integrations = {
@@ -168,7 +168,7 @@
   };
 
   rollout = {
-    stufe = 4;
+    stufe = 5;
   };
 
   iot = {

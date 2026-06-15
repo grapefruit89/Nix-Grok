@@ -259,6 +259,7 @@ in
 
         caddy.virtualHosts."gatus.${domain}" = {
           extraConfig = ''
+            import tailscale_admin
             import sso_auth
             reverse_proxy 127.0.0.1:${toString cfgGatus.port}
           '';
@@ -418,6 +419,7 @@ in
 
         caddy.virtualHosts."grafana.${domain}" = {
           extraConfig = ''
+            import tailscale_admin
             import sso_auth
             reverse_proxy 127.0.0.1:${toString cfgObs.grafanaPort}
           '';

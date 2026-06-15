@@ -3,6 +3,9 @@
 **/*.key
 **/.config/context7/api_key
 **/secrets.devKeys
+machines/q958/profile.local.nix
+**/profile.local.nix
+!**/profile.local.nix.example
 
 # Nix build artifacts
 result

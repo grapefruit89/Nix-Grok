@@ -61,6 +61,8 @@ in
 
     services.caddy.virtualHosts."sabnzbd.${domain}" = {
       extraConfig = ''
+        import tailscale_admin
+        import sso_auth
         reverse_proxy 127.0.0.1:${toString portSabnzbd}
       '';
     };

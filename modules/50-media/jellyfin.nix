@@ -98,7 +98,14 @@ in
       # Caddy Reverse Proxy Mapping
       services.caddy.virtualHosts."jellyfin.${domain}" = {
         extraConfig = ''
-          reverse_proxy 127.0.0.1:${toString portJellyfin}
+          import streamer_headers
+          import sso_auth
+          reverse_proxy 127.0.0.1:${toString portJellyfin} {
+            flush_interval -1
+            transport http {
+              read_buffer 0
+            }
+          }
         '';
       };
     })
@@ -122,6 +129,7 @@ in
 
       services.caddy.virtualHosts."seerr.${domain}" = {
         extraConfig = ''
+          import sso_auth
           reverse_proxy 127.0.0.1:${toString portJellyseerr}
         '';
       };

@@ -13,19 +13,6 @@ let
   cfgHermes = config.my.services.hermes;
   cfgGrok = config.my.services.grok;
 
-  anyEnabled =
-    cfgVaultwarden.enable ||
-    cfgHomepage.enable ||
-    cfgHass.enable ||
-    cfgZigbee.enable ||
-    cfgPaperless.enable ||
-    cfgN8n.enable ||
-    cfgFilebrowser.enable ||
-    cfgLinkwarden.enable ||
-    cfgOpenWebui.enable ||
-    cfgHermes.enable ||
-    cfgGrok.enable;
-
 in
 {
   imports = [
@@ -122,15 +109,17 @@ in
 
   };
 
-  config = lib.mkIf anyEnabled {
-    services.caddy = {
-      enable = true;
-    };
-
+  # Caddy .enable nur in machines/<host>/rollout.nix — hier nur Hardening
+  config = lib.mkIf config.services.caddy.enable {
     systemd.services.caddy.serviceConfig = {
       OOMScoreAdjust = lib.mkForce (-900);
       Restart = lib.mkForce "always";
       RestartSec = lib.mkForce "5s";
+      ProtectSystem = lib.mkForce "strict";
+      ProtectHome = lib.mkForce true;
+      NoNewPrivileges = lib.mkForce true;
+      PrivateTmp = lib.mkForce true;
+      RestrictNamespaces = lib.mkForce true;
     };
   };
 }
