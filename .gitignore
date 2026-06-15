@@ -1,0 +1,34 @@
+# Secrets & keys
+**/secrets.sops.yaml
+**/*.key
+**/.config/context7/api_key
+**/secrets.devKeys
+
+# Nix build artifacts
+result
+result-*
+.direnv/
+
+# Local user/session state (not repo content)
+.bash_history
+.ssh/
+.cache/
+.npm/
+.duckdb/
+.grok/
+
+# Large/generated knowledge DBs (sync via sync-nixos-docs-db)
+data/
+*.db
+
+# Editor / OS
+*~
+.DS_Store
+.vscode/
+
+# Staging copies (not source of truth)
+stage-nixos/
+
+# Nix build output in packages
+packages/*/result
+packages/*/node_modules/
