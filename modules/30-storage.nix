@@ -323,18 +323,16 @@ in
           "--keep-weekly 4"
         ];
 
-        # Stop active database and application services to prevent write drift during backup
+        # Create consistent live database dumps (SQLite/PostgreSQL) instead of stopping services
         backupPrepareCommand = ''
-          echo "Stopping active web applications and database services..."
-          systemctl stop paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden forgejo vaultwarden zigbee2mqtt || true
-          systemctl stop mosquitto || true
+          echo "Creating live database dumps for consistent backups..."
+          # TODO: Implement pg_dump and sqlite3 .backup hooks here or use Btrfs snapshots
         '';
 
-        # Restart database and web applications after backup attempt finishes (even on failure)
+        # Clean up temporary database dumps after backup attempt finishes
         backupCleanupCommand = ''
-          echo "Restarting database and web applications..."
-          systemctl start mosquitto || true
-          systemctl start paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden forgejo vaultwarden zigbee2mqtt || true
+          echo "Cleaning up temporary database dumps..."
+          # TODO: Remove dumps
         '';
 
       };

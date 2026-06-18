@@ -68,7 +68,7 @@ in
 
         # Dateipfade beschränken
         ReadWritePaths = [
-          "/var/lib/jellyfin"
+          "/data/state/jellyfin"
           "/var/cache/jellyfin"
           "/run/jellyfin-transcode"
           "/mnt/fast_pool/cache/jellyfin"
@@ -88,7 +88,7 @@ in
         IPAddressDeny = "any";
 
         OOMScoreAdjust = 100; # Jellyfin darf bei Speicherknappheit vor Core-Diensten sterben
-        ExecStart = lib.mkForce "${pkgs.jellyfin}/bin/jellyfin --datadir /var/lib/jellyfin --cachedir /var/cache/jellyfin --host 127.0.0.1";
+        ExecStart = lib.mkForce "${pkgs.jellyfin}/bin/jellyfin --datadir /data/state/jellyfin --cachedir /var/cache/jellyfin --host 127.0.0.1";
       };
 
       # Diagnosewerkzeuge systemweit
@@ -133,7 +133,7 @@ in
         PrivateTmp = lib.mkForce true;
         PrivateDevices = lib.mkForce true;
         NoNewPrivileges = lib.mkForce true;
-        ReadWritePaths = [ "/var/lib/seerr" ];
+        ReadWritePaths = [ "/data/state/seerr" ];
       };
       systemd.services.seerr.environment = {
         HOST = "127.0.0.1";
@@ -145,3 +145,4 @@ in
     })
   ];
 }
+

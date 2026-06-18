@@ -43,15 +43,15 @@ in
       vpnKillSwitch
       {
         preStart = lib.mkBefore ''
-          if [ -f /var/lib/sabnzbd/sabnzbd.ini ] && \
-             [ "$(grep -c "^\[servers\]" /var/lib/sabnzbd/sabnzbd.ini 2>/dev/null || echo 0)" -gt 1 ]; then
+          if [ -f /data/state/sabnzbd/sabnzbd.ini ] && \
+             [ "$(grep -c "^\[servers\]" /data/state/sabnzbd/sabnzbd.ini 2>/dev/null || echo 0)" -gt 1 ]; then
             echo "Removing corrupt sabnzbd.ini (duplicate [servers])"
-            rm -f /var/lib/sabnzbd/sabnzbd.ini
+            rm -f /data/state/sabnzbd/sabnzbd.ini
           fi
           
           # RAM-Disk Setup (Incomplete Downloads)
-          if [ -f /var/lib/sabnzbd/sabnzbd.ini ]; then
-            ${pkgs.gnused}/bin/sed -i 's/^download_dir\s*=.*/download_dir = \/run\/sabnzbd-tmp/g' /var/lib/sabnzbd/sabnzbd.ini
+          if [ -f /data/state/sabnzbd/sabnzbd.ini ]; then
+            ${pkgs.gnused}/bin/sed -i 's/^download_dir\s*=.*/download_dir = \/run\/sabnzbd-tmp/g' /data/state/sabnzbd/sabnzbd.ini
           fi
         '';
         serviceConfig = {
@@ -64,7 +64,7 @@ in
           RuntimeDirectory = "sabnzbd-tmp";
           RuntimeDirectoryMode = "0700";
           ReadWritePaths = [
-            "/var/lib/sabnzbd"
+            "/data/state/sabnzbd"
             "/data/downloads"
             "/run/sabnzbd-tmp"
           ];
@@ -77,3 +77,4 @@ in
     };
   };
 }
+
