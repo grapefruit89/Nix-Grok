@@ -50,7 +50,7 @@ in
   my.impermanence.enable = erstAb 9;
 
   my.services = {
-    adguardhome.enable = lib.mkForce false; # Blocky ist unser DNS (Port-53-Konflikt)
+     # Blocky ist unser DNS (Port-53-Konflikt)
     valkey.enable = erstAb 2;
     postgresql.enable = erstAb 2;
     blocky.enable = erstAb 2;
