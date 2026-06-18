@@ -19,6 +19,7 @@ in
     ./grok.nix
     ./hermes.nix
     ./vaultwarden.nix
+    ./homepage.nix
     ./stealth-landing.nix
     ./filebrowser.nix
     ./linkwarden.nix
