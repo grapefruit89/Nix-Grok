@@ -136,7 +136,7 @@ in
         NoNewPrivileges = true;
         MemoryDenyWriteExecute = true;
         CapabilityBoundingSet = "";
-        RestrictAddressFamilies = [ "AF_UNIX" # Admin Hangar Isolation ];
+        RestrictAddressFamilies = [ "AF_UNIX" ]; # Admin Hangar Isolation
         ReadWritePaths = [ "/var/lib/redis-valkey" ];
       };
     })
@@ -192,7 +192,7 @@ in
         RestrictNamespaces = lib.mkDefault true;
         NoNewPrivileges = lib.mkDefault true;
         PrivateNetwork = lib.mkDefault false;
-        RestrictAddressFamilies = lib.mkDefault [ "AF_UNIX" # Admin Hangar Isolation ];
+        RestrictAddressFamilies = lib.mkDefault [ "AF_UNIX" ]; # Admin Hangar Isolation
         CapabilityBoundingSet = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
         AmbientCapabilities = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
         SystemCallFilter = lib.mkDefault [
@@ -399,3 +399,4 @@ in
     }
   ];
 }
+
