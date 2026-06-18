@@ -201,6 +201,7 @@ in
           MaxRetentionSec=1month
         '';
       };
+    })
     # ── MERGERFS HYBRID POOLING ───────────────────────────────────────────────
     (lib.mkIf cfgStorage.enable {
       boot.supportedFilesystems = [ "ext4" ];
