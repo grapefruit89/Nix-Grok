@@ -17,10 +17,16 @@ in
 {
   imports = [
     ./grok.nix
-    ./core.nix
-    ./iot.nix
-    ./automation.nix
     ./hermes.nix
+    ./vaultwarden.nix
+    ./stealth-landing.nix
+    ./filebrowser.nix
+    ./linkwarden.nix
+    ./open-webui.nix
+    ./paperless.nix
+    ./n8n.nix
+    ./home-assistant.nix
+    ./zigbee-stack.nix
   ];
 
   options.my.services = {
@@ -33,8 +39,8 @@ in
       };
       containerMode = lib.mkOption {
         type = lib.types.bool;
-        default = true;
-        description = "OCI-Container-Modus — isolierte Umgebung, kein Schreibzugriff auf Host.";
+        default = false;
+        description = "OCI-Container-Modus (Podman). Falls false: natives NixOS Systemd.";
       };
       exposeGatewayPort = lib.mkOption {
         type = lib.types.bool;
@@ -111,6 +117,17 @@ in
 
   # Caddy .enable nur in machines/<host>/rollout.nix — hier nur Hardening
   config = lib.mkIf config.services.caddy.enable {
+    systemd.services.caddy = {
+      # Blocky → Caddy (ACME + forward_auth ohne Deadlock)
+      after = lib.mkAfter (
+        lib.optional config.my.services.blocky.enable "blocky.service"
+        ++ [ "network-online.target" ]
+      );
+      wants =
+        lib.optional config.my.services.blocky.enable "blocky.service"
+        ++ [ "network-online.target" ];
+    };
+
     systemd.services.caddy.serviceConfig = {
       OOMScoreAdjust = lib.mkForce (-900);
       Restart = lib.mkForce "always";
@@ -119,6 +136,8 @@ in
       ProtectHome = lib.mkForce true;
       NoNewPrivileges = lib.mkForce true;
       PrivateTmp = lib.mkForce true;
+      PrivateDevices = lib.mkForce true;
+      MemoryDenyWriteExecute = lib.mkForce true;
       RestrictNamespaces = lib.mkForce true;
     };
   };
