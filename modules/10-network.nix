@@ -3,25 +3,25 @@
 # PURPOSE
 # ==============================================================================
 # Configures local networking infrastructure and central database plumbing, 
-# including AdGuard Home, Valkey (Redis-fork) cache, and the PostgreSQL server.
+# including Valkey (Redis-fork) cache.
 # Key decisions -> ADR-10-network.md
 
 { config, lib, pkgs, ... }:
 
 let
-  cfgAdguard = config.my.services.adguardhome;
   cfgValkey = config.my.services.valkey;
-  cfgPostgres = config.my.services.postgresql;
-  ramGB = config.my.configs.hardware.ramGB;
+  cfgBlocky = config.my.services.blocky;
+  cfgPrivado = config.my.services.privado-vpn;
+  cfgTailscale = config.my.services.tailscale;
 
   lanIP = config.my.configs.server.lanIP;
   tailscaleIP = config.my.configs.server.tailscaleIP;
   dnsDoH = config.my.configs.network.dnsDoH;
   dnsBootstrap = config.my.configs.network.dnsBootstrap;
   domain = config.my.configs.identity.domain;
-  portAdguard = config.my.ports.adguard;
   portValkey = config.my.ports.valkey;
 
+  caddy = import ../lib/caddy-helpers.nix { inherit lib; };
   caddySnippets = import ../lib/caddy-snippets.nix {
     inherit lib;
     pocketIdPort =
@@ -36,11 +36,9 @@ in
   # OPTIONS
   # ============================================================================
   options.my.services = {
-    adguardhome.enable = lib.mkEnableOption "AdGuardHome DNS Filter and Resolver";
     valkey.enable = lib.mkEnableOption "Valkey cache server (Redis-fork)";
-    postgresql.enable = lib.mkEnableOption "PostgreSQL database server";
 
-    # 🛑 Blocky DNS Resolver
+    # ðŸ›‘ Blocky DNS Resolver
     blocky = {
       enable = lib.mkEnableOption "Blocky DNS Resolver";
       port = lib.mkOption { type = lib.types.port; default = 53; description = "Blocky DNS listening port."; };
@@ -48,13 +46,13 @@ in
       upstreamDns = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "1.1.1.1" "8.8.8.8" ]; description = "List of upstream DNS servers."; };
     };
 
-    # 🔗 Tailscale VPN
+    # ðŸ”— Tailscale VPN
     tailscale = {
       enable = lib.mkEnableOption "Tailscale Zero-Trust VPN";
       port = lib.mkOption { type = lib.types.port; default = 41641; description = "Tailscale UDP WireGuard port."; };
     };
 
-    # 🛡️ Privado VPN WireGuard Client
+    # ðŸ›¡ï¸ Privado VPN WireGuard Client
     privado-vpn = {
       enable = lib.mkEnableOption "Privado VPN WireGuard Client Tunnel";
       ipAddress = lib.mkOption {
@@ -80,11 +78,11 @@ in
       privateKeyFile = lib.mkOption {
         type = lib.types.str;
         default = "/var/lib/secrets/privado_private_key";
-        description = "WireGuard private key file — Pfad aus machines/<host>/profile.nix.";
+        description = "WireGuard private key file â€” Pfad aus machines/<host>/profile.nix.";
       };
     };
 
-    # 🔑 PocketID Identity Provider
+    # ðŸ”‘ PocketID Identity Provider
     pocket-id = {
       enable = lib.mkEnableOption "PocketID OIDC Passkey Provider";
       port = lib.mkOption { type = lib.types.port; default = config.my.ports.pocket-id; description = "PocketID web interface listening port."; };
@@ -92,7 +90,7 @@ in
       secretsFile = lib.mkOption {
         type = lib.types.str;
         default = "";
-        description = "Optional env file (ENCRYPTION_KEY=…) — Pfad aus machines/<host>/profile.nix.";
+        description = "Optional env file (ENCRYPTION_KEY=â€¦) â€” Pfad aus machines/<host>/profile.nix.";
       };
     };
   };
@@ -101,104 +99,12 @@ in
   # CONFIG
   # ============================================================================
   config = lib.mkMerge [
-    # ── ADGUARD HOME ──────────────────────────────────────────────────────────
-    (lib.mkIf cfgAdguard.enable {
-      services.adguardhome = {
-        enable = true;
-        host = "127.0.0.1";
-        port = portAdguard;
-        openFirewall = false;
+    {
+      # Admin Hangar Loopback Alias
+      networking.interfaces.lo.ipv4.addresses = [ { address = "127.0.0.2"; prefixLength = 8; } ];
+    }
 
-        settings = {
-          http.address = "127.0.0.1:${toString portAdguard}";
-
-          dns = {
-            bind_hosts = [ "127.0.0.1" lanIP tailscaleIP ];
-            port = 53;
-            upstream_dns = dnsDoH;
-            bootstrap_dns = dnsBootstrap;
-            fallback_dns = config.my.configs.network.dnsFallback;
-            cache_size = 33554432; # 32MB Cache
-            cache_ttl_min = 300;
-            cache_ttl_max = 86400; # Max TTL 24h
-            cache_optimistic = true;
-            filtering_enabled = true;
-            filters_update_interval = 24;
-            edns_cs_enabled = false;
-            dnssec_enabled = true;
-            all_servers = false;
-            fastest_addr = true;
-          };
-
-          querylog = {
-            enabled = true;
-            file_enabled = true;
-            interval = "24h";
-            size_memory = 1000;
-            add_timestamps = true;
-          };
-
-          statistics = {
-            enabled = true;
-            interval = "168h"; # 7 Tage
-          };
-
-          filtering = {
-            protection_enabled = true;
-            filtering_enabled = true;
-            safe_browsing = { enabled = true; };
-            parental = { enabled = false; };
-            safe_search = { enabled = false; };
-          };
-
-          rewrites = [
-            { domain = "nixhome.local"; answer = lanIP; }
-            { domain = "*.${domain}"; answer = lanIP; }
-            { domain = "*.nix.${domain}"; answer = lanIP; }
-            { domain = "auth.${domain}"; answer = lanIP; }
-            { domain = "netdata.${domain}"; answer = lanIP; }
-          ];
-
-          clients.persistent = [
-            { ids = [ lanIP ]; name = "nixhome-server"; }
-          ];
-
-          user_rules = [
-            "@@||nixhome.local^"
-            "@@||${domain}^"
-          ];
-        };
-      };
-
-      services.caddy.virtualHosts."dns.${domain}" = {
-        extraConfig = ''
-          import sso_auth
-          reverse_proxy 127.0.0.1:${toString portAdguard}
-        '';
-      };
-
-      systemd.services.AdGuardHome.serviceConfig = {
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-        NoNewPrivileges = true;
-        CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
-        AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
-        ReadWritePaths = [ "/var/lib/AdGuardHome" ];
-        LockPersonality = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        SystemCallFilter = [ "@system-service" ];
-        OOMScoreAdjust = -200;
-      };
-    })
-
-    # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────
+    # â”€â”€ VALKEY CACHE DATABASE (Valkey package inside Redis module) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     (lib.mkIf cfgValkey.enable {
       systemd.tmpfiles.rules = [
         "d /var/lib/redis-valkey 0750 redis redis -"
@@ -209,7 +115,7 @@ in
         servers.valkey = {
           enable = true;
           bind = "127.0.0.1"; # Lokal isolierter Ingress
-          port = portValkey;
+          port = 0; # TCP deaktiviert, nur Unix Sockets
           openFirewall = false;
           unixSocket = "/run/redis-valkey/valkey.sock";
           unixSocketPerm = 660;
@@ -230,60 +136,13 @@ in
         NoNewPrivileges = true;
         MemoryDenyWriteExecute = true;
         CapabilityBoundingSet = "";
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = [ "AF_UNIX" # Admin Hangar Isolation ];
         ReadWritePaths = [ "/var/lib/redis-valkey" ];
       };
     })
 
-    # ── POSTGRESQL DATABASE SERVER ────────────────────────────────────────────
-    (lib.mkIf cfgPostgres.enable {
-      systemd.tmpfiles.rules = [
-        "d /var/lib/postgresql 0700 postgres postgres -"
-      ];
 
-      services.postgresql = {
-        enable = true;
-        package = pkgs.postgresql_16;
-
-        # Rationale: Liegt auf Fast-Tier SSD/NVMe (Ext4/Btrfs mit noatime), getrennt von mergerfs
-        dataDir = "/var/lib/postgresql";
-
-        # Unix Sockets bevorzugen, TCP/IP standardmäßig deaktiviert (Zero-Trust)
-        enableTCPIP = false;
-
-        # Streng lokaler Socket-Zugriff per Ident-Validation
-        authentication = pkgs.lib.mkForce ''
-          # TYPE  DATABASE        USER            ADDRESS                 METHOD
-          local   all             all                                     ident
-        '';
-
-        settings = {
-          shared_buffers = "${toString (lib.max 1 (lib.floor (ramGB * 0.25)))}GB";
-          work_mem = "64MB";
-          maintenance_work_mem = "${toString (lib.max 128 (lib.floor (ramGB * 64)))}MB";
-          effective_cache_size = "${toString (lib.max 1 (lib.floor (ramGB * 0.375)))}GB";
-          max_connections = 100;
-        };
-      };
-
-      # PostgreSQL Systemd Sandboxing Härtung
-      systemd.services.postgresql.serviceConfig = {
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        NoNewPrivileges = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-        ReadWritePaths = [ "/var/lib/postgresql" ];
-      };
-    })
-
-    # ── BLOCKY DNS RESOLVER ───────────────────────────────────────────────────
+    # â”€â”€ BLOCKY DNS RESOLVER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     (lib.mkIf config.my.services.blocky.enable {
       services.resolved.enable = lib.mkForce false;
 
@@ -304,10 +163,7 @@ in
             mapping = {
               "nixhome.local" = lanIP;
               "${domain}" = lanIP;
-              "nix.${domain}" = lanIP;
-              "auth.${domain}" = lanIP;
-              "dns.${domain}" = lanIP;
-              "netdata.${domain}" = lanIP;
+              "*.${domain}" = lanIP;
             };
           };
         };
@@ -315,7 +171,15 @@ in
 
       networking.nameservers = lib.mkForce [ "127.0.0.1" "1.1.1.1" ];
 
+      systemd.services.blocky = {
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        before = lib.mkIf config.services.caddy.enable [ "caddy.service" ];
+      };
+
       systemd.services.blocky.serviceConfig = {
+        Restart = lib.mkDefault "always";
+        RestartSec = lib.mkDefault "5s";
         ProtectSystem = lib.mkDefault "strict";
         ProtectHome = lib.mkDefault true;
         PrivateTmp = lib.mkDefault true;
@@ -328,7 +192,7 @@ in
         RestrictNamespaces = lib.mkDefault true;
         NoNewPrivileges = lib.mkDefault true;
         PrivateNetwork = lib.mkDefault false;
-        RestrictAddressFamilies = lib.mkDefault [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = lib.mkDefault [ "AF_UNIX" # Admin Hangar Isolation ];
         CapabilityBoundingSet = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
         AmbientCapabilities = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
         SystemCallFilter = lib.mkDefault [
@@ -346,7 +210,7 @@ in
       };
     })
 
-    # ── TAILSCALE VPN ─────────────────────────────────────────────────────────
+    # â”€â”€ TAILSCALE VPN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     (lib.mkIf config.my.services.tailscale.enable {
       systemd.tmpfiles.rules = [
         "d /var/lib/secrets 0700 root root -"
@@ -358,7 +222,8 @@ in
         port = config.my.services.tailscale.port;
         permitCertUid = "caddy";
         useRoutingFeatures = "client";
-        extraUpFlags = [ "--ssh" "--accept-dns=true" "--accept-routes=true" ];
+        # DNS bleibt bei Blocky (127.0.0.1) â€” kein Tailscale MagicDNS in resolv.conf
+        extraUpFlags = [ "--ssh" "--accept-dns=false" "--accept-routes=true" ];
       };
       networking.firewall.trustedInterfaces = [ "tailscale0" ];
       networking.firewall.checkReversePath = "loose";
@@ -374,7 +239,7 @@ in
             sleep 2
             TOKEN_FILE=''${TOKEN_FILE:-/var/lib/secrets/tailscale_token}
             if [ ! -f "$TOKEN_FILE" ]; then
-              echo "tailscale-autoconnect: kein $TOKEN_FILE — manuell: tailscale up"
+              echo "tailscale-autoconnect: kein $TOKEN_FILE â€” manuell: tailscale up"
               exit 0
             fi
             status=$(${pkgs.tailscale}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -r .BackendState)
@@ -400,37 +265,61 @@ in
       };
     })
 
-    # ── PRIVADO VPN WIREGUARD CLIENT ──────────────────────────────────────────
+    # â”€â”€ PRIVADO VPN WIREGUARD CLIENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     (lib.mkIf config.my.services.privado-vpn.enable {
 
 
-      networking.wg-quick.interfaces.privado = {
+      networking.wg-quick.interfaces.privado = let
+        ip = pkgs.iproute2;
+        vpnTable = "51820";
+        # Prowlarr 969, SABnzbd 984 â€” nur diese UIDs Ã¼ber privado (Split-Tunnel)
+        vpnUids = [ 969 984 ];
+        uidRules = lib.concatMapStringsSep "\n" (uid:
+          "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
+        ) vpnUids;
+        uidRulesDown = lib.concatMapStringsSep "\n" (uid:
+          "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
+        ) vpnUids;
+      in {
         autostart = true;
         address = [ config.my.services.privado-vpn.ipAddress ];
         dns = config.my.services.privado-vpn.dns;
         privateKeyFile = config.my.services.privado-vpn.privateKeyFile;
+        table = "off";
+
+        postUp = ''
+          ${ip}/bin/ip route add default dev privado table ${vpnTable}
+          ${uidRules}
+        '';
+        preDown = ''
+          ${uidRulesDown}
+          ${ip}/bin/ip route flush table ${vpnTable} || true
+          ${pkgs.openresolv}/bin/resolvconf -d privado 2>/dev/null || true
+        '';
 
         peers = [{
           publicKey = config.my.services.privado-vpn.publicKey;
           endpoint = config.my.services.privado-vpn.endpoint;
           allowedIPs = [ "0.0.0.0/0" ];
+          persistentKeepalive = 25;
         }];
       };
 
-      systemd.services.wg-quick-privado = {
-        serviceConfig = {
-          Restart = "always";
-          RestartSec = "5s";
-        };
-      };
+
     })
 
-    # ── POCKETID IDENTITY PROVIDER ────────────────────────────────────────────
+    # â”€â”€ POCKETID IDENTITY PROVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     (lib.mkIf config.my.services.pocket-id.enable {
+      systemd.services.pocket-id = {
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+      };
+
       services.pocket-id = {
         enable = true;
         dataDir = config.my.services.pocket-id.dataDir;
         settings = {
+          HOST = "127.0.0.1";
           PORT = toString config.my.services.pocket-id.port;
           PUBLIC_URL = "https://auth.${domain}";
           RP_ID = "auth.${domain}";
@@ -468,15 +357,21 @@ in
       ];
 
       services.caddy.virtualHosts."auth.${domain}" = {
-        extraConfig = ''
-          import security_headers
-          reverse_proxy 127.0.0.1:${toString config.my.services.pocket-id.port}
-        '';
+        extraConfig = caddy.proxySecurity config.my.services.pocket-id.port;
       };
     })
 
-    # ── CADDY GLOBAL CONFIG & SNIPPETS ────────────────────────────────────────
+    # â”€â”€ CADDY GLOBAL CONFIG & SNIPPETS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     {
+      systemd.services.caddy = lib.mkIf config.services.caddy.enable {
+        serviceConfig = {
+          OOMScoreAdjust = -1000;
+          Nice = -10;
+          CPUWeight = 10000;
+          LimitNOFILE = 1048576;
+        };
+      };
+
       services.caddy.logFormat = lib.mkIf config.services.caddy.enable (
         lib.mkForce ''
           level INFO
@@ -487,6 +382,20 @@ in
       services.caddy.extraConfig = lib.mkIf config.services.caddy.enable (
         lib.mkBefore caddySnippets.extraConfig
       );
+      
+      services.caddy.globalConfig = lib.mkIf config.services.caddy.enable ''
+        admin 127.0.0.1:${toString config.my.ports.caddyAdmin}
+      '';
+
+      # â”€â”€ LEBENSVERSICHERUNG: SYSTEMD-NETWORKD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # "Gott-Modus" fÃ¼r den Netzwerk-Daemon: SchÃ¼tzt vor dem OOM-Killer und 
+      # gewÃ¤hrt hÃ¶chste CPU-PrioritÃ¤t, damit der Server bei Lastspitzen nicht 
+      # die Verbindung verliert.
+      systemd.services.systemd-networkd.serviceConfig = {
+        OOMScoreAdjust = -1000;
+        CPUSchedulingPolicy = "rr";
+        CPUSchedulingPriority = 99;
+      };
     }
   ];
 }

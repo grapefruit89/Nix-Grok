@@ -27,6 +27,21 @@ in
     core = {
       boot-safeguard.enable = lib.mkEnableOption "Boot safeguard generation limits";
       nix-tuning.enable = lib.mkEnableOption "Nix store performance tuning and GC";
+      nix-tuning.maxJobs = lib.mkOption {
+        type = lib.types.nullOr lib.types.int;
+        default = null;
+        description = "Parallele Nix-Jobs (null = RAM-basiert). q958/i3-9100: 4.";
+      };
+      nix-tuning.cores = lib.mkOption {
+        type = lib.types.nullOr lib.types.int;
+        default = null;
+        description = "Kerne pro Job (0 = alle). null = RAM-basiert.";
+      };
+      nix-tuning.daemonLowPriority = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "true = nix-daemon idle (schont Dienste). false = volle Build-Power.";
+      };
       zram-swap.enable = lib.mkEnableOption "Aggressive komprimierter ZRAM RAM-swap";
     };
 
@@ -61,33 +76,47 @@ in
     };
 
     ports = {
-      adguard = lib.mkOption { type = lib.types.port; default = 3053; description = "AdGuard Home port."; };
-      valkey = lib.mkOption { type = lib.types.port; default = 6379; description = "Valkey cache port."; };
+      # 10-network
+      valkey = lib.mkOption { type = lib.types.port; default = 1010; description = "Valkey cache port."; };
+      pocket-id = lib.mkOption { type = lib.types.port; default = 1020; description = "PocketID port."; };
+      
+      # 20-security
       ssh = lib.mkOption { type = lib.types.port; default = 22; description = "SSH port (override via machines/<host>/profile.nix)."; };
-      jellyfin = lib.mkOption { type = lib.types.port; default = 8096; description = "Jellyfin port."; };
-      jellyseerr = lib.mkOption { type = lib.types.port; default = 5055; description = "Jellyseerr port."; };
-      sonarr = lib.mkOption { type = lib.types.port; default = 8989; description = "Sonarr port."; };
-      radarr = lib.mkOption { type = lib.types.port; default = 7878; description = "Radarr port."; };
-      readarr = lib.mkOption { type = lib.types.port; default = 8787; description = "Readarr port."; };
-      prowlarr = lib.mkOption { type = lib.types.port; default = 9696; description = "Prowlarr port."; };
-      sabnzbd = lib.mkOption { type = lib.types.port; default = 8080; description = "SABnzbd port."; };
-      vaultwarden = lib.mkOption { type = lib.types.port; default = 8000; description = "Vaultwarden port."; };
-      homepage = lib.mkOption { type = lib.types.port; default = 8082; description = "Homepage port."; };
-      mqtt = lib.mkOption { type = lib.types.port; default = 1883; description = "MQTT broker port."; };
-      zigbee2mqtt = lib.mkOption { type = lib.types.port; default = 8075; description = "Zigbee2MQTT frontend port."; };
-      pocket-id = lib.mkOption { type = lib.types.port; default = 8083; description = "PocketID port."; };
-      paperless = lib.mkOption { type = lib.types.port; default = 28981; description = "Paperless-ngx port."; };
-      n8n = lib.mkOption { type = lib.types.port; default = 5678; description = "n8n port."; };
-      filebrowser = lib.mkOption { type = lib.types.port; default = 20001; description = "Filebrowser port."; };
-      linkwarden = lib.mkOption { type = lib.types.port; default = 3000; description = "Linkwarden port."; };
-      open-webui = lib.mkOption { type = lib.types.port; default = 3080; description = "Open WebUI port."; };
-      forgejo = lib.mkOption { type = lib.types.port; default = 3010; description = "Forgejo HTTP port."; };
-      semaphore = lib.mkOption { type = lib.types.port; default = 3015; description = "Semaphore HTTP port."; };
-      cockpit = lib.mkOption { type = lib.types.port; default = 9090; description = "Cockpit admin port."; };
-      amp = lib.mkOption { type = lib.types.port; default = 8085; description = "AMP Web UI port."; };
-      gatus = lib.mkOption { type = lib.types.port; default = 8084; description = "Gatus Web UI port."; };
-      loki = lib.mkOption { type = lib.types.port; default = 3100; description = "Loki API port."; };
-      grafana = lib.mkOption { type = lib.types.port; default = 3005; description = "Grafana Web UI port."; };
+      caddyAdmin = lib.mkOption { type = lib.types.port; default = 2020; description = "Caddy Admin API port."; };
+      
+      # 40-observability
+      gatus = lib.mkOption { type = lib.types.port; default = 4010; description = "Gatus Web UI port."; };
+      loki = lib.mkOption { type = lib.types.port; default = 4020; description = "Loki API port."; };
+      grafana = lib.mkOption { type = lib.types.port; default = 4030; description = "Grafana Web UI port."; };
+
+      # 50-media
+      jellyfin = lib.mkOption { type = lib.types.port; default = 5010; description = "Jellyfin port."; };
+      jellyseerr = lib.mkOption { type = lib.types.port; default = 5020; description = "Jellyseerr port."; };
+      sonarr = lib.mkOption { type = lib.types.port; default = 5030; description = "Sonarr port."; };
+      radarr = lib.mkOption { type = lib.types.port; default = 5040; description = "Radarr port."; };
+      readarr = lib.mkOption { type = lib.types.port; default = 5050; description = "Readarr port."; };
+      prowlarr = lib.mkOption { type = lib.types.port; default = 5060; description = "Prowlarr port."; };
+      sabnzbd = lib.mkOption { type = lib.types.port; default = 5070; description = "SABnzbd port."; };
+      audiobookshelf = lib.mkOption { type = lib.types.port; default = 5080; description = "Audiobookshelf port."; };
+
+      # 60-apps
+      vaultwarden = lib.mkOption { type = lib.types.port; default = 6010; description = "Vaultwarden port."; };
+      homepage = lib.mkOption { type = lib.types.port; default = 6020; description = "Homepage port."; };
+      paperless = lib.mkOption { type = lib.types.port; default = 6030; description = "Paperless-ngx port."; };
+      n8n = lib.mkOption { type = lib.types.port; default = 6040; description = "n8n port."; };
+      filebrowser = lib.mkOption { type = lib.types.port; default = 6050; description = "Filebrowser port."; };
+      linkwarden = lib.mkOption { type = lib.types.port; default = 6060; description = "Linkwarden port."; };
+      open-webui = lib.mkOption { type = lib.types.port; default = 6070; description = "Open WebUI port."; };
+      forgejo = lib.mkOption { type = lib.types.port; default = 6080; description = "Forgejo HTTP port."; };
+      semaphore = lib.mkOption { type = lib.types.port; default = 6090; description = "Semaphore HTTP port."; };
+      mqtt = lib.mkOption { type = lib.types.port; default = 6091; description = "MQTT broker port."; };
+      zigbee2mqtt = lib.mkOption { type = lib.types.port; default = 6092; description = "Zigbee2MQTT frontend port."; };
+
+      # 70-forge
+      cockpit = lib.mkOption { type = lib.types.port; default = 7010; description = "Cockpit admin port."; };
+
+      # 80-gaming
+      amp = lib.mkOption { type = lib.types.port; default = 8010; description = "AMP Web UI port."; };
     };
   };
 
@@ -104,12 +133,37 @@ in
 
     # ── BOOT SAFEGUARD ────────────────────────────────────────────────────────
     (lib.mkIf cfgBoot.enable {
-      # Verhindert Überlauf der EFI System-Partition (ESP) bei strengem 96MB Limit
-      boot.loader.systemd-boot.configurationLimit = 5;
+      # Verhindert Überlauf der EFI System-Partition (ESP)
+      boot.loader.systemd-boot.configurationLimit = 30;
     })
+
+    # ── PORT COLLISION GUARD ──────────────────────────────────────────────────
+    {
+      assertions = let
+        portAttrs = config.my.ports;
+        portList = lib.mapAttrsToList (name: value: value) portAttrs;
+        uniquePorts = lib.unique portList;
+      in [
+        {
+          assertion = builtins.length portList == builtins.length uniquePorts;
+          message = "KRITISCHER FEHLER: Port-Kollision im Port-Register (config.my.ports) erkannt! Zwei Apps nutzen denselben Port.";
+        }
+      ];
+    }
 
     # ── KERNEL SLIMMING → machines/<host>/kernel-slim.nix
 
+    # ── STRICT HEADLESS SERVER PURGE ──────────────────────────────────────────
+    # Deaktiviert überflüssige Desktop- und Legacy-Dienste tief im System.
+    {
+      # Kein Legacy NetworkManager (wir nutzen systemd-networkd)
+      networking.networkmanager.enable = lib.mkForce false;
+      # Keine Legacy DHCP-Clients
+      networking.dhcpcd.enable = lib.mkForce false;
+      # Keine NixOS Handbücher lokal kompilieren (spart extrem viel RAM/Zeit beim Build)
+      documentation.nixos.enable = lib.mkForce false;
+      documentation.man.generateCaches = lib.mkForce false;
+    }
     # ── NIX STORE TUNING ──────────────────────────────────────────────────────
     (lib.mkIf cfgNix.enable {
       nix = {
@@ -135,13 +189,14 @@ in
           # Negativ-Cache verkürzen
           narinfo-cache-negative-ttl = 0;
 
-          # Dynamisches Ressourcen-Management basierend auf RamGB
           max-jobs =
-            if isLowRam then lib.mkForce 1
+            if cfgNix.maxJobs != null then lib.mkForce cfgNix.maxJobs
+            else if isLowRam then lib.mkForce 1
             else if isMidRam then lib.mkForce 2
             else lib.mkDefault 4;
           cores =
-            if isLowRam then lib.mkForce 1
+            if cfgNix.cores != null then lib.mkForce cfgNix.cores
+            else if isLowRam then lib.mkForce 1
             else if isMidRam then lib.mkForce 2
             else lib.mkDefault 0;
 
@@ -154,10 +209,11 @@ in
           trusted-users = [ "root" config.my.configs.identity.user ];
         };
 
-        # CPU & I/O Prioritäten für Builds (verhindert Host-Freezes)
-        daemonCPUSchedPolicy = "idle";
-        daemonIOSchedClass = "idle";
-        daemonIOSchedPriority = 7;
+        daemonCPUSchedPolicy =
+          if cfgNix.daemonLowPriority then "idle" else "batch";
+        daemonIOSchedClass =
+          if cfgNix.daemonLowPriority then "idle" else "best-effort";
+        daemonIOSchedPriority = lib.mkIf cfgNix.daemonLowPriority 7;
 
         # Wöchentlicher automatischer GC
         gc = {
