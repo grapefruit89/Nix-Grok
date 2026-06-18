@@ -251,5 +251,21 @@ in
         "vm.vfs_cache_pressure" = lib.mkDefault 150; # Aggressiveres Freigeben von Verzeichnis- und Inode-Caches im RAM
       };
     })
+
+    # ==========================================================================
+    # SYSTEM UID REGISTRY (PORT = UID)
+    # ==========================================================================
+    # Jeder Dienst ab Port 1024 bekommt automatische seine Port-Nummer als statische UID/GID.
+    {
+      users.users = lib.mapAttrs (name: port: {
+        uid = lib.mkIf (port >= 1024) port;
+        group = lib.mkIf (port >= 1024) name;
+        isSystemUser = lib.mkIf (port >= 1024) true;
+      }) config.my.ports;
+
+      users.groups = lib.mapAttrs (name: port: {
+        gid = lib.mkIf (port >= 1024) port;
+      }) config.my.ports;
+    }
   ];
 }

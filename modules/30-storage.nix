@@ -14,7 +14,7 @@ let
       "/var/lib/nixos"
       "/etc/nixos"
       "/var/lib/tailscale"
-      "/var/lib/postgresql"
+      # PostgreSQL entfernt
       "/var/lib/hermes"
       "/var/lib/vaultwarden"
       "/var/lib/jellyfin"
@@ -312,21 +312,7 @@ in
         passwordFile = "/var/lib/secrets/restic_password";
         environmentFile = "/var/lib/secrets/restic_s3_creds";
 
-        paths = [
-          "${cfgImp.persistMountPoint}/var/lib/secrets"
-          "${cfgImp.persistMountPoint}/var/lib/postgresql"
-          "${cfgImp.persistMountPoint}/var/lib/vaultwarden"
-          "${cfgImp.persistMountPoint}/var/lib/pocket-id"
-          "${cfgImp.persistMountPoint}/var/lib/hass"
-          "${cfgImp.persistMountPoint}/var/lib/zigbee2mqtt"
-          "${cfgImp.persistMountPoint}/var/lib/paperless"
-          "${cfgImp.persistMountPoint}/var/lib/linkwarden"
-          "${cfgImp.persistMountPoint}/var/lib/forgejo"
-          "${cfgImp.persistMountPoint}/var/lib/semaphore"
-          "/home/${config.my.configs.identity.user}/.grok"
-          "${cfgImp.persistMountPoint}/var/lib/grafana"
-          "${cfgImp.persistMountPoint}/etc/nixos"
-        ];
+        paths = map (path: "${cfgImp.persistMountPoint}${path}") tierA.paths;
 
         pruneOpts = [
           "--keep-daily 7"
@@ -337,13 +323,13 @@ in
         backupPrepareCommand = ''
           echo "Stopping active web applications and database services..."
           systemctl stop paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden forgejo vaultwarden zigbee2mqtt || true
-          systemctl stop mosquitto postgresql || true
+          systemctl stop mosquitto || true
         '';
 
         # Restart database and web applications after backup attempt finishes (even on failure)
         backupCleanupCommand = ''
           echo "Restarting database and web applications..."
-          systemctl start postgresql mosquitto || true
+          systemctl start mosquitto || true
           systemctl start paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden forgejo vaultwarden zigbee2mqtt || true
         '';
 

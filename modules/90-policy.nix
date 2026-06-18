@@ -1,71 +1,78 @@
+{ config, lib, ... }:
 
-# ==============================================================================
-# PURPOSE
-# ==============================================================================
-# Configures bubblewrap-based sandboxing policies (jailed-agents) for running
-# autonomous LLM coding agents securely on the host.
-# Key decisions → ADR-90-policy.md
-
-{ config
-, lib
-, pkgs
-, ...
-}:
-let
-  # --------------------------------------------------------------------------
-  # MODULE CONFIG REF
-  # --------------------------------------------------------------------------
-  cfg = config.my.policy.jailed-agents;
-
-in
 {
   # ============================================================================
-  # OPTIONS
+  # ZERO-TOLERANCE POLICY & FORBIDDEN TECHNOLOGY
   # ============================================================================
-  options.my.policy.jailed-agents = {
-    enable = lib.mkEnableOption "Bubblewrap-based zero-trust sandboxing for LLM agents";
-  };
+  config = lib.mkIf (config.my.mode == "production" || config.my.mode == "development") {
 
-  # ============================================================================
-  # CONFIG
-  # The implementation. Guarded by lib.mkIf cfg.enable.
-  # ============================================================================
-  config = lib.mkIf cfg.enable {
+    # --- HARTE DEAKTIVIERUNGEN ---
+    # Diese Dienste werden systemweit erzwungen deaktiviert.
+    services.xserver.enable = lib.mkForce false;
+    sound.enable = lib.mkForce false;
+    hardware.pulseaudio.enable = lib.mkForce false;
+    networking.networkmanager.enable = lib.mkForce false;
 
-    # --------------------------------------------------------------------------
-    # BUBBLEWRAP CAGE ENVIRONMENT
-    # --------------------------------------------------------------------------
-    systemd.services.jailed-agents = {
-      description = "Zero-Trust LLM Coding Agent Jail Daemon";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+    # IPv6 Bann (Homelab Area)
+    networking.enableIPv6 = lib.mkForce false;
 
-      serviceConfig = {
-        User = "jailed-agent";
-        Group = "jailed-agent";
+    # Aus v5: Unnötige Desktop- und Peripherie-Daemons abschalten
+    services.accounts-daemon.enable = lib.mkForce false;
+    services.upower.enable = lib.mkForce false;
+    services.printing.enable = lib.mkForce false; # cups
+    hardware.bluetooth.enable = lib.mkForce false;
+    networking.wireless.enable = lib.mkForce false; # wpa_supplicant
 
-        # Sandbox hardening guidelines
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        NoNewPrivileges = true;
-        MemoryDenyWriteExecute = true;
+    # --- KERNEL & PROCESS SECURITY ---
+    security.hideProcessInformation = true;
 
-        StateDirectory = "jailed-agent";
-        Restart = "on-failure";
-        RestartSec = "5s";
-      };
-    };
-
-    users.users.jailed-agent = {
-      isSystemUser = true;
-      group = "jailed-agent";
-    };
-    users.groups.jailed-agent = { };
-
-    # We install bubblewrap to implement sandboxing policies
-    environment.systemPackages = [ pkgs.bubblewrap ];
-
+    # --- COMPILER ASSERTIONS (DER TÜRSTEHER) ---
+    assertions = [
+      {
+        assertion = !config.networking.networkmanager.enable;
+        message = "KRITISCHER FEHLER [POLICY]: NetworkManager ist verboten. Nutze systemd-networkd.";
+      }
+      {
+        assertion = config.systemd.network.enable;
+        message = "KRITISCHER FEHLER [POLICY]: systemd-networkd MUSS aktiv sein, damit die Netzwerkkarte nicht ausfällt.";
+      }
+      {
+        assertion = config.networking.nftables.enable;
+        message = "KRITISCHER FEHLER [POLICY]: Native nftables muss zwingend aktiviert sein.";
+      }
+      {
+        assertion = !config.networking.firewall.enable;
+        message = "KRITISCHER FEHLER [POLICY]: Legacy iptables-Firewall ist verboten. Nutze 15-firewall.nix (nftables).";
+      }
+      {
+        assertion = !(config.virtualisation.docker.enable or false);
+        message = "KRITISCHER FEHLER [POLICY]: Docker ist verboten. Wir nutzen NixOS, Container sind hier unerwünscht.";
+      }
+      {
+        assertion = !(config.virtualisation.podman.enable or false);
+        message = "KRITISCHER FEHLER [POLICY]: Podman ist verboten. Keine OCI-Container auf diesem Server.";
+      }
+      {
+        assertion = !(config ? deployment);
+        message = "KRITISCHER FEHLER [POLICY]: Colmena Hive Deployment ist verboten. Zu viel Overengineering für dieses System.";
+      }
+      {
+        assertion = !(config.services.transmission.enable or false);
+        message = "KRITISCHER FEHLER [POLICY]: Transmission ist verboten. Sabnzbd-only Server!";
+      }
+      {
+        assertion = !config.services.xserver.enable;
+        message = "KRITISCHER FEHLER [POLICY]: X11/Wayland ist verboten. Der Server ist headless (TTY-Monitor weiterhin möglich).";
+      }
+      {
+        assertion = !config.networking.enableIPv6;
+        message = "KRITISCHER FEHLER [POLICY]: IPv6 ist systemweit verboten (Homelab-Policy).";
+      }
+      {
+        assertion = config.nixpkgs.overlays == [];
+        message = "KRITISCHER FEHLER [POLICY]: Globale nixpkgs.overlays sind verboten. Nutze lokale Package-Inputs zur Vermeidung von Supply-Chain-Risiken und Rebuild-Stürmen.";
+      }
+    ];
   };
 }
+
