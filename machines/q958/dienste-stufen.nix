@@ -57,7 +57,7 @@ in
   my.services = {
     
     valkey.enable = erstAb 2;
-    postgresql.enable = erstAb 2;
+    
     blocky.enable = erstAb 2;
     tailscale.enable = erstAb 2;
     pocket-id.enable = erstAb 2;
@@ -99,3 +99,4 @@ in
     lib.mkForce [ p.network.sshPort ]
   );
 }
+
