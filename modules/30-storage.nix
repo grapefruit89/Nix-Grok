@@ -199,13 +199,14 @@ in
           SystemMaxUse=1G
           RuntimeMaxUse=100M
           MaxRetentionSec=1month
-        '';
-      };
-    })
-
     # ── MERGERFS HYBRID POOLING ───────────────────────────────────────────────
     (lib.mkIf cfgStorage.enable {
       boot.supportedFilesystems = [ "ext4" ];
+
+      # HDD Spindown für rotierende Disks nach 20 Minuten Inaktivität (240 * 5s = 1200s)
+      services.udev.extraRules = ''
+        ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", RUN+="${pkgs.hdparm}/bin/hdparm -S 240 /dev/%k"
+      '';
 
       # Pooling mounts
       fileSystems = {

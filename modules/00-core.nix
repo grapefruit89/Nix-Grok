@@ -253,6 +253,28 @@ in
     })
 
     # ==========================================================================
+    # HARDWARE AUDIT & POWER MANAGEMENT (KISS)
+    # ==========================================================================
+    {
+      services.smartd = {
+        enable = true;
+        notifications.x11.enable = false;
+      };
+
+      services.tlp = {
+        enable = true;
+        settings = {
+          CPU_SCALING_GOVERNOR_ON_AC = "schedutil";
+          CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+          CPU_ENERGY_PERF_POLICY_ON_AC = "balance_performance";
+          CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+          PCIE_ASPM_ON_AC = "default";
+          PCIE_ASPM_ON_BAT = "powersupersave";
+        };
+      };
+    }
+
+    # ==========================================================================
     # SYSTEM UID REGISTRY (PORT = UID)
     # ==========================================================================
     # Jeder Dienst ab Port 1024 bekommt automatische seine Port-Nummer als statische UID/GID.

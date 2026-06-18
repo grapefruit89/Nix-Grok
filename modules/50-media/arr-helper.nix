@@ -1,10 +1,17 @@
 
 # arr-helper.nix
 # Shared helper to generate standardized *Arr services.
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
+let
+  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
+  vpnKillSwitchAttrs = import ../../lib/vpn-killswitch.nix {
+    inherit lib;
+    privadoEnabled = config.my.services.privado-vpn.enable or false;
+  };
+in
 {
-  mkArrService = { name, port, dataDir, uid, gid }: {
+  mkArrService = { name, port, dataDir, uid, gid, useVpnKillSwitch ? false, apiSetupScript ? "" }: {
     services.${name} = {
       enable = true;
       openFirewall = false;
@@ -21,25 +28,72 @@
       extraGroups = [ "media" ];
     };
 
-    systemd.services.${name}.serviceConfig = {
-      ProtectSystem = lib.mkForce "strict";
-      ProtectHome = lib.mkForce true;
-      PrivateTmp = lib.mkForce true;
-      PrivateDevices = lib.mkForce true;
-      NoNewPrivileges = lib.mkForce true;
-      UMask = lib.mkForce "0002";
-      ReadWritePaths = [
-        dataDir
-        "/data/media"
-        "/data/downloads"
-      ];
-    };
+    systemd.services.${name} = lib.mkMerge [
+      (lib.mkIf useVpnKillSwitch vpnKillSwitchAttrs)
+      {
+        preStart = lib.mkBefore ''
+          if [ ! -f ${dataDir}/config.xml ]; then
+            mkdir -p ${dataDir}
+            echo "<Config><BindAddress>127.0.0.1</BindAddress></Config>" > ${dataDir}/config.xml
+          else
+            ${pkgs.gnused}/bin/sed -i -e 's|<BindAddress>.*</BindAddress>|<BindAddress>127.0.0.1</BindAddress>|g' ${dataDir}/config.xml
+            if ! grep -q "<BindAddress>" ${dataDir}/config.xml; then
+              ${pkgs.gnused}/bin/sed -i -e 's|</Config>|<BindAddress>127.0.0.1</BindAddress></Config>|g' ${dataDir}/config.xml
+            fi
+          fi
+        '';
+        serviceConfig = {
+          ProtectSystem = lib.mkForce "strict";
+          ProtectHome = lib.mkForce true;
+          PrivateTmp = lib.mkForce true;
+          PrivateDevices = lib.mkForce true;
+          NoNewPrivileges = lib.mkForce true;
+          UMask = lib.mkForce "0002";
+          ReadWritePaths = [
+            dataDir
+            "/data/media"
+            "/data/downloads"
+          ];
+        };
+      }
+    ];
 
     services.caddy.virtualHosts."${name}.${config.my.configs.identity.domain}" = {
-      extraConfig = ''
-        import sso_auth
-        reverse_proxy 127.0.0.1:${toString port}
+      extraConfig = caddy.proxySso port;
+    };
+
+    systemd.services."${name}-configurator" = lib.mkIf (apiSetupScript != "") {
+      description = "Idempotent API Configurator for ${name}";
+      wantedBy = [ "multi-user.target" ];
+      requires = [ "${name}.service" ];
+      after = [ "${name}.service" ];
+
+      path = with pkgs; [ curl jq gnugrep ];
+
+      script = ''
+        set -euo pipefail
+
+        CONFIG_XML="${dataDir}/config.xml"
+        API_URL="http://localhost:${toString port}/api/v3"
+
+        echo "Warte auf config.xml..."
+        while [ ! -f "$CONFIG_XML" ]; do sleep 1; done
+
+        API_KEY=$(grep -oP '(?<=<ApiKey>)[^<]+' "$CONFIG_XML")
+
+        echo "Warte auf API..."
+        while ! curl -s --fail "$API_URL/system/status?apiKey=$API_KEY" > /dev/null; do
+          sleep 2
+        done
+        
+        # Führe app-spezifisches Setup aus
+        ${apiSetupScript}
       '';
+
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
     };
   };
 }
