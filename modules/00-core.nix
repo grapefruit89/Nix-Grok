@@ -84,6 +84,11 @@ in
       ssh = lib.mkOption { type = lib.types.port; default = 22; description = "SSH port (override via machines/<host>/profile.nix)."; };
       caddyAdmin = lib.mkOption { type = lib.types.port; default = 2020; description = "Caddy Admin API port."; };
       
+      # 40-observability
+      gatus = lib.mkOption { type = lib.types.port; default = 4010; description = "Gatus Web UI port."; };
+      loki = lib.mkOption { type = lib.types.port; default = 4020; description = "Loki API port."; };
+      grafana = lib.mkOption { type = lib.types.port; default = 4030; description = "Grafana Web UI port."; };
+
       # 50-media
       jellyfin = lib.mkOption { type = lib.types.port; default = 5010; description = "Jellyfin port."; };
       jellyseerr = lib.mkOption { type = lib.types.port; default = 5020; description = "Jellyseerr port."; };
@@ -275,7 +280,7 @@ in
     # Jeder Dienst ab Port 1024 bekommt automatische seine Port-Nummer als statische UID/GID.
     {
       users.users = lib.mapAttrs (name: port: {
-        uid = lib.mkIf (port >= 1024) port;
+        uid = lib.mkIf (port >= 1024) (lib.mkDefault port);
         group = lib.mkIf (port >= 1024) name;
         isSystemUser = lib.mkIf (port >= 1024) true;
       }) config.my.ports;
@@ -286,5 +291,4 @@ in
     }
   ];
 }
-
 
