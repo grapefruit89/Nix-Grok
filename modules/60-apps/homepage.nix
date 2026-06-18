@@ -12,7 +12,7 @@ in
     services.homepage-dashboard = {
       enable = true;
       listenPort = portHomepage;
-      listenHost = "127.0.0.1";
+      
 
       settings = {
         title = "Mäusekino";
@@ -336,3 +336,4 @@ in
     };
   };
 }
+
