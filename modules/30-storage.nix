@@ -199,6 +199,8 @@ in
           SystemMaxUse=1G
           RuntimeMaxUse=100M
           MaxRetentionSec=1month
+        '';
+      };
     # ── MERGERFS HYBRID POOLING ───────────────────────────────────────────────
     (lib.mkIf cfgStorage.enable {
       boot.supportedFilesystems = [ "ext4" ];
@@ -429,3 +431,4 @@ in
     )
   ];
 }
+
