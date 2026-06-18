@@ -387,6 +387,7 @@ in
               echo "Starting local file migration from ${cfgMover.sourceDir} to ${cfgMover.targetDir}..."
               ${pkgs.rclone}/bin/rclone move "${cfgMover.sourceDir}" "${cfgMover.targetDir}" \
                 --min-age "${cfgMover.minAge}" \
+                --min-size 1G \
                 --delete-empty-src-dirs \
                 --transfers=4 \
                 --checkers=8 \
