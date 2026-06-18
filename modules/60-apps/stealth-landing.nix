@@ -12,7 +12,7 @@ let
       <title>Stealth</title>
       <style>
         body {
-          background-color: #000;
+          background-color: #0b1121;
           color: #000;
           display: flex;
           justify-content: center;
@@ -31,9 +31,11 @@ let
         svg:hover {
           fill: #555;
         }
-        /* Honeypot Links (Invisible) */
+        /* Honeypot Links (Invisible to Humans, Visible to DOM Scrapers) */
         a.trap {
-          display: none;
+          position: absolute;
+          left: -9999px;
+          opacity: 0.01;
         }
       </style>
     </head>

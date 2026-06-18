@@ -2,6 +2,7 @@
 { config, lib, pkgs, ... }:
 
 let
+  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
   cfgJellyfin = config.my.services.jellyfin;
   cfgJellyseerr = config.my.services.jellyseerr;
   domain = config.my.configs.identity.domain;
@@ -87,6 +88,7 @@ in
         IPAddressDeny = "any";
 
         OOMScoreAdjust = 100; # Jellyfin darf bei Speicherknappheit vor Core-Diensten sterben
+        ExecStart = lib.mkForce "${pkgs.jellyfin}/bin/jellyfin --datadir /var/lib/jellyfin --cachedir /var/cache/jellyfin --host 127.0.0.1";
       };
 
       # Diagnosewerkzeuge systemweit
@@ -95,16 +97,23 @@ in
         intel-gpu-tools # intel_gpu_top
       ];
 
-      # Caddy Reverse Proxy Mapping
+      # Client-Split: Jellyfin-Apps senden X-Emby-Authorization (MediaBrowser Client=…).
+      # Browser (kein Emby-Header beim ersten Load) → Pocket-ID forward_auth.
+      # WAN-Schutz zusätzlich: nftables Geo (Stufe 8).
       services.caddy.virtualHosts."jellyfin.${domain}" = {
         extraConfig = ''
           import streamer_headers
-          import sso_auth
-          reverse_proxy 127.0.0.1:${toString portJellyfin} {
-            flush_interval -1
-            transport http {
-              read_buffer 0
-            }
+          import security_headers
+
+          @jellyfin_client header_regexp X-Emby-Authorization (?i)MediaBrowser
+
+          handle @jellyfin_client {
+            ${caddy.streamingBackend portJellyfin}
+          }
+
+          handle {
+            import sso_auth
+            ${caddy.streamingBackend portJellyfin}
           }
         '';
       };
@@ -126,12 +135,12 @@ in
         NoNewPrivileges = lib.mkForce true;
         ReadWritePaths = [ "/var/lib/seerr" ];
       };
+      systemd.services.seerr.environment = {
+        HOST = "127.0.0.1";
+      };
 
       services.caddy.virtualHosts."seerr.${domain}" = {
-        extraConfig = ''
-          import sso_auth
-          reverse_proxy 127.0.0.1:${toString portJellyseerr}
-        '';
+        extraConfig = caddy.proxySsoBypassApp portJellyseerr;
       };
     })
   ];

@@ -1,4 +1,7 @@
-# Shared Caddyfile snippets — Kirschen aus USB-Chats (Grok Tower v9.0)
+# Shared Caddyfile snippets — homelab_server Kirschen (kein Geo in Caddy, nie)
+#
+# sso_auth     → Browser-Dienste (*arr, Paperless, Jellyfin-Browser, …)
+# NICHT für    → Jellyfin-Apps (X-Emby-Authorization), auth.* (Deadlock)
 { lib, pocketIdPort, lanCidr ? "192.168.0.0/16" }:
 
 let
@@ -31,6 +34,23 @@ in
     + lib.optionalString (pocketIdPort != null) ''
       (sso_auth) {
         forward_auth 127.0.0.1:${toString pocketIdPort} {
+          uri /api/auth/verify
+          copy_headers X-Forwarded-User X-Forwarded-Method X-Forwarded-Uri
+          transport http {
+            keepalive 30s
+            keepalive_idle_conns 10
+          }
+        }
+      }
+
+      (sso_auth_bypass) {
+        @nativeApp {
+          header_regexp User-Agent (?i)(jellyfin|emby|kodi|roku|firetv|appletv|swiftfin|findroid)
+        }
+        @requireSso {
+          not matcher @nativeApp
+        }
+        forward_auth @requireSso 127.0.0.1:${toString pocketIdPort} {
           uri /api/auth/verify
           copy_headers X-Forwarded-User X-Forwarded-Method X-Forwarded-Uri
           transport http {

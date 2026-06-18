@@ -331,7 +331,7 @@ in
       '';
     };
 
-    services.caddy.virtualHosts."dashboard.${domain}" = {
+    services.caddy.virtualHosts."homepage.${domain}" = {
       extraConfig = caddy.proxyTailscaleSso portHomepage;
     };
   };
