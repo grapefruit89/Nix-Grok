@@ -73,43 +73,5 @@ in
       extraConfig = caddy.proxySso cfgPaperless.port;
     };
 
-    # ── SANE SCANNER & ONE-TOUCH OCR ──────────────────────────────────────────
-    # Deklarative SANE-Einrichtung für Canon CanoScan LiDE 220
-    hardware.sane = {
-      enable = true;
-      extraBackends = [ pkgs.sane-backends ];
-    };
-
-    # Udev Rule: Wenn der Scanner-Knopf gedrückt wird, triggern wir ein Script, das den SANE-Scan
-    # startet und das Ergebnis direkt als PDF in den Paperless consume-Ordner wirft.
-    services.udev.extraRules = ''
-      # Canon CanoScan LiDE 220 Scanner-Knopf-Event
-      ACTION=="bind", ENV{DEVTYPE}=="usb_device", ENV{ID_VENDOR_ID}=="04a9", ENV{ID_MODEL_ID}=="190f", RUN+="${pkgs.systemd}/bin/systemctl start paperless-scan.service"
-    '';
-
-    systemd.services.paperless-scan = {
-      description = "Paperless One-Touch Scanner Action";
-      # Der Service wird per udev getriggert, wenn der Scanner eingesteckt / gedrückt wird.
-      # (In einer finalen Ausbaustufe kann hier der scanbd-Daemon für exakte Button-Auswertung laufen)
-      serviceConfig = {
-        Type = "oneshot";
-        User = "paperless";
-        Group = "scanner";
-        ExecStart = pkgs.writeShellScript "paperless-scan-action" ''
-          set -e
-          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-          OUTPUT_FILE="${cfgPaperless.consumptionDir}/scan_$TIMESTAMP.pdf"
-
-          # Scan ausführen: 300dpi, Farbe (optimal für Paperless OCR)
-          ${pkgs.sane-frontends}/bin/scanimage \
-            --format=pdf \
-            --resolution 300 \
-            --mode Color \
-            > "$OUTPUT_FILE"
-            
-          echo "Scan abgeschlossen und an Paperless übergeben: $OUTPUT_FILE"
-        '';
-      };
-    };
   };
 }

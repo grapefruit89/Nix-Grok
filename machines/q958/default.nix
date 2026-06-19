@@ -10,6 +10,7 @@ in
   imports = [
     ./hardware.nix
     ../../roles/server-headless.nix
+    ../../modules/hardware
     ../../modules/00-core.nix
     ../../modules/25-kernel-policy.nix
     ../../modules/10-network.nix

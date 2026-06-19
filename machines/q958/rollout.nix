@@ -83,6 +83,10 @@ in
     grok.enable = lib.mkForce true; # Headless-Dev — immer an, unabhängig von rollout.stufe
   };
 
+  my.hardware = {
+    scanner.enable = erstAb 7;
+  };
+
   services.hermes-agent.enable = erstAb 7;
   services.caddy.enable = erstAb 5;
 
