@@ -173,7 +173,7 @@ in
 
   iot = {
     zigbeeCoordinator = {
-      host = "192.168.1.100";
+      host = "slzb-06m.local";
       port = 6638;
     };
     homeAssistant = {
