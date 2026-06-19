@@ -25,7 +25,7 @@ in
     };
 
     systemd.services.open-webui.serviceConfig = {
-      OOMScoreAdjust = 500;
+      OOMScoreAdjust = 200;
       DynamicUser = true;
       ProtectSystem = "strict";
       ProtectHome = true;
@@ -33,7 +33,6 @@ in
       PrivateDevices = true;
       SupplementaryGroups = [ "render" "video" ];
       SystemCallFilter = [ "@system-service" "~@privileged" ];
-      OOMScoreAdjust = 200;
     };
   };
 }

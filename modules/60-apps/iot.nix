@@ -52,7 +52,6 @@ in
           LoadCredential = lib.optional (cfgHass.secretFile != null) "HA_SECRET:${toString cfgHass.secretFile}";
           MemoryMax = "2G";
           CPUWeight = 70;
-          OOMScoreAdjust = 300;
           ProtectSystem = "strict";
           ProtectHome = true;
           PrivateTmp = true;

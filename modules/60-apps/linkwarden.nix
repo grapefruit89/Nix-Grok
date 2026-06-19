@@ -31,7 +31,6 @@ in
         PrivateTmp = true;
         PrivateDevices = true;
         SystemCallFilter = [ "@system-service" "~@privileged" ];
-        OOMScoreAdjust = 300;
         StateDirectory = "linkwarden";
         CapabilityBoundingSet = "";
         RestrictNamespaces = true;
