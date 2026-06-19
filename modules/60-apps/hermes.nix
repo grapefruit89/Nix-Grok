@@ -7,7 +7,6 @@
 
 let
   cfg = config.my.services.hermes;
-  identityUser = config.my.configs.identity.user;
 in
 {
   config = lib.mkIf cfg.enable {

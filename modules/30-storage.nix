@@ -10,7 +10,6 @@ let
   cfgImp = config.my.impermanence;
   cfgStorage = config.my.services.storage;
   cfgBackup = config.my.services.restic-backup;
-  cfgMover = config.my.services.storage-mover;
 
   # Tier A (NVMe/SSD Cache): Persistent high-priority states
   tierA = {
@@ -32,16 +31,8 @@ let
   journaldPath = "/var/log/journal";
 
   # Tier B (SSD Pool): Speed-sensitive volatile caches and incomplete downloads
-  tierB = {
-    paths = [
-      "/mnt/fast_pool/cache"
-      "/mnt/fast_pool/downloads"
-      "/var/cache"
-    ];
-  };
 
   # Boot partition path for monitoring
-  bootMountPoint = "/boot";
 
 in
 {

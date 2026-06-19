@@ -3,9 +3,6 @@
 # All system modules and user environments derive their settings from here.
 
 {
-  config,
-  lib,
-  pkgs,
   ...
 }:
 

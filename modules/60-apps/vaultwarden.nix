@@ -8,12 +8,10 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 
 let
-  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
   cfgVaultwarden = config.my.services.vaultwarden;
   domain = config.my.configs.identity.domain;
   portVaultwarden = config.my.ports.vaultwarden;

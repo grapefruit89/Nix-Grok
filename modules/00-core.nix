@@ -308,7 +308,7 @@ in
       assertions =
         let
           portAttrs = config.my.ports;
-          portList = lib.mapAttrsToList (name: value: value) portAttrs;
+          portList = lib.mapAttrsToList (_name: value: value) portAttrs;
           uniquePorts = lib.unique portList;
         in
         [
@@ -522,11 +522,11 @@ in
         uid = lib.mkDefault port;
         group = name;
         isSystemUser = true;
-      }) (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
+      }) (lib.filterAttrs (_name: port: port >= 1024) config.my.ports);
 
-      users.groups = lib.mapAttrs (name: port: {
+      users.groups = lib.mapAttrs (_name: port: {
         gid = port;
-      }) (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
+      }) (lib.filterAttrs (_name: port: port >= 1024) config.my.ports);
     }
 
     # ==========================================================================

@@ -14,7 +14,6 @@
 
 let
   cfgBoot = config.my.core.boot-safeguard;
-  cfgKernel = config.my.core.kernel-slim;
   cfgNix = config.my.core.nix-tuning;
   cfgZram = config.my.core.zram-swap;
 

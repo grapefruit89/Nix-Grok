@@ -12,7 +12,7 @@
 #   8 = Security (firewall, fail2ban, crowdsec, dropbear)
 #   9 = Impermanence (production mode)
 #  SOPS = ganz zum Schluss, separat
-{ config, lib, ... }:
+{ lib, ... }:
 
 let
   p = import ./profile.nix;

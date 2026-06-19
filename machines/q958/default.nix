@@ -1,5 +1,5 @@
 # Fujitsu Q958 — reine Verdrahtung. Werte in profile.nix, Zugang in access.nix, Dienste in rollout.nix.
-{ config, lib, ... }:
+{ config, ... }:
 
 let
   p = import ./profile.nix;

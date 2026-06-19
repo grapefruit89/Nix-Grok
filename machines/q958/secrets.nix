@@ -1,7 +1,5 @@
 # q958 — Datei-Secrets unter /var/lib/secrets (vorläufig statt SOPS).
 {
-  config,
-  lib,
   pkgs,
   ...
 }:

@@ -13,14 +13,9 @@
 }:
 
 let
-  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
   cfgSabnzbd = config.my.services.sabnzbd;
   domain = config.my.configs.identity.domain;
   portSabnzbd = config.my.ports.sabnzbd;
-  vpnKillSwitch = import ../../lib/vpn-killswitch.nix {
-    inherit lib;
-    privadoEnabled = config.my.services.privado-vpn.enable or false;
-  };
 
   netnsName = "sabnzbd-vpn";
   wgIface = "wg0";

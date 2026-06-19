@@ -1,6 +1,5 @@
 # q958 — Storage-Verdrahtung: Tier-Policy, Automount, Assertions
 {
-  config,
   lib,
   pkgs,
   ...

@@ -1,4 +1,4 @@
-{ stdenv, lib }:
+{ stdenv }:
 stdenv.mkDerivation {
   pname = "grok-cli";
   version = "1.0";

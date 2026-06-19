@@ -1,7 +1,5 @@
 # Legacy-Standalone — Werte aus machines/q958/profile.nix + users/moritz/profile.nix
 {
-  config,
-  lib,
   pkgs,
   ...
 }:

@@ -14,16 +14,9 @@
 
 let
   cfgValkey = config.my.services.valkey;
-  cfgBlocky = config.my.services.blocky;
-  cfgPrivado = config.my.services.privado-vpn;
-  cfgTailscale = config.my.services.tailscale;
 
   lanIP = config.my.configs.server.lanIP;
-  tailscaleIP = config.my.configs.server.tailscaleIP;
-  dnsDoH = config.my.configs.network.dnsDoH;
-  dnsBootstrap = config.my.configs.network.dnsBootstrap;
   domain = config.my.configs.identity.domain;
-  portValkey = config.my.ports.valkey;
 
   caddy = import ../lib/caddy-helpers.nix { inherit lib; };
   caddySnippets = import ../lib/caddy-snippets.nix {
