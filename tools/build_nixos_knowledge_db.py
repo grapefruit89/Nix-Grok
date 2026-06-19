@@ -227,7 +227,7 @@ def main() -> None:
         conn.commit()
         doc_count = conn.execute("SELECT count(*) FROM documents").fetchone()[0] if args.duckdb else 0
         insight_count = conn.execute("SELECT count(*) FROM chat_insights").fetchone()[0]
-        print(f"OK → {args.target} ({doc_count} docs, {insight_count} insights)")
+        print(f"OK -> {args.target} ({doc_count} docs, {insight_count} insights)")
     finally:
         conn.close()
 
