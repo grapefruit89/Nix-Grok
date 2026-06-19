@@ -19,7 +19,7 @@
     ./n8n.nix
     ./home-assistant.nix
     ./zigbee-stack.nix
-    ./wyoming.nix
+    ./voice-assistant.nix
   ];
 
   options.my.services = {
