@@ -97,8 +97,11 @@ in
           fi
 
           if [ -f /data/state/sabnzbd/sabnzbd.ini ]; then
-            # RAM-Disk Setup (Incomplete Downloads)
+            # RAM-Disk Setup & Performance Tuning (Incomplete Downloads)
             ${pkgs.gnused}/bin/sed -i 's/^download_dir\s*=.*/download_dir = \/run\/sabnzbd-tmp/g' /data/state/sabnzbd/sabnzbd.ini
+            ${pkgs.gnused}/bin/sed -i 's/^direct_unpack\s*=.*/direct_unpack = 1/g' /data/state/sabnzbd/sabnzbd.ini
+            ${pkgs.gnused}/bin/sed -i 's/^enable_par_cleanup\s*=.*/enable_par_cleanup = 1/g' /data/state/sabnzbd/sabnzbd.ini
+            ${pkgs.gnused}/bin/sed -i 's/^fast_fail\s*=.*/fast_fail = 1/g' /data/state/sabnzbd/sabnzbd.ini
 
             # Remove existing [servers] and [categories] and everything below them until the next section
             ${pkgs.gnused}/bin/sed -i '/^\[servers\]/,/^\[/{/^\[servers\]/d;/^\[/!d}' /data/state/sabnzbd/sabnzbd.ini
