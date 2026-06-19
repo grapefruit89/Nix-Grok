@@ -398,6 +398,10 @@ in
       # "Gott-Modus" fÃ¼r den Netzwerk-Daemon: SchÃ¼tzt vor dem OOM-Killer und 
       # gewÃ¤hrt hÃ¶chste CPU-PrioritÃ¤t, damit der Server bei Lastspitzen nicht 
       # die Verbindung verliert.
+            # Beschleunigt den Bootvorgang enorm: systemd-networkd wartet nur auf das ERSTE
+      # Interface (z.B. eth0), anstatt auf alle (wie veth, docker0, tailscale0)
+      systemd.network.wait-online.anyInterface = true;
+
       systemd.services.systemd-networkd.serviceConfig = {
         OOMScoreAdjust = -1000;
         CPUSchedulingPolicy = "rr";
