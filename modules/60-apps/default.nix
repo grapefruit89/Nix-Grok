@@ -86,8 +86,9 @@ in
     paperless = {
       enable = lib.mkEnableOption "Paperless-ngx Document Archive";
       port = lib.mkOption { type = lib.types.port; default = config.my.ports.paperless; description = "Paperless-ngx web port."; };
-      dataDir = lib.mkOption { type = lib.types.str; default = "/var/lib/paperless"; description = "Data directory."; };
-      consumptionDir = lib.mkOption { type = lib.types.str; default = "/var/lib/paperless/consume"; description = "Consumption directory."; };
+      dataDir = lib.mkOption { type = lib.types.str; default = "/data/state/paperless/data"; description = "Data directory."; };
+      mediaDir = lib.mkOption { type = lib.types.str; default = "/data/state/paperless/media"; description = "Media directory."; };
+      consumptionDir = lib.mkOption { type = lib.types.str; default = "/data/state/paperless/consume"; description = "Consumption directory."; };
     };
 
     n8n = {

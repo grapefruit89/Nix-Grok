@@ -15,7 +15,14 @@ in
         address = "127.0.0.1";
         inherit (cfgPaperless) port;
         inherit (cfgPaperless) dataDir;
+        inherit (cfgPaperless) mediaDir;
         inherit (cfgPaperless) consumptionDir;
+        environmentFile = "/var/lib/secrets/paperless.env";
+        database.createLocally = true;
+      };
+
+      services.postgresql = {
+        dataDir = "/data/state/postgresql/${config.services.postgresql.package.psqlSchema}";
         settings = {
           PAPERLESS_URL = "https://paperless.${domain}";
           PAPERLESS_ALLOWED_HOSTS = "localhost,127.0.0.1,paperless.${domain}";
@@ -33,7 +40,7 @@ in
         ProtectHome = true;
         NoNewPrivileges = true;
         PrivateTmp = true;
-        ReadWritePaths = [ cfgPaperless.dataDir cfgPaperless.consumptionDir ];
+        ReadWritePaths = [ cfgPaperless.dataDir cfgPaperless.mediaDir cfgPaperless.consumptionDir ];
         CapabilityBoundingSet = "";
         RestrictNamespaces = true;
         ProtectClock = true;
@@ -84,3 +91,4 @@ in
     })
   ];
 }
+
