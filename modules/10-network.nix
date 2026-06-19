@@ -121,9 +121,9 @@ in
           unixSocketPerm = 660;
           settings = {
             dir = "/data/state/valkey";
-            maxmemory = "256mb";
-            maxmemory-policy = "allkeys-lru";
-            save = [ "900 1" "300 10" ];
+            maxmemory = "512mb"; # Puffer für große Paperless OCR Bulk-Imports
+            maxmemory-policy = "volatile-lru"; # Schützt aktive Paperless Tasks vor LRU-Löschung
+            save = ""; # Pure In-Memory für minimalen SSD-Verschleiß
           };
         };
       };
