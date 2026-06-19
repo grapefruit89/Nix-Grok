@@ -31,16 +31,15 @@ in
       };
 
       script = builtins.readFile ./sync-script.sh;
-        systemd.timers.media-stack-config-sync = {
+    };
+
+    systemd.timers.media-stack-config-sync = {
       description = "Delay Media Stack Config Sync after Boot";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "2min";
         OnUnitActiveSec = "1d";
       };
-      };
+    };
+  };
 }
-
-
-
-
