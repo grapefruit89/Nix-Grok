@@ -1,7 +1,7 @@
 # Einzige Quelle für alle moritz-spezifischen Werte.
 {
   name = "moritz";
-  domain = "m7c5.de";
+  domain = "nix.m7c5.de";
   description = "moritz";
   shell = "bash";
   extraGroups = [ "networkmanager" "wheel" ];
