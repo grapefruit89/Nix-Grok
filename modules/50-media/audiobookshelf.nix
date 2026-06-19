@@ -13,14 +13,15 @@ in
       services.audiobookshelf = {
         enable = true;
         port = portABS;
+        host = "127.0.0.1";
         user = "audiobookshelf";
         group = "audiobookshelf";
         openFirewall = false;
         # Note: We use the default ffmpeg as approved.
       };
 
-      # Allow audiobookshelf to read/write the media array
-      users.users.audiobookshelf.extraGroups = [ "media" ];
+      # Allow audiobookshelf to read/write the media array AND use Intel QSV via iGPU
+      users.users.audiobookshelf.extraGroups = [ "media" "render" "video" ];
 
       # WebSockets are handled automatically by Caddy. We use native login (no SSO bypass required).
       services.caddy.virtualHosts."audiobookshelf.${domain}" = {
@@ -35,6 +36,9 @@ in
           PrivateTmp = true;
           ProtectKernelLogs = true;
           ProtectControlGroups = true;
+          # Hardware Transcoding: Allow access to /dev/dri
+          PrivateDevices = lib.mkForce false;
+          DeviceAllow = [ "/dev/dri rw" ];
         };
       };
     })
