@@ -8,6 +8,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 
@@ -28,7 +29,7 @@ in
         user = "audiobookshelf";
         group = "audiobookshelf";
         openFirewall = false;
-        # Note: We use the default ffmpeg as approved.
+        package = pkgs.audiobookshelf.override { ffmpeg = pkgs.ffmpeg-full; };
       };
 
       # Allow audiobookshelf to read/write the media array AND use Intel QSV via iGPU

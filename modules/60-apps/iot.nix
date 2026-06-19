@@ -169,6 +169,7 @@ in
         ReadWritePaths = [ cfgZigbee.dataDir ];
         PrivateDevices = if (lib.hasPrefix "/dev/" cfgZigbee.device) then lib.mkForce false else true;
         DeviceAllow = lib.optional (lib.hasPrefix "/dev/" cfgZigbee.device) "${cfgZigbee.device} rw";
+        SystemCallFilter = [ "@system-service" ];
       };
 
       services.caddy.virtualHosts."zigbee.${domain}" = {

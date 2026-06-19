@@ -27,7 +27,12 @@ in
       services.jellyfin = {
         enable = true;
         openFirewall = false;
+        # Force declarative encoding settings
+        # forceEncodingConfig = true;  # Note: Subagent mentioned this, if it fails, we remove it.
       };
+
+      # Low-power Intel encoding mode
+      boot.kernelParams = [ "i915.enable_guc=2" ];
 
       # System-wide graphics pipeline and compute runtime for tone mapping
       hardware.graphics = {

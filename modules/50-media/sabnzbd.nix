@@ -18,7 +18,7 @@ let
   portSabnzbd = config.my.ports.sabnzbd;
 
   netnsName = "sabnzbd-vpn";
-  wgIface = "wg0";
+  wgIface = "privado";
   hostVethIp = "10.100.100.1";
   nsVethIp = "10.100.100.2";
 
@@ -113,6 +113,9 @@ in
           UMask = "0002";
           RuntimeDirectory = "sabnzbd-tmp";
           RuntimeDirectoryMode = "0700";
+          IOSchedulingClass = "best-effort";
+          IOSchedulingPriority = 4;
+          LimitNOFILE = 65536;
           ReadWritePaths = [
             "/data/state/sabnzbd"
             "/data/downloads"

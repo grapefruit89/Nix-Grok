@@ -105,6 +105,7 @@ in
         LockPersonality = lib.mkForce true;
         RestrictRealtime = lib.mkForce true;
         RestrictSUIDSGID = lib.mkForce true;
+        MemoryDenyWriteExecute = true;
         CapabilityBoundingSet = lib.mkForce "";
         DevicePolicy = lib.mkForce "closed";
         SystemCallFilter = [
