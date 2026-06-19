@@ -100,8 +100,9 @@ in
             # RAM-Disk Setup (Incomplete Downloads)
             ${pkgs.gnused}/bin/sed -i 's/^download_dir\s*=.*/download_dir = \/run\/sabnzbd-tmp/g' /data/state/sabnzbd/sabnzbd.ini
 
-            # Remove existing [servers] and everything below it until the next section
+            # Remove existing [servers] and [categories] and everything below them until the next section
             ${pkgs.gnused}/bin/sed -i '/^\[servers\]/,/^\[/{/^\[servers\]/d;/^\[/!d}' /data/state/sabnzbd/sabnzbd.ini
+            ${pkgs.gnused}/bin/sed -i '/^\[categories\]/,/^\[/{/^\[categories\]/d;/^\[/!d}' /data/state/sabnzbd/sabnzbd.ini
             
             # Inject declarative servers block
             PASSWORD_NEWS=$(cat "''${CREDENTIALS_DIRECTORY}/SABNZBD_PASSWORD_NEWS")
@@ -152,6 +153,37 @@ ssl_verify = 3
 ssl_ciphers = ""
 enable = 1
 priority = 4
+
+[categories]
+[[scenecart]]
+name = scenecart
+order = 4
+dir = scenecart
+priority = -100
+
+[[audiobooks]]
+name = audiobooks
+order = 3
+dir = audiobooks
+priority = -100
+
+[[music]]
+name = music
+order = 2
+dir = music
+priority = -100
+
+[[tv]]
+name = tv
+order = 1
+dir = tv
+priority = -100
+
+[[movies]]
+name = movies
+order = 0
+dir = movies
+priority = -100
 EOF
           fi
         '';
