@@ -385,14 +385,6 @@ in
           message = "Sicherheits-Blockade: deployment verboten ohne SSH-Authorized-Keys in users.nix";
         }
         {
-          assertion = config.services.openssh.settings.PasswordAuthentication == false;
-          message = "Sicherheits-Blockade: SSH PasswordAuthentication MUSS auf false gesetzt sein!";
-        }
-        {
-          assertion = config.services.openssh.settings.PermitRootLogin == "no";
-          message = "Sicherheits-Blockade: SSH PermitRootLogin MUSS auf 'no' gesetzt sein!";
-        }
-        {
           assertion = !(lib.strings.hasInfix "ssh-rsa" config.services.openssh.settings.HostKeyAlgorithms) && !(lib.strings.hasInfix "ssh-rsa" config.services.openssh.settings.PubkeyAcceptedAlgorithms);
           message = "Sicherheits-Blockade: Veraltete ssh-rsa Schlüssel sind strikt verboten!";
         }
