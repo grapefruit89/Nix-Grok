@@ -66,14 +66,7 @@ in
   # CONFIG
   # ============================================================================
   config = lib.mkMerge [
-    {
-      sops.secrets."gatus/ssh_key" = {
-        owner = "gatus";
-        group = "gatus";
-        mode = "0400";
-        restartUnits = [ "gatus.service" ];
-      };
-    }
+
 
     # ─── SECTION 1: GATUS MONITORING ──────────────────────────────────────────
     (lib.mkIf cfgGatus.enable {
