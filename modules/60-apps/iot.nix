@@ -48,6 +48,7 @@ in
         description = lib.mkForce "Home Assistant Core (hardened)";
         environment.PYTHONPYCACHEPREFIX = "${cfgHass.cacheDir}/pycache";
         serviceConfig = {
+          OOMScoreAdjust = -500;
           LoadCredential = lib.optional (cfgHass.secretFile != null) "HA_SECRET:${toString cfgHass.secretFile}";
           MemoryMax = "2G";
           CPUWeight = 70;

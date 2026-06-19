@@ -334,6 +334,8 @@ in
     services.caddy.virtualHosts."homepage.${domain}" = {
       extraConfig = caddy.proxyTailscaleSso portHomepage;
     };
+
+    systemd.services.homepage-dashboard.serviceConfig.OOMScoreAdjust = 500;
   };
 }
 

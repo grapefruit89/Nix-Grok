@@ -58,18 +58,19 @@ in
     systemd = {
       services = {
         mosquitto.serviceConfig = {
+          OOMScoreAdjust = -500;
           ProtectSystem = "strict";
           ProtectHome = true;
           PrivateTmp = true;
           NoNewPrivileges = true;
           ReadWritePaths = [ "/var/lib/mosquitto" ];
-          OOMScoreAdjust = -100;
         };
 
         zigbee2mqtt = {
           after = [ "mosquitto.service" ];
           wants = [ "mosquitto.service" ];
           serviceConfig = {
+            OOMScoreAdjust = -500;
             ProtectSystem = "strict";
             ProtectHome = true;
             PrivateTmp = true;

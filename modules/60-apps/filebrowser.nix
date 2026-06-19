@@ -27,6 +27,7 @@ in
     ];
 
     systemd.services.filebrowser.serviceConfig = {
+      OOMScoreAdjust = 500;
       ReadWritePaths = [ (builtins.dirOf cfgFilebrowser.databasePath) ];
       ProtectSystem = "strict";
       ProtectHome = true;

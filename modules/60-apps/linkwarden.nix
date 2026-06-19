@@ -24,6 +24,7 @@ in
 
     systemd.services.linkwarden = {
       serviceConfig = {
+        OOMScoreAdjust = 500;
         DynamicUser = true;
         ProtectSystem = "strict";
         ProtectHome = true;

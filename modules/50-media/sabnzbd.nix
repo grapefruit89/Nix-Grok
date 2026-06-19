@@ -55,6 +55,8 @@ in
           fi
         '';
         serviceConfig = {
+          MemoryMax = "4G";
+          OOMScoreAdjust = 500;
           ProtectSystem = lib.mkForce "strict";
           ProtectHome = lib.mkForce true;
           PrivateTmp = lib.mkForce true;

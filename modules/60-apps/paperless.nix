@@ -31,6 +31,7 @@ in
     users.users.paperless.extraGroups = [ "redis" ];
 
     systemd.services.paperless-web.serviceConfig = {
+      OOMScoreAdjust = -500;
       ProtectSystem = "strict";
       ProtectHome = true;
       NoNewPrivileges = true;

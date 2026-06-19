@@ -46,6 +46,8 @@ in
       };
     };
 
+    systemd.services.vaultwarden.serviceConfig.OOMScoreAdjust = -1000;
+
     # Log-Ordner Bereitstellung
     systemd.tmpfiles.rules = [
       "d /var/log/vaultwarden 0750 vaultwarden vaultwarden -"

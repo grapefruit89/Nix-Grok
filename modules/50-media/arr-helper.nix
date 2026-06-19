@@ -57,6 +57,8 @@ EOF
           fi
         '';
         serviceConfig = {
+          MemoryMax = "2G";
+          OOMScoreAdjust = 500;
           ProtectSystem = lib.mkForce "strict";
           ProtectHome = lib.mkForce true;
           PrivateTmp = lib.mkForce true;

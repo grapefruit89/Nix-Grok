@@ -179,6 +179,7 @@ in
       };
 
       systemd.services.blocky.serviceConfig = {
+        OOMScoreAdjust = -1000;
         Restart = lib.mkDefault "always";
         RestartSec = lib.mkDefault "5s";
         ProtectSystem = lib.mkDefault "strict";

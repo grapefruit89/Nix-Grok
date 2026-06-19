@@ -28,6 +28,7 @@ in
         recyclarr sync
       '';
       serviceConfig = {
+        OOMScoreAdjust = 500;
         Type = "oneshot";
         User = "root";
         Group = "root";

@@ -25,6 +25,7 @@ in
     };
 
     systemd.services.open-webui.serviceConfig = {
+      OOMScoreAdjust = 500;
       DynamicUser = true;
       ProtectSystem = "strict";
       ProtectHome = true;

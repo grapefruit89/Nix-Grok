@@ -38,6 +38,7 @@ in
       };
 
       systemd.services.n8n.serviceConfig = {
+        OOMScoreAdjust = lib.mkForce (-500);
         ProtectSystem = lib.mkForce "strict";
         ProtectHome = lib.mkForce true;
         NoNewPrivileges = lib.mkForce true;
