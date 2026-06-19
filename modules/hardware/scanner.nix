@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.hardware.scanner;
@@ -17,7 +22,10 @@ in
     };
 
     # 2. Füge den paperless User der scanner Gruppe hinzu, falls paperless aktiviert ist
-    users.users.paperless.extraGroups = lib.mkIf cfgPaperless.enable [ "scanner" "lp" ];
+    users.users.paperless.extraGroups = lib.mkIf cfgPaperless.enable [
+      "scanner"
+      "lp"
+    ];
 
     # 3. Die Udev-Regeln für Scanner!
     # Regel A: Fallback/Direkt-Erkennung für Canon CanoScan LiDE 220

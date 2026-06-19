@@ -168,9 +168,9 @@ in
 
       assertions = [
         {
-          assertion = lib.all (mount:
-            mount.fsType != "fuse.mergerfs" || lib.elem "use_ino" mount.options
-          ) (lib.attrValues config.fileSystems);
+          assertion = lib.all (mount: mount.fsType != "fuse.mergerfs" || lib.elem "use_ino" mount.options) (
+            lib.attrValues config.fileSystems
+          );
           message = "CRITICAL: Alle mergerfs Mounts müssen 'use_ino' in den options haben! Andernfalls gehen Inodes verloren und Hardlinks im Arr-Stack gehen kaputt.";
         }
       ];
