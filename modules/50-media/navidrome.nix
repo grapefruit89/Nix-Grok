@@ -1,11 +1,16 @@
 /*
----
-id: navidrome
-upstream_repo: "navidrome/navidrome"
----
+  ---
+  id: navidrome
+  upstream_repo: "navidrome/navidrome"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -35,4 +40,3 @@ in
     };
   };
 }
-

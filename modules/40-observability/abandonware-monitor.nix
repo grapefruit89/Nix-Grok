@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.abandonware-monitor;
@@ -76,7 +81,7 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${checkScript} ${cfg.modulesPath}";
-        
+
         # Hardening
         User = "nobody";
         DynamicUser = true;

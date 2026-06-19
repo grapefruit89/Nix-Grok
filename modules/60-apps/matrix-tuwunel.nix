@@ -1,13 +1,18 @@
 /*
----
-id: matrix-tuwunel
-domain: 60-apps
-status: accepted
-upstream_repo: "matrix-construct/tuwunel"
----
+  ---
+  id: matrix-tuwunel
+  domain: 60-apps
+  status: accepted
+  upstream_repo: "matrix-construct/tuwunel"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgTuwunel = config.my.services.matrix-tuwunel;
@@ -29,7 +34,7 @@ in
           database_path = "/data/state/tuwunel"; # SSoT: Ext4 path
           port = 6167;
           address = "127.0.0.1"; # Bind to localhost for Caddy
-          
+
           # Disable federation entirely for private friends & family use
           allow_federation = false;
         };
@@ -44,10 +49,12 @@ in
     };
 
     # 3. Storage Persistence
-    environment.persistence."${config.my.impermanence.persistMountPoint}" = lib.mkIf config.my.impermanence.enable {
-      directories = [
-        "/data/state/tuwunel"
-      ];
-    };
+    environment.persistence."${config.my.impermanence.persistMountPoint}" =
+      lib.mkIf config.my.impermanence.enable
+        {
+          directories = [
+            "/data/state/tuwunel"
+          ];
+        };
   };
 }
