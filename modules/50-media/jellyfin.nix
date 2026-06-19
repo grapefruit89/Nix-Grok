@@ -90,7 +90,6 @@ in
         IPAddressAllow = [ "127.0.0.0/8" "10.0.0.0/8" "192.168.0.0/16" "100.64.0.0/10" ];
         IPAddressDeny = "any";
 
-        OOMScoreAdjust = 100; # Jellyfin darf bei Speicherknappheit vor Core-Diensten sterben
         ExecStart = lib.mkForce "${pkgs.jellyfin}/bin/jellyfin --datadir /data/state/jellyfin --cachedir /var/cache/jellyfin --host 127.0.0.1";
       };
 
