@@ -11,12 +11,14 @@ let
     ,
     }:
     lib.concatStringsSep "\n" (
-      "import acme_tls"`n      ++ map (snippet: "import ${snippet}") imports
+      [ "import acme_tls" ]
+      ++ map (snippet: "import ${snippet}") imports
       ++ [ "reverse_proxy ${upstream host port}" ]
     );
 
   streamingBackend = port: ''
-    import acme_tls`n    reverse_proxy ${upstream "127.0.0.1" port} {
+    import acme_tls
+    reverse_proxy ${upstream "127.0.0.1" port} {
       flush_interval -1
       transport http {
         read_buffer 0

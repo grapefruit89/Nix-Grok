@@ -11,13 +11,11 @@ in
   extraConfig =
     ''
       (acme_tls) {
-        tls /var/lib/acme/$domain/cert.pem /var/lib/acme/$domain/key.pem {
+        tls /var/lib/acme/${domain}/cert.pem /var/lib/acme/${domain}/key.pem {
           protocols tls1.3
         }
       }
 
-      (security_headers) {
-        header {
           Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
           X-XSS-Protection "1; mode=block"
           X-Content-Type-Options "nosniff"
