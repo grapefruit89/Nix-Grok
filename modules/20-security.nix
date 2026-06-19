@@ -301,7 +301,7 @@ in
         services.fail2ban = {
           enable = true;
           ignoreIP = [ "127.0.0.0/8" "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16" "100.64.0.0/10" "169.254.0.0/16" ];
-          daemon.settings.Definition.dbfile = "/data/state/fail2ban/fail2ban.sqlite3";
+          daemonSettings.Definition.dbfile = "/data/state/fail2ban/fail2ban.sqlite3";
           inherit (cfg) banaction;
           inherit (cfg) bantime;
           inherit (cfg) maxretry;
