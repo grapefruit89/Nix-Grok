@@ -104,10 +104,10 @@ in
       networking.interfaces.lo.ipv4.addresses = [ { address = "127.0.0.2"; prefixLength = 8; } ];
     }
 
-    # â”€â”€ VALKEY CACHE DATABASE (Valkey package inside Redis module) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────
     (lib.mkIf cfgValkey.enable {
       systemd.tmpfiles.rules = [
-        "d /var/lib/redis-valkey 0750 redis redis -"
+        "d /data/state/valkey 0750 redis redis -"
       ];
 
       services.redis = {
@@ -120,6 +120,7 @@ in
           unixSocket = "/run/redis-valkey/valkey.sock";
           unixSocketPerm = 660;
           settings = {
+            dir = "/data/state/valkey";
             maxmemory = "256mb";
             maxmemory-policy = "allkeys-lru";
             save = [ "900 1" "300 10" ];
@@ -137,12 +138,11 @@ in
         MemoryDenyWriteExecute = true;
         CapabilityBoundingSet = "";
         RestrictAddressFamilies = [ "AF_UNIX" ]; # Admin Hangar Isolation
-        ReadWritePaths = [ "/var/lib/redis-valkey" ];
+        ReadWritePaths = [ "/data/state/valkey" ];
       };
     })
 
-
-    # â”€â”€ BLOCKY DNS RESOLVER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── BLOCKY DNS RESOLVER ───────────────────────────────────────────────────
     (lib.mkIf config.my.services.blocky.enable {
       services.resolved.enable = lib.mkForce false;
 

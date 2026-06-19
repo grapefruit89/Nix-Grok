@@ -42,7 +42,7 @@ in
         LOG_LEVEL = "warn";
         EXTENDED_LOGGING = true;
         LOG_FILE = "/var/log/vaultwarden/vaultwarden.log";
-        DATA_FOLDER = "/var/lib/vaultwarden";
+        DATA_FOLDER = "/data/state/vaultwarden";
       };
     };
 

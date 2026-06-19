@@ -64,9 +64,9 @@ in
       user = lib.mkOption { type = lib.types.str; default = "hass"; description = "Home Assistant system user."; };
       group = lib.mkOption { type = lib.types.str; default = "hass"; description = "Home Assistant system group."; };
       port = lib.mkOption { type = lib.types.port; default = 8123; description = "Home Assistant port."; };
-      stateDir = lib.mkOption { type = lib.types.str; default = "/var/lib/hass"; description = "State directory (Tier A)."; };
+      stateDir = lib.mkOption { type = lib.types.str; default = "/data/state/home-assistant"; description = "State directory (Tier A)."; };
       cacheDir = lib.mkOption { type = lib.types.str; default = "/var/cache/home-assistant"; description = "Python cache directory (Tier B)."; };
-      mediaDir = lib.mkOption { type = lib.types.str; default = "/var/lib/home-assistant/media"; description = "Media directory (Tier C)."; };
+      mediaDir = lib.mkOption { type = lib.types.str; default = "/data/state/home-assistant/media"; description = "Media directory (Tier C)."; };
       zigbeeDevice = lib.mkOption { type = lib.types.str; default = ""; description = "SLZB-06 socket or serial path (set in machines/<host>/profile.nix)."; };
       bluetooth = lib.mkOption { type = lib.types.bool; default = false; description = "Enable bluetooth device access."; };
       secretFile = lib.mkOption { type = lib.types.nullOr lib.types.path; default = null; description = "Path to local secrets file."; };
@@ -80,7 +80,7 @@ in
       zigbeePort = lib.mkOption { type = lib.types.port; default = 8075; description = "Zigbee2MQTT port."; };
       zigbeeDevice = lib.mkOption { type = lib.types.str; default = ""; description = "SLZB-06 socket or serial path (set in machines/<host>/profile.nix)."; };
       adapter = lib.mkOption { type = lib.types.enum [ "ember" "zstack" "deconz" "ezsp" ]; default = "ember"; description = "Ember adapter type."; };
-      dataDir = lib.mkOption { type = lib.types.str; default = "/var/lib/zigbee2mqtt"; description = "Zigbee2MQTT data folder."; };
+      dataDir = lib.mkOption { type = lib.types.str; default = "/data/state/zigbee2mqtt"; description = "Zigbee2MQTT data folder."; };
     };
 
     paperless = {
@@ -94,7 +94,7 @@ in
     n8n = {
       enable = lib.mkEnableOption "n8n Workflow Automation Platform";
       port = lib.mkOption { type = lib.types.port; default = config.my.ports.n8n; description = "n8n port."; };
-      userFolder = lib.mkOption { type = lib.types.str; default = "/var/lib/n8n"; description = "n8n state directory."; };
+      userFolder = lib.mkOption { type = lib.types.str; default = "/data/state/n8n"; description = "n8n state directory."; };
     };
 
     filebrowser = {
