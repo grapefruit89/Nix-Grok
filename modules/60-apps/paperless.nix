@@ -18,7 +18,7 @@ in
         PAPERLESS_URL = "https://paperless.${domain}";
         PAPERLESS_ALLOWED_HOSTS = "localhost,127.0.0.1,paperless.${domain}";
         PAPERLESS_TIME_ZONE = "Europe/Berlin";
-        PAPERLESS_OCR_LANGUAGE = "deu+eng";
+        PAPERLESS_OCR_LANGUAGE = "deu";
         PAPERLESS_OCR_MODE = "skip";
         PAPERLESS_OCR_CLEAN = "clean";
         PAPERLESS_OCR_OUTPUT_TYPE = "pdfa";
