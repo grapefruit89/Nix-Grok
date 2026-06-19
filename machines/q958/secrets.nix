@@ -1,5 +1,10 @@
 # q958 — Datei-Secrets unter /var/lib/secrets (vorläufig statt SOPS).
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   p = import ./profile.nix;

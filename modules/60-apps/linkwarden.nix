@@ -1,11 +1,16 @@
 /*
----
-id: linkwarden
-upstream_repo: "linkwarden/linkwarden"
----
+  ---
+  id: linkwarden
+  upstream_repo: "linkwarden/linkwarden"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -37,17 +42,22 @@ in
         ProtectHome = true;
         PrivateTmp = true;
         PrivateDevices = true;
-        SystemCallFilter = [ "@system-service" "~@privileged" ];
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+        ];
         StateDirectory = "linkwarden";
         CapabilityBoundingSet = "";
         RestrictNamespaces = true;
         ProtectClock = true;
         ProtectHostname = true;
         LockPersonality = true;
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
       };
     };
   };
 }
-
-

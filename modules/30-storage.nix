@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   user = config.my.configs.identity.user;
@@ -14,7 +19,8 @@ let
       "/var/lib/nixos"
       "/etc/nixos"
       "/var/lib/tailscale"
-    ] ++ lib.optional (user != "") "/home/${user}/.grok";
+    ]
+    ++ lib.optional (user != "") "/home/${user}/.grok";
     files = [
       "/etc/machine-id"
       "/etc/ssh/ssh_host_ed25519_key"
@@ -126,7 +132,11 @@ in
         "/" = lib.mkForce {
           device = "none";
           fsType = "tmpfs";
-          options = [ "defaults" "size=16G" "mode=755" ];
+          options = [
+            "defaults"
+            "size=16G"
+            "mode=755"
+          ];
         };
 
         "${cfgImp.persistMountPoint}" = {
@@ -302,16 +312,19 @@ in
       lib.mkIf cfgMover.enable {
         systemd.services.nixhome-storage-mover = {
           description = "Precision Storage Cache Mover (rclone local engine)";
-          after = [ "local-fs.target" "network.target" ];
+          after = [
+            "local-fs.target"
+            "network.target"
+          ];
 
           serviceConfig = {
             Type = "oneshot";
             ExecStart = pkgs.writeShellScript "storage-mover" ''
               set -euo pipefail
-              
+
               # Check current SSD cache capacity
               CACHE_USAGE=$(df -h "${cfgMover.sourceDir}" | awk 'NR==2 {print $5}' | sed 's/%//')
-              
+
               # Helper to check if any of our storage disks are already spinning
               disks_spinning=false
               for dev in /dev/disk/by-label/DISK_STORAGE_* /dev/disk/by-label/TIER_C_*; do
@@ -360,7 +373,11 @@ in
             ProtectHome = true;
             PrivateTmp = true;
             PrivateNetwork = true;
-            CapabilityBoundingSet = [ "CAP_CHOWN" "CAP_FOWNER" "CAP_DAC_OVERRIDE" ];
+            CapabilityBoundingSet = [
+              "CAP_CHOWN"
+              "CAP_FOWNER"
+              "CAP_DAC_OVERRIDE"
+            ];
             ReadWritePaths = [
               cfgMover.sourceDir
               cfgMover.targetDir
@@ -381,5 +398,3 @@ in
     )
   ];
 }
-
-

@@ -6,7 +6,12 @@
 #   3. Intel vor Kaby Lake (7. Gen) — Treiber für alte Intel-HW verbieten
 #   4. Assertions — Build bricht wenn ein Pflichtmodul geblacklistet wird
 #
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.core.kernel-slim;
@@ -276,17 +281,13 @@ in
     ];
 
     assertions =
-      (map
-        (m: {
-          assertion = !(lib.elem m safeBlacklist);
-          message = "KERNEL-SICHERUNG: Pflichtmodul '${m}' steht in der Blacklist-Definition.";
-        })
-        requiredKernelModules)
-      ++ (map
-        (m: {
-          assertion = !(lib.elem m safeBlacklist);
-          message = "KERNEL-SICHERUNG: Initrd-Pflichtmodul '${m}' steht in der Blacklist-Definition.";
-        })
-        requiredInitrdKernelModules);
+      (map (m: {
+        assertion = !(lib.elem m safeBlacklist);
+        message = "KERNEL-SICHERUNG: Pflichtmodul '${m}' steht in der Blacklist-Definition.";
+      }) requiredKernelModules)
+      ++ (map (m: {
+        assertion = !(lib.elem m safeBlacklist);
+        message = "KERNEL-SICHERUNG: Initrd-Pflichtmodul '${m}' steht in der Blacklist-Definition.";
+      }) requiredInitrdKernelModules);
   };
 }

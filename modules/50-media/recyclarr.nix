@@ -1,11 +1,16 @@
 /*
----
-id: recyclarr
-upstream_repo: "recyclarr/recyclarr"
----
+  ---
+  id: recyclarr
+  upstream_repo: "recyclarr/recyclarr"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.recyclarr;
@@ -27,7 +32,11 @@ in
 
     systemd.services.recyclarr-sync = {
       description = "Recyclarr TRaSH-Guides Sync";
-      after = [ "network-online.target" "sonarr.service" "radarr.service" ];
+      after = [
+        "network-online.target"
+        "sonarr.service"
+        "radarr.service"
+      ];
       wants = [ "network-online.target" ];
       path = [ pkgs.recyclarr ];
       script = ''
@@ -58,4 +67,3 @@ in
     };
   };
 }
-

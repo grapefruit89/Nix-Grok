@@ -5,12 +5,10 @@ let
     if builtins.pathExists ./profile.local.nix then
       import ./profile.local.nix
     else
-      builtins.trace
-        "WARNUNG: profile.local.nix fehlt — cp profile.local.nix.example profile.local.nix"
-        {
-          access.emergency = { };
-          secrets.devKeys = { };
-        };
+      builtins.trace "WARNUNG: profile.local.nix fehlt — cp profile.local.nix.example profile.local.nix" {
+        access.emergency = { };
+        secrets.devKeys = { };
+      };
 in
 {
   meta = {
@@ -37,13 +35,19 @@ in
       prefixLength = 24;
       interface = "eno1";
       gateway = "192.168.2.1";
-      dns = [ "127.0.0.1" "1.1.1.1" ];
+      dns = [
+        "127.0.0.1"
+        "1.1.1.1"
+      ];
       systemdNetworkName = "10-lan";
     };
     tailscaleIP = "100.64.0.1";
     sshPort = 22;
     blocky = {
-      upstream = [ "1.1.1.1" "8.8.8.8" ];
+      upstream = [
+        "1.1.1.1"
+        "8.8.8.8"
+      ];
     };
     dns = {
       doh = [ "https://dns.cloudflare.com/dns-query" ];
@@ -57,10 +61,13 @@ in
     emergency = {
       name = "nixos";
       description = "Admin-Zugang (Notfall-Login)";
-      passwordHash = local.access.emergency.passwordHash or (
-        throw "access.emergency.passwordHash in machines/q958/profile.local.nix setzen"
-      );
-      extraGroups = [ "wheel" "networkmanager" ];
+      passwordHash =
+        local.access.emergency.passwordHash
+          or (throw "access.emergency.passwordHash in machines/q958/profile.local.nix setzen");
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+      ];
     };
   };
 
@@ -76,7 +83,12 @@ in
     gpu = "UHD 630";
     nic = "I219-LM";
     kvmModule = "kvm-intel";
-    initrdModules = [ "xhci_pci" "ahci" "usb_storage" "sd_mod" ];
+    initrdModules = [
+      "xhci_pci"
+      "ahci"
+      "usb_storage"
+      "sd_mod"
+    ];
   };
 
   storage = {
@@ -87,9 +99,21 @@ in
     # A/B = kein spinning device. A = NVMe, oder SATA wenn keine NVMe (q958).
     # B = immer SATA-SSD. C = HDD only (cold storage).
     tierPolicy = {
-      a = { medium = "ssd"; bus = [ "nvme" "ata" ]; };
-      b = { medium = "ssd"; bus = [ "ata" ]; };
-      c = { medium = "hdd"; bus = [ "ata" ]; };
+      a = {
+        medium = "ssd";
+        bus = [
+          "nvme"
+          "ata"
+        ];
+      };
+      b = {
+        medium = "ssd";
+        bus = [ "ata" ];
+      };
+      c = {
+        medium = "hdd";
+        bus = [ "ata" ];
+      };
     };
 
     systemLabels = [
@@ -127,8 +151,14 @@ in
     };
 
     tierC = {
-      labels = [ "NIXMEDIA" "NIXBACKUP" ];
-      legacyPrefixes = [ "TIER_C_" "DISK_STORAGE_" ];
+      labels = [
+        "NIXMEDIA"
+        "NIXBACKUP"
+      ];
+      legacyPrefixes = [
+        "TIER_C_"
+        "DISK_STORAGE_"
+      ];
       mountPoint = "/mnt/media";
       enabled = false;
     };
@@ -152,9 +182,8 @@ in
     };
 
     # Dev-Platzhalter: machines/q958/profile.local.nix (gitignored, rollout.stufe < 9)
-    devKeys = local.secrets.devKeys or (
-      throw "secrets.devKeys in machines/q958/profile.local.nix setzen"
-    );
+    devKeys =
+      local.secrets.devKeys or (throw "secrets.devKeys in machines/q958/profile.local.nix setzen");
   };
 
   integrations = {

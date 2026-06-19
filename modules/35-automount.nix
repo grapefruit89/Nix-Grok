@@ -4,16 +4,17 @@
 #   Tier A   = NVMe-SSD, oder SATA-SSD wenn keine NVMe (unlabeled: nvme → A, ata → B)
 #   Tier B   = SATA-SSD only — nie NVMe, nie HDD
 #   Tier C   = HDD only (rotational=1, cold storage)
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.storage-automount;
   mediaGroup = "media";
-  tierCLabelMatch = lib.concatMapStringsSep " || "
-    (
-      l: "[ \"\$LABEL\" = \"${l}\" ]"
-    )
-    cfg.tierCLabels;
+  tierCLabelMatch = lib.concatMapStringsSep " || " (l: "[ \"\$LABEL\" = \"${l}\" ]") cfg.tierCLabels;
 in
 {
   options.my.services.storage-automount = {
@@ -52,7 +53,10 @@ in
 
     tierCLabels = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "NIXMEDIA" "NIXBACKUP" ];
+      default = [
+        "NIXMEDIA"
+        "NIXBACKUP"
+      ];
       description = "Labels für Tier-C-HDD (cold storage / media pool branches).";
     };
 
@@ -73,10 +77,21 @@ in
 
     systemd.services."nixhome-automount@" = {
       description = "NixHome Tiered Automounter for device %I";
-      path = with pkgs; [ util-linux udev gnugrep coreutils systemd procps psmisc ];
+      path = with pkgs; [
+        util-linux
+        udev
+        gnugrep
+        coreutils
+        systemd
+        procps
+        psmisc
+      ];
 
       bindsTo = [ "dev-%i.device" ];
-      after = [ "dev-%i.device" "local-fs.target" ];
+      after = [
+        "dev-%i.device"
+        "local-fs.target"
+      ];
       requires = [ "dev-%i.device" ];
       partOf = [ "dev-%i.device" ];
 
@@ -89,7 +104,12 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
 
-        CapabilityBoundingSet = [ "CAP_SYS_ADMIN" "CAP_CHOWN" "CAP_FOWNER" "CAP_DAC_OVERRIDE" ];
+        CapabilityBoundingSet = [
+          "CAP_SYS_ADMIN"
+          "CAP_CHOWN"
+          "CAP_FOWNER"
+          "CAP_DAC_OVERRIDE"
+        ];
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateNetwork = true;

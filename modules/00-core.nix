@@ -5,7 +5,12 @@
 # ZRAM swap protection, and store tuning.
 # Key decisions -> ADR-00-core.md
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgBoot = config.my.core.boot-safeguard;
@@ -45,78 +50,239 @@ in
     };
 
     mode = lib.mkOption {
-      type = lib.types.enum [ "development" "production" ];
+      type = lib.types.enum [
+        "development"
+        "production"
+      ];
       default = "development";
       description = "Overall system mode: development (open) or production (hardened)";
     };
 
     configs = {
       identity = {
-        user = lib.mkOption { type = lib.types.str; description = "Primary user name (set in users/<name>/profile.nix)."; };
-        domain = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Primary domain (set in users/<name>/profile.nix)."; };
+        user = lib.mkOption {
+          type = lib.types.str;
+          description = "Primary user name (set in users/<name>/profile.nix).";
+        };
+        domain = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Primary domain (set in users/<name>/profile.nix).";
+        };
       };
       locale = {
-        default = lib.mkOption { type = lib.types.str; default = "de_DE.UTF-8"; description = "System-wide default locale."; };
-        language = lib.mkOption { type = lib.types.str; default = "de"; description = "System-wide keyboard layout and language code."; };
-        timezone = lib.mkOption { type = lib.types.str; default = "Europe/Berlin"; description = "System-wide timezone."; };
+        default = lib.mkOption {
+          type = lib.types.str;
+          default = "de_DE.UTF-8";
+          description = "System-wide default locale.";
+        };
+        language = lib.mkOption {
+          type = lib.types.str;
+          default = "de";
+          description = "System-wide keyboard layout and language code.";
+        };
+        timezone = lib.mkOption {
+          type = lib.types.str;
+          default = "Europe/Berlin";
+          description = "System-wide timezone.";
+        };
       };
       hardware = {
-        ramGB = lib.mkOption { type = lib.types.int; description = "Installed RAM in GB (set in machines/<host>/profile.nix)."; };
+        ramGB = lib.mkOption {
+          type = lib.types.int;
+          description = "Installed RAM in GB (set in machines/<host>/profile.nix).";
+        };
       };
       server = {
-        lanIP = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Server LAN IP (set in machines/<host>/profile.nix)."; };
-        tailscaleIP = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Server Tailscale IP (set in machines/<host>/profile.nix)."; };
+        lanIP = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Server LAN IP (set in machines/<host>/profile.nix).";
+        };
+        tailscaleIP = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Server Tailscale IP (set in machines/<host>/profile.nix).";
+        };
       };
       network = {
-        dnsDoH = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "https://dns.cloudflare.com/dns-query" ]; description = "List of upstream DNS DoH endpoints."; };
-        dnsBootstrap = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "1.1.1.1" ]; description = "List of bootstrap DNS IPs."; };
-        dnsFallback = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "1.1.1.1" ]; description = "List of fallback DNS IPs."; };
+        dnsDoH = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "https://dns.cloudflare.com/dns-query" ];
+          description = "List of upstream DNS DoH endpoints.";
+        };
+        dnsBootstrap = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "1.1.1.1" ];
+          description = "List of bootstrap DNS IPs.";
+        };
+        dnsFallback = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "1.1.1.1" ];
+          description = "List of fallback DNS IPs.";
+        };
       };
     };
 
     ports = {
       # 10-network
-      valkey = lib.mkOption { type = lib.types.port; default = 1010; description = "Valkey cache port."; };
-      pocket-id = lib.mkOption { type = lib.types.port; default = 1020; description = "PocketID port."; };
+      valkey = lib.mkOption {
+        type = lib.types.port;
+        default = 1010;
+        description = "Valkey cache port.";
+      };
+      pocket-id = lib.mkOption {
+        type = lib.types.port;
+        default = 1020;
+        description = "PocketID port.";
+      };
 
       # 20-security
-      ssh = lib.mkOption { type = lib.types.port; default = 22; description = "SSH port (override via machines/<host>/profile.nix)."; };
-      caddyAdmin = lib.mkOption { type = lib.types.port; default = 2020; description = "Caddy Admin API port."; };
+      ssh = lib.mkOption {
+        type = lib.types.port;
+        default = 22;
+        description = "SSH port (override via machines/<host>/profile.nix).";
+      };
+      caddyAdmin = lib.mkOption {
+        type = lib.types.port;
+        default = 2020;
+        description = "Caddy Admin API port.";
+      };
 
       # 40-observability
-      gatus = lib.mkOption { type = lib.types.port; default = 4010; description = "Gatus Web UI port."; };
-      loki = lib.mkOption { type = lib.types.port; default = 4020; description = "Loki API port."; };
-      grafana = lib.mkOption { type = lib.types.port; default = 4030; description = "Grafana Web UI port."; };
+      gatus = lib.mkOption {
+        type = lib.types.port;
+        default = 4010;
+        description = "Gatus Web UI port.";
+      };
+      loki = lib.mkOption {
+        type = lib.types.port;
+        default = 4020;
+        description = "Loki API port.";
+      };
+      grafana = lib.mkOption {
+        type = lib.types.port;
+        default = 4030;
+        description = "Grafana Web UI port.";
+      };
 
       # 50-media
-      jellyfin = lib.mkOption { type = lib.types.port; default = 5010; description = "Jellyfin port."; };
-      jellyseerr = lib.mkOption { type = lib.types.port; default = 5020; description = "Jellyseerr port."; };
-      sonarr = lib.mkOption { type = lib.types.port; default = 5030; description = "Sonarr port."; };
-      radarr = lib.mkOption { type = lib.types.port; default = 5040; description = "Radarr port."; };
-      readarr = lib.mkOption { type = lib.types.port; default = 5050; description = "Readarr port."; };
-      prowlarr = lib.mkOption { type = lib.types.port; default = 5060; description = "Prowlarr port."; };
-      sabnzbd = lib.mkOption { type = lib.types.port; default = 5070; description = "SABnzbd port."; };
-      audiobookshelf = lib.mkOption { type = lib.types.port; default = 5080; description = "Audiobookshelf port."; };
-      navidrome = lib.mkOption { type = lib.types.port; default = 5100; description = "Navidrome port."; };
+      jellyfin = lib.mkOption {
+        type = lib.types.port;
+        default = 5010;
+        description = "Jellyfin port.";
+      };
+      jellyseerr = lib.mkOption {
+        type = lib.types.port;
+        default = 5020;
+        description = "Jellyseerr port.";
+      };
+      sonarr = lib.mkOption {
+        type = lib.types.port;
+        default = 5030;
+        description = "Sonarr port.";
+      };
+      radarr = lib.mkOption {
+        type = lib.types.port;
+        default = 5040;
+        description = "Radarr port.";
+      };
+      readarr = lib.mkOption {
+        type = lib.types.port;
+        default = 5050;
+        description = "Readarr port.";
+      };
+      prowlarr = lib.mkOption {
+        type = lib.types.port;
+        default = 5060;
+        description = "Prowlarr port.";
+      };
+      sabnzbd = lib.mkOption {
+        type = lib.types.port;
+        default = 5070;
+        description = "SABnzbd port.";
+      };
+      audiobookshelf = lib.mkOption {
+        type = lib.types.port;
+        default = 5080;
+        description = "Audiobookshelf port.";
+      };
+      navidrome = lib.mkOption {
+        type = lib.types.port;
+        default = 5100;
+        description = "Navidrome port.";
+      };
 
       # 60-apps
-      vaultwarden = lib.mkOption { type = lib.types.port; default = 6010; description = "Vaultwarden port."; };
-      homepage = lib.mkOption { type = lib.types.port; default = 6020; description = "Homepage port."; };
-      paperless = lib.mkOption { type = lib.types.port; default = 6030; description = "Paperless-ngx port."; };
-      n8n = lib.mkOption { type = lib.types.port; default = 6040; description = "n8n port."; };
-      filebrowser = lib.mkOption { type = lib.types.port; default = 6050; description = "Filebrowser port."; };
-      linkwarden = lib.mkOption { type = lib.types.port; default = 6060; description = "Linkwarden port."; };
-      open-webui = lib.mkOption { type = lib.types.port; default = 6070; description = "Open WebUI port."; };
-      forgejo = lib.mkOption { type = lib.types.port; default = 6080; description = "Forgejo HTTP port."; };
-      semaphore = lib.mkOption { type = lib.types.port; default = 6090; description = "Semaphore HTTP port."; };
-      mqtt = lib.mkOption { type = lib.types.port; default = 6091; description = "MQTT broker port."; };
-      zigbee2mqtt = lib.mkOption { type = lib.types.port; default = 6092; description = "Zigbee2MQTT frontend port."; };
+      vaultwarden = lib.mkOption {
+        type = lib.types.port;
+        default = 6010;
+        description = "Vaultwarden port.";
+      };
+      homepage = lib.mkOption {
+        type = lib.types.port;
+        default = 6020;
+        description = "Homepage port.";
+      };
+      paperless = lib.mkOption {
+        type = lib.types.port;
+        default = 6030;
+        description = "Paperless-ngx port.";
+      };
+      n8n = lib.mkOption {
+        type = lib.types.port;
+        default = 6040;
+        description = "n8n port.";
+      };
+      filebrowser = lib.mkOption {
+        type = lib.types.port;
+        default = 6050;
+        description = "Filebrowser port.";
+      };
+      linkwarden = lib.mkOption {
+        type = lib.types.port;
+        default = 6060;
+        description = "Linkwarden port.";
+      };
+      open-webui = lib.mkOption {
+        type = lib.types.port;
+        default = 6070;
+        description = "Open WebUI port.";
+      };
+      forgejo = lib.mkOption {
+        type = lib.types.port;
+        default = 6080;
+        description = "Forgejo HTTP port.";
+      };
+      semaphore = lib.mkOption {
+        type = lib.types.port;
+        default = 6090;
+        description = "Semaphore HTTP port.";
+      };
+      mqtt = lib.mkOption {
+        type = lib.types.port;
+        default = 6091;
+        description = "MQTT broker port.";
+      };
+      zigbee2mqtt = lib.mkOption {
+        type = lib.types.port;
+        default = 6092;
+        description = "Zigbee2MQTT frontend port.";
+      };
 
       # 70-forge
-      cockpit = lib.mkOption { type = lib.types.port; default = 7010; description = "Cockpit admin port."; };
+      cockpit = lib.mkOption {
+        type = lib.types.port;
+        default = 7010;
+        description = "Cockpit admin port.";
+      };
 
       # 80-gaming
-      amp = lib.mkOption { type = lib.types.port; default = 8010; description = "AMP Web UI port."; };
+      amp = lib.mkOption {
+        type = lib.types.port;
+        default = 8010;
+        description = "AMP Web UI port.";
+      };
     };
   };
 
@@ -192,29 +358,43 @@ in
           narinfo-cache-negative-ttl = 0;
 
           max-jobs =
-            if cfgNix.maxJobs != null then lib.mkForce cfgNix.maxJobs
-            else if isLowRam then lib.mkForce 1
-            else if isMidRam then lib.mkForce 2
-            else lib.mkDefault 4;
+            if cfgNix.maxJobs != null then
+              lib.mkForce cfgNix.maxJobs
+            else if isLowRam then
+              lib.mkForce 1
+            else if isMidRam then
+              lib.mkForce 2
+            else
+              lib.mkDefault 4;
           cores =
-            if cfgNix.cores != null then lib.mkForce cfgNix.cores
-            else if isLowRam then lib.mkForce 1
-            else if isMidRam then lib.mkForce 2
-            else lib.mkDefault 0;
+            if cfgNix.cores != null then
+              lib.mkForce cfgNix.cores
+            else if isLowRam then
+              lib.mkForce 1
+            else if isMidRam then
+              lib.mkForce 2
+            else
+              lib.mkDefault 0;
 
           # Build-Timeout gegen hängende Prozesse
           timeout = 3600;
           max-silent-time = 600;
 
-          experimental-features = [ "nix-command" "flakes" "auto-allocate-uids" "cgroups" ];
+          experimental-features = [
+            "nix-command"
+            "flakes"
+            "auto-allocate-uids"
+            "cgroups"
+          ];
           sandbox = true;
-          trusted-users = [ "root" config.my.configs.identity.user ];
+          trusted-users = [
+            "root"
+            config.my.configs.identity.user
+          ];
         };
 
-        daemonCPUSchedPolicy =
-          if cfgNix.daemonLowPriority then "idle" else "batch";
-        daemonIOSchedClass =
-          if cfgNix.daemonLowPriority then "idle" else "best-effort";
+        daemonCPUSchedPolicy = if cfgNix.daemonLowPriority then "idle" else "batch";
+        daemonIOSchedClass = if cfgNix.daemonLowPriority then "idle" else "best-effort";
         daemonIOSchedPriority = lib.mkIf cfgNix.daemonLowPriority 7;
 
         # Wöchentlicher automatischer GC
@@ -253,7 +433,11 @@ in
       system.autoUpgrade = {
         enable = true;
         flake = "/etc/nixos/Nix-Grok";
-        flags = [ "--update-input" "nixpkgs-stable" "--commit-lock-file" ];
+        flags = [
+          "--update-input"
+          "nixpkgs-stable"
+          "--commit-lock-file"
+        ];
         dates = "04:00";
         randomizedDelaySec = "45min";
         allowReboot = false;
@@ -262,7 +446,7 @@ in
       systemd.services.nixos-upgrade.postStart = ''
         echo "Warte 30 Sekunden auf das Hochfahren der Dienste nach dem Upgrade..."
         sleep 30
-        
+
         CRITICAL_SERVICES="caddy.service postgresql.service valkey.service blocky.service"
         ROLLBACK_NEEDED=0
 
@@ -291,9 +475,12 @@ in
         enable = true;
         algorithm = "zstd";
         memoryPercent =
-          if ramGB <= 4 then 75
-          else if ramGB <= 8 then 50
-          else 25;
+          if ramGB <= 4 then
+            75
+          else if ramGB <= 8 then
+            50
+          else
+            25;
       };
 
       # Kernel-Parameter für aggressives und effizientes ZRAM-Paging
@@ -331,19 +518,15 @@ in
     # ==========================================================================
     # Jeder Dienst ab Port 1024 bekommt automatische seine Port-Nummer als statische UID/GID.
     {
-      users.users = lib.mapAttrs
-        (name: port: {
-          uid = lib.mkDefault port;
-          group = name;
-          isSystemUser = true;
-        })
-        (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
+      users.users = lib.mapAttrs (name: port: {
+        uid = lib.mkDefault port;
+        group = name;
+        isSystemUser = true;
+      }) (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
 
-      users.groups = lib.mapAttrs
-        (name: port: {
-          gid = port;
-        })
-        (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
+      users.groups = lib.mapAttrs (name: port: {
+        gid = port;
+      }) (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
     }
 
     # ==========================================================================
@@ -353,13 +536,10 @@ in
       services.udev.extraRules = ''
         # Setze I/O Scheduler auf "none" für minimale NVMe-Latenz
         ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="none"
-        
+
         # Optimiere Read-Ahead auf 128KB für gemischte DB/Media Workloads
         ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/read_ahead_kb}="128"
       '';
     }
   ];
 }
-
-
-

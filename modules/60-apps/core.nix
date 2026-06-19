@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgVaultwarden = config.my.services.vaultwarden;
@@ -15,7 +20,6 @@ in
 {
   config = lib.mkMerge [
     (lib.mkIf cfgVaultwarden.enable {
-
 
       services.vaultwarden = {
         enable = true;
@@ -80,8 +84,16 @@ in
         RestrictSUIDSGID = lib.mkForce true;
         CapabilityBoundingSet = lib.mkForce "";
         DevicePolicy = lib.mkForce "closed";
-        SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+          "~@resources"
+        ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
         ReadWritePaths = [
           "/data/state/vaultwarden"
           "/var/log/vaultwarden"
@@ -449,12 +461,15 @@ in
         ProtectClock = true;
         ProtectHostname = true;
         LockPersonality = true;
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
       };
     })
 
     (lib.mkIf cfgLinkwarden.enable {
-
 
       services.linkwarden = {
         enable = true;
@@ -479,7 +494,10 @@ in
           ProtectHome = true;
           PrivateTmp = true;
           PrivateDevices = true;
-          SystemCallFilter = [ "@system-service" "~@privileged" ];
+          SystemCallFilter = [
+            "@system-service"
+            "~@privileged"
+          ];
           OOMScoreAdjust = 300;
           StateDirectory = "linkwarden";
           CapabilityBoundingSet = "";
@@ -487,7 +505,11 @@ in
           ProtectClock = true;
           ProtectHostname = true;
           LockPersonality = true;
-          RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+          RestrictAddressFamilies = [
+            "AF_INET"
+            "AF_INET6"
+            "AF_UNIX"
+          ];
         };
       };
     })
@@ -518,11 +540,16 @@ in
         ProtectHome = true;
         PrivateTmp = true;
         PrivateDevices = true;
-        SupplementaryGroups = [ "render" "video" ];
-        SystemCallFilter = [ "@system-service" "~@privileged" ];
+        SupplementaryGroups = [
+          "render"
+          "video"
+        ];
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+        ];
         OOMScoreAdjust = 200;
       };
     })
   ];
 }
-

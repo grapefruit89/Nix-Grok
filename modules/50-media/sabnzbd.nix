@@ -1,11 +1,16 @@
 /*
----
-id: sabnzbd
-upstream_repo: "sabnzbd/sabnzbd"
----
+  ---
+  id: sabnzbd
+  upstream_repo: "sabnzbd/sabnzbd"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -20,7 +25,7 @@ let
   netnsName = "sabnzbd-vpn";
   wgIface = "wg0";
   hostVethIp = "10.100.100.1";
-  nsVethIp   = "10.100.100.2";
+  nsVethIp = "10.100.100.2";
 
 in
 {
@@ -72,7 +77,7 @@ in
         ip link set veth-sab-host up
         ip -n ${netnsName} addr add ${nsVethIp}/24 dev veth-sab-ns
         ip -n ${netnsName} link set veth-sab-ns up
-        
+
         # Move Wireguard interface if it exists
         if ip link show ${wgIface} >/dev/null 2>&1; then
           ip link set ${wgIface} netns ${netnsName}
@@ -95,7 +100,7 @@ in
             echo "Removing corrupt sabnzbd.ini (duplicate [servers])"
             rm -f /data/state/sabnzbd/sabnzbd.ini
           fi
-          
+
           # RAM-Disk Setup (Incomplete Downloads)
           if [ -f /data/state/sabnzbd/sabnzbd.ini ]; then
             ${pkgs.gnused}/bin/sed -i 's/^download_dir\s*=.*/download_dir = \/run\/sabnzbd-tmp/g' /data/state/sabnzbd/sabnzbd.ini
@@ -131,5 +136,3 @@ in
     };
   };
 }
-
-

@@ -10,10 +10,14 @@ let
   flatten = attrs: lib.unique (lib.concatLists (lib.attrValues attrs));
   flattenLists = lists: lib.unique (lib.concatLists lists);
 
-  homelabProfileBlacklist = profile:
-    if profile == "headless-server" then flatten homelabHeadless
-    else if profile == "desktop" then [ ]
-    else [ ];
+  homelabProfileBlacklist =
+    profile:
+    if profile == "headless-server" then
+      flatten homelabHeadless
+    else if profile == "desktop" then
+      [ ]
+    else
+      [ ];
 
   homelabWhitelistAll = flatten homelabWhitelist;
 
@@ -34,22 +38,20 @@ in
   inherit modes homelabProfiles homelabWhitelistAll;
 
   compute =
-    { mode ? "homelab-strict"
-    , homelabProfile ? "headless-server"
-    , requiredModules ? [ ]
-    , requiredInitrdModules ? [ ]
-    , hostBlacklist ? [ ]
-    , whitelistExtra ? [ ]
-    , moduleRoles ? { }
-    , hostLabel ? "host"
-    ,
+    {
+      mode ? "homelab-strict",
+      homelabProfile ? "headless-server",
+      requiredModules ? [ ],
+      requiredInitrdModules ? [ ],
+      hostBlacklist ? [ ],
+      whitelistExtra ? [ ],
+      moduleRoles ? { },
+      hostLabel ? "host",
     }:
     let
       allowedModules = lib.unique (homelabWhitelistAll ++ whitelistExtra);
 
-      globalLayer =
-        flatten globalBlacklist
-        ++ exoticFilesystems;
+      globalLayer = flatten globalBlacklist ++ exoticFilesystems;
 
       homelabLayer =
         if mode == "homelab-strict" || mode == "homelab-relaxed" then
@@ -73,32 +75,22 @@ in
         if mode == "blank" || mode == "global-only" || homelabProfile == "none" then
           [ ]
         else
-          map
-            (m: {
-              assertion = lib.elem m allowedModules;
-              message =
-                "KERNEL-POLICY: Pflichtmodul '${m}' ist weder in der Homelab-Whitelist noch in kernel.whitelistExtra — Profil oder whitelistExtra anpassen.";
-            })
-            requiredModules;
+          map (m: {
+            assertion = lib.elem m allowedModules;
+            message = "KERNEL-POLICY: Pflichtmodul '${m}' ist weder in der Homelab-Whitelist noch in kernel.whitelistExtra — Profil oder whitelistExtra anpassen.";
+          }) requiredModules;
 
       roleOf = m: moduleRoles.${m} or "Pflicht-Hardware (${hostLabel})";
 
-      blacklistAssertions =
-        map
-          (m: {
-            assertion = !(lib.elem m safeBlacklist);
-            message =
-              "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) darf nicht geblacklistet werden — effektive Blacklist enthält es.";
-          })
-          (requiredModules ++ requiredInitrdModules);
+      blacklistAssertions = map (m: {
+        assertion = !(lib.elem m safeBlacklist);
+        message = "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) darf nicht geblacklistet werden — effektive Blacklist enthält es.";
+      }) (requiredModules ++ requiredInitrdModules);
 
-      hostBlacklistAssertions = map
-        (m: {
-          assertion = !(lib.elem m hostBlacklist);
-          message =
-            "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) steht in kernel.blacklist — für diese Hardware verboten.";
-        })
-        requiredModules;
+      hostBlacklistAssertions = map (m: {
+        assertion = !(lib.elem m hostBlacklist);
+        message = "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) steht in kernel.blacklist — für diese Hardware verboten.";
+      }) requiredModules;
 
       explicitFilesystemAssertions = [
         {
@@ -121,6 +113,10 @@ in
     in
     {
       inherit safeBlacklist allowedModules rawBlacklist;
-      assertions = blacklistAssertions ++ whitelistAssertions ++ hostBlacklistAssertions ++ explicitFilesystemAssertions;
+      assertions =
+        blacklistAssertions
+        ++ whitelistAssertions
+        ++ hostBlacklistAssertions
+        ++ explicitFilesystemAssertions;
     };
 }

@@ -1,11 +1,16 @@
 /*
----
-id: vaultwarden
-upstream_repo: "dani-garcia/vaultwarden"
----
+  ---
+  id: vaultwarden
+  upstream_repo: "dani-garcia/vaultwarden"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -63,16 +68,17 @@ in
     # Caddy Reverse Proxy mit WebSocket Support fÃ¼r Live-Sync
     services.caddy.virtualHosts."vault.${domain}" = {
       extraConfig = ''
-        import security_headers
-
-        @websocket {
-          header Connection *Upgrade*
-          header Upgrade websocket
-        }
-        handle @websocket {
-          reverse_proxy 127.0.0.2:${toString (portVaultwarden + 1)}
-        }
-        reverse_proxy 127.0.0.2:${toString portVaultwarden}
+        
+                import security_headers
+        
+                @websocket {
+                  header Connection *Upgrade*
+                  header Upgrade websocket
+                }
+                handle @websocket {
+                  reverse_proxy 127.0.0.2:${toString (portVaultwarden + 1)}
+                }
+                reverse_proxy 127.0.0.2:${toString portVaultwarden}
       '';
     };
 
@@ -103,8 +109,16 @@ in
         RestrictSUIDSGID = lib.mkForce true;
         CapabilityBoundingSet = lib.mkForce "";
         DevicePolicy = lib.mkForce "closed";
-        SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+          "~@resources"
+        ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
         ReadWritePaths = [
           "/data/state/vaultwarden"
           "/var/log/vaultwarden"
@@ -115,5 +129,3 @@ in
     };
   };
 }
-
-

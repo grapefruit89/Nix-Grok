@@ -6,12 +6,21 @@
 # kernel-level SYN-flood protection, ICMP throttling, web-port rate limiting,
 # SSH brute force prevention, and automated weekly Geo-IP blocking.
 
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg = config.my.security.firewall;
   sshPort = config.my.ports.ssh;
-  sshPorts = (if config.my.mode == "development" then [ 22 ] else [ sshPort ]) ++ (lib.optional ((config.my.security ? dropbear-rescue) && config.my.security.dropbear-rescue.enable) config.my.security.dropbear-rescue.port);
+  sshPorts =
+    (if config.my.mode == "development" then [ 22 ] else [ sshPort ])
+    ++ (lib.optional (
+      (config.my.security ? dropbear-rescue) && config.my.security.dropbear-rescue.enable
+    ) config.my.security.dropbear-rescue.port);
 
 in
 {
@@ -22,7 +31,14 @@ in
     enable = lib.mkEnableOption "Pure, hardened nftables firewall stack (disables legacy iptables)";
     blockedCountries = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "cn" "ru" "kp" "ir" "sy" "vn" ];
+      default = [
+        "cn"
+        "ru"
+        "kp"
+        "ir"
+        "sy"
+        "vn"
+      ];
       description = "List of ISO country codes to block on Layer 3/4.";
     };
   };
@@ -143,7 +159,7 @@ in
         Type = "oneshot";
         ExecStart = pkgs.writeShellScript "update-geoip" ''
           set -euo pipefail
-          
+
           TEMP_DIR=$(mktemp -d)
           trap 'rm -rf "$TEMP_DIR"' EXIT
 

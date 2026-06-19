@@ -34,8 +34,7 @@ in
   };
 
   my.security = {
-    sovereign-unlock.enable =
-      if p.storage.luks.device == "" then lib.mkForce false else erstAb 8;
+    sovereign-unlock.enable = if p.storage.luks.device == "" then lib.mkForce false else erstAb 8;
     crowdsec.enable = erstAb 8;
     fail2ban.enable = erstAb 8;
     dropbear-rescue.enable = erstAb 8;
@@ -53,8 +52,7 @@ in
     pocket-id.enable = erstAb 2; # /var/lib/secrets/pocket-id.env (secrets-provision)
     privado-vpn.enable = lib.mkForce false; # privado_private_key manuell vom Provider
 
-    storage.enable =
-      if p.storage.mergerfsEnable then erstAb 3 else lib.mkForce false;
+    storage.enable = if p.storage.mergerfsEnable then erstAb 3 else lib.mkForce false;
     storage-automount.enable = erstAb 3;
 
     gatus.enable = erstAb 4;
@@ -88,8 +86,5 @@ in
   services.hermes-agent.enable = erstAb 7;
   services.caddy.enable = erstAb 5;
 
-  networking.firewall.allowedTCPPorts = lib.mkIf (stufe < 8) (
-    lib.mkForce [ p.network.sshPort ]
-  );
+  networking.firewall.allowedTCPPorts = lib.mkIf (stufe < 8) (lib.mkForce [ p.network.sshPort ]);
 }
-

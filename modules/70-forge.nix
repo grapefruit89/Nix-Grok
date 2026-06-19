@@ -1,8 +1,8 @@
 /*
----
-id: 70-forge
-upstream_repo: "forgejo/forgejo"
----
+  ---
+  id: 70-forge
+  upstream_repo: "forgejo/forgejo"
+  ---
 */
 
 # ==============================================================================
@@ -12,7 +12,12 @@ upstream_repo: "forgejo/forgejo"
 # and Cockpit (system administration).
 # Key decisions -> ADR-70-forge.md
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgForgejo = config.my.services.forgejo;
@@ -29,23 +34,43 @@ in
   options.my.services = {
     forgejo = {
       enable = lib.mkEnableOption "Forgejo self-hosted Git service";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.forgejo; description = "Forgejo HTTP port."; };
-      disableRegistration = lib.mkOption { type = lib.types.bool; default = true; description = "Disable public user registration."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.forgejo;
+        description = "Forgejo HTTP port.";
+      };
+      disableRegistration = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Disable public user registration.";
+      };
     };
 
     mdbook = {
       enable = lib.mkEnableOption "mdBook SSoT Interactive Docs";
-      port = lib.mkOption { type = lib.types.port; default = 6200; description = "mdBook HTTP port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 6200;
+        description = "mdBook HTTP port.";
+      };
     };
 
     semaphore = {
       enable = lib.mkEnableOption "Semaphore Ansible Web UI";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.semaphore; description = "Semaphore HTTP port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.semaphore;
+        description = "Semaphore HTTP port.";
+      };
     };
 
     cockpit = {
       enable = lib.mkEnableOption "Cockpit Server Admin UI";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.cockpit; description = "Cockpit admin port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.cockpit;
+        description = "Cockpit admin port.";
+      };
       enableVirtualization = lib.mkOption {
         type = lib.types.bool;
         default = true;
@@ -200,4 +225,3 @@ in
     })
   ];
 }
-

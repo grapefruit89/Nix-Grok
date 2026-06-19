@@ -1,11 +1,18 @@
-{ config, lib, pkgs, grok-cli ? null, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  grok-cli ? null,
+  ...
+}:
 
 let
   cfg = config.my.services.grok;
-  package = if cfg.package != null then cfg.package else
-  (
-    if grok-cli != null then grok-cli else pkgs.callPackage ../../packages/grok-cli { }
-  );
+  package =
+    if cfg.package != null then
+      cfg.package
+    else
+      (if grok-cli != null then grok-cli else pkgs.callPackage ../../packages/grok-cli { });
   user = cfg.user;
   group = config.users.users.${user}.group or "users";
   stateDir = cfg.stateDirectory;

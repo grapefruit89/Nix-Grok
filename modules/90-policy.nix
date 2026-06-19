@@ -21,8 +21,6 @@
     hardware.bluetooth.enable = lib.mkForce false;
     networking.wireless.enable = lib.mkForce false; # wpa_supplicant
 
-
-
     # --- COMPILER ASSERTIONS (DER TÜRSTEHER) ---
     assertions = [
       {
@@ -72,4 +70,3 @@
     ];
   };
 }
-

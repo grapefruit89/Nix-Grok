@@ -25,7 +25,7 @@
   "efs"
   "adfs"
   "bfs"
-  
+
   # Added per ADR to keep it KISS and avoid unnecessary attack vectors
   "btrfs"
   "ntfs"

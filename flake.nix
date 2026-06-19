@@ -31,7 +31,18 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, impermanence, sops-nix, home-manager, hermes-agent, nixos-wsl, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-stable,
+      impermanence,
+      sops-nix,
+      home-manager,
+      hermes-agent,
+      nixos-wsl,
+      ...
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {

@@ -1,5 +1,10 @@
 # Legacy-Standalone — Werte aus machines/q958/profile.nix + users/moritz/profile.nix
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   p = import ./machines/q958/profile.nix;
@@ -70,6 +75,9 @@ in
     smartmontools
   ];
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
   system.stateVersion = p.system.stateVersion;
 }

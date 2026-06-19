@@ -5,7 +5,12 @@
 # Management Panel) sandbox and system service.
 # Key decisions -> ADR-80-gaming.md
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.amp;
@@ -14,27 +19,29 @@ let
   # FHS Sandbox Environment for running unpatched game servers inside AMP
   amp-fhs = pkgs.buildFHSEnv {
     name = "amp-fhs";
-    targetPkgs = pkgs: with pkgs; [
-      dotnet-sdk_8
-      glibc
-      glibc.dev
-      stdenv.cc.cc.lib # libstdc++
-      openssl
-      curl
-      sqlite
-      screen
-      bash
-      coreutils
-      procps
-      findutils
-      steamcmd
-      icu
-      zlib
-      krb5
-    ];
-    multiPkgs = pkgs: with pkgs; [
-      pkgsi686Linux.glibc
-    ];
+    targetPkgs =
+      pkgs: with pkgs; [
+        dotnet-sdk_8
+        glibc
+        glibc.dev
+        stdenv.cc.cc.lib # libstdc++
+        openssl
+        curl
+        sqlite
+        screen
+        bash
+        coreutils
+        procps
+        findutils
+        steamcmd
+        icu
+        zlib
+        krb5
+      ];
+    multiPkgs =
+      pkgs: with pkgs; [
+        pkgsi686Linux.glibc
+      ];
     runScript = "bash";
   };
 
@@ -67,7 +74,10 @@ in
     # ── 2. SYSTEMD SERVICE ────────────────────────────────────────────────────
     systemd.services.amp = {
       description = "AMP Game Server Manager (Native FHS)";
-      after = [ "network.target" "local-fs.target" ];
+      after = [
+        "network.target"
+        "local-fs.target"
+      ];
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {

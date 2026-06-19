@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgSonarr = config.my.services.sonarr;
@@ -7,17 +12,41 @@ let
   cfgSabnzbd = config.my.services.sabnzbd;
   cfgJellyfin = config.my.services.jellyfin;
 
-  anyEnabled = cfgSonarr.enable || cfgRadarr.enable || cfgProwlarr.enable || cfgSabnzbd.enable || cfgJellyfin.enable;
+  anyEnabled =
+    cfgSonarr.enable
+    || cfgRadarr.enable
+    || cfgProwlarr.enable
+    || cfgSabnzbd.enable
+    || cfgJellyfin.enable;
 
 in
 {
   config = lib.mkIf anyEnabled {
     systemd.services.media-stack-config-sync = {
       description = "Declarative Media Stack Locale and Application Sync Orchestrator";
-      after = [ "prowlarr.service" "sonarr.service" "radarr.service" "sabnzbd.service" "jellyfin.service" ];
-      wants = [ "prowlarr.service" "sonarr.service" "radarr.service" "sabnzbd.service" "jellyfin.service" ];
-      
-      path = with pkgs; [ curl jq gnugrep coreutils python3 systemd ];
+      after = [
+        "prowlarr.service"
+        "sonarr.service"
+        "radarr.service"
+        "sabnzbd.service"
+        "jellyfin.service"
+      ];
+      wants = [
+        "prowlarr.service"
+        "sonarr.service"
+        "radarr.service"
+        "sabnzbd.service"
+        "jellyfin.service"
+      ];
+
+      path = with pkgs; [
+        curl
+        jq
+        gnugrep
+        coreutils
+        python3
+        systemd
+      ];
 
       serviceConfig = {
         Type = "oneshot";

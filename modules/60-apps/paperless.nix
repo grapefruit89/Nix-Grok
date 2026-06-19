@@ -1,8 +1,8 @@
 /*
----
-id: paperless
-upstream_repo: "paperless-ngx/paperless-ngx"
----
+  ---
+  id: paperless
+  upstream_repo: "paperless-ngx/paperless-ngx"
+  ---
 */
 
 { config, lib, ... }:
@@ -36,7 +36,11 @@ in
       };
     };
 
-    users.users.paperless.extraGroups = [ "redis" "scanner" "lp" ];
+    users.users.paperless.extraGroups = [
+      "redis"
+      "scanner"
+      "lp"
+    ];
 
     systemd.services.paperless-web.serviceConfig = {
       OOMScoreAdjust = -500;
@@ -44,13 +48,20 @@ in
       ProtectHome = true;
       NoNewPrivileges = true;
       PrivateTmp = true;
-      ReadWritePaths = [ cfgPaperless.dataDir cfgPaperless.consumptionDir ];
+      ReadWritePaths = [
+        cfgPaperless.dataDir
+        cfgPaperless.consumptionDir
+      ];
       CapabilityBoundingSet = "";
       RestrictNamespaces = true;
       ProtectClock = true;
       ProtectHostname = true;
       LockPersonality = true;
-      RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+      RestrictAddressFamilies = [
+        "AF_INET"
+        "AF_INET6"
+        "AF_UNIX"
+      ];
     };
 
     services.caddy.virtualHosts."paperless.${domain}" = {
@@ -64,7 +75,7 @@ in
       extraBackends = [ pkgs.sane-backends ];
     };
 
-    # Udev Rule: Wenn der Scanner-Knopf gedrückt wird, triggern wir ein Script, das den SANE-Scan 
+    # Udev Rule: Wenn der Scanner-Knopf gedrückt wird, triggern wir ein Script, das den SANE-Scan
     # startet und das Ergebnis direkt als PDF in den Paperless consume-Ordner wirft.
     services.udev.extraRules = ''
       # Canon CanoScan LiDE 220 Scanner-Knopf-Event
@@ -83,7 +94,7 @@ in
           set -e
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           OUTPUT_FILE="${cfgPaperless.consumptionDir}/scan_$TIMESTAMP.pdf"
-          
+
           # Scan ausführen: 300dpi, Farbe (optimal für Paperless OCR)
           ${pkgs.sane-frontends}/bin/scanimage \
             --format=pdf \
@@ -97,4 +108,3 @@ in
     };
   };
 }
-

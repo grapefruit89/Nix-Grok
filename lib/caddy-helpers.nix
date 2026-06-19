@@ -5,10 +5,10 @@ let
   upstream = host: port: "${host}:${toString port}";
 
   mkProxy =
-    { port
-    , host ? "127.0.0.1"
-    , imports ? [ ]
-    ,
+    {
+      port,
+      host ? "127.0.0.1",
+      imports ? [ ],
     }:
     lib.concatStringsSep "\n" (
       [ "import acme_tls" ]
@@ -30,17 +30,36 @@ in
 {
   inherit mkProxy streamingBackend;
 
-  proxySso = port: mkProxy { inherit port; imports = [ "sso_auth" ]; };
-
-  proxySsoBypassApp = port: mkProxy { inherit port; imports = [ "sso_auth_bypass" ]; };
-
-  proxyTailscaleSso = port:
+  proxySso =
+    port:
     mkProxy {
       inherit port;
-      imports = [ "tailscale_admin" "sso_auth" ];
+      imports = [ "sso_auth" ];
     };
 
-  proxySecurity = port: mkProxy { inherit port; imports = [ "security_headers" ]; };
+  proxySsoBypassApp =
+    port:
+    mkProxy {
+      inherit port;
+      imports = [ "sso_auth_bypass" ];
+    };
+
+  proxyTailscaleSso =
+    port:
+    mkProxy {
+      inherit port;
+      imports = [
+        "tailscale_admin"
+        "sso_auth"
+      ];
+    };
+
+  proxySecurity =
+    port:
+    mkProxy {
+      inherit port;
+      imports = [ "security_headers" ];
+    };
 
   proxyDirect = port: mkProxy { inherit port; };
 }

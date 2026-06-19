@@ -11,7 +11,13 @@ in
     {
       users = [ emergency.name ];
       commands = [
-        { command = "ALL"; options = [ "SETENV" "NOPASSWD" ]; }
+        {
+          command = "ALL";
+          options = [
+            "SETENV"
+            "NOPASSWD"
+          ];
+        }
       ];
     }
   ];

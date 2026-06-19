@@ -2,7 +2,12 @@
 # Centralized language, locale, and timezone settings for user moritz.
 # All system modules and user environments derive their settings from here.
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   my.configs.locale = {

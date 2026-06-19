@@ -1,11 +1,16 @@
 /*
----
-id: home-assistant
-upstream_repo: "home-assistant/core"
----
+  ---
+  id: home-assistant
+  upstream_repo: "home-assistant/core"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -19,7 +24,12 @@ in
       isSystemUser = true;
       inherit (cfgHass) group;
       home = cfgHass.stateDir;
-      extraGroups = [ "dialout" "video" "media" ] ++ (lib.optional cfgHass.bluetooth "bluetooth");
+      extraGroups = [
+        "dialout"
+        "video"
+        "media"
+      ]
+      ++ (lib.optional cfgHass.bluetooth "bluetooth");
     };
     users.groups.${cfgHass.group} = { };
 
@@ -51,7 +61,9 @@ in
       description = lib.mkForce "Home Assistant Core (hardened)";
       environment.PYTHONPYCACHEPREFIX = "${cfgHass.cacheDir}/pycache";
       serviceConfig = {
-        LoadCredential = lib.optional (cfgHass.secretFile != null) "HA_SECRET:${toString cfgHass.secretFile}";
+        LoadCredential = lib.optional (
+          cfgHass.secretFile != null
+        ) "HA_SECRET:${toString cfgHass.secretFile}";
         MemoryMax = "2G";
         CPUWeight = 70;
         OOMScoreAdjust = 300;
@@ -59,12 +71,25 @@ in
         ProtectHome = true;
         PrivateTmp = true;
         NoNewPrivileges = true;
-        PrivateDevices = if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then lib.mkForce false else true;
-        DeviceAllow = (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
+        PrivateDevices =
+          if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then
+            lib.mkForce false
+          else
+            true;
+        DeviceAllow =
+          (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
           ++ (lib.optional cfgHass.bluetooth "/dev/rfkill rw")
           ++ [ "/dev/dri/renderD128 rw" ];
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-        SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+          "~@resources"
+        ];
       };
     };
 
@@ -80,4 +105,3 @@ in
     };
   };
 }
-

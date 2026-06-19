@@ -1,4 +1,9 @@
-{ lib, buildNpmPackage, fetchNpmDeps, nodejs_22 }:
+{
+  lib,
+  buildNpmPackage,
+  fetchNpmDeps,
+  nodejs_22,
+}:
 
 buildNpmPackage (finalAttrs: {
   pname = "nixos-docs-mcp";

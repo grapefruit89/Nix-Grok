@@ -1,0 +1,27 @@
+# Kopie: cp profile.local.nix.example profile.local.nix
+# NIEMALS committen — steht in .gitignore
+{
+  access = {
+    emergency = {
+      # nixos-rebuild: mkpasswd -m sha-512
+      passwordHash = "CHANGE_ME_sha512_hash";
+    };
+  };
+
+  secrets = {
+    devKeys = {
+      pocketId.encryptionKey = "CHANGE_ME_min_16_chars";
+      grafana.secretKey = "CHANGE_ME";
+      context7.apiKey = ""; # leer = set-context7-api-key
+      restic.password = "CHANGE_ME";
+      vaultwarden.adminToken = "CHANGE_ME";
+      media = {
+        prowlarr.apiKey = "CHANGE_ME";
+        sonarr.apiKey = "CHANGE_ME";
+        radarr.apiKey = "CHANGE_ME";
+        sabnzbd.apiKey = "CHANGE_ME";
+        scenenzbs.apiKey = "CHANGE_ME";
+      };
+    };
+  };
+}

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.hermes;
@@ -35,7 +40,7 @@ in
       group = "hermes";
       home = "/data/state/hermes";
     };
-    users.groups.hermes = {};
+    users.groups.hermes = { };
 
     systemd.services.hermes-agent.serviceConfig = {
       User = lib.mkForce "hermes";

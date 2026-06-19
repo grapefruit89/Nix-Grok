@@ -1,11 +1,16 @@
 # ==============================================================================
 # PURPOSE
 # ==============================================================================
-# Configures local networking infrastructure and central database plumbing, 
+# Configures local networking infrastructure and central database plumbing,
 # including Valkey (Redis-fork) cache.
 # Key decisions -> ADR-10-network.md
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgValkey = config.my.services.valkey;
@@ -24,8 +29,7 @@ let
   caddySnippets = import ../lib/caddy-snippets.nix {
     inherit lib;
     pocketIdPort =
-      if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id
-      else null;
+      if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id else null;
     lanCidr = "192.168.0.0/16";
   };
 
@@ -40,15 +44,34 @@ in
     # ðŸ›‘ Blocky DNS Resolver
     blocky = {
       enable = lib.mkEnableOption "Blocky DNS Resolver";
-      port = lib.mkOption { type = lib.types.port; default = 53; description = "Blocky DNS listening port."; };
-      metricsPort = lib.mkOption { type = lib.types.port; default = 4000; description = "Blocky HTTP metrics port."; };
-      upstreamDns = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "1.1.1.1" "8.8.8.8" ]; description = "List of upstream DNS servers."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 53;
+        description = "Blocky DNS listening port.";
+      };
+      metricsPort = lib.mkOption {
+        type = lib.types.port;
+        default = 4000;
+        description = "Blocky HTTP metrics port.";
+      };
+      upstreamDns = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [
+          "1.1.1.1"
+          "8.8.8.8"
+        ];
+        description = "List of upstream DNS servers.";
+      };
     };
 
     # ðŸ”— Tailscale VPN
     tailscale = {
       enable = lib.mkEnableOption "Tailscale Zero-Trust VPN";
-      port = lib.mkOption { type = lib.types.port; default = 41641; description = "Tailscale UDP WireGuard port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 41641;
+        description = "Tailscale UDP WireGuard port.";
+      };
     };
 
     # ðŸ›¡ï¸ Privado VPN WireGuard Client
@@ -84,8 +107,16 @@ in
     # ðŸ”‘ PocketID Identity Provider
     pocket-id = {
       enable = lib.mkEnableOption "PocketID OIDC Passkey Provider";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.pocket-id; description = "PocketID web interface listening port."; };
-      dataDir = lib.mkOption { type = lib.types.str; default = "/data/state/pocket-id"; description = "Database state directory."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.pocket-id;
+        description = "PocketID web interface listening port.";
+      };
+      dataDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/data/state/pocket-id";
+        description = "Database state directory.";
+      };
       secretsFile = lib.mkOption {
         type = lib.types.str;
         default = "";
@@ -100,7 +131,12 @@ in
   config = lib.mkMerge [
     {
       # Admin Hangar Loopback Alias
-      networking.interfaces.lo.ipv4.addresses = [{ address = "127.0.0.2"; prefixLength = 8; }];
+      networking.interfaces.lo.ipv4.addresses = [
+        {
+          address = "127.0.0.2";
+          prefixLength = 8;
+        }
+      ];
     }
 
     # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────
@@ -169,7 +205,10 @@ in
         };
       };
 
-      networking.nameservers = lib.mkForce [ "127.0.0.1" "1.1.1.1" ];
+      networking.nameservers = lib.mkForce [
+        "127.0.0.1"
+        "1.1.1.1"
+      ];
 
       systemd.services.blocky = {
         after = [ "network-online.target" ];
@@ -221,18 +260,32 @@ in
         enable = true;
         openFirewall = true;
         port = config.my.services.tailscale.port;
-        
+
         useRoutingFeatures = "client";
         # DNS bleibt bei Blocky (127.0.0.1) â€” kein Tailscale MagicDNS in resolv.conf
-        extraUpFlags = [ "--ssh" "--accept-dns=false" "--accept-routes=true" ];
+        extraUpFlags = [
+          "--ssh"
+          "--accept-dns=false"
+          "--accept-routes=true"
+        ];
       };
-            networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 80 443 ];
+      networking.firewall.interfaces."tailscale0".allowedTCPPorts = [
+        22
+        80
+        443
+      ];
       networking.firewall.checkReversePath = "loose";
 
       systemd.services.tailscale-autoconnect = {
         description = "Automatic Tailscale Login";
-        after = [ "tailscaled.service" "network-online.target" ];
-        wants = [ "tailscaled.service" "network-online.target" ];
+        after = [
+          "tailscaled.service"
+          "network-online.target"
+        ];
+        wants = [
+          "tailscaled.service"
+          "network-online.target"
+        ];
         wantedBy = [ "multi-user.target" ];
         serviceConfig = {
           Type = "oneshot";
@@ -261,7 +314,10 @@ in
           ProtectHome = true;
           NoNewPrivileges = true;
           PrivateTmp = true;
-          CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
+          CapabilityBoundingSet = [
+            "CAP_NET_ADMIN"
+            "CAP_NET_RAW"
+          ];
         };
       };
     })
@@ -269,23 +325,23 @@ in
     # â”€â”€ PRIVADO VPN WIREGUARD CLIENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     (lib.mkIf config.my.services.privado-vpn.enable {
 
-
       networking.wg-quick.interfaces.privado =
         let
           ip = pkgs.iproute2;
           vpnTable = "51820";
           # Prowlarr 969, SABnzbd 984 â€” nur diese UIDs Ã¼ber privado (Split-Tunnel)
-          vpnUids = [ 969 984 ];
-          uidRules = lib.concatMapStringsSep "\n"
-            (uid:
-              "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
-            )
-            vpnUids;
-          uidRulesDown = lib.concatMapStringsSep "\n"
-            (uid:
-              "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
-            )
-            vpnUids;
+          vpnUids = [
+            969
+            984
+          ];
+          uidRules = lib.concatMapStringsSep "\n" (
+            uid:
+            "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
+          ) vpnUids;
+          uidRulesDown = lib.concatMapStringsSep "\n" (
+            uid:
+            "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
+          ) vpnUids;
         in
         {
           autostart = true;
@@ -304,14 +360,15 @@ in
             ${pkgs.openresolv}/bin/resolvconf -d privado 2>/dev/null || true
           '';
 
-          peers = [{
-            publicKey = config.my.services.privado-vpn.publicKey;
-            endpoint = config.my.services.privado-vpn.endpoint;
-            allowedIPs = [ "0.0.0.0/0" ];
-            persistentKeepalive = 25;
-          }];
+          peers = [
+            {
+              publicKey = config.my.services.privado-vpn.publicKey;
+              endpoint = config.my.services.privado-vpn.endpoint;
+              allowedIPs = [ "0.0.0.0/0" ];
+              persistentKeepalive = 25;
+            }
+          ];
         };
-
 
     })
 
@@ -395,10 +452,10 @@ in
       '';
 
       # â”€â”€ LEBENSVERSICHERUNG: SYSTEMD-NETWORKD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      # "Gott-Modus" fÃ¼r den Netzwerk-Daemon: SchÃ¼tzt vor dem OOM-Killer und 
-      # gewÃ¤hrt hÃ¶chste CPU-PrioritÃ¤t, damit der Server bei Lastspitzen nicht 
+      # "Gott-Modus" fÃ¼r den Netzwerk-Daemon: SchÃ¼tzt vor dem OOM-Killer und
+      # gewÃ¤hrt hÃ¶chste CPU-PrioritÃ¤t, damit der Server bei Lastspitzen nicht
       # die Verbindung verliert.
-            # Beschleunigt den Bootvorgang enorm: systemd-networkd wartet nur auf das ERSTE
+      # Beschleunigt den Bootvorgang enorm: systemd-networkd wartet nur auf das ERSTE
       # Interface (z.B. eth0), anstatt auf alle (wie veth, docker0, tailscale0)
       systemd.network.wait-online.anyInterface = true;
 
@@ -412,7 +469,10 @@ in
       # =====================================================================
       services.cloudflare-dyndns = {
         enable = true;
-        domains = [ "${domain}" "*.${domain}" ];
+        domains = [
+          "${domain}"
+          "*.${domain}"
+        ];
         apiTokenFile = "/home/moritz/secrets/ddclient.env"; # Cloudflare API Token
       };
 
@@ -441,11 +501,3 @@ in
     }
   ];
 }
-
-
-
-
-
-
-
-

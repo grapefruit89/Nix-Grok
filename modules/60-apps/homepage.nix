@@ -1,11 +1,16 @@
 /*
----
-id: homepage
-upstream_repo: "gethomepage/homepage"
----
+  ---
+  id: homepage
+  upstream_repo: "gethomepage/homepage"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -19,7 +24,6 @@ in
     services.homepage-dashboard = {
       enable = true;
       listenPort = portHomepage;
-
 
       settings = {
         title = "Mäusekino";
@@ -345,5 +349,3 @@ in
     systemd.services.homepage-dashboard.serviceConfig.OOMScoreAdjust = 500;
   };
 }
-
-

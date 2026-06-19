@@ -54,7 +54,11 @@ in
         RestrictNamespaces = lib.mkForce true;
         ProtectClock = lib.mkForce true;
         ProtectHostname = lib.mkForce true;
-        RestrictAddressFamilies = lib.mkForce [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = lib.mkForce [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
       };
 
       services.caddy.virtualHosts."n8n.${domain}" = {

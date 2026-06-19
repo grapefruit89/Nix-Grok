@@ -1,11 +1,16 @@
 /*
----
-id: filebrowser
-upstream_repo: "filebrowser/filebrowser"
----
+  ---
+  id: filebrowser
+  upstream_repo: "filebrowser/filebrowser"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -45,8 +50,11 @@ in
       ProtectClock = true;
       ProtectHostname = true;
       LockPersonality = true;
-      RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+      RestrictAddressFamilies = [
+        "AF_INET"
+        "AF_INET6"
+        "AF_UNIX"
+      ];
     };
   };
 }
-

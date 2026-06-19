@@ -1,11 +1,16 @@
 /*
----
-id: audiobookshelf
-upstream_repo: "advplyr/audiobookshelf"
----
+  ---
+  id: audiobookshelf
+  upstream_repo: "advplyr/audiobookshelf"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -28,7 +33,11 @@ in
       };
 
       # Allow audiobookshelf to read/write the media array AND use Intel QSV via iGPU
-      users.users.audiobookshelf.extraGroups = [ "media" "render" "video" ];
+      users.users.audiobookshelf.extraGroups = [
+        "media"
+        "render"
+        "video"
+      ];
 
       # WebSockets are handled automatically by Caddy. We use native login (no SSO bypass required).
       services.caddy.virtualHosts."audiobookshelf.${domain}" = {
@@ -55,4 +64,3 @@ in
     })
   ];
 }
-

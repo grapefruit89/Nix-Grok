@@ -31,11 +31,11 @@ in
               content = {
                 type = "luks";
                 name = "sovereign_vault";
-                
+
                 # ZERO-KNOWLEDGE STRATEGIE:
                 # Disko liest bei der Installation das Passwort aus dieser temporären Datei im RAM aus.
-                # Weder GitHub noch die KI kennen das Passwort. 
-                # Vor dem Ausführen von `disko` machst du einmalig: 
+                # Weder GitHub noch die KI kennen das Passwort.
+                # Vor dem Ausführen von `disko` machst du einmalig:
                 # echo -n "DeinGeheimesPasswort" > /tmp/luks_password.txt
                 passwordFile = "/tmp/luks_password.txt";
 
@@ -46,7 +46,10 @@ in
                   type = "filesystem";
                   format = "ext4";
                   mountpoint = "/";
-                  mountOptions = [ "defaults" "noatime" ];
+                  mountOptions = [
+                    "defaults"
+                    "noatime"
+                  ];
                 };
               };
             };

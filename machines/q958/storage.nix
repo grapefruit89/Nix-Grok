@@ -1,5 +1,10 @@
 # q958 — Storage-Verdrahtung: Tier-Policy, Automount, Assertions
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   p = import ./profile.nix;

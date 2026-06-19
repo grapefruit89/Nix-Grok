@@ -1,11 +1,16 @@
 /*
----
-id: zigbee-stack
-upstream_repo: "Koenkk/zigbee2mqtt"
----
+  ---
+  id: zigbee-stack
+  upstream_repo: "Koenkk/zigbee2mqtt"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -18,24 +23,28 @@ in
     services = {
       mosquitto = {
         enable = true;
-        listeners = [{
-          port = cfgZigbee.mqttPort;
-          address = "127.0.0.1";
-          acl = [ "pattern readwrite #" ];
-          settings.allow_anonymous = false;
-          users = {
-            "zigbee2mqtt" = {
-              hashedPasswordFile = "/home/moritz/secrets/mosquitto_password";
+        listeners = [
+          {
+            port = cfgZigbee.mqttPort;
+            address = "127.0.0.1";
+            acl = [ "pattern readwrite #" ];
+            settings.allow_anonymous = false;
+            users = {
+              "zigbee2mqtt" = {
+                hashedPasswordFile = "/home/moritz/secrets/mosquitto_password";
+              };
             };
-          };
-        }];
+          }
+        ];
       };
 
       zigbee2mqtt = {
         enable = true;
         inherit (cfgZigbee) dataDir;
         settings = {
-          homeassistant = { enabled = true; };
+          homeassistant = {
+            enabled = true;
+          };
           permit_join = false;
           mqtt = {
             base_topic = "zigbee2mqtt";
@@ -82,9 +91,15 @@ in
             ProtectHome = true;
             PrivateTmp = true;
             NoNewPrivileges = true;
-            PrivateDevices = lib.mkForce (if (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) then false else true);
+            PrivateDevices = lib.mkForce (
+              if (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) then false else true
+            );
             DeviceAllow = lib.optional (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) "${cfgZigbee.zigbeeDevice} rw";
-            RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+            RestrictAddressFamilies = [
+              "AF_INET"
+              "AF_INET6"
+              "AF_UNIX"
+            ];
             EnvironmentFile = "/home/moritz/secrets/zigbee2mqtt.env";
           };
         };
@@ -96,9 +111,10 @@ in
       ];
     };
 
-    users.users.zigbee2mqtt.extraGroups = [ "mqtt" "dialout" ];
+    users.users.zigbee2mqtt.extraGroups = [
+      "mqtt"
+      "dialout"
+    ];
     users.users.mosquitto.extraGroups = [ "mqtt" ];
   };
 }
-
-

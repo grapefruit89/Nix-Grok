@@ -6,7 +6,12 @@
 # 2. Vector, Loki, and Grafana (VLG) Log Scraper and Dashboard Stack.
 # 3. CrowdSec Security Threat Detection Engine and nftables Bouncer.
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgGatus = config.my.services.gatus;
@@ -69,7 +74,7 @@ in
         restartUnits = [ "gatus.service" ];
       };
     }
-    
+
     # ─── SECTION 1: GATUS MONITORING ──────────────────────────────────────────
     (lib.mkIf cfgGatus.enable {
 
@@ -570,4 +575,3 @@ in
     })
   ];
 }
-

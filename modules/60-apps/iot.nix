@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgHass = config.my.services.home-assistant;
@@ -13,7 +18,12 @@ in
         isSystemUser = true;
         inherit (cfgHass) group;
         home = cfgHass.stateDir;
-        extraGroups = [ "dialout" "video" "media" ] ++ (lib.optional cfgHass.bluetooth "bluetooth");
+        extraGroups = [
+          "dialout"
+          "video"
+          "media"
+        ]
+        ++ (lib.optional cfgHass.bluetooth "bluetooth");
       };
       users.groups.${cfgHass.group} = { };
 
@@ -49,19 +59,34 @@ in
         environment.PYTHONPYCACHEPREFIX = "${cfgHass.cacheDir}/pycache";
         serviceConfig = {
           OOMScoreAdjust = -500;
-          LoadCredential = lib.optional (cfgHass.secretFile != null) "HA_SECRET:${toString cfgHass.secretFile}";
+          LoadCredential = lib.optional (
+            cfgHass.secretFile != null
+          ) "HA_SECRET:${toString cfgHass.secretFile}";
           MemoryMax = "2G";
           CPUWeight = 70;
           ProtectSystem = "strict";
           ProtectHome = true;
           PrivateTmp = true;
           NoNewPrivileges = true;
-          PrivateDevices = if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then lib.mkForce false else true;
-          DeviceAllow = (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
+          PrivateDevices =
+            if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then
+              lib.mkForce false
+            else
+              true;
+          DeviceAllow =
+            (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
             ++ (lib.optional cfgHass.bluetooth "/dev/rfkill rw")
             ++ [ "/dev/dri/renderD128 rw" ];
-          RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-          SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
+          RestrictAddressFamilies = [
+            "AF_INET"
+            "AF_INET6"
+            "AF_UNIX"
+          ];
+          SystemCallFilter = [
+            "@system-service"
+            "~@privileged"
+            "~@resources"
+          ];
         };
       };
 
@@ -84,17 +109,19 @@ in
       services = {
         mosquitto = {
           enable = true;
-          listeners = [{
-            port = cfgZigbee.mqttPort;
-            address = "127.0.0.1";
-            acl = [ "pattern readwrite #" ];
-            settings.allow_anonymous = false;
-            users = {
-              "zigbee2mqtt" = {
-                hashedPasswordFile = "/home/moritz/secrets/mosquitto_password";
+          listeners = [
+            {
+              port = cfgZigbee.mqttPort;
+              address = "127.0.0.1";
+              acl = [ "pattern readwrite #" ];
+              settings.allow_anonymous = false;
+              users = {
+                "zigbee2mqtt" = {
+                  hashedPasswordFile = "/home/moritz/secrets/mosquitto_password";
+                };
               };
-            };
-          }];
+            }
+          ];
         };
 
         zigbee2mqtt = {
@@ -113,7 +140,16 @@ in
             advanced = {
               network_key = "!${cfgZigbee.secretFile} network_key";
               pan_id = 6754;
-              ext_pan_id = [221 221 221 221 221 221 221 221];
+              ext_pan_id = [
+                221
+                221
+                221
+                221
+                221
+                221
+                221
+                221
+              ];
               homeassistant_legacy_entity_attributes = false;
               legacy_api = false;
               legacy_availability_payload = false;
@@ -123,7 +159,9 @@ in
       };
 
       systemd.services.zigbee2mqtt.serviceConfig = {
-        LoadCredential = lib.optional (cfgZigbee.secretFile != null) "Z2M_SECRET:${toString cfgZigbee.secretFile}";
+        LoadCredential = lib.optional (
+          cfgZigbee.secretFile != null
+        ) "Z2M_SECRET:${toString cfgZigbee.secretFile}";
         MemoryMax = "1G";
         ProtectSystem = "strict";
         ProtectHome = true;

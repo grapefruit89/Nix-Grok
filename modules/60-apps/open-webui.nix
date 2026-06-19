@@ -1,11 +1,16 @@
 /*
----
-id: open-webui
-upstream_repo: "open-webui/open-webui"
----
+  ---
+  id: open-webui
+  upstream_repo: "open-webui/open-webui"
+  ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
@@ -38,9 +43,14 @@ in
       ProtectHome = true;
       PrivateTmp = true;
       PrivateDevices = true;
-      SupplementaryGroups = [ "render" "video" ];
-      SystemCallFilter = [ "@system-service" "~@privileged" ];
+      SupplementaryGroups = [
+        "render"
+        "video"
+      ];
+      SystemCallFilter = [
+        "@system-service"
+        "~@privileged"
+      ];
     };
   };
 }
-

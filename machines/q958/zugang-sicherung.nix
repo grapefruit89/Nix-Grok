@@ -45,8 +45,7 @@ in
       message = "ZUGANG-SICHERUNG: User '${emergency.name}' braucht Gruppe 'wheel' (sudo).";
     }
     {
-      assertion =
-        (config.users.users.${emergency.name}.hashedPassword or "") == emergency.passwordHash;
+      assertion = (config.users.users.${emergency.name}.hashedPassword or "") == emergency.passwordHash;
       message = "ZUGANG-SICHERUNG: Passwort-Hash für '${emergency.name}' fehlt oder wurde geändert.";
     }
     {
@@ -74,9 +73,7 @@ in
       message = "ZUGANG-SICHERUNG: SSH PasswordAuthentication muss true sein.";
     }
     {
-      assertion =
-        !config.my.security.firewall.enable
-        || lib.elem p.network.sshPort firewallPorts;
+      assertion = !config.my.security.firewall.enable || lib.elem p.network.sshPort firewallPorts;
       message = "ZUGANG-SICHERUNG: Firewall aktiv → Port ${toString p.network.sshPort} muss erlaubt sein.";
     }
   ];

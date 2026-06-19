@@ -5,7 +5,12 @@
 # (TPM2.0 / Tang / FIDO2 / SSH Port 2222) and hardened Zero-Trust production SSH.
 # Key decisions -> ADR-20-security.md
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgUnlock = config.my.security.sovereign-unlock;
@@ -97,40 +102,115 @@ in
 
     fail2ban = {
       enable = lib.mkEnableOption "Fail2ban intrusion prevention system";
-      bantime = lib.mkOption { type = lib.types.str; default = "1h"; description = "Default ban duration."; };
-      findtime = lib.mkOption { type = lib.types.str; default = "10m"; description = "Time window for counting failures."; };
-      maxretry = lib.mkOption { type = lib.types.int; default = 5; description = "Number of failures before ban."; };
+      bantime = lib.mkOption {
+        type = lib.types.str;
+        default = "1h";
+        description = "Default ban duration.";
+      };
+      findtime = lib.mkOption {
+        type = lib.types.str;
+        default = "10m";
+        description = "Time window for counting failures.";
+      };
+      maxretry = lib.mkOption {
+        type = lib.types.int;
+        default = 5;
+        description = "Number of failures before ban.";
+      };
       banaction = lib.mkOption {
-        type = lib.types.enum [ "nftables-multiport" "nftables-allports" "iptables-multiport" ];
+        type = lib.types.enum [
+          "nftables-multiport"
+          "nftables-allports"
+          "iptables-multiport"
+        ];
         default = "nftables-multiport";
         description = "Default ban action.";
       };
-      banIncrementEnable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable progressive ban time increase."; };
-      banIncrementMultipliers = lib.mkOption { type = lib.types.str; default = "1 2 4 8 16 32 64"; description = "Multipliers for progressive bans."; };
-      banIncrementMaxtime = lib.mkOption { type = lib.types.str; default = "168h"; description = "Maximum ban time (1 week)."; };
+      banIncrementEnable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable progressive ban time increase.";
+      };
+      banIncrementMultipliers = lib.mkOption {
+        type = lib.types.str;
+        default = "1 2 4 8 16 32 64";
+        description = "Multipliers for progressive bans.";
+      };
+      banIncrementMaxtime = lib.mkOption {
+        type = lib.types.str;
+        default = "168h";
+        description = "Maximum ban time (1 week).";
+      };
 
       sshJail = {
-        enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable SSH jail."; };
-        mode = lib.mkOption { type = lib.types.enum [ "normal" "aggressive" ]; default = "aggressive"; description = "SSH jail mode."; };
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable SSH jail.";
+        };
+        mode = lib.mkOption {
+          type = lib.types.enum [
+            "normal"
+            "aggressive"
+          ];
+          default = "aggressive";
+          description = "SSH jail mode.";
+        };
       };
 
       webJails = {
         caddy = {
-          enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable Caddy 401/403 jail."; };
-          maxretry = lib.mkOption { type = lib.types.int; default = 10; description = "Max retries for Caddy jail."; };
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Enable Caddy 401/403 jail.";
+          };
+          maxretry = lib.mkOption {
+            type = lib.types.int;
+            default = 10;
+            description = "Max retries for Caddy jail.";
+          };
         };
       };
 
       appJails = {
-        vaultwarden = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Vaultwarden jail."; }; };
-        paperless = { enable = lib.mkOption { type = lib.types.bool; default = false; description = "Enable Paperless jail."; }; };
+        vaultwarden = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Enable Vaultwarden jail.";
+          };
+        };
+        paperless = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Enable Paperless jail.";
+          };
+        };
       };
 
       recidive = {
-        enable = lib.mkOption { type = lib.types.bool; default = true; description = "Enable recidive jail for repeat offenders."; };
-        bantime = lib.mkOption { type = lib.types.str; default = "168h"; description = "Ban time for recidive (1 week)."; };
-        findtime = lib.mkOption { type = lib.types.str; default = "86400s"; description = "Find time for recidive (1 day)."; };
-        maxretry = lib.mkOption { type = lib.types.int; default = 3; description = "Number of bans before recidive triggers."; };
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable recidive jail for repeat offenders.";
+        };
+        bantime = lib.mkOption {
+          type = lib.types.str;
+          default = "168h";
+          description = "Ban time for recidive (1 week).";
+        };
+        findtime = lib.mkOption {
+          type = lib.types.str;
+          default = "86400s";
+          description = "Find time for recidive (1 day).";
+        };
+        maxretry = lib.mkOption {
+          type = lib.types.int;
+          default = 3;
+          description = "Number of bans before recidive triggers.";
+        };
       };
     };
   };
@@ -216,10 +296,12 @@ in
         };
       };
 
-      assertions = [{
-        assertion = cfgUnlock.authorizedKeys != [ ] || cfgUnlock.tangServer != "";
-        message = "Sovereign Unlock: Entweder initrd SSH-Keys oder ein Tang-Server müssen konfiguriert sein.";
-      }];
+      assertions = [
+        {
+          assertion = cfgUnlock.authorizedKeys != [ ] || cfgUnlock.tangServer != "";
+          message = "Sovereign Unlock: Entweder initrd SSH-Keys oder ein Tang-Server müssen konfiguriert sein.";
+        }
+      ];
     })
 
     # ── DEVELOPMENT SSHD ──────────────────────────────────────────────────────
@@ -235,7 +317,8 @@ in
       };
 
       # Copy admin public keys to root user for easy passwordless access
-      users.users.root.openssh.authorizedKeys.keys = config.users.users.${user}.openssh.authorizedKeys.keys or [ ];
+      users.users.root.openssh.authorizedKeys.keys =
+        config.users.users.${user}.openssh.authorizedKeys.keys or [ ];
     })
 
     # ── ZERO-TRUST HARDENED SSHD ──────────────────────────────────────────────
@@ -264,14 +347,21 @@ in
           # Post-Quantum / Hardened Krypto-Verfahren
           HostKeyAlgorithms = "ssh-ed25519,ssh-rsa";
           PubkeyAcceptedAlgorithms = "+ssh-rsa";
-          KexAlgorithms = [ "curve25519-sha256" "curve25519-sha256@libssh.org" ];
-          Ciphers = [ "chacha20-poly1305@openssh.com" "aes256-gcm@openssh.com" ];
-          Macs = [ "hmac-sha2-512-etm@openssh.com" "hmac-sha2-256-etm@openssh.com" ];
+          KexAlgorithms = [
+            "curve25519-sha256"
+            "curve25519-sha256@libssh.org"
+          ];
+          Ciphers = [
+            "chacha20-poly1305@openssh.com"
+            "aes256-gcm@openssh.com"
+          ];
+          Macs = [
+            "hmac-sha2-512-etm@openssh.com"
+            "hmac-sha2-256-etm@openssh.com"
+          ];
         };
         extraConfig = lib.mkForce "";
       };
-
-
 
       # Rate-Limiting für SSH per nftables zum Schutz vor Brute-Force
       networking.firewall.extraInputRules = lib.mkAfter ''
@@ -289,10 +379,12 @@ in
         PrivateTmp = true;
       };
 
-      assertions = [{
-        assertion = hasAuthorizedKeys;
-        message = "Sicherheits-Blockade: deployment verboten ohne SSH-Authorized-Keys in users.nix";
-      }];
+      assertions = [
+        {
+          assertion = hasAuthorizedKeys;
+          message = "Sicherheits-Blockade: deployment verboten ohne SSH-Authorized-Keys in users.nix";
+        }
+      ];
     })
 
     # ── FAIL2BAN INTRUSION PREVENTION ─────────────────────────────────────────
@@ -307,7 +399,14 @@ in
 
         services.fail2ban = {
           enable = true;
-          ignoreIP = [ "127.0.0.0/8" "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16" "100.64.0.0/10" "169.254.0.0/16" ];
+          ignoreIP = [
+            "127.0.0.0/8"
+            "10.0.0.0/8"
+            "172.16.0.0/12"
+            "192.168.0.0/16"
+            "100.64.0.0/10"
+            "169.254.0.0/16"
+          ];
           daemonSettings.Definition.dbfile = "/data/state/fail2ban/fail2ban.sqlite3";
           inherit (cfg) banaction;
           inherit (cfg) bantime;
@@ -425,5 +524,3 @@ in
     )
   ];
 }
-
-
