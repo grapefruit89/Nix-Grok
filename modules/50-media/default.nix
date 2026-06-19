@@ -6,6 +6,7 @@
     ./jellyfin.nix
     ./arr-stack.nix
     ./sabnzbd.nix
+    ./audiobookshelf.nix
     ./sync.nix
   ];
 
@@ -18,5 +19,6 @@
     readarr.enable = lib.mkEnableOption "Readarr Books Manager";
     prowlarr.enable = lib.mkEnableOption "Prowlarr Indexer Proxy";
     sabnzbd.enable = lib.mkEnableOption "SABnzbd Usenet Downloader";
+    audiobookshelf.enable = lib.mkEnableOption "Audiobookshelf Server";
   };
 }

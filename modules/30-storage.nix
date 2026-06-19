@@ -24,6 +24,7 @@ let
       "/var/lib/readarr"
       "/var/lib/prowlarr"
       "/var/lib/sabnzbd"
+      "/var/lib/audiobookshelf"
       "/var/lib/AdGuardHome"
       "/var/lib/pocket-id"
       "/var/lib/hass"
