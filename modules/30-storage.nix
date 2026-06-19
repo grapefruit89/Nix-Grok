@@ -179,8 +179,16 @@ in
           options = [
             "defaults"
             "allow_other"
-            "minfreespace=10G"
+            "fsname=mergerfs-fast"
             "category.create=mfs"
+            "minfreespace=10G"
+            "ignorepponrename=true"
+            "use_ino"
+            "dropcacheonclose=true"
+            "cache.files=partial"
+            "cache.readdir=true"
+            "cache.statfs=true"
+            "cache.symlinks=true"
             "branches=/mnt/tier-b/*"
           ];
         };
@@ -194,9 +202,16 @@ in
           options = [
             "defaults"
             "allow_other"
+            "fsname=mergerfs-pool"
             "category.create=epmfs"
             "minfreespace=50G"
+            "ignorepponrename=true"
+            "use_ino"
             "dropcacheonclose=true"
+            "cache.files=partial"
+            "cache.readdir=true"
+            "cache.statfs=true"
+            "cache.symlinks=true"
             "branches=/mnt/tier-b/*:/mnt/tier-c/*"
           ];
         };
@@ -207,8 +222,16 @@ in
           options = [
             "defaults"
             "allow_other"
-            "minfreespace=1G"
+            "fsname=mergerfs-external"
             "category.create=mfs"
+            "minfreespace=1G"
+            "ignorepponrename=true"
+            "use_ino"
+            "dropcacheonclose=true"
+            "cache.files=partial"
+            "cache.readdir=true"
+            "cache.statfs=true"
+            "cache.symlinks=true"
             "branches=/mnt/external/*"
           ];
         };
