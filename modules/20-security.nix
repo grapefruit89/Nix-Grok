@@ -345,8 +345,8 @@ in
           AllowTcpForwarding = true; # Erlaubt Tunneling über sicheren Tailscale-Kanal
 
           # Post-Quantum / Hardened Krypto-Verfahren
-          HostKeyAlgorithms = "ssh-ed25519,ssh-rsa";
-          PubkeyAcceptedAlgorithms = "+ssh-rsa";
+          HostKeyAlgorithms = "ssh-ed25519";
+          PubkeyAcceptedAlgorithms = "ssh-ed25519";
           KexAlgorithms = [
             "curve25519-sha256"
             "curve25519-sha256@libssh.org"
@@ -383,6 +383,18 @@ in
         {
           assertion = hasAuthorizedKeys;
           message = "Sicherheits-Blockade: deployment verboten ohne SSH-Authorized-Keys in users.nix";
+        }
+        {
+          assertion = config.services.openssh.settings.PasswordAuthentication == false;
+          message = "Sicherheits-Blockade: SSH PasswordAuthentication MUSS auf false gesetzt sein!";
+        }
+        {
+          assertion = config.services.openssh.settings.PermitRootLogin == "no";
+          message = "Sicherheits-Blockade: SSH PermitRootLogin MUSS auf 'no' gesetzt sein!";
+        }
+        {
+          assertion = !(lib.strings.hasInfix "ssh-rsa" config.services.openssh.settings.HostKeyAlgorithms) && !(lib.strings.hasInfix "ssh-rsa" config.services.openssh.settings.PubkeyAcceptedAlgorithms);
+          message = "Sicherheits-Blockade: Veraltete ssh-rsa Schlüssel sind strikt verboten!";
         }
       ];
     })
