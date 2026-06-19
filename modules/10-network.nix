@@ -221,7 +221,7 @@ in
         enable = true;
         openFirewall = true;
         port = config.my.services.tailscale.port;
-        permitCertUid = "caddy";
+        
         useRoutingFeatures = "client";
         # DNS bleibt bei Blocky (127.0.0.1) â€” kein Tailscale MagicDNS in resolv.conf
         extraUpFlags = [ "--ssh" "--accept-dns=false" "--accept-routes=true" ];

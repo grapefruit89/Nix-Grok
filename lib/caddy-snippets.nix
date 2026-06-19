@@ -2,7 +2,7 @@
 #
 # sso_auth     → Browser-Dienste (*arr, Paperless, Jellyfin-Browser, …)
 # NICHT für    → Jellyfin-Apps (X-Emby-Authorization), auth.* (Deadlock)
-{ lib, pocketIdPort, lanCidr ? "192.168.0.0/16" }:
+{ lib, pocketIdPort, lanCidr ? "192.168.0.0/16", domain ? "m7c5.de" }:
 
 let
   tailscaleCidr = "100.64.0.0/10";
@@ -10,6 +10,12 @@ in
 {
   extraConfig =
     ''
+      (acme_tls) {
+        tls /var/lib/acme/$domain/cert.pem /var/lib/acme/$domain/key.pem {
+          protocols tls1.3
+        }
+      }
+
       (security_headers) {
         header {
           Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"

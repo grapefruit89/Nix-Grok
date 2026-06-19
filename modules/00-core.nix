@@ -163,7 +163,7 @@ in
       networking.dhcpcd.enable = lib.mkForce false;
       # Keine NixOS Handbücher lokal kompilieren (spart extrem viel RAM/Zeit beim Build)
       documentation.nixos.enable = lib.mkForce false;
-      documentation.man.generateCaches = lib.mkForce false;
+      documentation.man.cache.enable = lib.mkForce false;
     }
     # ── NIX STORE TUNING ──────────────────────────────────────────────────────
     (lib.mkIf cfgNix.enable {
