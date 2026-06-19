@@ -119,7 +119,7 @@ in
           unixSocket = "/run/redis-valkey/valkey.sock";
           unixSocketPerm = 660;
           settings = {
-            dir = "/data/state/valkey";
+            dir = lib.mkForce "/data/state/valkey";
             maxmemory = "512mb"; # Puffer für große Paperless OCR Bulk-Imports
             maxmemory-policy = "volatile-lru"; # Schützt aktive Paperless Tasks vor LRU-Löschung
             save = ""; # Pure In-Memory für minimalen SSD-Verschleiß
