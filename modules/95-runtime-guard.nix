@@ -26,10 +26,10 @@
         Type = "oneshot";
         User = "root";
       };
-      script = '
-        set - euo pipefail
+      script = ''
+        set -euo pipefail
 
-          echo "=== RUNTIME SECURITY WATCHDOG gestartet ==="
+        echo "=== RUNTIME SECURITY WATCHDOG gestartet ==="
 
         # 1. Check Firewall (nftables active)
         # Die nftables filter table MUSS existieren, sonst ist der Server ungeschützt!
@@ -54,7 +54,7 @@
     fi
 
     echo "=== RUNTIME SECURITY WATCHDOG erfolgreich ==="
-    ';
+    '';
     };
 
     systemd.timers.security-watchdog = {

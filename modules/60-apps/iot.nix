@@ -113,7 +113,7 @@ in
             advanced = {
               network_key = "!${cfgZigbee.secretFile} network_key";
               pan_id = 6754;
-              ext_pan_id = [221, 221, 221, 221, 221, 221, 221, 221];
+              ext_pan_id = [221 221 221 221 221 221 221 221];
               homeassistant_legacy_entity_attributes = false;
               legacy_api = false;
               legacy_availability_payload = false;
