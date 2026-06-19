@@ -104,7 +104,8 @@ in
             ${pkgs.gnused}/bin/sed -i '/^\[servers\]/,/^\[/{/^\[servers\]/d;/^\[/!d}' /data/state/sabnzbd/sabnzbd.ini
             
             # Inject declarative servers block
-            PASSWORD=$(cat "''${CREDENTIALS_DIRECTORY}/SABNZBD_PASSWORD")
+            PASSWORD_NEWS=$(cat "''${CREDENTIALS_DIRECTORY}/SABNZBD_PASSWORD_NEWS")
+            PASSWORD_EASY=$(cat "''${CREDENTIALS_DIRECTORY}/SABNZBD_PASSWORD_EASY")
             cat <<EOF >> /data/state/sabnzbd/sabnzbd.ini
 [servers]
 [[news.newshosting.com]]
@@ -112,23 +113,53 @@ name = news.newshosting.com
 displayname = news.newshosting.com
 host = news.newshosting.com
 port = 563
-timeout = 120
+timeout = 60
 username = p8embyavo
-password = $PASSWORD
+password = $PASSWORD_NEWS
 connections = 100
 ssl = 1
 ssl_verify = 2
 ssl_ciphers = ""
 enable = 1
-type = 0
-notes = ""
 priority = 0
-retention = 0
+
+[[news.easynews.com]]
+name = news.easynews.com
+displayname = news.easynews.com
+host = news.easynews.com
+port = 563
+timeout = 60
+username = p8embyavo@newshosting.com
+password = $PASSWORD_EASY
+connections = 8
+ssl = 1
+ssl_verify = 3
+ssl_ciphers = ""
+enable = 1
+priority = 5
+
+[[newshosting.tweaknews.eu]]
+name = newshosting.tweaknews.eu
+displayname = newshosting.tweaknews.eu
+host = newshosting.tweaknews.eu
+port = 563
+timeout = 60
+username = fveuyzfdavra
+password = $PASSWORD_NEWS
+connections = 40
+ssl = 1
+ssl_verify = 3
+ssl_ciphers = ""
+enable = 1
+priority = 4
 EOF
           fi
         '';
         serviceConfig = {
-          LoadCredential = [ "SABNZBD_PASSWORD:/home/moritz/secrets/sabnzbd_password" ];
+          LoadCredential = [
+            "SABNZBD_PASSWORD_NEWS:/home/moritz/secrets/sabnzbd_password"
+            "SABNZBD_PASSWORD_EASY:/home/moritz/secrets/sabnzbd_password_easynews"
+          ];
           NetworkNamespacePath = "/var/run/netns/${netnsName}";
           MemoryMax = "4G";
           OOMScoreAdjust = 500;

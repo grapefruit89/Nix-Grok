@@ -7,6 +7,7 @@ in
   options.my.services.wyoming-stt.enable = lib.mkEnableOption "Wyoming Protocol STT (Parakeet TDT)";
 
   config = lib.mkIf cfgWyoming.enable {
+    virtualisation.oci-containers.backend = "podman";
     virtualisation.oci-containers.containers.wyoming-stt-nemo = {
       image = "ghcr.io/tboby/wyoming-onnx-asr:latest";
       ports = [ "10300:10300" ];

@@ -41,11 +41,11 @@
       }
       {
         assertion = !(config.virtualisation.docker.enable or false);
-        message = "KRITISCHER FEHLER [POLICY]: Docker ist verboten. Wir nutzen NixOS, Container sind hier unerwünscht.";
+        message = "KRITISCHER FEHLER [POLICY]: Benutz gefälligst Podman, du faules Stück Scheisse! Docker hat hier nichts zu suchen!";
       }
       {
-        assertion = !(config.virtualisation.podman.enable or false);
-        message = "KRITISCHER FEHLER [POLICY]: Podman ist verboten. Keine OCI-Container auf diesem Server.";
+        assertion = (config.virtualisation.oci-containers.containers == {}) || (config.virtualisation.oci-containers.backend == "podman");
+        message = "KRITISCHER FEHLER [POLICY]: OCI-Container müssen zwingend über Podman laufen!";
       }
       {
         assertion = !(config ? deployment);
