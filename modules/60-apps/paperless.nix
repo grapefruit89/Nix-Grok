@@ -5,7 +5,12 @@
   ---
 */
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
