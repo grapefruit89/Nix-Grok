@@ -137,6 +137,17 @@ in
           prefixLength = 8;
         }
       ];
+
+      # ── NTP Zeitserver (Ausfallsicherheit via PTB & Pool) ───────────────
+      networking.timeServers = [
+        "ptbtime1.ptb.de"
+        "ptbtime2.ptb.de"
+        "ptbtime3.ptb.de"
+        "0.de.pool.ntp.org"
+        "1.de.pool.ntp.org"
+        "2.de.pool.ntp.org"
+        "3.de.pool.ntp.org"
+      ];
     }
 
     # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────

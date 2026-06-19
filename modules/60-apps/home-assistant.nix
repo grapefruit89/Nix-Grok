@@ -42,6 +42,8 @@ in
           name = "NixHome";
           unit_system = "metric";
           time_zone = "Europe/Berlin";
+          country = "DE";
+          language = "de";
           external_url = "https://home.${domain}";
           internal_url = "http://localhost:${toString cfgHass.port}";
         };
