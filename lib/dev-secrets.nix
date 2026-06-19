@@ -65,7 +65,8 @@ let
         if isUnset e.value
         then "MANUELL SETZEN"
         else "DEV-PLATZHALTER — vor Production ersetzen";
-    in "  • ${e.label}: ${e.path} (${status})";
+    in
+    "  • ${e.label}: ${e.path} (${status})";
 
   mkWarning = { rolloutStufe, mode }:
     lib.optionalString (mode == "development") ''

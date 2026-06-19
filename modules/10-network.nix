@@ -1,4 +1,3 @@
-
 # ==============================================================================
 # PURPOSE
 # ==============================================================================
@@ -101,7 +100,7 @@ in
   config = lib.mkMerge [
     {
       # Admin Hangar Loopback Alias
-      networking.interfaces.lo.ipv4.addresses = [ { address = "127.0.0.2"; prefixLength = 8; } ];
+      networking.interfaces.lo.ipv4.addresses = [{ address = "127.0.0.2"; prefixLength = 8; }];
     }
 
     # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────
@@ -271,41 +270,47 @@ in
     (lib.mkIf config.my.services.privado-vpn.enable {
 
 
-      networking.wg-quick.interfaces.privado = let
-        ip = pkgs.iproute2;
-        vpnTable = "51820";
-        # Prowlarr 969, SABnzbd 984 â€” nur diese UIDs Ã¼ber privado (Split-Tunnel)
-        vpnUids = [ 969 984 ];
-        uidRules = lib.concatMapStringsSep "\n" (uid:
-          "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
-        ) vpnUids;
-        uidRulesDown = lib.concatMapStringsSep "\n" (uid:
-          "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
-        ) vpnUids;
-      in {
-        autostart = true;
-        address = [ config.my.services.privado-vpn.ipAddress ];
-        dns = config.my.services.privado-vpn.dns;
-        privateKeyFile = config.my.services.privado-vpn.privateKeyFile;
-        table = "off";
+      networking.wg-quick.interfaces.privado =
+        let
+          ip = pkgs.iproute2;
+          vpnTable = "51820";
+          # Prowlarr 969, SABnzbd 984 â€” nur diese UIDs Ã¼ber privado (Split-Tunnel)
+          vpnUids = [ 969 984 ];
+          uidRules = lib.concatMapStringsSep "\n"
+            (uid:
+              "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
+            )
+            vpnUids;
+          uidRulesDown = lib.concatMapStringsSep "\n"
+            (uid:
+              "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
+            )
+            vpnUids;
+        in
+        {
+          autostart = true;
+          address = [ config.my.services.privado-vpn.ipAddress ];
+          dns = config.my.services.privado-vpn.dns;
+          privateKeyFile = config.my.services.privado-vpn.privateKeyFile;
+          table = "off";
 
-        postUp = ''
-          ${ip}/bin/ip route add default dev privado table ${vpnTable}
-          ${uidRules}
-        '';
-        preDown = ''
-          ${uidRulesDown}
-          ${ip}/bin/ip route flush table ${vpnTable} || true
-          ${pkgs.openresolv}/bin/resolvconf -d privado 2>/dev/null || true
-        '';
+          postUp = ''
+            ${ip}/bin/ip route add default dev privado table ${vpnTable}
+            ${uidRules}
+          '';
+          preDown = ''
+            ${uidRulesDown}
+            ${ip}/bin/ip route flush table ${vpnTable} || true
+            ${pkgs.openresolv}/bin/resolvconf -d privado 2>/dev/null || true
+          '';
 
-        peers = [{
-          publicKey = config.my.services.privado-vpn.publicKey;
-          endpoint = config.my.services.privado-vpn.endpoint;
-          allowedIPs = [ "0.0.0.0/0" ];
-          persistentKeepalive = 25;
-        }];
-      };
+          peers = [{
+            publicKey = config.my.services.privado-vpn.publicKey;
+            endpoint = config.my.services.privado-vpn.endpoint;
+            allowedIPs = [ "0.0.0.0/0" ];
+            persistentKeepalive = 25;
+          }];
+        };
 
 
     })
@@ -384,7 +389,7 @@ in
       services.caddy.extraConfig = lib.mkIf config.services.caddy.enable (
         lib.mkBefore caddySnippets.extraConfig
       );
-      
+
       services.caddy.globalConfig = lib.mkIf config.services.caddy.enable ''
         admin "unix//run/caddy-admin.sock"
       '';

@@ -11,8 +11,11 @@ in
 
   config = lib.mkIf cfg.enable {
     systemd.tmpfiles.rules = [
-      "d "" 0755 root root -"
-      "d "/config" 0755 root root -"
+      "d "
+      " 0755 root root -"
+      "d "
+      /config
+      " 0755 root root -"
     ];
 
     systemd.services.recyclarr-sync = {

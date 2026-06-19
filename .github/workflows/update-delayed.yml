@@ -1,0 +1,35 @@
+name: 7-Day Delayed Flake Update
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-flake:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fetch 7-day old commit from nixos-unstable
+        id: fetch-commit
+        run: |
+          TARGET_DATE=$(date -d "7 days ago" --utc +%Y-%m-%dT%H:%M:%SZ)
+          COMMIT_HASH=$(curl -s "https://api.github.com/repos/NixOS/nixpkgs/commits?sha=nixos-unstable&until=$TARGET_DATE&per_page=1" | jq -r '.[0].sha')
+          echo "commit=$COMMIT_HASH" >> $GITHUB_OUTPUT
+      - name: Update flake.lock with delayed commit
+        run: |
+          nix flake lock --update-input nixpkgs --override-input nixpkgs "github:NixOS/nixpkgs/${{ steps.fetch-commit.outputs.commit }}"
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): update nixpkgs to 7-day delayed commit"
+          title: "chore(deps): 7-Day Delayed Nixpkgs Update"
+          branch: "auto-update/nixpkgs-delayed"
+          delete-branch: true

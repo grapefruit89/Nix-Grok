@@ -37,7 +37,7 @@ in
         # WebSockets fÃ¼r sofortiges Live-Sync auf GerÃ¤ten
         WEBSOCKET_ENABLED = true;
         WEBSOCKET_ADDRESS = "127.0.0.2";
-        WEBSOCKET_PORT = portVaultwarden + 1; 
+        WEBSOCKET_PORT = portVaultwarden + 1;
 
         LOG_LEVEL = "warn";
         EXTENDED_LOGGING = true;

@@ -5,10 +5,10 @@ let
   upstream = host: port: "${host}:${toString port}";
 
   mkProxy =
-    {
-      port,
-      host ? "127.0.0.1",
-      imports ? [ ],
+    { port
+    , host ? "127.0.0.1"
+    , imports ? [ ]
+    ,
     }:
     lib.concatStringsSep "\n" (
       map (snippet: "import ${snippet}") imports

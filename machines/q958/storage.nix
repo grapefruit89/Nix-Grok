@@ -40,21 +40,21 @@ in
 
   # Einmal-Migration: BOOT/NIXHOME_PERSIST → NIXBOOT/NIXPERSIST
   system.activationScripts.relabelTierALabels = lib.stringAfter [ "specialfs" ] ''
-      boot_dev="${s.tierA.device}1"
-      persist_dev="${s.tierA.device}2"
-      if [ -b "$boot_dev" ]; then
-        boot_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$boot_dev" 2>/dev/null || true)
-        if [ "$boot_label" = "BOOT" ]; then
-          echo "relabelTierALabels: BOOT → NIXBOOT on $boot_dev"
-          ${pkgs.dosfstools}/bin/fatlabel "$boot_dev" NIXBOOT
-        fi
+    boot_dev="${s.tierA.device}1"
+    persist_dev="${s.tierA.device}2"
+    if [ -b "$boot_dev" ]; then
+      boot_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$boot_dev" 2>/dev/null || true)
+      if [ "$boot_label" = "BOOT" ]; then
+        echo "relabelTierALabels: BOOT → NIXBOOT on $boot_dev"
+        ${pkgs.dosfstools}/bin/fatlabel "$boot_dev" NIXBOOT
       fi
-      if [ -b "$persist_dev" ]; then
-        persist_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$persist_dev" 2>/dev/null || true)
-        if [ "$persist_label" = "NIXHOME_PERSIST" ]; then
-          echo "relabelTierALabels: NIXHOME_PERSIST → NIXPERSIST on $persist_dev"
-          ${pkgs.e2fsprogs}/bin/e2label "$persist_dev" NIXPERSIST
-        fi
+    fi
+    if [ -b "$persist_dev" ]; then
+      persist_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$persist_dev" 2>/dev/null || true)
+      if [ "$persist_label" = "NIXHOME_PERSIST" ]; then
+        echo "relabelTierALabels: NIXHOME_PERSIST → NIXPERSIST on $persist_dev"
+        ${pkgs.e2fsprogs}/bin/e2label "$persist_dev" NIXPERSIST
       fi
+    fi
   '';
 }

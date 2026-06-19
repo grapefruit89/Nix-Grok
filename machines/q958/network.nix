@@ -19,7 +19,9 @@ in
     privado-vpn.privateKeyFile = secretPath "privadoKey";
   };
 
-  networking.firewall.allowedUDPPorts = lib.mkIf (
-    config.my.services.tailscale.enable && !config.my.security.firewall.enable
-  ) (lib.mkForce [ config.my.services.tailscale.port ]);
+  networking.firewall.allowedUDPPorts = lib.mkIf
+    (
+      config.my.services.tailscale.enable && !config.my.security.firewall.enable
+    )
+    (lib.mkForce [ config.my.services.tailscale.port ]);
 }

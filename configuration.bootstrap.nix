@@ -60,7 +60,14 @@ in
   networking.firewall.allowedTCPPorts = [ p.network.sshPort ];
 
   environment.systemPackages = with pkgs; [
-    vim wget curl git htop pciutils usbutils smartmontools
+    vim
+    wget
+    curl
+    git
+    htop
+    pciutils
+    usbutils
+    smartmontools
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];

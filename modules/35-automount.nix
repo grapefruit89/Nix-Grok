@@ -1,4 +1,3 @@
-
 # 35-automount.nix – Label-basiertes Tier-Mounting
 # Regeln:
 #   Tier A/B = SSD only (rotational=0), nie HDD
@@ -10,9 +9,11 @@
 let
   cfg = config.my.services.storage-automount;
   mediaGroup = "media";
-  tierCLabelMatch = lib.concatMapStringsSep " || " (
-    l: "[ \"\$LABEL\" = \"${l}\" ]"
-  ) cfg.tierCLabels;
+  tierCLabelMatch = lib.concatMapStringsSep " || "
+    (
+      l: "[ \"\$LABEL\" = \"${l}\" ]"
+    )
+    cfg.tierCLabels;
 in
 {
   options.my.services.storage-automount = {

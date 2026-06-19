@@ -69,7 +69,7 @@
         message = "KRITISCHER FEHLER [POLICY]: IPv6 ist systemweit verboten (Homelab-Policy).";
       }
       {
-        assertion = config.nixpkgs.overlays == [];
+        assertion = config.nixpkgs.overlays == [ ];
         message = "KRITISCHER FEHLER [POLICY]: Globale nixpkgs.overlays sind verboten. Nutze lokale Package-Inputs zur Vermeidung von Supply-Chain-Risiken und Rebuild-Stürmen.";
       }
     ];

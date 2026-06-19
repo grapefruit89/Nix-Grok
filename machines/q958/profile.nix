@@ -199,45 +199,47 @@ in
     healthcheckUrl = "https://hc-ping.com/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
   };
 
-  kernel = let
-    moduleRoles = {
-      e1000e = "Intel I219-LM Onboard-NIC (eno1)";
-      i915 = "Intel UHD 630 — Jellyfin VA-API";
-      ahci = "SATA-Controller — Tier-A SSD /dev/sda";
-      sd_mod = "SCSI-Disk-Treiber — Systemplatte";
-      libata = "ATA-Library — SATA";
-      scsi_mod = "SCSI-Core";
-      xhci_pci = "USB 3.0 — Tastatur, Install-Stick";
-      usb_storage = "USB-Mass-Storage";
-      usbhid = "USB-HID";
-      hid = "HID-Core";
-      kvm = "KVM-Virtualisierung";
-      kvm_intel = "KVM Intel (i3-9100)";
-      zram = "ZRAM-Swap";
-      mei_me = "Intel ME Interface — Q370 PCH";
-      intel_pch_thermal = "Intel PCH-Thermal — Q370";
+  kernel =
+    let
+      moduleRoles = {
+        e1000e = "Intel I219-LM Onboard-NIC (eno1)";
+        i915 = "Intel UHD 630 — Jellyfin VA-API";
+        ahci = "SATA-Controller — Tier-A SSD /dev/sda";
+        sd_mod = "SCSI-Disk-Treiber — Systemplatte";
+        libata = "ATA-Library — SATA";
+        scsi_mod = "SCSI-Core";
+        xhci_pci = "USB 3.0 — Tastatur, Install-Stick";
+        usb_storage = "USB-Mass-Storage";
+        usbhid = "USB-HID";
+        hid = "HID-Core";
+        kvm = "KVM-Virtualisierung";
+        kvm_intel = "KVM Intel (i3-9100)";
+        zram = "ZRAM-Swap";
+        mei_me = "Intel ME Interface — Q370 PCH";
+        intel_pch_thermal = "Intel PCH-Thermal — Q370";
+      };
+    in
+    {
+      # Zwiebelschale: lib/kernel/* = Schicht A+B, hier nur Schicht C (Host)
+      policy = {
+        mode = "homelab-strict";
+        homelabProfile = "headless-server";
+      };
+
+      inherit moduleRoles;
+      requiredModules = builtins.attrNames moduleRoles;
+
+      requiredInitrdModules = [
+        "xhci_pci"
+        "ahci"
+        "usb_storage"
+        "sd_mod"
+      ];
+
+      # Module außerhalb der Homelab-Whitelist, die dieser Host trotzdem braucht
+      whitelistExtra = [ ];
+
+      # Schicht C — Host-Blacklist (zusätzlich zu A+B)
+      blacklist = { };
     };
-  in {
-    # Zwiebelschale: lib/kernel/* = Schicht A+B, hier nur Schicht C (Host)
-    policy = {
-      mode = "homelab-strict";
-      homelabProfile = "headless-server";
-    };
-
-    inherit moduleRoles;
-    requiredModules = builtins.attrNames moduleRoles;
-
-    requiredInitrdModules = [
-      "xhci_pci"
-      "ahci"
-      "usb_storage"
-      "sd_mod"
-    ];
-
-    # Module außerhalb der Homelab-Whitelist, die dieser Host trotzdem braucht
-    whitelistExtra = [ ];
-
-    # Schicht C — Host-Blacklist (zusätzlich zu A+B)
-    blacklist = { };
-  };
 }

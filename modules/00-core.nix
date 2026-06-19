@@ -1,4 +1,3 @@
-
 # ==============================================================================
 # PURPOSE
 # ==============================================================================
@@ -79,11 +78,11 @@ in
       # 10-network
       valkey = lib.mkOption { type = lib.types.port; default = 1010; description = "Valkey cache port."; };
       pocket-id = lib.mkOption { type = lib.types.port; default = 1020; description = "PocketID port."; };
-      
+
       # 20-security
       ssh = lib.mkOption { type = lib.types.port; default = 22; description = "SSH port (override via machines/<host>/profile.nix)."; };
       caddyAdmin = lib.mkOption { type = lib.types.port; default = 2020; description = "Caddy Admin API port."; };
-      
+
       # 40-observability
       gatus = lib.mkOption { type = lib.types.port; default = 4010; description = "Gatus Web UI port."; };
       loki = lib.mkOption { type = lib.types.port; default = 4020; description = "Loki API port."; };
@@ -139,16 +138,18 @@ in
 
     # ── PORT COLLISION GUARD ──────────────────────────────────────────────────
     {
-      assertions = let
-        portAttrs = config.my.ports;
-        portList = lib.mapAttrsToList (name: value: value) portAttrs;
-        uniquePorts = lib.unique portList;
-      in [
-        {
-          assertion = builtins.length portList == builtins.length uniquePorts;
-          message = "KRITISCHER FEHLER: Port-Kollision im Port-Register (config.my.ports) erkannt! Zwei Apps nutzen denselben Port.";
-        }
-      ];
+      assertions =
+        let
+          portAttrs = config.my.ports;
+          portList = lib.mapAttrsToList (name: value: value) portAttrs;
+          uniquePorts = lib.unique portList;
+        in
+        [
+          {
+            assertion = builtins.length portList == builtins.length uniquePorts;
+            message = "KRITISCHER FEHLER: Port-Kollision im Port-Register (config.my.ports) erkannt! Zwei Apps nutzen denselben Port.";
+          }
+        ];
     }
 
     # ── KERNEL SLIMMING → machines/<host>/kernel-slim.nix
@@ -279,15 +280,19 @@ in
     # ==========================================================================
     # Jeder Dienst ab Port 1024 bekommt automatische seine Port-Nummer als statische UID/GID.
     {
-      users.users = lib.mapAttrs (name: port: {
-        uid = lib.mkIf (port >= 1024) (lib.mkDefault port);
-        group = lib.mkIf (port >= 1024) name;
-        isSystemUser = lib.mkIf (port >= 1024) true;
-      }) config.my.ports;
+      users.users = lib.mapAttrs
+        (name: port: {
+          uid = lib.mkIf (port >= 1024) (lib.mkDefault port);
+          group = lib.mkIf (port >= 1024) name;
+          isSystemUser = lib.mkIf (port >= 1024) true;
+        })
+        config.my.ports;
 
-      users.groups = lib.mapAttrs (name: port: {
-        gid = lib.mkIf (port >= 1024) port;
-      }) config.my.ports;
+      users.groups = lib.mapAttrs
+        (name: port: {
+          gid = lib.mkIf (port >= 1024) port;
+        })
+        config.my.ports;
     }
 
     # ==========================================================================

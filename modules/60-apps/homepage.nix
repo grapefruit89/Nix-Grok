@@ -12,7 +12,7 @@ in
     services.homepage-dashboard = {
       enable = true;
       listenPort = portHomepage;
-      
+
 
       settings = {
         title = "Mäusekino";
