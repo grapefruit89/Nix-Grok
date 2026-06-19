@@ -397,19 +397,15 @@ in
         CPUSchedulingPriority = 99;
       };
       # =====================================================================
-      # DDCLIENT (DDNS für Cloudflare)
+      # Nativer Cloudflare DDNS Service
       # =====================================================================
-      services.ddclient = {
+      services.cloudflare-dyndns = {
         enable = true;
-        usev4 = "web1, web1=https://cloudflare.com/cdn-cgi/trace, web1-skip=ip=";
-        protocol = "cloudflare";
-        zone = "${domain}";
-        username = "token"; # Cloudflare API uses 'token'
-        passwordFile = "/home/moritz/secrets/ddclient.env"; # API Token File
         domains = [ "${domain}" "*.${domain}" ];
+        apiTokenFile = "/home/moritz/secrets/ddclient.env"; # Cloudflare API Token
       };
 
-      systemd.services.ddclient = {
+      systemd.services.cloudflare-dyndns = {
         serviceConfig = {
           OOMScoreAdjust = -1000;
           ProtectSystem = "strict";
@@ -426,6 +422,7 @@ in
     }
   ];
 }
+
 
 
 
