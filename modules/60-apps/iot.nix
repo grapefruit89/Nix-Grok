@@ -18,49 +18,23 @@ in
       };
       users.groups.${cfgHass.group} = { };
 
-      services.home-assistant = {
-        enable = true;
-        configDir = cfgHass.stateDir;
-        inherit (cfgHass) extraComponents;
-        config = {
-          homeassistant = {
-            name = "NixHome";
-            unit_system = "metric";
-            time_zone = "Europe/Berlin";
-            external_url = "https://home.${domain}";
-            internal_url = "http://localhost:${toString cfgHass.port}";
-          };
-          mqtt = {
-            broker = "127.0.0.1";
-            port = config.my.ports.mqtt;
-          };
-          http = {
-            use_x_forwarded_for = true;
-            trusted_proxies = cfgHass.trustedProxies;
-          };
-        };
+      # Containerized Home Assistant (OCI) for full HACS support and Python freedom
+      virtualisation.oci-containers.containers."homeassistant" = {
+        image = "ghcr.io/home-assistant/home-assistant:stable";
+        environment.TZ = "Europe/Berlin";
+        volumes = [
+          "${cfgHass.stateDir}:/config"
+          "/run/postgresql:/run/postgresql" # Mount Postgres socket for Recorder
+        ];
+        extraOptions = [
+          "--network=host" # Required for mDNS/UPnP discovery
+        ];
       };
 
-      systemd.services.home-assistant = {
-        description = lib.mkForce "Home Assistant Core (hardened)";
-        environment.PYTHONPYCACHEPREFIX = "${cfgHass.cacheDir}/pycache";
-        serviceConfig = {
-          LoadCredential = lib.optional (cfgHass.secretFile != null) "HA_SECRET:${toString cfgHass.secretFile}";
-          MemoryMax = "2G";
-          CPUWeight = 70;
-          OOMScoreAdjust = 300;
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          PrivateTmp = true;
-          NoNewPrivileges = true;
-          PrivateDevices = if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then lib.mkForce false else true;
-          DeviceAllow = (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
-            ++ (lib.optional cfgHass.bluetooth "/dev/rfkill rw")
-            ++ [ "/dev/dri/renderD128 rw" ];
-          RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-          SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
-        };
-      };
+      # Hinweis: Die alte deklarative config (mqtt, http) muss nun manuell in der /var/lib/hass/configuration.yaml
+      # vorgenommen werden! Dies beinhaltet auch den Recorder-Block für Postgres:
+      # recorder:
+      #   db_url: postgresql://hass@/homeassistant?host=/run/postgresql
 
       systemd.tmpfiles.rules = [
         "d ${cfgHass.stateDir} 0750 ${cfgHass.user} ${cfgHass.group} -"
@@ -166,4 +140,5 @@ in
     })
   ];
 }
+
 
