@@ -1,4 +1,3 @@
-
 { config, lib, pkgs, ... }:
 
 let
@@ -18,23 +17,53 @@ in
       };
       users.groups.${cfgHass.group} = { };
 
-      # Containerized Home Assistant (OCI) for full HACS support and Python freedom
-      virtualisation.oci-containers.containers."homeassistant" = {
-        image = "ghcr.io/home-assistant/home-assistant:stable";
-        environment.TZ = "Europe/Berlin";
-        volumes = [
-          "${cfgHass.stateDir}:/config"
-          "/run/postgresql:/run/postgresql" # Mount Postgres socket for Recorder
-        ];
-        extraOptions = [
-          "--network=host" # Required for mDNS/UPnP discovery
-        ];
+      # Native NixOS Home Assistant
+      services.home-assistant = {
+        enable = true;
+        configDir = cfgHass.stateDir;
+        inherit (cfgHass) extraComponents;
+        config = {
+          homeassistant = {
+            name = "NixHome";
+            unit_system = "metric";
+            time_zone = "Europe/Berlin";
+            external_url = "https://home.${domain}";
+            internal_url = "http://localhost:${toString cfgHass.port}";
+          };
+          mqtt = {
+            broker = "127.0.0.1";
+            port = config.my.ports.mqtt;
+          };
+          http = {
+            use_x_forwarded_for = true;
+            trusted_proxies = cfgHass.trustedProxies;
+          };
+          recorder = {
+            db_url = "postgresql://hass@/homeassistant?host=/run/postgresql";
+          };
+        };
       };
 
-      # Hinweis: Die alte deklarative config (mqtt, http) muss nun manuell in der /var/lib/hass/configuration.yaml
-      # vorgenommen werden! Dies beinhaltet auch den Recorder-Block für Postgres:
-      # recorder:
-      #   db_url: postgresql://hass@/homeassistant?host=/run/postgresql
+      systemd.services.home-assistant = {
+        description = lib.mkForce "Home Assistant Core (hardened)";
+        environment.PYTHONPYCACHEPREFIX = "${cfgHass.cacheDir}/pycache";
+        serviceConfig = {
+          LoadCredential = lib.optional (cfgHass.secretFile != null) "HA_SECRET:${toString cfgHass.secretFile}";
+          MemoryMax = "2G";
+          CPUWeight = 70;
+          OOMScoreAdjust = 300;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          NoNewPrivileges = true;
+          PrivateDevices = if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then lib.mkForce false else true;
+          DeviceAllow = (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
+            ++ (lib.optional cfgHass.bluetooth "/dev/rfkill rw")
+            ++ [ "/dev/dri/renderD128 rw" ];
+          RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+          SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
+        };
+      };
 
       systemd.tmpfiles.rules = [
         "d ${cfgHass.stateDir} 0750 ${cfgHass.user} ${cfgHass.group} -"
@@ -72,73 +101,45 @@ in
           enable = true;
           inherit (cfgZigbee) dataDir;
           settings = {
-            homeassistant = { enabled = true; };
-            permit_join = false;
             mqtt = {
-              base_topic = "zigbee2mqtt";
               server = "mqtt://127.0.0.1:${toString cfgZigbee.mqttPort}";
               user = "zigbee2mqtt";
+              password = "!${cfgZigbee.secretFile} mosquitto_password";
             };
             serial = {
-              port = cfgZigbee.zigbeeDevice;
-              inherit (cfgZigbee) adapter;
-            };
-            frontend = {
-              port = cfgZigbee.zigbeePort;
-              host = "127.0.0.1";
+              port = cfgZigbee.device;
+              adapter = "zstack";
             };
             advanced = {
-              log_directory = "${cfgZigbee.dataDir}/log";
-              pan_id = 6699;
+              network_key = "!${cfgZigbee.secretFile} network_key";
+              pan_id = 6754;
+              ext_pan_id = [221, 221, 221, 221, 221, 221, 221, 221];
+              homeassistant_legacy_entity_attributes = false;
+              legacy_api = false;
+              legacy_availability_payload = false;
             };
           };
         };
-
-        caddy.virtualHosts."zigbee.${domain}" = {
-          extraConfig = ''
-            import security_headers
-            reverse_proxy 127.0.0.1:${toString cfgZigbee.zigbeePort}
-          '';
-        };
       };
 
-      systemd = {
-        services = {
-          mosquitto.serviceConfig = {
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            NoNewPrivileges = true;
-            ReadWritePaths = [ "/var/lib/mosquitto" ];
-            OOMScoreAdjust = -100;
-          };
-
-          zigbee2mqtt = {
-            after = [ "mosquitto.service" ];
-            wants = [ "mosquitto.service" ];
-            serviceConfig = {
-              ProtectSystem = "strict";
-              ProtectHome = true;
-              PrivateTmp = true;
-              NoNewPrivileges = true;
-              PrivateDevices = lib.mkForce (if (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) then false else true);
-              DeviceAllow = lib.optional (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) "${cfgZigbee.zigbeeDevice} rw";
-              RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-              EnvironmentFile = "/home/moritz/secrets/zigbee2mqtt.env";
-            };
-          };
-        };
-
-        tmpfiles.rules = [
-          "d ${cfgZigbee.dataDir} 0750 zigbee2mqtt mqtt -"
-          "d /var/lib/mosquitto 0750 mosquitto mqtt -"
-        ];
+      systemd.services.zigbee2mqtt.serviceConfig = {
+        LoadCredential = lib.optional (cfgZigbee.secretFile != null) "Z2M_SECRET:${toString cfgZigbee.secretFile}";
+        MemoryMax = "1G";
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ReadWritePaths = [ cfgZigbee.dataDir ];
+        PrivateDevices = if (lib.hasPrefix "/dev/" cfgZigbee.device) then lib.mkForce false else true;
+        DeviceAllow = lib.optional (lib.hasPrefix "/dev/" cfgZigbee.device) "${cfgZigbee.device} rw";
       };
 
-      users.users.zigbee2mqtt.extraGroups = [ "mqtt" "dialout" ];
-      users.users.mosquitto.extraGroups = [ "mqtt" ];
+      services.caddy.virtualHosts."zigbee.${domain}" = {
+        extraConfig = ''
+          import sso_auth
+          reverse_proxy 127.0.0.1:8080
+        '';
+      };
     })
   ];
 }
-
-
