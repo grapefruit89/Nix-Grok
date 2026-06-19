@@ -313,8 +313,8 @@ in
     (lib.mkIf cfgBackup.enable {
       services.restic.backups.tier-a-sovereign = {
         initialize = true;
-        passwordFile = "/var/lib/secrets/restic_password";
-        environmentFile = "/var/lib/secrets/restic_s3_creds";
+        passwordFile = "/home/moritz/secrets/restic_password";
+        environmentFile = "/home/moritz/secrets/restic_s3_creds";
 
         paths = map (path: "${cfgImp.persistMountPoint}${path}") tierA.paths;
 
@@ -430,4 +430,5 @@ in
     )
   ];
 }
+
 

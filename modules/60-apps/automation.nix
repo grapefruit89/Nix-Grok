@@ -17,7 +17,7 @@ in
         inherit (cfgPaperless) dataDir;
         inherit (cfgPaperless) mediaDir;
         inherit (cfgPaperless) consumptionDir;
-        environmentFile = "/var/lib/secrets/paperless.env";
+        environmentFile = "/home/moritz/secrets/paperless.env";
         database.createLocally = true;
       };
 
@@ -91,4 +91,5 @@ in
     })
   ];
 }
+
 

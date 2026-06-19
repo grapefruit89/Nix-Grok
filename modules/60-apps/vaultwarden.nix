@@ -12,7 +12,7 @@ in
     services.vaultwarden = {
       enable = true;
       dbBackend = "sqlite"; # Lokale SQLite DB fÃ¼r minimale externe Latenz
-      environmentFile = "/var/lib/secrets/vaultwarden.env";
+      environmentFile = "/home/moritz/secrets/vaultwarden.env";
 
       config = {
         ROCKET_ADDRESS = "127.0.0.2";
@@ -101,8 +101,9 @@ in
           "/var/log/vaultwarden"
         ];
         PrivateUsers = lib.mkForce false;
-        EnvironmentFile = lib.mkForce "/var/lib/secrets/vaultwarden.env";
+        EnvironmentFile = lib.mkForce "/home/moritz/secrets/vaultwarden.env";
       };
     };
   };
 }
+

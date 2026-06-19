@@ -77,7 +77,7 @@ in
       };
       privateKeyFile = lib.mkOption {
         type = lib.types.str;
-        default = "/var/lib/secrets/privado_private_key";
+        default = "/home/moritz/secrets/privado_private_key";
         description = "WireGuard private key file â€” Pfad aus machines/<host>/profile.nix.";
       };
     };
@@ -237,7 +237,7 @@ in
           Type = "oneshot";
           ExecStart = pkgs.writeShellScript "tailscale-auth" ''
             sleep 2
-            TOKEN_FILE=''${TOKEN_FILE:-/var/lib/secrets/tailscale_token}
+            TOKEN_FILE=''${TOKEN_FILE:-/home/moritz/secrets/tailscale_token}
             if [ ! -f "$TOKEN_FILE" ]; then
               echo "tailscale-autoconnect: kein $TOKEN_FILE â€” manuell: tailscale up"
               exit 0
@@ -399,5 +399,6 @@ in
     }
   ];
 }
+
 
 

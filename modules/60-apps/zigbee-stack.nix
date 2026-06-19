@@ -18,7 +18,7 @@ in
           settings.allow_anonymous = false;
           users = {
             "zigbee2mqtt" = {
-              hashedPasswordFile = "/var/lib/secrets/mosquitto_password";
+              hashedPasswordFile = "/home/moritz/secrets/mosquitto_password";
             };
           };
         }];
@@ -77,7 +77,7 @@ in
             PrivateDevices = lib.mkForce (if (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) then false else true);
             DeviceAllow = lib.optional (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) "${cfgZigbee.zigbeeDevice} rw";
             RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-            EnvironmentFile = "/var/lib/secrets/zigbee2mqtt.env";
+            EnvironmentFile = "/home/moritz/secrets/zigbee2mqtt.env";
           };
         };
       };
@@ -92,3 +92,4 @@ in
     users.users.mosquitto.extraGroups = [ "mqtt" ];
   };
 }
+

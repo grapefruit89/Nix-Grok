@@ -11,7 +11,7 @@ in
     services.linkwarden = {
       enable = true;
       inherit (cfgLinkwarden) port;
-      environmentFile = "/var/lib/secrets/linkwarden.env";
+      environmentFile = "/home/moritz/secrets/linkwarden.env";
       environment = {
         NEXTAUTH_URL = "https://links.${domain}/api/v1/auth";
         HOST = "127.0.0.1";
@@ -42,3 +42,4 @@ in
     };
   };
 }
+

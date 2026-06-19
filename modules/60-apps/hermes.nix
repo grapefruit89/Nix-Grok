@@ -49,9 +49,9 @@ in
           touch /var/lib/hermes/env
           chown hermes:hermes /var/lib/hermes/env
           chmod 0640 /var/lib/hermes/env
-          if [ -f /var/lib/secrets/context7.env ]; then
-            grep -q '^CONTEXT7_API_KEY=' /var/lib/secrets/context7.env 2>/dev/null && \
-              grep '^CONTEXT7_API_KEY=' /var/lib/secrets/context7.env >> /var/lib/hermes/env || true
+          if [ -f /home/moritz/secrets/context7.env ]; then
+            grep -q '^CONTEXT7_API_KEY=' /home/moritz/secrets/context7.env 2>/dev/null && \
+              grep '^CONTEXT7_API_KEY=' /home/moritz/secrets/context7.env >> /var/lib/hermes/env || true
           fi
         '';
       };

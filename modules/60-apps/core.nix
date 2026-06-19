@@ -21,7 +21,7 @@ in
       services.vaultwarden = {
         enable = true;
         dbBackend = "sqlite"; # Lokale SQLite DB für minimale externe Latenz
-        environmentFile = "/var/lib/secrets/vaultwarden.env";
+        environmentFile = "/home/moritz/secrets/vaultwarden.env";
 
         config = {
           ROCKET_ADDRESS = "127.0.0.1";
@@ -98,7 +98,7 @@ in
           "/var/lib/vaultwarden"
           "/var/log/vaultwarden"
         ];
-        EnvironmentFile = lib.mkForce "/var/lib/secrets/vaultwarden.env";
+        EnvironmentFile = lib.mkForce "/home/moritz/secrets/vaultwarden.env";
       };
     })
 
@@ -471,7 +471,7 @@ in
       services.linkwarden = {
         enable = true;
         inherit (cfgLinkwarden) port;
-        environmentFile = "/var/lib/secrets/linkwarden.env";
+        environmentFile = "/home/moritz/secrets/linkwarden.env";
         environment = {
           NEXTAUTH_URL = "https://links.${domain}/api/v1/auth";
         };
@@ -537,3 +537,4 @@ in
     })
   ];
 }
+

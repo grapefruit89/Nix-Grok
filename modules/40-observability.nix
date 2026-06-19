@@ -268,8 +268,8 @@ in
 
       systemd.services.gatus = {
         preStart = lib.mkAfter ''
-          if [ -f /var/lib/secrets/gatus_ssh_key ]; then
-            install -D -m 600 -o gatus -g gatus /var/lib/secrets/gatus_ssh_key /var/lib/gatus/ssh_key
+          if [ -f /home/moritz/secrets/gatus_ssh_key ]; then
+            install -D -m 600 -o gatus -g gatus /home/moritz/secrets/gatus_ssh_key /var/lib/gatus/ssh_key
           fi
         '';
         serviceConfig = {
@@ -463,8 +463,8 @@ in
 
         grafana = {
           preStart = lib.mkAfter ''
-            if [ -f /var/lib/secrets/grafana_secret_key ]; then
-              install -D -m 600 -o grafana -g grafana /var/lib/secrets/grafana_secret_key /var/lib/grafana/secret_key
+            if [ -f /home/moritz/secrets/grafana_secret_key ]; then
+              install -D -m 600 -o grafana -g grafana /home/moritz/secrets/grafana_secret_key /var/lib/grafana/secret_key
             fi
           '';
           serviceConfig = {
@@ -480,7 +480,7 @@ in
             DevicePolicy = "closed";
             CapabilityBoundingSet = "";
             ReadWritePaths = [ "/var/lib/grafana" ];
-            EnvironmentFile = "-/var/lib/secrets/grafana.env";
+            EnvironmentFile = "-/home/moritz/secrets/grafana.env";
           };
         };
       };
@@ -531,7 +531,7 @@ in
       services.crowdsec-firewall-bouncer = {
         enable = true;
         registerBouncer.enable = false;
-        secrets.apiKeyPath = "/var/lib/secrets/crowdsec_bouncer_key";
+        secrets.apiKeyPath = "/home/moritz/secrets/crowdsec_bouncer_key";
         settings = {
           api_url = "http://127.0.0.1:8080/";
           mode = "nftables";
@@ -558,3 +558,4 @@ in
     })
   ];
 }
+
