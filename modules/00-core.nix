@@ -244,7 +244,7 @@ in
       # Automatisches System-Update vom Git-Repository (7-Tage Delay über GitHub Action PRs)
       system.autoUpgrade = {
         enable = true;
-        flake = "github:grapefruit89/Nix-Grok"; # Zieht immer den aktuellsten 'main' Branch
+        flake = "/etc/nixos/Nix-Grok"; # Muss lokal sein, solange profile.local.nix nicht in sops-nix ist!
         dates = "04:00";
         randomizedDelaySec = "45min";
         allowReboot = false; # Server nicht unerwartet neustarten
@@ -301,17 +301,17 @@ in
     {
       users.users = lib.mapAttrs
         (name: port: {
-          uid = lib.mkIf (port >= 1024) (lib.mkDefault port);
-          group = lib.mkIf (port >= 1024) name;
-          isSystemUser = lib.mkIf (port >= 1024) true;
+          uid = lib.mkDefault port;
+          group = name;
+          isSystemUser = true;
         })
-        config.my.ports;
+        (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
 
       users.groups = lib.mapAttrs
         (name: port: {
-          gid = lib.mkIf (port >= 1024) port;
+          gid = port;
         })
-        config.my.ports;
+        (lib.filterAttrs (name: port: port >= 1024) config.my.ports);
     }
 
     # ==========================================================================
