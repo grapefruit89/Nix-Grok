@@ -2,6 +2,7 @@
   description = "NixOS Configuration — Q958 Server + Laptop";
 
   inputs = {
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     impermanence = {
@@ -25,7 +26,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, impermanence, home-manager, hermes-agent, nixos-wsl, ... }:
+  outputs = { self, nixpkgs, nixpkgs-stable, impermanence, home-manager, hermes-agent, nixos-wsl, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -38,7 +39,7 @@
       packages.${system}.grok-cli = grok-cli;
 
       nixosConfigurations = {
-        q958 = nixpkgs.lib.nixosSystem {
+        q958 = nixpkgs-stable.lib.nixosSystem {
           inherit system;
           specialArgs = { inherit self grok-cli; };
           modules = [

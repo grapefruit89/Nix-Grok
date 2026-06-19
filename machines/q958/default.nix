@@ -105,5 +105,12 @@ in
     kernelParams = p.boot.kernelParams;
   };
 
+  assertions = [
+    {
+      assertion = config.system.nixos.release == "26.05";
+      message = "KRITISCHER FEHLER [POLICY]: Server MUST run on NixOS Stable (26.05). Unstable builds are strictly forbidden!";
+    }
+  ];
+
   system.stateVersion = p.system.stateVersion;
 }
