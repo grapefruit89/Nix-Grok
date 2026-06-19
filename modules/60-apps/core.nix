@@ -43,12 +43,9 @@ in
 
           REQUIRE_DEVICE_EMAIL = false;
 
-          # WebSockets für sofortiges Live-Sync auf Geräten
-          WEBSOCKET_ENABLED = true;
-          WEBSOCKET_ADDRESS = "127.0.0.1";
-          WEBSOCKET_PORT = portVaultwarden + 1; # Port 20003
+          ICON_DOWNLOAD_TIMEOUT = 0; # IP-Leakage Schutz
 
-          LOG_LEVEL = "warn";
+          LOG_LEVEL = "info"; # Für Fail2Ban parsing
           EXTENDED_LOGGING = true;
           LOG_FILE = "/var/log/vaultwarden/vaultwarden.log";
           DATA_FOLDER = "/var/lib/vaultwarden";
@@ -60,18 +57,10 @@ in
         "d /var/log/vaultwarden 0750 vaultwarden vaultwarden -"
       ];
 
-      # Caddy Reverse Proxy mit WebSocket Support für Live-Sync
+      # Caddy Reverse Proxy (Websockets laufen nativ auf Hauptport)
       services.caddy.virtualHosts."vault.${domain}" = {
         extraConfig = ''
           import security_headers
-
-          @websocket {
-            header Connection *Upgrade*
-            header Upgrade websocket
-          }
-          handle @websocket {
-            reverse_proxy 127.0.0.1:${toString (portVaultwarden + 1)}
-          }
           reverse_proxy 127.0.0.1:${toString portVaultwarden}
         '';
       };

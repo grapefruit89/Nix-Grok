@@ -338,6 +338,9 @@ in
             vaultwarden = lib.mkIf cfg.appJails.vaultwarden.enable {
               settings = {
                 enabled = true;
+                filter = "vaultwarden";
+                backend = "systemd";
+                journalmatch = "_SYSTEMD_UNIT=vaultwarden.service";
                 inherit (cfg) findtime;
                 inherit (cfg) maxretry;
               };
@@ -365,6 +368,13 @@ in
           [Definition]
           failregex = ^.*"remote_ip":"<ADDR>".*"status":(401|403).*$
           journalmatch = _SYSTEMD_UNIT=caddy.service
+        '';
+
+        environment.etc."fail2ban/filter.d/vaultwarden.conf".text = ''
+          [Definition]
+          failregex = ^.*Invalid password for '.*' from <HOST>.*$
+                      ^.*IP <HOST> blocked.*$
+          journalmatch = _SYSTEMD_UNIT=vaultwarden.service
         '';
       }
     )
