@@ -46,7 +46,7 @@ in
     configs = {
       identity = {
         user = moritz.name;
-        domain = moritz.domain;
+        inherit (moritz) domain;
       };
       hardware = {
         ramGB = p.hardware.ramGB;

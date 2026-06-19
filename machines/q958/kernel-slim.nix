@@ -14,11 +14,11 @@ let
   policyInput = {
     mode = k.policy.mode;
     homelabProfile = k.policy.homelabProfile;
-    requiredModules = k.requiredModules;
-    requiredInitrdModules = k.requiredInitrdModules;
+    inherit (k) requiredModules;
+    inherit (k) requiredInitrdModules;
     hostBlacklist = lib.flatten (lib.attrValues k.blacklist);
-    whitelistExtra = k.whitelistExtra;
-    moduleRoles = k.moduleRoles;
+    inherit (k) whitelistExtra;
+    inherit (k) moduleRoles;
     hostLabel = "q958";
   };
 

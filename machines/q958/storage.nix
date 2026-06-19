@@ -36,9 +36,9 @@ in
   ];
 
   my.services.storage-automount = {
-    singleDisk = s.singleDisk;
+    inherit (s) singleDisk;
     tierADevice = s.tierA.device;
-    systemLabels = s.systemLabels;
+    inherit (s) systemLabels;
     tierBLabel = s.tierB.label;
     tierCLabels = s.tierC.labels;
   };

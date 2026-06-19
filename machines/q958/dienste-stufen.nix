@@ -11,8 +11,8 @@ in
 {
   users.users.${emergency.name} = {
     isNormalUser = true;
-    description = emergency.description;
-    extraGroups = emergency.extraGroups;
+    inherit (emergency) description;
+    inherit (emergency) extraGroups;
     hashedPassword = emergency.passwordHash;
   };
 

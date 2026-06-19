@@ -41,15 +41,15 @@ in
 
   users.users.${emergency.name} = {
     isNormalUser = true;
-    description = emergency.description;
-    extraGroups = emergency.extraGroups;
+    inherit (emergency) description;
+    inherit (emergency) extraGroups;
     hashedPassword = emergency.passwordHash;
   };
 
   users.users.${moritz.name} = {
     isNormalUser = true;
-    description = moritz.description;
-    extraGroups = moritz.extraGroups;
+    inherit (moritz) description;
+    inherit (moritz) extraGroups;
     openssh.authorizedKeys.keys = moritz.authorizedKeys;
   };
 

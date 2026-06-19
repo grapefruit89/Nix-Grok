@@ -149,7 +149,7 @@ in
       environment.persistence."${cfgImp.persistMountPoint}" = {
         hideMounts = true;
         directories = tierA.paths ++ [ journaldPath ];
-        files = tierA.files;
+        inherit (tierA) files;
       };
 
       # Journald persistent storage for forensics

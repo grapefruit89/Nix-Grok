@@ -20,7 +20,7 @@ in
 
   fileSystems."/boot" = {
     device = "/dev/disk/by-label/${boot.label}";
-    fsType = boot.fsType;
+    inherit (boot) fsType;
     options = [
       "fmask=${boot.fmask}"
       "dmask=${boot.dmask}"
@@ -29,7 +29,7 @@ in
 
   fileSystems."/" = {
     device = "/dev/disk/by-label/${persist.label}";
-    fsType = persist.fsType;
+    inherit (persist) fsType;
   };
 
   swapDevices = [ ];

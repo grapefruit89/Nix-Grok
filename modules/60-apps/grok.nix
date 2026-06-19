@@ -13,7 +13,7 @@ let
       cfg.package
     else
       (if grok-cli != null then grok-cli else pkgs.callPackage ../../packages/grok-cli { });
-  user = cfg.user;
+  inherit (cfg) user;
   group = config.users.users.${user}.group or "users";
   stateDir = cfg.stateDirectory;
   binDir = "${stateDir}/bin";
