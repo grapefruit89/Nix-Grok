@@ -30,11 +30,24 @@ in
 
     };
 
-    services.hermes-agent.container.enable = lib.mkIf cfg.containerMode true;
-    services.hermes-agent.container.backend = lib.mkIf cfg.containerMode "docker";
-    services.hermes-agent.container.hostUsers = lib.mkIf cfg.containerMode [ identityUser ];
+    # Strikte Systemd-Sandbox für Hermes-Agent (KISS & Secure)
+    users.users.hermes = {
+      isSystemUser = true;
+      group = "hermes";
+      home = "/var/lib/hermes";
+    };
+    users.groups.hermes = {};
 
-    virtualisation.docker.enable = lib.mkIf cfg.containerMode true;
+    systemd.services.hermes-agent.serviceConfig = {
+      User = lib.mkForce "hermes";
+      Group = lib.mkForce "hermes";
+      CapabilityBoundingSet = "";
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      ReadWritePaths = [ "/var/lib/hermes" ];
+    };
 
     # Secrets für Hermes (API-Keys) — Context7 optional aus /var/lib/secrets
     systemd.services.hermes-env-provision = {

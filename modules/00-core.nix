@@ -54,7 +54,7 @@ in
     configs = {
       identity = {
         user = lib.mkOption { type = lib.types.str; description = "Primary user name (set in users/<name>/profile.nix)."; };
-        domain = lib.mkOption { type = lib.types.str; description = "Primary domain (set in users/<name>/profile.nix)."; };
+        domain = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Primary domain (set in users/<name>/profile.nix)."; };
       };
       locale = {
         default = lib.mkOption { type = lib.types.str; default = "de_DE.UTF-8"; description = "System-wide default locale."; };
@@ -65,8 +65,8 @@ in
         ramGB = lib.mkOption { type = lib.types.int; description = "Installed RAM in GB (set in machines/<host>/profile.nix)."; };
       };
       server = {
-        lanIP = lib.mkOption { type = lib.types.str; description = "Server LAN IP (set in machines/<host>/profile.nix)."; };
-        tailscaleIP = lib.mkOption { type = lib.types.str; description = "Server Tailscale IP (set in machines/<host>/profile.nix)."; };
+        lanIP = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Server LAN IP (set in machines/<host>/profile.nix)."; };
+        tailscaleIP = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; description = "Server Tailscale IP (set in machines/<host>/profile.nix)."; };
       };
       network = {
         dnsDoH = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "https://dns.cloudflare.com/dns-query" ]; description = "List of upstream DNS DoH endpoints."; };
