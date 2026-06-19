@@ -10,6 +10,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -26,7 +31,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, impermanence, home-manager, hermes-agent, nixos-wsl, ... }:
+  outputs = { self, nixpkgs, nixpkgs-stable, impermanence, sops-nix, home-manager, hermes-agent, nixos-wsl, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -36,6 +41,7 @@
       grok-cli = pkgs.callPackage ./packages/grok-cli { };
     in
     {
+      formatter.${system} = pkgs.nixfmt-rfc-style;
       packages.${system}.grok-cli = grok-cli;
 
       nixosConfigurations = {
@@ -46,6 +52,7 @@
             { nixpkgs.config.allowUnfree = true; }
             ./machines/q958/default.nix
             impermanence.nixosModules.impermanence
+            sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
             hermes-agent.nixosModules.default
           ];

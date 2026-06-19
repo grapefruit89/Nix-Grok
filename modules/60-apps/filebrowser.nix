@@ -1,3 +1,10 @@
+/*
+---
+id: filebrowser
+upstream_repo: "filebrowser/filebrowser"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -42,3 +49,4 @@ in
     };
   };
 }
+

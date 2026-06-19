@@ -1,3 +1,10 @@
+/*
+---
+id: linkwarden
+upstream_repo: "linkwarden/linkwarden"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -42,4 +49,5 @@ in
     };
   };
 }
+
 

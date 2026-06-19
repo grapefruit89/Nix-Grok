@@ -1,3 +1,10 @@
+/*
+---
+id: recyclarr
+upstream_repo: "recyclarr/recyclarr"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -51,3 +58,4 @@ in
     };
   };
 }
+

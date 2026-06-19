@@ -1,3 +1,10 @@
+/*
+---
+id: sabnzbd
+upstream_repo: "sabnzbd/sabnzbd"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -9,6 +16,11 @@ let
     inherit lib;
     privadoEnabled = config.my.services.privado-vpn.enable or false;
   };
+
+  netnsName = "sabnzbd-vpn";
+  wgIface = "wg0";
+  hostVethIp = "10.100.100.1";
+  nsVethIp   = "10.100.100.2";
 
 in
 {
@@ -38,9 +50,45 @@ in
       };
     };
 
+    systemd.services."netns-${netnsName}" = {
+      description = "SABnzbd WireGuard Network Namespace (Kill-Switch)";
+      before = [ "sabnzbd.service" ];
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        set -e
+        export PATH=${pkgs.iproute2}/bin:${pkgs.wireguard-tools}/bin:$PATH
+        ip netns del ${netnsName} 2>/dev/null || true
+        ip netns add ${netnsName}
+        ip -n ${netnsName} link set lo up
+        ip link add veth-sab-host type veth peer name veth-sab-ns
+        ip link set veth-sab-ns netns ${netnsName}
+        ip addr add ${hostVethIp}/24 dev veth-sab-host
+        ip link set veth-sab-host up
+        ip -n ${netnsName} addr add ${nsVethIp}/24 dev veth-sab-ns
+        ip -n ${netnsName} link set veth-sab-ns up
+        
+        # Move Wireguard interface if it exists
+        if ip link show ${wgIface} >/dev/null 2>&1; then
+          ip link set ${wgIface} netns ${netnsName}
+        fi
+      '';
+      preStop = ''
+        export PATH=${pkgs.iproute2}/bin:$PATH
+        ip link del veth-sab-host || true
+        ip netns del ${netnsName} || true
+      '';
+    };
+
     systemd.services.sabnzbd = lib.mkMerge [
-      vpnKillSwitch
       {
+        bindsTo = [ "netns-${netnsName}.service" ];
+        after = [ "netns-${netnsName}.service" ];
         preStart = lib.mkBefore ''
           if [ -f /data/state/sabnzbd/sabnzbd.ini ] && \
              [ "$(grep -c "^\[servers\]" /data/state/sabnzbd/sabnzbd.ini 2>/dev/null || echo 0)" -gt 1 ]; then
@@ -54,6 +102,7 @@ in
           fi
         '';
         serviceConfig = {
+          NetworkNamespacePath = "/var/run/netns/${netnsName}";
           MemoryMax = "4G";
           OOMScoreAdjust = 500;
           ProtectSystem = lib.mkForce "strict";
@@ -73,9 +122,14 @@ in
       }
     ];
 
+    # Proxy via the veth pair into the namespace
     services.caddy.virtualHosts."sabnzbd.${domain}" = {
-      extraConfig = caddy.proxyTailscaleSso portSabnzbd;
+      extraConfig = ''
+        import sso_auth
+        reverse_proxy ${nsVethIp}:${toString portSabnzbd}
+      '';
     };
   };
 }
+
 

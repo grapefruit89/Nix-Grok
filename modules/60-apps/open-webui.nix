@@ -1,3 +1,10 @@
+/*
+---
+id: open-webui
+upstream_repo: "open-webui/open-webui"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -36,3 +43,4 @@ in
     };
   };
 }
+

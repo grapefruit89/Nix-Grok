@@ -1,3 +1,10 @@
+/*
+---
+id: vaultwarden
+upstream_repo: "dani-garcia/vaultwarden"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -108,4 +115,5 @@ in
     };
   };
 }
+
 

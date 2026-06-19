@@ -19,6 +19,11 @@ in
             ensureDBOwnership = true;
           }
         ];
+        settings = {
+          fsync = "on";
+          full_page_writes = "on";
+          wal_sync_method = "fdatasync";
+        };
       };
 
       systemd.services.postgresql.serviceConfig = {

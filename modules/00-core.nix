@@ -97,6 +97,7 @@ in
       prowlarr = lib.mkOption { type = lib.types.port; default = 5060; description = "Prowlarr port."; };
       sabnzbd = lib.mkOption { type = lib.types.port; default = 5070; description = "SABnzbd port."; };
       audiobookshelf = lib.mkOption { type = lib.types.port; default = 5080; description = "Audiobookshelf port."; };
+      navidrome = lib.mkOption { type = lib.types.port; default = 5100; description = "Navidrome port."; };
 
       # 60-apps
       vaultwarden = lib.mkOption { type = lib.types.port; default = 6010; description = "Vaultwarden port."; };
@@ -244,6 +245,8 @@ in
         nix-diff
         nix-output-monitor
         nix-du
+        nh
+        statix
       ];
 
       # Automatischer 0-Day Autopilot mit Rollback-Watchdog

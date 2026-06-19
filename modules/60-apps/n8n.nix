@@ -1,3 +1,10 @@
+/*
+---
+id: n8n
+upstream_repo: "n8n-io/n8n"
+---
+*/
+
 { config, lib, ... }:
 
 let
@@ -38,3 +45,4 @@ in
     };
   };
 }
+

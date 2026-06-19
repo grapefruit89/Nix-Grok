@@ -1,3 +1,10 @@
+/*
+---
+id: audiobookshelf
+upstream_repo: "advplyr/audiobookshelf"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -48,3 +55,4 @@ in
     })
   ];
 }
+

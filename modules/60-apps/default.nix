@@ -20,6 +20,7 @@ in
     ./hermes.nix
     ./vaultwarden.nix
     ./homepage.nix
+    ./matrix-tuwunel.nix
     ./stealth-landing.nix
     ./filebrowser.nix
     ./linkwarden.nix

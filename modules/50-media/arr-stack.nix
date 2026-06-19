@@ -1,3 +1,10 @@
+/*
+---
+id: arr-stack
+upstream_repo: "Sonarr/Sonarr"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -48,6 +55,7 @@ in
     }))
   ];
 }
+
 
 
 

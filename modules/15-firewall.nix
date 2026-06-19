@@ -37,8 +37,9 @@ in
     # ── ENABLE NATIVE NFTABLES ────────────────────────────────────────────────
     networking.nftables = {
       enable = true;
-      ruleset = ''
-        table inet filter {
+      tables."filter" = {
+        family = "inet";
+        content = lib.mkBefore ''
           # Dynamic set to store blocked Geo-IP ranges (subnets/CIDR require flags interval)
           set geoip_blocked {
             type ipv4_addr
@@ -68,6 +69,9 @@ in
             flags dynamic, timeout
             timeout 1m
           }
+
+          # Base empty chain for apps to attach to
+          chain app_input {}
 
           chain input {
             type filter hook input priority filter; policy drop;
@@ -109,6 +113,9 @@ in
             tcp dport { ${lib.concatStringsSep ", " (map toString sshPorts)} } ct state new update @ssh_meter { ip saddr limit rate over 10/minute } drop
             tcp dport { ${lib.concatStringsSep ", " (map toString sshPorts)} } accept
 
+            # === THE DENDRITIC JUMP ===
+            jump app_input
+
             # 10. Log all other dropped packets (rate limited)
             limit rate 5/second log prefix "nftables-dropped: "
           }
@@ -122,8 +129,8 @@ in
           chain output {
             type filter hook output priority filter; policy accept;
           }
-        }
-      '';
+        '';
+      };
     };
 
     # ── GEO-IP AUTOMATED WEEKLY DOWNLOAD ──────────────────────────────────────

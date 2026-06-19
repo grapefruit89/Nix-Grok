@@ -1,3 +1,10 @@
+/*
+---
+id: 70-forge
+upstream_repo: "forgejo/forgejo"
+---
+*/
+
 # ==============================================================================
 # PURPOSE
 # ==============================================================================
@@ -11,6 +18,7 @@ let
   cfgForgejo = config.my.services.forgejo;
   cfgSemaphore = config.my.services.semaphore;
   cfgCockpit = config.my.services.cockpit;
+  cfgMdBook = config.my.services.mdbook;
   domain = config.my.configs.identity.domain;
 
 in
@@ -23,6 +31,11 @@ in
       enable = lib.mkEnableOption "Forgejo self-hosted Git service";
       port = lib.mkOption { type = lib.types.port; default = config.my.ports.forgejo; description = "Forgejo HTTP port."; };
       disableRegistration = lib.mkOption { type = lib.types.bool; default = true; description = "Disable public user registration."; };
+    };
+
+    mdbook = {
+      enable = lib.mkEnableOption "mdBook SSoT Interactive Docs";
+      port = lib.mkOption { type = lib.types.port; default = 6200; description = "mdBook HTTP port."; };
     };
 
     semaphore = {
@@ -85,6 +98,32 @@ in
         extraConfig = ''
           import security_headers
           reverse_proxy 127.0.0.1:${toString cfgForgejo.port}
+        '';
+      };
+    })
+
+    # ── MDBOOK INTERACTIVE DOCS ───────────────────────────────────────────────
+    (lib.mkIf cfgMdBook.enable {
+      systemd.services.mdbook-docs = {
+        description = "mdBook SSoT Interactive Docs Server";
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          # Serve from persistent source or tmpfs rendering directory
+          ExecStart = "${pkgs.mdbook}/bin/mdbook serve /data/state/mdbook -p ${toString cfgMdBook.port} -n 127.0.0.1";
+          Restart = "always";
+          User = "nobody";
+          DynamicUser = true;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+        };
+      };
+
+      services.caddy.virtualHosts."docs.${domain}" = {
+        extraConfig = ''
+          import sso_auth
+          reverse_proxy 127.0.0.1:${toString cfgMdBook.port}
         '';
       };
     })
@@ -161,3 +200,4 @@ in
     })
   ];
 }
+

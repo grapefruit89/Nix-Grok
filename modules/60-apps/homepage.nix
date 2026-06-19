@@ -1,3 +1,10 @@
+/*
+---
+id: homepage
+upstream_repo: "gethomepage/homepage"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -338,4 +345,5 @@ in
     systemd.services.homepage-dashboard.serviceConfig.OOMScoreAdjust = 500;
   };
 }
+
 

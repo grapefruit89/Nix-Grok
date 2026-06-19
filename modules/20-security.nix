@@ -139,6 +139,14 @@ in
   # CONFIG
   # ============================================================================
   config = lib.mkMerge [
+    # ── SOPS-NIX SECRETS INJECTION ────────────────────────────────────────────
+    {
+      sops = {
+        defaultSopsFile = ../secrets/secrets.yaml;
+        age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+      };
+    }
+
     # ── SOVEREIGN UNLOCK CASCADE ──────────────────────────────────────────────
     (lib.mkIf cfgUnlock.enable {
       boot = {
@@ -168,9 +176,8 @@ in
               inherit (cfgUnlock) authorizedKeys;
               hostKeys = [ cfgUnlock.hostKey ];
               shell = "${pkgs.writeShellScript "initrd-unlock-shell" ''
-                echo "NMS v4.2 - Remote initrd Unlock Shell"
-                echo "Unlock command: systemd-tty-ask-password-agent"
-                exec ${pkgs.bashInteractive}/bin/bash
+                echo "NMS v4.2 - Remote initrd Auto-Unlock"
+                exec systemd-tty-ask-password-agent
               ''}";
             };
           };

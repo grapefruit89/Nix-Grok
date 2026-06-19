@@ -1,3 +1,10 @@
+/*
+---
+id: home-assistant
+upstream_repo: "home-assistant/core"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -73,3 +80,4 @@ in
     };
   };
 }
+

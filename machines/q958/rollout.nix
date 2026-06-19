@@ -67,6 +67,8 @@ in
     readarr.enable = erstAb 6;
     prowlarr.enable = erstAb 6;
     sabnzbd.enable = erstAb 6;
+    audiobookshelf.enable = erstAb 6;
+    navidrome.enable = erstAb 6;
 
     vaultwarden.enable = erstAb 7;
     homepage.enable = erstAb 7;

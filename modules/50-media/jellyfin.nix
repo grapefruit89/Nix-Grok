@@ -1,3 +1,10 @@
+/*
+---
+id: jellyfin
+upstream_repo: "jellyfin/jellyfin"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -147,4 +154,5 @@ in
     })
   ];
 }
+
 

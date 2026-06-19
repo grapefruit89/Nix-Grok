@@ -99,9 +99,28 @@ in
             "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) steht in kernel.blacklist — für diese Hardware verboten.";
         })
         requiredModules;
+
+      explicitFilesystemAssertions = [
+        {
+          assertion = !(lib.elem "vfat" safeBlacklist);
+          message = "CRITICAL: 'vfat' (FAT32) darf niemals geblacklistet werden! Das Mainboard (UEFI) benötigt es zwingend für /boot.";
+        }
+        {
+          assertion = !(lib.elem "ntfs3" safeBlacklist);
+          message = "POLICY: 'ntfs3' (und exfat) auf Whitelist, damit Windows-USB-Sticks weiterhin erkannt werden.";
+        }
+        {
+          assertion = lib.elem "btrfs" safeBlacklist;
+          message = "POLICY-REJECTION: 'btrfs' ist strengstens verboten. Grund: Verursacht Fragmentierung bei Datenbanken und RAID5/6 ist instabil. Wir nutzen ext4 + MergerFS.";
+        }
+        {
+          assertion = lib.elem "zfs" safeBlacklist;
+          message = "POLICY-REJECTION: 'zfs' ist verboten. Grund: Overkill für Heimanwender, extrem RAM-hungrig, unflexibel beim Erweitern.";
+        }
+      ];
     in
     {
       inherit safeBlacklist allowedModules rawBlacklist;
-      assertions = blacklistAssertions ++ whitelistAssertions ++ hostBlacklistAssertions;
+      assertions = blacklistAssertions ++ whitelistAssertions ++ hostBlacklistAssertions ++ explicitFilesystemAssertions;
     };
 }

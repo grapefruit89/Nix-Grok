@@ -134,37 +134,12 @@ in
           fsType = "ext4";
           neededForBoot = true;
         };
-      } // lib.listToAttrs (
-        map
-          (path: {
-            name = path;
-            value = {
-              device = "${cfgImp.persistMountPoint}${path}";
-              fsType = "none";
-              options = [ "bind" ];
-              depends = [ cfgImp.persistMountPoint ];
-            };
-          })
-          tierA.paths
-      ) // lib.listToAttrs (
-        map
-          (file: {
-            name = file;
-            value = {
-              device = "${cfgImp.persistMountPoint}${file}";
-              fsType = "none";
-              options = [ "bind" ];
-              depends = [ cfgImp.persistMountPoint ];
-            };
-          })
-          tierA.files
-      ) // {
-        "${journaldPath}" = {
-          device = "${cfgImp.persistMountPoint}${journaldPath}";
-          fsType = "none";
-          options = [ "bind" ];
-          depends = [ cfgImp.persistMountPoint ];
-        };
+      };
+
+      environment.persistence."${cfgImp.persistMountPoint}" = {
+        hideMounts = true;
+        directories = tierA.paths ++ [ journaldPath ];
+        files = tierA.files;
       };
 
       # Journald persistent storage for forensics
@@ -212,7 +187,7 @@ in
             "category.create=epmfs"
             "minfreespace=50G"
             "dropcacheonclose=true"
-            "branches=/mnt/tier-c/*"
+            "branches=/mnt/tier-b/*:/mnt/tier-c/*"
           ];
         };
 
@@ -362,6 +337,7 @@ in
               # Perform the atomic, verified local-to-local move via rclone
               echo "Starting local file migration from ${cfgMover.sourceDir} to ${cfgMover.targetDir}..."
               ${pkgs.rclone}/bin/rclone move "${cfgMover.sourceDir}" "${cfgMover.targetDir}" \
+                --order-by "modtime,asc" \
                 --min-age "${cfgMover.minAge}" \
                 --min-size 1G \
                 --delete-empty-src-dirs \

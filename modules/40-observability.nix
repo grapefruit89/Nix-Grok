@@ -19,6 +19,10 @@ in
   # ============================================================================
   # OPTIONS
   # ============================================================================
+  imports = [
+    ./40-observability/abandonware-monitor.nix
+  ];
+
   options.my = {
     services.gatus = {
       enable = lib.mkEnableOption "Gatus status and health monitoring dashboard";
@@ -57,6 +61,15 @@ in
   # CONFIG
   # ============================================================================
   config = lib.mkMerge [
+    {
+      sops.secrets."gatus/ssh_key" = {
+        owner = "gatus";
+        group = "gatus";
+        mode = "0400";
+        restartUnits = [ "gatus.service" ];
+      };
+    }
+    
     # ─── SECTION 1: GATUS MONITORING ──────────────────────────────────────────
     (lib.mkIf cfgGatus.enable {
 

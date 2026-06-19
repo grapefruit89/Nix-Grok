@@ -1,3 +1,10 @@
+/*
+---
+id: zigbee-stack
+upstream_repo: "Koenkk/zigbee2mqtt"
+---
+*/
+
 { config, lib, pkgs, ... }:
 
 let
@@ -93,4 +100,5 @@ in
     users.users.mosquitto.extraGroups = [ "mqtt" ];
   };
 }
+
 

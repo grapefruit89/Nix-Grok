@@ -129,6 +129,8 @@ let
           -webkit-backdrop-filter: blur(24px);
           box-shadow: 0 8px 32px var(--shadow-color), inset 0 1px 0 oklch(100% 0 0 / 0.1);
           transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          text-decoration: none;
+          color: inherit;
           
           &:hover {
             background: var(--card-bg-hover);
@@ -166,44 +168,50 @@ let
       </div>
 
       <div class="dashboard">
-        <!-- Jellyfin -->
+        <!-- App 1 -->
         <div class="card-wrapper">
-          <div class="card" aria-label="Jellyfin" data-route="aHR0cHM6Ly9qZWxseWZpbi5tN2M1LmRl">
+          <div class="card" data-id="1">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
           </div>
         </div>
         
-        <!-- Jellyseerr -->
+        <!-- App 2 -->
         <div class="card-wrapper">
-          <div class="card" aria-label="Jellyseerr" data-route="aHR0cHM6Ly9zZWVyci5tN2M1LmRl">
+          <div class="card" data-id="2">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
           </div>
         </div>
 
-        <!-- Audiobookshelf -->
+        <!-- App 3 -->
         <div class="card-wrapper">
-          <div class="card" aria-label="Audiobookshelf" data-route="aHR0cHM6Ly9hdWRpb2Jvb2tzaGVsZi5tN2M1LmRl">
+          <div class="card" data-id="3">
             <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
           </div>
         </div>
 
-        <!-- Navidrome -->
+        <!-- App 4 -->
         <div class="card-wrapper">
-          <div class="card" aria-label="Navidrome" data-route="aHR0cHM6Ly9uYXZpZHJvbWUubTdjNS5kZQ==">
+          <div class="card" data-id="4">
             <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7c0-4.97-4.03-9-9-9z"/></svg>
           </div>
         </div>
       </div>
 
       <script type="module">
-        // Modern event delegation for routing
         document.body.addEventListener('click', (e) => {
-          const target = e.target.closest('.card[data-route]');
-          if (target) {
-            window.location.assign(atob(target.dataset.route));
+          if (!e.isTrusted) return;
+          const card = e.target.closest('.card[data-id]');
+          if (card) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/go/' + card.dataset.id;
+            document.body.appendChild(form);
+            form.submit();
           }
         });
       </script>
+
+
     </body>
     </html>
   '';
@@ -233,9 +241,28 @@ in
           respond 403 { close }
         }
 
-        # Catch-All Drop: Only allow root path
+        # Stealth POST Routing
+        @go_post {
+          method POST
+          path /go/*
+        }
+        handle @go_post {
+          @app1 path /go/1
+          redir @app1 https://jellyfin.''${domain} 303
+          
+          @app2 path /go/2
+          redir @app2 https://seer.''${domain} 303
+          
+          @app3 path /go/3
+          redir @app3 https://audiobookshelf.''${domain} 303
+          
+          @app4 path /go/4
+          redir @app4 https://navidrome.''${domain} 303
+        }
+
+        # Catch-All Drop: Only allow root path and /go/*
         @notroot {
-          not path /
+          not path / /go/*
         }
         handle @notroot {
           respond 403 { close }

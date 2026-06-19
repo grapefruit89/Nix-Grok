@@ -7,6 +7,7 @@
     ./sabnzbd.nix
     ./audiobookshelf.nix
     ./sync.nix
+    ./navidrome.nix
   ];
 
   # Centralized options declaration for domain 50
@@ -19,5 +20,6 @@
     prowlarr.enable = lib.mkEnableOption "Prowlarr Indexer Proxy";
     sabnzbd.enable = lib.mkEnableOption "SABnzbd Usenet Downloader";
     audiobookshelf.enable = lib.mkEnableOption "Audiobookshelf Server";
+    navidrome.enable = lib.mkEnableOption "Navidrome Music Server";
   };
 }
