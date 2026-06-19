@@ -9,8 +9,6 @@
     # --- HARTE DEAKTIVIERUNGEN ---
     # Diese Dienste werden systemweit erzwungen deaktiviert.
     services.xserver.enable = lib.mkForce false;
-    sound.enable = lib.mkForce false;
-    hardware.pulseaudio.enable = lib.mkForce false;
     networking.networkmanager.enable = lib.mkForce false;
 
     # IPv6 Bann (Homelab Area)
@@ -23,8 +21,7 @@
     hardware.bluetooth.enable = lib.mkForce false;
     networking.wireless.enable = lib.mkForce false; # wpa_supplicant
 
-    # --- KERNEL & PROCESS SECURITY ---
-    security.hideProcessInformation = true;
+
 
     # --- COMPILER ASSERTIONS (DER TÜRSTEHER) ---
     assertions = [

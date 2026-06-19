@@ -246,14 +246,38 @@ in
         nix-du
       ];
 
-      # Automatisches System-Update vom Git-Repository (7-Tage Delay über GitHub Action PRs)
+      # Automatischer 0-Day Autopilot mit Rollback-Watchdog
       system.autoUpgrade = {
         enable = true;
-        flake = "/etc/nixos/Nix-Grok"; # Muss lokal sein, solange profile.local.nix nicht in sops-nix ist!
+        flake = "/etc/nixos/Nix-Grok";
+        flags = [ "--update-input" "nixpkgs-stable" "--commit-lock-file" ];
         dates = "04:00";
         randomizedDelaySec = "45min";
-        allowReboot = false; # Server nicht unerwartet neustarten
+        allowReboot = false;
       };
+
+      systemd.services.nixos-upgrade.postStart = ''
+        echo "Warte 30 Sekunden auf das Hochfahren der Dienste nach dem Upgrade..."
+        sleep 30
+        
+        CRITICAL_SERVICES="caddy.service postgresql.service valkey.service blocky.service"
+        ROLLBACK_NEEDED=0
+
+        for s in $CRITICAL_SERVICES; do
+          if ! /run/current-system/sw/bin/systemctl is-active --quiet $s; then
+            echo "🚨 KRITISCHER FEHLER: Dienst $s ist nach dem Update abgestürzt!"
+            ROLLBACK_NEEDED=1
+          fi
+        done
+
+        if [ $ROLLBACK_NEEDED -eq 1 ]; then
+          echo "🔄 Initiiere sofortigen ROLLBACK auf die vorherige Generation..."
+          /run/current-system/sw/bin/nixos-rebuild switch --rollback
+          echo "Rollback abgeschlossen. Das fehlerhafte Update wurde isoliert."
+        else
+          echo "✅ Update erfolgreich! Alle kritischen Dienste laufen stabil."
+        fi
+      '';
 
       services.fwupd.enable = true;
     })
@@ -333,4 +357,5 @@ in
     }
   ];
 }
+
 

@@ -26,10 +26,6 @@ in
   boot.loader.systemd-boot.sortKey = lib.mkIf (stufe < 9) (lib.mkForce p.boot.sortKey);
   system.stateVersion = lib.mkForce p.system.stateVersion;
 
-  my.mode =
-    if stufe >= 9 then lib.mkForce "production"
-    else lib.mkForce "development";
-
   my.core = {
     boot-safeguard.enable = erstAb 1;
     kernel-slim.enable = erstAb 1;
@@ -40,7 +36,6 @@ in
   my.security = {
     sovereign-unlock.enable =
       if p.storage.luks.device == "" then lib.mkForce false else erstAb 8;
-    firewall.enable = erstAb 8;
     crowdsec.enable = erstAb 8;
     fail2ban.enable = erstAb 8;
     dropbear-rescue.enable = erstAb 8;
