@@ -225,7 +225,7 @@ in
         # DNS bleibt bei Blocky (127.0.0.1) â€” kein Tailscale MagicDNS in resolv.conf
         extraUpFlags = [ "--ssh" "--accept-dns=false" "--accept-routes=true" ];
       };
-      networking.firewall.trustedInterfaces = [ "tailscale0" ];
+            networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 22 80 443 ];
       networking.firewall.checkReversePath = "loose";
 
       systemd.services.tailscale-autoconnect = {
@@ -396,9 +396,39 @@ in
         CPUSchedulingPolicy = "rr";
         CPUSchedulingPriority = 99;
       };
+      # =====================================================================
+      # DDCLIENT (DDNS f�r Cloudflare)
+      # =====================================================================
+      services.ddclient = {
+        enable = true;
+        usev4 = "web1, web1=https://cloudflare.com/cdn-cgi/trace, web1-skip=ip=";
+        protocol = "cloudflare";
+        zone = "${domain}";
+        username = "token"; # Cloudflare API uses 'token'
+        passwordFile = "/home/moritz/secrets/ddclient.env"; # API Token File
+        domains = [ "${domain}" "*.${domain}" ];
+      };
+
+      systemd.services.ddclient = {
+        serviceConfig = {
+          OOMScoreAdjust = -1000;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          ProtectKernelLogs = true;
+          ProtectKernelModules = true;
+          ProtectControlGroups = true;
+          RestrictNamespaces = true;
+          MemoryDenyWriteExecute = true;
+        };
+      };
+
     }
   ];
 }
+
+
+
 
 
 
