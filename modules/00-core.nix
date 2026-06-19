@@ -273,7 +273,7 @@ in
         if [ $ROLLBACK_NEEDED -eq 1 ]; then
           echo "🔄 Initiiere sofortigen ROLLBACK auf die vorherige Generation..."
           /run/current-system/sw/bin/nixos-rebuild switch --rollback
-          echo "Rollback abgeschlossen. Das fehlerhafte Update wurde isoliert."
+          echo "Rollback abgeschlossen. Das fehlerhafte Update wurde isoliert."; curl -d "KRITISCHER FEHLER: Dienst $s abgestuerzt. Rollback durchgefuehrt!" https://ntfy.sh/m7c5-watchdog-x8f9a2
         else
           echo "✅ Update erfolgreich! Alle kritischen Dienste laufen stabil."
         fi
@@ -357,5 +357,6 @@ in
     }
   ];
 }
+
 
 
