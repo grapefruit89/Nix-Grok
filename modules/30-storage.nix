@@ -166,6 +166,15 @@ in
     (lib.mkIf cfgStorage.enable {
       boot.supportedFilesystems = [ "ext4" ];
 
+      assertions = [
+        {
+          assertion = lib.all (mount:
+            mount.fsType != "fuse.mergerfs" || lib.elem "use_ino" mount.options
+          ) (lib.attrValues config.fileSystems);
+          message = "CRITICAL: Alle mergerfs Mounts müssen 'use_ino' in den options haben! Andernfalls gehen Inodes verloren und Hardlinks im Arr-Stack gehen kaputt.";
+        }
+      ];
+
       # HDD Spindown für rotierende Disks nach 20 Minuten Inaktivität (240 * 5s = 1200s)
       services.udev.extraRules = ''
         ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", RUN+="${pkgs.hdparm}/bin/hdparm -S 240 /dev/%k"
