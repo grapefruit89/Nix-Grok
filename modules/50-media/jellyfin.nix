@@ -59,10 +59,17 @@ in
         OCL_ICD_VENDORS = "${pkgs.intel-compute-runtime}/etc/OpenCL/vendors";
       };
 
+      systemd.services.jellyfin.preStart = ''
+        if [ -f /data/state/jellyfin/config/encoding.xml ]; then
+          ${pkgs.gnused}/bin/sed -i 's/<EnableSegmentDeletion>.*<\/EnableSegmentDeletion>/<EnableSegmentDeletion>true<\/EnableSegmentDeletion>/g' /data/state/jellyfin/config/encoding.xml
+          ${pkgs.gnused}/bin/sed -i 's/<SegmentKeepSeconds>.*<\/SegmentKeepSeconds>/<SegmentKeepSeconds>180<\/SegmentKeepSeconds>/g' /data/state/jellyfin/config/encoding.xml
+        fi
+      '';
+
       # Systemd Sandboxing Härtung
       systemd.services.jellyfin.serviceConfig = {
-        MemoryHigh = "4G";
-        MemoryMax = "6G";
+        MemoryHigh = "6G";
+        MemoryMax = "8G";
         OOMScoreAdjust = 100; # Etwas geschützter als der Download-Stack, um Ruckler zu vermeiden
 
         PrivateDevices = lib.mkForce false; # Erforderlich für DRI-Gerätezugriff
@@ -89,6 +96,7 @@ in
         # RAM-backed transcoding directory (SSD Longevity)
         RuntimeDirectory = "jellyfin-transcode";
         RuntimeDirectoryMode = "0700";
+        RuntimeDirectorySize = "8G";
 
         # Dateipfade beschränken
         ReadWritePaths = [

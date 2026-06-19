@@ -21,7 +21,7 @@ in
   config = lib.mkIf cfgVaultwarden.enable {
     services.vaultwarden = {
       enable = true;
-      dbBackend = "sqlite"; # Lokale SQLite DB fÃ¼r minimale externe Latenz
+      dbBackend = "postgresql"; # Lokale PostgreSQL DB
       environmentFile = "/home/moritz/secrets/vaultwarden.env";
 
       config = {
@@ -35,8 +35,9 @@ in
         SHOW_PASSWORD_HINT = false;
         DISABLE_ADMIN_TOKEN = false; # ErmÃ¶glicht administrative Zugriffe
 
-        # Concurrency
-        DATABASE_MAX_CONNS = 10; # WAL mode Concurrency
+        # Database
+        DATABASE_MAX_CONNS = 10;
+        DATABASE_URL = "postgresql://vaultwarden@/vaultwarden?host=/run/postgresql";
 
         # Brute-Force Rate Limiting
         LOGIN_RATELIMIT_MAX_BURST = 10;
@@ -92,6 +93,7 @@ in
         WEBSOCKET_PORT = toString (portVaultwarden + 1);
         LOG_FILE = "/var/log/vaultwarden/vaultwarden.log";
         WEB_VAULT_ENABLED = "false";
+        DATABASE_URL = "postgresql://vaultwarden@/vaultwarden?host=/run/postgresql";
       };
       serviceConfig = {
         ProtectSystem = lib.mkForce "strict";

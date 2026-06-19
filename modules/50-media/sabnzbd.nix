@@ -96,12 +96,39 @@ in
             rm -f /data/state/sabnzbd/sabnzbd.ini
           fi
 
-          # RAM-Disk Setup (Incomplete Downloads)
           if [ -f /data/state/sabnzbd/sabnzbd.ini ]; then
+            # RAM-Disk Setup (Incomplete Downloads)
             ${pkgs.gnused}/bin/sed -i 's/^download_dir\s*=.*/download_dir = \/run\/sabnzbd-tmp/g' /data/state/sabnzbd/sabnzbd.ini
+
+            # Remove existing [servers] and everything below it until the next section
+            ${pkgs.gnused}/bin/sed -i '/^\[servers\]/,/^\[/{/^\[servers\]/d;/^\[/!d}' /data/state/sabnzbd/sabnzbd.ini
+            
+            # Inject declarative servers block
+            PASSWORD=$(cat "''${CREDENTIALS_DIRECTORY}/SABNZBD_PASSWORD")
+            cat <<EOF >> /data/state/sabnzbd/sabnzbd.ini
+[servers]
+[[news.newshosting.com]]
+name = news.newshosting.com
+displayname = news.newshosting.com
+host = news.newshosting.com
+port = 563
+timeout = 120
+username = p8embyavo
+password = $PASSWORD
+connections = 100
+ssl = 1
+ssl_verify = 2
+ssl_ciphers = ""
+enable = 1
+type = 0
+notes = ""
+priority = 0
+retention = 0
+EOF
           fi
         '';
         serviceConfig = {
+          LoadCredential = [ "SABNZBD_PASSWORD:/home/moritz/secrets/sabnzbd_password" ];
           NetworkNamespacePath = "/var/run/netns/${netnsName}";
           MemoryMax = "4G";
           OOMScoreAdjust = 500;

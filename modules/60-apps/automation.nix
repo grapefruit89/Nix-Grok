@@ -12,10 +12,17 @@ in
       services.postgresql = {
         enable = true;
         dataDir = "/data/state/postgresql";
-        ensureDatabases = [ "homeassistant" ];
+        ensureDatabases = [
+          "homeassistant"
+          "vaultwarden"
+        ];
         ensureUsers = [
           {
             name = "hass";
+            ensureDBOwnership = true;
+          }
+          {
+            name = "vaultwarden";
             ensureDBOwnership = true;
           }
         ];
