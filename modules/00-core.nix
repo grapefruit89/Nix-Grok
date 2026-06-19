@@ -205,7 +205,7 @@ in
           timeout = 3600;
           max-silent-time = 600;
 
-          experimental-features = [ "nix-command" "flakes" "auto-allocate-uids" "cgroups" "lazy-trees" ];
+          experimental-features = [ "nix-command" "flakes" "auto-allocate-uids" "cgroups" ];
           sandbox = true;
           trusted-users = [ "root" config.my.configs.identity.user ];
         };
