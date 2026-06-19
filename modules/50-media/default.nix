@@ -8,6 +8,7 @@
     ./audiobookshelf.nix
     ./sync.nix
     ./navidrome.nix
+    ./audio-receiver.nix
   ];
 
   # Centralized options declaration for domain 50
