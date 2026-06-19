@@ -64,6 +64,10 @@
         message = "KRITISCHER FEHLER [POLICY]: IPv6 ist systemweit verboten (Homelab-Policy).";
       }
       {
+        assertion = builtins.all (ns: ns == "127.0.0.1" || ns == "::1") config.networking.nameservers;
+        message = "KRITISCHER FEHLER [POLICY]: Unverschlüsseltes IPv4/IPv6 DNS (wie 1.1.1.1) in networking.nameservers ist verboten! Erlaubt ist nur 127.0.0.1 (z.B. für Blocky als lokalen DoT/DoH Resolver).";
+      }
+      {
         assertion = config.nixpkgs.overlays == [ ];
         message = "KRITISCHER FEHLER [POLICY]: Globale nixpkgs.overlays sind verboten. Nutze lokale Package-Inputs zur Vermeidung von Supply-Chain-Risiken und Rebuild-Stürmen.";
       }

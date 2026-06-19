@@ -131,15 +131,14 @@ in
         }
       ];
 
-      # ── NTP Zeitserver (Ausfallsicherheit via PTB & Pool) ───────────────
+      # ── NTP Zeitserver (Redundante Auswahl ohne PTB-Spam) ───────────────
       networking.timeServers = [
-        "ptbtime1.ptb.de"
-        "ptbtime2.ptb.de"
-        "ptbtime3.ptb.de"
         "0.de.pool.ntp.org"
         "1.de.pool.ntp.org"
         "2.de.pool.ntp.org"
         "3.de.pool.ntp.org"
+        "ntp.se"
+        "time.cloudflare.com"
       ];
     }
 
@@ -209,10 +208,7 @@ in
         };
       };
 
-      networking.nameservers = lib.mkForce [
-        "127.0.0.1"
-        "1.1.1.1"
-      ];
+      networking.nameservers = lib.mkForce [ "127.0.0.1" ];
 
       systemd.services.blocky = {
         after = [ "network-online.target" ];
