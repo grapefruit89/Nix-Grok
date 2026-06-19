@@ -17,7 +17,7 @@ in
     (lib.mkIf cfgSonarr.enable (arrHelper.mkArrService {
       name = "sonarr";
       port = ports.sonarr;
-      dataDir = "/var/lib/sonarr";
+      dataDir = "/data/state/sonarr";
       uid = 989;
       gid = 989;
       apiSetupScript = ''
@@ -34,7 +34,7 @@ in
     (lib.mkIf cfgRadarr.enable (arrHelper.mkArrService {
       name = "radarr";
       port = ports.radarr;
-      dataDir = "/var/lib/radarr";
+      dataDir = "/data/state/radarr";
       uid = 978;
       gid = 978;
     }))
@@ -42,7 +42,7 @@ in
     (lib.mkIf cfgReadarr.enable (arrHelper.mkArrService {
       name = "readarr";
       port = ports.readarr;
-      dataDir = "/var/lib/readarr";
+      dataDir = "/data/state/readarr";
       uid = 987;
       gid = 987;
     }))
@@ -51,10 +51,13 @@ in
     (lib.mkIf cfgProwlarr.enable (arrHelper.mkArrService {
       name = "prowlarr";
       port = ports.prowlarr;
-      dataDir = "/var/lib/prowlarr";
+      dataDir = "/data/state/prowlarr";
       uid = 969;
       gid = 969;
       useVpnKillSwitch = true;
     }))
   ];
 }
+
+
+

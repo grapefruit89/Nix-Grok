@@ -34,11 +34,25 @@ in
         preStart = lib.mkBefore ''
           if [ ! -f ${dataDir}/config.xml ]; then
             mkdir -p ${dataDir}
-            echo "<Config><BindAddress>127.0.0.1</BindAddress></Config>" > ${dataDir}/config.xml
+            cat > ${dataDir}/config.xml <<EOF
+<Config>
+  <BindAddress>127.0.0.1</BindAddress>
+  <PostgresUser>${name}</PostgresUser>
+  <PostgresPassword>nixgrok</PostgresPassword>
+  <PostgresPort>5432</PostgresPort>
+  <PostgresHost>127.0.0.1</PostgresHost>
+  <PostgresMainDb>${name}-main</PostgresMainDb>
+  <PostgresLogDb>${name}-log</PostgresLogDb>
+</Config>
+EOF
           else
             ${pkgs.gnused}/bin/sed -i -e 's|<BindAddress>.*</BindAddress>|<BindAddress>127.0.0.1</BindAddress>|g' ${dataDir}/config.xml
             if ! grep -q "<BindAddress>" ${dataDir}/config.xml; then
               ${pkgs.gnused}/bin/sed -i -e 's|</Config>|<BindAddress>127.0.0.1</BindAddress></Config>|g' ${dataDir}/config.xml
+            fi
+            # Add Postgres settings if missing in existing config
+            if ! grep -q "<PostgresHost>" ${dataDir}/config.xml; then
+              ${pkgs.gnused}/bin/sed -i -e 's|</Config>|<PostgresUser>${name}</PostgresUser><PostgresPassword>nixgrok</PostgresPassword><PostgresPort>5432</PostgresPort><PostgresHost>127.0.0.1</PostgresHost><PostgresMainDb>${name}-main</PostgresMainDb><PostgresLogDb>${name}-log</PostgresLogDb></Config>|g' ${dataDir}/config.xml
             fi
           fi
         '';
