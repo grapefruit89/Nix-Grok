@@ -122,7 +122,7 @@ in
             dir = lib.mkForce "/data/state/valkey";
             maxmemory = "512mb"; # Puffer für große Paperless OCR Bulk-Imports
             maxmemory-policy = "volatile-lru"; # Schützt aktive Paperless Tasks vor LRU-Löschung
-            save = ""; # Pure In-Memory für minimalen SSD-Verschleiß
+            save = lib.mkForce ""; # Pure In-Memory für minimalen SSD-Verschleiß
           };
         };
       };
