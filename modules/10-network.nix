@@ -86,7 +86,7 @@ in
     pocket-id = {
       enable = lib.mkEnableOption "PocketID OIDC Passkey Provider";
       port = lib.mkOption { type = lib.types.port; default = config.my.ports.pocket-id; description = "PocketID web interface listening port."; };
-      dataDir = lib.mkOption { type = lib.types.str; default = "/var/lib/pocket-id"; description = "Database state directory."; };
+      dataDir = lib.mkOption { type = lib.types.str; default = "/data/state/pocket-id"; description = "Database state directory."; };
       secretsFile = lib.mkOption {
         type = lib.types.str;
         default = "";
@@ -399,4 +399,5 @@ in
     }
   ];
 }
+
 

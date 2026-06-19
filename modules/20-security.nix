@@ -295,8 +295,14 @@ in
         cfg = config.my.security.fail2ban;
       in
       lib.mkIf cfg.enable {
+        systemd.tmpfiles.rules = [
+          "d /data/state/fail2ban 0700 root root -"
+        ];
+
         services.fail2ban = {
           enable = true;
+          ignoreIP = [ "127.0.0.0/8" "10.0.0.0/8" "192.168.0.0/16" ];
+          daemon.settings.Definition.dbfile = "/data/state/fail2ban/fail2ban.sqlite3";
           inherit (cfg) banaction;
           inherit (cfg) bantime;
           inherit (cfg) maxretry;
@@ -311,6 +317,8 @@ in
                 enabled = true;
                 mode = cfg.sshJail.mode;
                 filter = "sshd[mode=${cfg.sshJail.mode}]";
+                backend = "systemd";
+                journalmatch = "_SYSTEMD_UNIT=sshd.service + _SYSTEMD_UNIT=sshd-session.service";
                 inherit (cfg) findtime;
                 inherit (cfg) maxretry;
               };
