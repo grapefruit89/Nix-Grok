@@ -46,6 +46,39 @@ in
           external_url = "https://home.${domain}";
           internal_url = "http://localhost:${toString cfgHass.port}";
         };
+        
+        # ── Declarative Automations & Integrations ───────────────
+        cast = {
+          media_player = [
+            { host = "192.168.2.142"; }
+          ];
+        };
+
+        androidtv = [
+          { host = "192.168.2.77"; }
+        ];
+
+        automation = [
+          {
+            alias = "NixOS: Willkommens-Licht";
+            trigger = [
+              {
+                platform = "homeassistant";
+                event = "start";
+              }
+            ];
+            action = [
+              {
+                service = "persistent_notification.create";
+                data = {
+                  message = "Home Assistant wurde frisch von NixOS kompiliert und gestartet!";
+                  title = "System Status";
+                };
+              }
+            ];
+          }
+        ];
+
         mqtt = {
           broker = "127.0.0.1";
           port = config.my.ports.mqtt;

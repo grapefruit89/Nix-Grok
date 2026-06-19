@@ -106,6 +106,8 @@
           "mqtt"
           "mobile_app"
           "radio_browser"
+          "cast"
+          "androidtv"
         ];
         description = "Extra components to load.";
       };
