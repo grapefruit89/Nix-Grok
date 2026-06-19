@@ -38,7 +38,9 @@ in
         OnBootSec = "2min";
         OnUnitActiveSec = "1d";
       };
-      };\n}
+      };
+}
+
 
 
 
