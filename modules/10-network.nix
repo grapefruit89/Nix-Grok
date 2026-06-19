@@ -147,7 +147,7 @@ in
       services.resolved.enable = lib.mkForce false;
 
       systemd.tmpfiles.rules = [
-        "d /var/lib/blocky 0755 root root -"
+        "d /data/state/blocky 0755 root root -"
       ];
 
       services.blocky = {
@@ -205,7 +205,7 @@ in
         LockPersonality = lib.mkDefault true;
         RestrictRealtime = lib.mkDefault true;
         RestrictSUIDSGID = lib.mkDefault true;
-        ReadWritePaths = lib.mkDefault [ "/var/lib/blocky" ];
+        ReadWritePaths = lib.mkDefault [ "/data/state/blocky" ];
         MemoryHigh = lib.mkDefault "200M";
         MemoryMax = lib.mkDefault "500M";
       };

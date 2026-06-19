@@ -98,11 +98,11 @@ in
           ports = [ "127.0.0.1:${toString cfgSemaphore.port}:3000" ];
           environment = {
             SEMAPHORE_DB_DIALECT = "sqlite";
-            SEMAPHORE_PLAYBOOK_PATH = "/var/lib/semaphore/playbooks";
-            SEMAPHORE_DB_PATH = "/var/lib/semaphore/semaphore.db";
+            SEMAPHORE_PLAYBOOK_PATH = "/data/state/semaphore/playbooks";
+            SEMAPHORE_DB_PATH = "/data/state/semaphore/semaphore.db";
           };
           volumes = [
-            "/var/lib/semaphore:/var/lib/semaphore"
+            "/data/state/semaphore:/data/state/semaphore"
           ];
         };
       };

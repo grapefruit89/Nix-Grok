@@ -63,7 +63,7 @@ in
           ProtectHome = true;
           PrivateTmp = true;
           NoNewPrivileges = true;
-          ReadWritePaths = [ "/var/lib/mosquitto" ];
+          ReadWritePaths = [ "/data/state/mosquitto" ];
         };
 
         zigbee2mqtt = {
@@ -85,7 +85,7 @@ in
 
       tmpfiles.rules = [
         "d ${cfgZigbee.dataDir} 0750 zigbee2mqtt mqtt -"
-        "d /var/lib/mosquitto 0750 mosquitto mqtt -"
+        "d /data/state/mosquitto 0750 mosquitto mqtt -"
       ];
     };
 

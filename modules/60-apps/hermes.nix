@@ -6,11 +6,11 @@ let
 in
 {
   config = lib.mkIf cfg.enable {
-    # Hermes-Agent-Flake: eigener System-User, State unter /var/lib/hermes
+    # Hermes-Agent-Flake: eigener System-User, State unter /data/state/hermes
     services.hermes-agent = {
       enable = true;
       addToSystemPackages = true;
-      environmentFiles = [ "/var/lib/hermes/env" ];
+      environmentFiles = [ "/data/state/hermes/env" ];
 
       settings = {
         model.default = "gemini-3-flash-preview";
@@ -33,7 +33,7 @@ in
     users.users.hermes = {
       isSystemUser = true;
       group = "hermes";
-      home = "/var/lib/hermes";
+      home = "/data/state/hermes";
     };
     users.groups.hermes = {};
 
@@ -45,25 +45,25 @@ in
       ProtectHome = true;
       PrivateTmp = true;
       NoNewPrivileges = true;
-      ReadWritePaths = [ "/var/lib/hermes" ];
+      ReadWritePaths = [ "/data/state/hermes" ];
     };
 
     # Secrets für Hermes (API-Keys) — Context7 optional aus /var/lib/secrets
     systemd.services.hermes-env-provision = {
-      description = "Provision /var/lib/hermes/env for Hermes Agent";
+      description = "Provision /data/state/hermes/env for Hermes Agent";
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStart = pkgs.writeShellScript "hermes-env-provision" ''
           set -euo pipefail
-          install -d -m 2770 -o hermes -g hermes /var/lib/hermes
-          install -d -m 2770 -o hermes -g hermes /var/lib/hermes/.hermes
-          touch /var/lib/hermes/env
-          chown hermes:hermes /var/lib/hermes/env
-          chmod 0640 /var/lib/hermes/env
+          install -d -m 2770 -o hermes -g hermes /data/state/hermes
+          install -d -m 2770 -o hermes -g hermes /data/state/hermes/.hermes
+          touch /data/state/hermes/env
+          chown hermes:hermes /data/state/hermes/env
+          chmod 0640 /data/state/hermes/env
           if [ -f /home/moritz/secrets/context7.env ]; then
             grep -q '^CONTEXT7_API_KEY=' /home/moritz/secrets/context7.env 2>/dev/null && \
-              grep '^CONTEXT7_API_KEY=' /home/moritz/secrets/context7.env >> /var/lib/hermes/env || true
+              grep '^CONTEXT7_API_KEY=' /home/moritz/secrets/context7.env >> /data/state/hermes/env || true
           fi
         '';
       };
@@ -71,7 +71,7 @@ in
       before = [ "hermes-agent.service" ];
     };
 
-    # Context7: Key in /var/lib/hermes/env (aus context7.env) — dann:
+    # Context7: Key in /data/state/hermes/env (aus context7.env) — dann:
     #   hermes mcp add context7 --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: $CONTEXT7_API_KEY"
 
     # Kein root-WebUI — Gateway läuft als User hermes mit upstream-Härtung

@@ -72,7 +72,7 @@ in
     # Systemd Security Hardening
     systemd.services.vaultwarden = {
       environment = {
-        DATA_FOLDER = "/var/lib/vaultwarden";
+        DATA_FOLDER = "/data/state/vaultwarden";
         ROCKET_ADDRESS = "127.0.0.2";
         ROCKET_PORT = toString portVaultwarden;
         DOMAIN = "https://vault.${domain}";
@@ -99,7 +99,7 @@ in
         SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
         RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
         ReadWritePaths = [
-          "/var/lib/vaultwarden"
+          "/data/state/vaultwarden"
           "/var/log/vaultwarden"
         ];
         PrivateUsers = lib.mkForce false;

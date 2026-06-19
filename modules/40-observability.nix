@@ -63,7 +63,7 @@ in
       users.users.monitoring = {
         isSystemUser = true;
         group = "media";
-        home = "/var/lib/monitoring";
+        home = "/data/state/monitoring";
         createHome = true;
         shell = pkgs.bash;
       };
@@ -268,7 +268,7 @@ in
       systemd.services.gatus = {
         preStart = lib.mkAfter ''
           if [ -f /home/moritz/secrets/gatus_ssh_key ]; then
-            install -D -m 600 -o gatus -g gatus /home/moritz/secrets/gatus_ssh_key /var/lib/gatus/ssh_key
+            install -D -m 600 -o gatus -g gatus /home/moritz/secrets/gatus_ssh_key /data/state/gatus/ssh_key
           fi
         '';
         serviceConfig = {
@@ -305,11 +305,11 @@ in
               grpc_listen_port: 9095
             common:
               instance_addr: 127.0.0.1
-              path_prefix: /var/lib/loki
+              path_prefix: /data/state/loki
               storage:
                 filesystem:
-                  chunks_directory: /var/lib/loki/chunks
-                  rules_directory: /var/lib/loki/rules
+                  chunks_directory: /data/state/loki/chunks
+                  rules_directory: /data/state/loki/rules
               replication_factor: 1
               ring:
                 kvstore:
@@ -320,7 +320,7 @@ in
               creation_grace_period: 10m
               retention_period: 168h
             compactor:
-              working_directory: /var/lib/loki/compactor
+              working_directory: /data/state/loki/compactor
               compaction_interval: 10m
               retention_enabled: true
               retention_delete_delay: 2h
@@ -399,7 +399,7 @@ in
               domain = "grafana.${domain}";
             };
             security = {
-              secret_key = "$__file{/var/lib/grafana/secret_key}";
+              secret_key = "$__file{/data/state/grafana/secret_key}";
             };
           };
           provision = {
@@ -438,7 +438,7 @@ in
           MemoryDenyWriteExecute = true;
           DevicePolicy = "closed";
           CapabilityBoundingSet = "";
-          ReadWritePaths = [ "/var/lib/loki" ];
+          ReadWritePaths = [ "/data/state/loki" ];
         };
 
         vector = {
@@ -456,14 +456,14 @@ in
             MemoryDenyWriteExecute = true;
             DevicePolicy = "closed";
             CapabilityBoundingSet = "";
-            ReadWritePaths = [ "/var/lib/vector" ];
+            ReadWritePaths = [ "/data/state/vector" ];
           };
         };
 
         grafana = {
           preStart = lib.mkAfter ''
             if [ -f /home/moritz/secrets/grafana_secret_key ]; then
-              install -D -m 600 -o grafana -g grafana /home/moritz/secrets/grafana_secret_key /var/lib/grafana/secret_key
+              install -D -m 600 -o grafana -g grafana /home/moritz/secrets/grafana_secret_key /data/state/grafana/secret_key
             fi
           '';
           serviceConfig = {
@@ -478,7 +478,7 @@ in
             MemoryDenyWriteExecute = true;
             DevicePolicy = "closed";
             CapabilityBoundingSet = "";
-            ReadWritePaths = [ "/var/lib/grafana" ];
+            ReadWritePaths = [ "/data/state/grafana" ];
             EnvironmentFile = "-/home/moritz/secrets/grafana.env";
           };
         };
@@ -511,7 +511,7 @@ in
             enable = true;
             listen_uri = "127.0.0.1:8080";
           };
-          lapi.credentialsFile = "/var/lib/crowdsec/local_api_credentials.yaml";
+          lapi.credentialsFile = "/data/state/crowdsec/local_api_credentials.yaml";
         };
       };
 
@@ -524,7 +524,7 @@ in
         ProtectKernelModules = true;
         ProtectControlGroups = true;
         NoNewPrivileges = true;
-        ReadWritePaths = [ "/var/lib/crowdsec" ];
+        ReadWritePaths = [ "/data/state/crowdsec" ];
       };
 
       services.crowdsec-firewall-bouncer = {

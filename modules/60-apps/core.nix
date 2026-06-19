@@ -47,7 +47,7 @@ in
           LOG_LEVEL = "info"; # Für Fail2Ban parsing
           EXTENDED_LOGGING = true;
           LOG_FILE = "/var/log/vaultwarden/vaultwarden.log";
-          DATA_FOLDER = "/var/lib/vaultwarden";
+          DATA_FOLDER = "/data/state/vaultwarden";
         };
       };
 
@@ -83,7 +83,7 @@ in
         SystemCallFilter = [ "@system-service" "~@privileged" "~@resources" ];
         RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
         ReadWritePaths = [
-          "/var/lib/vaultwarden"
+          "/data/state/vaultwarden"
           "/var/log/vaultwarden"
         ];
         EnvironmentFile = lib.mkForce "/home/moritz/secrets/vaultwarden.env";
