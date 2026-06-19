@@ -45,9 +45,23 @@ radarr:
     quality_definition:
       type: movie
       preferred_ratio: 0.5
+      # KEIN hartes Size-Limit! Große Dateien sind okay, wenn es nichts anderes gibt.
     quality_profiles:
       - name: 1080p_Deutsch
         reset_unmatched_scores: true
+        upgrade:
+          allowed: true
+          until_quality: Bluray-1080p
+          until_score: 10000
+        qualities:
+          # Wir definieren NUR hochwertige 1080p Quellen. 
+          # CAM, Telesync, Workprint und SD-Müll sind hier NICHT gelistet und werden somit absolut blockiert!
+          - name: 1080p
+            qualities:
+              - Bluray-1080p
+              - WEBDL-1080p
+              - WEBRip-1080p
+              - HDTV-1080p
     custom_formats:
       - trash_ids:
           - 496f355514737f7d83bf7aa4d24f8169 # German
@@ -64,13 +78,13 @@ radarr:
           - 104b901dd78e3dbd4ab5cb14f09d84c1 # Unknown/Foreign Language
         quality_profiles:
           - name: 1080p_Deutsch
-            score: -10000 # BLOCK
+            score: -1000000 # ABSOLUTER BLOCK FÜR FREMDSPRACHEN
       - trash_ids:
           - 839bea857ed2c0a8e084f3cbdbd65ecb # x265 (HD)
           - 66c3080ffb82ee2cf82902ea64a2a16c # AV1
         quality_profiles:
           - name: 1080p_Deutsch
-            score: 100 # Bevorzuge effiziente Codecs für FireTV
+            score: 100 # Bevorzuge effiziente Codecs für FireTV (zwingt Dateigröße natürlich nach unten)
 EOF
       '';
       script = ''
