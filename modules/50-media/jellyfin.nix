@@ -41,6 +41,10 @@ in
 
       # Systemd Sandboxing Härtung
       systemd.services.jellyfin.serviceConfig = {
+        MemoryHigh = "4G";
+        MemoryMax = "6G";
+        OOMScoreAdjust = 500; # Weiches Ziel für OOM-Killer bei System-Notstand
+
         PrivateDevices = lib.mkForce false; # Erforderlich für DRI-Gerätezugriff
         DeviceAllow = [
           "/dev/dri rw"

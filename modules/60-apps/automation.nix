@@ -11,7 +11,7 @@ in
       # PostgreSQL SSoT Database Instance
       services.postgresql = {
         enable = true;
-        dataDir = "/data/state/postgresql/''";
+        dataDir = "/data/state/postgresql";
         ensureDatabases = [ "homeassistant" ];
         ensureUsers = [
           {
@@ -19,6 +19,10 @@ in
             ensureDBOwnership = true;
           }
         ];
+      };
+
+      systemd.services.postgresql.serviceConfig = {
+        OOMScoreAdjust = -1000; # Kritische SSoT-Datenbank: Niemals von OOM-Killer beenden
       };
     }
 

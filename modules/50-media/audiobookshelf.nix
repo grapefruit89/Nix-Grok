@@ -30,6 +30,10 @@ in
 
       systemd.services.audiobookshelf = {
         serviceConfig = {
+          MemoryHigh = "2G";
+          MemoryMax = "4G";
+          OOMScoreAdjust = 500;
+
           # Additional Hardening
           ProtectSystem = "strict";
           ProtectHome = true;

@@ -289,6 +289,19 @@ in
         gid = lib.mkIf (port >= 1024) port;
       }) config.my.ports;
     }
+
+    # ==========================================================================
+    # NVME KERNEL TUNING (Emily Harbord Best-Practices)
+    # ==========================================================================
+    {
+      services.udev.extraRules = ''
+        # Setze I/O Scheduler auf "none" für minimale NVMe-Latenz
+        ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="none"
+        
+        # Optimiere Read-Ahead auf 128KB für gemischte DB/Media Workloads
+        ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/read_ahead_kb}="128"
+      '';
+    }
   ];
 }
 

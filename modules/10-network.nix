@@ -130,6 +130,7 @@ in
 
       # Valkey Server Sandboxing
       systemd.services.redis-valkey.serviceConfig = {
+        OOMScoreAdjust = -1000; # Kritischer Cache/Message-Broker: Niemals von OOM-Killer beenden
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateTmp = true;
