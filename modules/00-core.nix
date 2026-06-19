@@ -232,7 +232,7 @@ in
         htop
         vim
         pciutils
-        glxinfo
+        mesa-demos
         lm_sensors
         cachix
         nix-tree
