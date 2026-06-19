@@ -197,7 +197,7 @@ in
   };
 
   rollout = {
-    stufe = 5;
+    stufe = 7;
   };
 
   iot = {

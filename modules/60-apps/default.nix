@@ -99,7 +99,14 @@
       };
       extraComponents = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ ];
+        default = [
+          "default_config"
+          "met"
+          "esphome"
+          "mqtt"
+          "mobile_app"
+          "radio_browser"
+        ];
         description = "Extra components to load.";
       };
       trustedProxies = lib.mkOption {
