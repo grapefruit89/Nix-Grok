@@ -226,12 +226,31 @@ in
       };
 
       environment.systemPackages = with pkgs; [
+        curl
+        wget
+        git
+        htop
+        vim
+        pciutils
+        glxinfo
+        lm_sensors
         cachix
         nix-tree
         nix-diff
         nix-output-monitor
         nix-du
       ];
+
+      # Automatisches System-Update vom Git-Repository (7-Tage Delay über GitHub Action PRs)
+      system.autoUpgrade = {
+        enable = true;
+        flake = "github:grapefruit89/Nix-Grok"; # Zieht immer den aktuellsten 'main' Branch
+        dates = "04:00";
+        randomizedDelaySec = "45min";
+        allowReboot = false; # Server nicht unerwartet neustarten
+      };
+
+      services.fwupd.enable = true;
     })
 
     # ── ZRAM COMPRESSED SWAP ──────────────────────────────────────────────────
