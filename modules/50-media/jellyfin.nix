@@ -43,7 +43,7 @@ in
       systemd.services.jellyfin.serviceConfig = {
         MemoryHigh = "4G";
         MemoryMax = "6G";
-        OOMScoreAdjust = 500; # Weiches Ziel für OOM-Killer bei System-Notstand
+        OOMScoreAdjust = 100; # Etwas geschützter als der Download-Stack, um Ruckler zu vermeiden
 
         PrivateDevices = lib.mkForce false; # Erforderlich für DRI-Gerätezugriff
         DeviceAllow = [

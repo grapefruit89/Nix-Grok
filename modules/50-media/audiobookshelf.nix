@@ -32,7 +32,7 @@ in
         serviceConfig = {
           MemoryHigh = "2G";
           MemoryMax = "4G";
-          OOMScoreAdjust = 500;
+          OOMScoreAdjust = 100;
 
           # Additional Hardening
           ProtectSystem = "strict";

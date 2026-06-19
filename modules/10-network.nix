@@ -421,6 +421,14 @@ in
         };
       };
 
+      boot.kernel.sysctl = {
+        # High-Performance TCP Routing (BBR) -> Verhindert Ruckeln bei Media Streaming über WAN / Tailscale
+        "net.ipv4.tcp_congestion_control" = "bbr";
+        "net.core.default_qdisc" = "fq";
+        # Swappiness: System zwingen, eher File-Cache aufzugeben als App-Memory zu swappen
+        "vm.swappiness" = 10;
+      };
+
     }
   ];
 }

@@ -4,7 +4,6 @@
 let
   cfgSonarr = config.my.services.sonarr;
   cfgRadarr = config.my.services.radarr;
-  cfgReadarr = config.my.services.readarr;
   cfgProwlarr = config.my.services.prowlarr;
 
   ports = config.my.ports;
@@ -37,14 +36,6 @@ in
       dataDir = "/data/state/radarr";
       uid = 978;
       gid = 978;
-    }))
-
-    (lib.mkIf cfgReadarr.enable (arrHelper.mkArrService {
-      name = "readarr";
-      port = ports.readarr;
-      dataDir = "/data/state/readarr";
-      uid = 987;
-      gid = 987;
     }))
 
 
