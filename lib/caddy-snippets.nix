@@ -26,6 +26,10 @@ in
         respond @external "Forbidden" 403
       }
 
+      (nixos_etag_fix) {
+        header -Last-Modified
+      }
+
       (streamer_headers) {
         header Cache-Control "no-store, no-cache, must-revalidate, private"
         header -ETag

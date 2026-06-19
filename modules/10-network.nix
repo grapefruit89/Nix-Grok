@@ -384,7 +384,7 @@ in
       );
       
       services.caddy.globalConfig = lib.mkIf config.services.caddy.enable ''
-        admin 127.0.0.1:${toString config.my.ports.caddyAdmin}
+        admin "unix//run/caddy-admin.sock"
       '';
 
       # â”€â”€ LEBENSVERSICHERUNG: SYSTEMD-NETWORKD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -399,6 +399,7 @@ in
     }
   ];
 }
+
 
 
 
