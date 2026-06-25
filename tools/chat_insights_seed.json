@@ -1,0 +1,392 @@
+[
+  {
+    "theme": "homelab_server",
+    "agent": "consensus",
+    "title": "Cloudflare trusted_proxies + CF-Connecting-IP",
+    "content": "Hinter orange Cloudflare müssen trusted_proxies cloudflare und client_ip_headers CF-Connecting-IP gesetzt sein, sonst Geo/Fail2ban sehen nur DE-Edge-IPs.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "all",
+    "source_path": "neuesmaterialfuergrok/*/homelab_server/"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "grok",
+    "title": "Pocket-ID forward_auth SPOF + Cache 5min",
+    "content": "Jeder Gleis-1-Request triggert POST /api/verify. Entlastung via Caddy cache auf erfolgreiche Verify-Responses (~5min TTL) oder Keepalive (bereits in caddy-snippets.nix).",
+    "status": "proposed",
+    "rollout_stufe": 5,
+    "consensus": "grok",
+    "source_path": "grok/homelab_server/grok_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "grok",
+    "title": "Gleis-2: Headscale ODER mTLS — nicht beides",
+    "content": "Grok widerspricht sich: erst Tailscale+caddy-tailscale für Admin, später freeze auf mTLS ohne Tailscale. Für q958: Tailscale bereits Stufe 2 — tailscale_admin Snippet gewählt.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "grok",
+    "source_path": "grok/homelab_server/grok_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "claude",
+    "title": "Pocket-ID Impermanence Pflicht",
+    "content": "/var/lib/pocket-id (Passkeys, OIDC) muss vor Stufe 9 in tierA persistieren, sonst SSO-Lockout nach jedem Reboot. Pocket-ID nie hinter eigenem forward_auth.",
+    "status": "accepted",
+    "rollout_stufe": 9,
+    "consensus": "claude",
+    "source_path": "claude/homelab_server/claude_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "claude",
+    "title": "Blocky vor Caddy + Watchdog",
+    "content": "Blocky-Tod zur Laufzeit bricht DNS-01 still. before=caddy, Restart=always, Gatus group critical. Tailscale --accept-dns=false.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "claude",
+    "source_path": "claude/homelab_server/claude_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "deepseek",
+    "title": "Streaming: flush_interval -1 + keepalive off",
+    "content": "Jellyfin/HLS: flush_interval -1 und transport http keepalive off (Caddy v2.7+). Bereits streamer_headers in jellyfin.nix.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "deepseek",
+    "source_path": "deepseek/homelab_server/deepseek_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "deepseek",
+    "title": "reverse_proxy Docker service names not 172.18.0.1",
+    "content": "502 auf Unraid durch reverse_proxy 172.18.0.1:PORT. Nix nativ: 127.0.0.1 + systemd sockets.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "deepseek",
+    "source_path": "deepseek/homelab_server/deepseek_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "grok",
+    "title": "Geo/ASN eine Wahrheit — L4 nftables",
+    "content": "Geo NUR in nftables (15-firewall.nix). Caddy: kein maxmind, kein wan_geoblock. LAN-CIDR vor Geo-Set. CF orange cloud = L4 blind.",
+    "status": "accepted",
+    "rollout_stufe": 8,
+    "consensus": "grok",
+    "source_path": "grok/homelab_server/grok_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "grok",
+    "title": "JSON-Logging statt transform-encoder",
+    "content": "Apache-Style via transform-encoder ist Legacy für Fail2ban. journald + JSON + Loki/Grafana ist schneller und NixOS-nativ.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "grok",
+    "source_path": "grok/homelab_server/grok_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "grok",
+    "title": "fwknop SPA ablehnen",
+    "content": "UDP-HMAC Port-Knocking = Komplexitäts-Tsunami, Self-Lockout-Risiko. Verworfen zugunsten Tailscale (Gleis 2) + nftables L4.",
+    "status": "antipattern",
+    "rollout_stufe": null,
+    "consensus": "grok",
+    "source_path": "grok/homelab_server/grok_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "claude",
+    "title": "Blocky Watchdog + Gatus — nicht nur Before=caddy",
+    "content": "Before=caddy reicht nur beim Boot. Blocky-Absturz zur Laufzeit bricht ACME-Renewal still (TLS-Warning, dann Ausfall). WatchdogSec + Gatus auf Blocky:53.",
+    "status": "proposed",
+    "rollout_stufe": 5,
+    "consensus": "claude",
+    "source_path": "claude/homelab_server/claude_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "claude",
+    "title": "Pocket-ID Deadlock-Kette",
+    "content": "auth.* nie hinter forward_auth. Pocket-ID after postgresql after persist.mount. Sonst blockiert forward_auth alle SSO-Dienste wenn DB/Pocket-ID langsam.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "claude",
+    "source_path": "claude/homelab_server/claude_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "claude",
+    "title": "Journald → Vector/Loki statt /persist",
+    "content": "Unter Impermanence: lokale Journal-Persistenz auf SSD teuer. Logs sofort nach Loki (Stufe 4) — volles Audit ohne tmpfs-Verlust.",
+    "status": "proposed",
+    "rollout_stufe": 9,
+    "consensus": "claude",
+    "source_path": "claude/homelab_server/claude_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "claude",
+    "title": "Strukturelle Änderungen: nixos-rebuild boot",
+    "content": "Mount-Units, Kernel, Firewall, Impermanence-Pfade: boot + Reboot. switch nur für Service-Configs. Vor Major-Upgrade: git diff auf 30-storage.nix.",
+    "status": "accepted",
+    "rollout_stufe": null,
+    "consensus": "claude",
+    "source_path": "claude/homelab_server/claude_answers.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "user_meta",
+    "title": "Jellyfin Client-Split — X-Emby-Authorization",
+    "content": "Apps senden X-Emby-Authorization MediaBrowser Client=… → kein forward_auth. Browser ohne Header → sso_auth. Zuverlässiger als User-Agent (Fire TV). VPN nur SABnzbd+Prowlarr, nicht Sonarr/Radarr.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "user_meta",
+    "source_path": "docs/ROADMAP.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "consensus",
+    "title": "Blocky = LAN-DNS + Adblock, nftables = Geo",
+    "content": "Blocky: DHCP DNS 192.168.2.73, Filtering+Rewrites für alle LAN-Geräte. nftables: kein Adblock, nur L4 Geo/Rate/SYN. Rollen nicht vermischen.",
+    "status": "accepted",
+    "rollout_stufe": 8,
+    "consensus": "all",
+    "source_path": "docs/ROADMAP.md"
+  },
+  {
+    "theme": "homelab_server",
+    "agent": "deepseek",
+    "title": "502 Root Cause: Upstream-Name nicht Gateway-IP",
+    "content": "Audiobookshelf-502 durch falschen Container-Namen/Port. Validierung: docker ps + caddy validate. Nix: feste 127.0.0.1:PORT aus my.ports.",
+    "status": "accepted",
+    "rollout_stufe": 5,
+    "consensus": "deepseek",
+    "source_path": "deepseek/homelab_server/deepseek_answers.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "Blocky RestrictNamespaces + ~@mount",
+    "content": "systemd sandbox für Blocky: RestrictNamespaces true, SystemCallFilter mit ~@mount. Implementiert in 10-network.nix.",
+    "status": "accepted",
+    "rollout_stufe": 2,
+    "consensus": "grok",
+    "source_path": "grok/nix_os/grok_answers.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "UID-Registry durchziehen",
+    "content": "Pocket-ID, Blocky, Caddy UIDs aus zentraler Registry für nftables skuid und Reproduzierbarkeit.",
+    "status": "proposed",
+    "rollout_stufe": 8,
+    "consensus": "grok",
+    "source_path": "grok/nix_os/user_prompts.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "user_meta",
+    "title": "Idempotente Prowlarr Indexer — GET vor POST",
+    "content": "SceneNZBs Setup muss jq Existenzcheck haben. sync-script.sh prüft HAS_SCENE vor POST.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "all",
+    "source_path": "grok/nix_os/user_prompts.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "user_meta",
+    "title": "60-media Factory nicht duplizieren",
+    "content": "arr-helper.nix nutzen, kein zweites mkArr. Konsolidierung unter modules/50-media/, nicht modules/apps/.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "user_meta",
+    "source_path": "grok/nix_os/user_prompts.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "user_meta",
+    "title": "/mnt/media nicht in Impermanence",
+    "content": "Medienpfade via fileSystems/automount Tier C, nicht impermanence.directories.",
+    "status": "accepted",
+    "rollout_stufe": 3,
+    "consensus": "all",
+    "source_path": "grok/nix_os/user_prompts.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "deepseek",
+    "title": "auto-locale beim Rebuild ablehnen",
+    "content": "Geolocation-Script beim nixos-rebuild ist nicht reproduzierbar. Nicht in q958 übernehmen.",
+    "status": "antipattern",
+    "rollout_stufe": null,
+    "consensus": "deepseek",
+    "source_path": "deepseek/nix_os/deepseek_answers.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "deepseek",
+    "title": "hardware.profile mkIf",
+    "content": "my.hardware.profile enum q958|generic — q958 nutzt machines/q958/ statt unconditional hardware import.",
+    "status": "accepted",
+    "rollout_stufe": 0,
+    "consensus": "deepseek",
+    "source_path": "deepseek/nix_os/deepseek_answers.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "CI validate.yml fehlt",
+    "content": "nix flake check, nix fmt --check, audit-code-quality, SOPS dry-decrypt in GitHub Actions.",
+    "status": "proposed",
+    "rollout_stufe": null,
+    "consensus": "grok",
+    "source_path": "grok/nix_os/grok_answers.md"
+  },
+  {
+    "theme": "unraid",
+    "agent": "consensus",
+    "title": "[Vorlage] Container-Inventar Tower",
+    "content": "Nur Referenz für Cutover-Reihenfolge und Volume-Pfade — Caddy/SSO-Logik aus homelab_server. Siehe docs/unraid-migration-map.md + USB Docker_Containers.md.",
+    "status": "reference",
+    "rollout_stufe": null,
+    "consensus": "all",
+    "source_path": "neuesmaterialfuergrok/*/unraid/Docker_Containers.md"
+  },
+  {
+    "theme": "unraid",
+    "agent": "consensus",
+    "title": "[Vorlage] Appdata → q958 Storage-Tiers",
+    "content": "docker_and_vm/appdata→Tier A /var/lib. user/data/media→Tier C. downloadcache→Tier B. Kein Nix-Code daraus ableiten ohne Abgleich machines/q958/storage.nix.",
+    "status": "reference",
+    "rollout_stufe": null,
+    "consensus": "all",
+    "source_path": "neuesmaterialfuergrok/*/unraid/Overview.md"
+  },
+  {
+    "theme": "unraid",
+    "agent": "claude",
+    "title": "[Vorlage] Jellyfin Marker beim Appdata-Kopieren",
+    "content": "LSIO=.jellyfin-config vs official=.jellyfin-data. Pitfall wenn Unraid-Appdata nach q958 kopiert wird — nicht Caddy-Thema.",
+    "status": "reference",
+    "rollout_stufe": 6,
+    "consensus": "claude",
+    "source_path": "claude/unraid/claude_answers.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "user_meta",
+    "title": "Dendritic — eine Datei pro Dienst, Sonarr+Radarr zusammen",
+    "content": "modules/50-media/: sonarr-radarr.nix, readarr.nix, prowlarr.nix, sabnzbd.nix. arr-stack.nix entfernt. .enable nur rollout.nix. Kein NIXMETA-Auto-Import.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "user_meta",
+    "source_path": "docs/adr/007-dendritic-one-file-per-service.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "consensus",
+    "title": "nftables checkRuleset + f2b_blocked_ipv4 Set",
+    "content": "lib/nftables-rules.nix + 15-firewall.nix: checkRuleset=true, split chains in_trusted/in_lan/in_wan, Fail2ban banaction nftables-f2b-set → inet filter f2b_blocked_ipv4.",
+    "status": "accepted",
+    "rollout_stufe": 8,
+    "consensus": "all",
+    "source_path": "docs/adr/008-nftables-l4-hardening.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "meta skuid Micro-Segmentation Stufe 8+",
+    "content": "UID-Registry: Prowlarr/SAB egress nur VPN/LAN; Sonarr/Radarr/Readarr input nur LAN+Tailscale; Postgres/Valkey localhost only. Option skuidSegmentation.enable.",
+    "status": "accepted",
+    "rollout_stufe": 8,
+    "consensus": "grok",
+    "source_path": "docs/guides/GUIDE-nftables-hardening.md"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "claude",
+    "title": "Jellyfin Mediathek ReadOnly — BindReadOnlyPaths",
+    "content": "/data/media aus readWritePaths entfernt, in readOnlyPaths (mkStreamer). Transcode/Cache bleiben RW.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "claude",
+    "source_path": "modules/50-media/jellyfin.nix"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "deepseek",
+    "title": "Blocky StevenBlack — DNS Adblock nicht nftables",
+    "content": "blocking.blackLists: StevenBlack hosts, AdAway, Easyprivacy. Rollen: Blocky=LAN-DNS+Adblock, nftables=L4 Geo/Rate.",
+    "status": "accepted",
+    "rollout_stufe": 2,
+    "consensus": "deepseek",
+    "source_path": "modules/10-network.nix"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "SRE Alerting ntfy/Webhook optional Stufe 8",
+    "content": "05-alerting.nix: OnFailure für usenet.service und restic-backups. URLs in profile.local alerting.ntfyTopic/webhookUrl.",
+    "status": "accepted",
+    "rollout_stufe": 8,
+    "consensus": "grok",
+    "source_path": "modules/05-alerting.nix"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "nix-hermes Audit — VPN leak timer getrennt",
+    "content": "vpn-leak-check: systemd.timers eigener Attrsatz (nicht in services). Alle 15min Host vs NetNS IP; bei Leak stop sabnzbd+prowlarr. rollout leakCheck.enable ab Stufe 6.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "grok",
+    "source_path": "modules/10-vpn-confinement.nix"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "Production SSH 53844 + PermitTTY Match",
+    "content": "rollout stufe>=9: my.ports.ssh=productionSshPort aus profile.nix. LAN/Tailscale PermitTTY yes, Match All no. Impermanence + tmpfiles für persist paths.",
+    "status": "accepted",
+    "rollout_stufe": 9,
+    "consensus": "grok",
+    "source_path": "machines/q958/rollout.nix"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "MediaCover Tier B metadata binds",
+    "content": "sonarr/radarr/prowlarr MediaCover nach /mnt/fast_pool/metadata/* — tmpfiles in storage.nix, Restic exclude **/MediaCover.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "grok",
+    "source_path": "modules/50-media/sonarr-radarr.nix"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "Jellyfin config seeds idempotent",
+    "content": "runCommand sed auf jellyfin-system/network.xml; preStart installiert nur wenn /var/lib/jellyfin/config/*.xml fehlt.",
+    "status": "accepted",
+    "rollout_stufe": 6,
+    "consensus": "grok",
+    "source_path": "modules/50-media/jellyfin.nix"
+  },
+  {
+    "theme": "nix_os",
+    "agent": "grok",
+    "title": "nix-hermes Guides portiert ohne NIXMETA",
+    "content": "docs/guides: network-database, security-secrets, storage-tiers, observability, media-stack, data-management, ANTIPATTERNS. ADR 009 VPN leak, 010 production SSH.",
+    "status": "accepted",
+    "rollout_stufe": 0,
+    "consensus": "grok",
+    "source_path": "docs/guides/"
+  }
+]

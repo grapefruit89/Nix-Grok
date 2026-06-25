@@ -1,0 +1,47 @@
+# File-Meta Schema — maschinenlesbar, zero Nix build cost
+# Extraktion: tools/list-file-meta.sh
+#
+# .nix / .sh: kommentiertes YAML zwischen Zeilen  "# ---"
+# .md:        normales YAML-Frontmatter zwischen "---"
+
+version: 1
+
+required:
+  - purpose
+
+fields:
+  file:
+    type: string
+    description: Repo-relativer Pfad (vom Tool gesetzt, nicht manuell pflegen)
+  layer:
+    type: integer
+    enum: [1, 2, 3, 4, 5]
+    description: "AGENTS.md — 1=flake, 2=machine, 3=module, 4=user, 5=lib"
+  role:
+    type: string
+    enum: [flake, machine, module, lib, doc, tool, package]
+  purpose:
+    type: string
+    description: Ein Satz — was diese Datei tut
+  docs:
+    type: array
+    items: string
+    description: Verwandte Markdown-Doku (existierende Pfade)
+  lib:
+    type: array
+    items: string
+    description: Importierte lib/*.nix
+  services:
+    type: array
+    items: string
+    description: Betroffene systemd-Dienste (optional)
+  tags:
+    type: array
+    items: string
+    description: Freie Schlagworte für KI-Suche (dns, oom, ingress, adr, …)
+
+adr:
+  path: docs/adr/
+  index: docs/adr/README.md
+  naming: "NNN-kurz-thema.md"
+  note: "Architektur-Entscheidungen — Kontext, Entscheidung, Konsequenzen"

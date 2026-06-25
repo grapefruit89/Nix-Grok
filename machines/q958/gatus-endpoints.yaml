@@ -1,0 +1,94 @@
+# DEPRECATED — generiert jetzt via lib/gatus-endpoints.nix → modules/40-observability.nix
+# Referenz/Backup; aktiv ist environment.etc."gatus/endpoints.yaml" aus dem Nix-Generator.
+# Stufe 4 — nur Dienste, die ab Rollout 2/4 aktiv sind (kein mergerfs/media/apps).
+web:
+  address: "127.0.0.1"
+  port: 8084
+
+storage:
+  type: sqlite
+  path: /var/lib/gatus/data.db
+
+endpoints:
+  - name: "internet-ping"
+    group: "network"
+    url: "icmp://1.1.1.1"
+    interval: "30s"
+    conditions:
+      - "[CONNECTED] == true"
+
+  # critical: Caddy-Ausfall → kein HTTPS-Ingress, ACME, SSO
+  - name: "caddy-ingress"
+    group: "critical"
+    url: "tcp://127.0.0.1:443"
+    interval: "1m"
+    conditions:
+      - "[CONNECTED] == true"
+
+  # critical: Blocky-Ausfall → ACME-Renewal und interne Auflösung brechen still
+  - name: "blocky-dns"
+    group: "critical"
+    url: "dns://cloudflare.com"
+    interval: "1m"
+    dns:
+      resolver: "127.0.0.1:53"
+      query-name: "cloudflare.com"
+      query-type: "A"
+    conditions:
+      - "[DNS_RC] == NOERROR"
+
+  - name: "postgresql"
+    group: "core"
+    url: "ssh://127.0.0.1:22"
+    interval: "1m"
+    conditions:
+      - "[CONNECTED] == true"
+      - "[STATUS] == 0"
+      - "[BODY] == OK*"
+    ssh:
+      username: "monitoring"
+      private-key: "/var/lib/gatus/ssh_key"
+      body:
+        command: "/run/current-system/sw/bin/check-postgres-uds"
+
+  - name: "valkey"
+    group: "core"
+    url: "ssh://127.0.0.1:22"
+    interval: "1m"
+    conditions:
+      - "[CONNECTED] == true"
+      - "[STATUS] == 0"
+      - "[BODY] == OK*"
+    ssh:
+      username: "monitoring"
+      private-key: "/var/lib/gatus/ssh_key"
+      body:
+        command: "/run/current-system/sw/bin/check-valkey-uds"
+
+  - name: "loki"
+    group: "observability"
+    url: "http://127.0.0.1:3100/ready"
+    interval: "1m"
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: "grafana"
+    group: "observability"
+    url: "ssh://127.0.0.1:22"
+    interval: "1m"
+    conditions:
+      - "[CONNECTED] == true"
+      - "[STATUS] == 0"
+      - "[BODY] == OK*"
+    ssh:
+      username: "monitoring"
+      private-key: "/var/lib/gatus/ssh_key"
+      body:
+        command: "/run/current-system/sw/bin/check-grafana-uds"
+
+  - name: "gatus-self"
+    group: "observability"
+    url: "http://127.0.0.1:8084/health"
+    interval: "1m"
+    conditions:
+      - "[STATUS] == 200"

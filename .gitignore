@@ -1,0 +1,78 @@
+# =============================================================================
+# Secrets & credentials — NIEMALS committen
+# =============================================================================
+**/secrets.sops.yaml
+**/.sops.yaml
+!**/.sops.yaml.example
+**/profile.local.nix
+!**/profile.local.nix.example
+**/*.key
+**/*.pem
+**/*.p12
+**/*.crt
+**/*.env
+**/.env
+**/.env.*
+**/api_key
+**/.config/context7/
+**/wireguard/
+**/*_private_key*
+**/tailscale_token
+**/gatus_ssh_key
+
+# Runtime secret paths (falls je ins Workspace kopiert)
+**/var/lib/secrets/
+
+# =============================================================================
+# Generierte / lokale Daten
+# =============================================================================
+backups/
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite.bak
+
+# =============================================================================
+# Nix build artifacts
+# =============================================================================
+result
+result-*
+.direnv/
+
+# =============================================================================
+# Local user/session state
+# =============================================================================
+.bash_history
+.ssh/
+.cache/
+.npm/
+.duckdb/
+.grok/
+
+# =============================================================================
+# Editor / OS
+# =============================================================================
+*~
+.DS_Store
+.vscode/
+
+# =============================================================================
+# Staging copies (not source of truth)
+# =============================================================================
+stage-nixos/
+
+# =============================================================================
+# Package build output
+# =============================================================================
+packages/*/result
+packages/*/node_modules/.nix-defexpr/
+
+# --- Hygiene-Fix 2026-06-26: nie wieder versehentlich committen ---
+.aider.chat.history.md
+.aider.input.history
+.local/share/containers/
+.nix-profile
+*.bak
+*.bak[0-9]
+.config/fish/completions/grok.fish

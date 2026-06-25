@@ -1,0 +1,59 @@
+# Kopie: cp profile.local.nix.example profile.local.nix
+# NIEMALS committen — steht in .gitignore
+{
+  restic = {
+    # optional — leer = kein Healthchecks.io-Ping
+    healthcheckUrl = "";
+  };
+  alerting = {
+    # optional — Stufe 8+, leer = kein ntfy/Webhook (OnFailure nur wenn gesetzt)
+    ntfyTopic = "";
+    webhookUrl = "";
+  };
+  access = {
+    emergency = {
+      # nixos-rebuild: mkpasswd -m sha-512
+      passwordHash = "CHANGE_ME_sha512_hash";
+    };
+  };
+
+  secrets = {
+    devKeys = {
+      pocketId.encryptionKey = "CHANGE_ME_min_16_chars";
+      grafana.secretKey = "CHANGE_ME";
+      context7.apiKey = ""; # leer = set-context7-api-key
+      restic.password = "CHANGE_ME";
+      vaultwarden.adminToken = "CHANGE_ME";
+      amp = {
+        adminUser = "admin";
+        adminPassword = "CHANGE_ME";
+      };
+      homeassistant = {
+        mqttPassword = "CHANGE_ME";
+      };
+      zigbee = {
+        mqttPassword = "CHANGE_ME";
+      };
+      media = {
+        prowlarr.apiKey = "CHANGE_ME";
+        sonarr.apiKey = "CHANGE_ME";
+        radarr.apiKey = "CHANGE_ME";
+        sabnzbd.apiKey = "CHANGE_ME";
+        scenenzbs.apiKey = "CHANGE_ME";
+      };
+    };
+    privado = {
+      # WireGuard PrivateKey — landet in /var/lib/secrets/privado.env + privado_private_key
+      privateKey = "";
+    };
+    cloudflare = {
+      # Zone.DNS.Edit für m7c5.de — DDNS-Updater + dns-guard; leer = kein DDNS-Config
+      apiToken = "";
+    };
+    restic = {
+      repository = "";
+      awsAccessKeyId = "";
+      awsSecretAccessKey = "";
+    };
+  };
+}

@@ -1,0 +1,143 @@
+# ---
+# meta:
+#   layer: 5
+#   role: lib
+#   purpose: Kernel-Blacklist global — Datacenter/Legacy/Sicherheit
+#   tags:
+#     - kernel
+#     - blacklist
+# ---
+{
+  securityLegacy = [
+    "appletalk"
+    "ax25"
+    "netrom"
+    "rose"
+    "mkiss"
+    "hdlc"
+    "bpqether"
+    "baycom_scc"
+    "scc"
+    "n_hdlc"
+    "coda"
+    "uvesafb"
+  ];
+
+  intelPreKabyLake = [
+    "e100"
+    "eepro100"
+    "e1000"
+    "igb"
+    "igbvf"
+    "ixgbe"
+    "ixgbevf"
+    "ipw2100"
+    "ipw2200"
+    "iwl3945"
+    "iwl4965"
+    "iwlwifi"
+    "iwldvm"
+    "iwlmvm"
+    "iwlmei"
+    "snd_intel8x0"
+  ];
+
+  datacenterNet = [
+    "i40e"
+    "i40evf"
+    "ice"
+    "fm10k"
+    "mlx4_core"
+    "mlx4_en"
+    "mlx5_core"
+    "mlx5_ib"
+    "bnxt_en"
+    "bnxt_re"
+    "qede"
+    "qed"
+    "liquidio"
+    "ionic"
+    "sfc"
+    "sfc-falcon"
+    "sfc-siena"
+    "be2net"
+    "bna"
+    "enic"
+    "vmxnet3"
+    "mana"
+    "ntb_netdev"
+    "jme"
+    "atl1c"
+    "atl1e"
+    "atl2c"
+    "sky2"
+  ];
+
+  enterpriseStorage = [
+    "megaraid_sas"
+    "mpt3sas"
+    "mpt2sas"
+    "mptspi"
+    "mptscsih"
+    "aacraid"
+    "hpsa"
+    "smartpqi"
+    "3w-xxxx"
+    "3w-9xxx"
+    "aic7xxx"
+    "aic79xx"
+    "sym53c8xx"
+    "sym53c8xx_2"
+    "BusLogic"
+    "qla2xxx"
+    "lpfc"
+    "bnxt_fc"
+    "bfa"
+    "mptfc"
+    "xen-blkfront"
+    "xen-scsifront"
+    "virtio_blk"
+    "virtio_scsi"
+  ];
+
+  hpcInterconnect = [
+    "ib_core"
+    "ib_ipoib"
+    "ib_umad"
+    "ib_uverbs"
+    "ib_cm"
+    "rdma_cm"
+    "rdma_ucm"
+    "rpcrdma"
+    "mlx4_ib"
+    "mlx5_ib"
+    "siw"
+    "mana_ib"
+  ];
+
+  legacyBus = [
+    "floppy"
+    "parport"
+    "parport_pc"
+    "ppdev"
+    "firewire-ohci"
+    "firewire-sbp2"
+    "pcmcia"
+    "yenta_socket"
+    "ide"
+    "ide_pci_generic"
+    "pata_oldpiix"
+    "pata_amd"
+    "ne2k-pci"
+    "8139too"
+    "8139cp"
+    "tulip"
+    "3c59x"
+    "via-rhine"
+    "via-velocity"
+    "hamradio"
+    "can"
+    "vcan"
+    "slcan"
+  ];
+}
