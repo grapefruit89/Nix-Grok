@@ -25,6 +25,34 @@ Architektur-Verfassung (6-Schichten-Modell, Nummerierungsschema,
 NIXMETA-Verbot, harte Regeln). Dieses Dokument hier ist die
 Tages-aktuelle Briefing-Ergänzung dazu, kein Ersatz.
 
+## Schreibzugriff auf /etc/nixos
+
+`/etc/nixos` gehört dem User `nixos`. Claude Codes native Edit/Write-Tools
+haben kein sudo — direkte Schreibversuche enden mit "Permission denied".
+
+**Das richtige Muster für jede Dateiänderung:**
+
+```bash
+# 1. Original-Mode prüfen
+sudo ls -la /etc/nixos/pfad/zur/datei
+
+# 2. Neue Version in den Session-Scratchpad schreiben (Write-Tool oder Bash)
+#    Scratchpad-Pfad steht im System-Prompt der Session, z.B.:
+#    /tmp/claude-<uid>/-home-moritz/<session-id>/scratchpad/
+
+# 3. Mit sudo install an den Zielpfad kopieren:
+sudo install -o nixos -g users -m <original-mode> <scratchpad-datei> /etc/nixos/pfad/zur/datei
+```
+
+**⚠ Warnung: `-m <mode>` immer explizit angeben!**
+`sudo install` ohne `-m` setzt den Mode auf den System-Default — nicht auf
+den Originalwert. Typischer Bug: ein Script mit Mode 755 (ausführbar) wird
+nach `install` ohne `-m` zu 644 und scheitert beim Ausführen. Vor jedem
+`install` erst `sudo ls -la <zielpfad>` ausführen und den Mode übernehmen.
+
+Nach jeder Änderung: `sudo nixos-rebuild dry-build --impure` muss grün
+sein, bevor committed wird.
+
 ## Was JETZT Stand ist (Stand: 2026-06-26, nach dem ersten Switch)
 
 - `/etc/nixos` **existiert**, ist ein Git-Repo (`origin` = `github.com/grapefruit89/Nix-Grok`),
@@ -58,12 +86,13 @@ Tages-aktuelle Briefing-Ergänzung dazu, kein Ersatz.
 - **sabnzbd**: Newshosting-Server-Eintrag hat noch Platzhalter-Credentials
   (`placeholder_user`/`placeholder_pass`) — Downloads laufen nicht, bis der
   Mensch echte Zugangsdaten im Webinterface einträgt.
-- **media-stack-config-sync.service**: kann flaky sein, wenn Prowlarr beim
-  Start noch nicht bereit ist (30-Versuche-Timeout). Einfach erneut
-  `systemctl restart media-stack-config-sync` wenn das passiert.
+- **media-stack-config-sync.service**: Prowlarr-API-Sync wird übersprungen
+  solange `privado-vpn.service` inaktiv ist (kein WireGuard-Key in
+  `profile.local.nix` eingetragen — bewusst offen). Locale-Sync (Jellyfin,
+  SABnzbd) läuft durch. Service endet mit exit 0.
 - Volle Architektur-Migration (`modules/` → strikt flache `00`–`90`-Ordner
-  mit `NNss`-Dateinamen, `machines/` → `hosts/`) ist **geplant, aber noch
-  nicht physisch durchgeführt** — nur in AGENTS.md dokumentiert.
+  mit `NNss`-Dateinamen, `machines/` → `hosts/`) ist **geplant, in Arbeit**
+  — Domäne `00-core/` ist der erste Schritt.
 
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 
