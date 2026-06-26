@@ -56,6 +56,7 @@ in
     ../../modules/91-security-assertions.nix
     ../../modules/dev/aider.nix
     ../../modules/dev/claude-code.nix
+    ../../modules/00-nixmeta-ban.nix
   ];
 
   nixpkgs.config.allowUnfree = true;
