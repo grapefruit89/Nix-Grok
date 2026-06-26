@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sudo cat *)",
+      "Bash(sudo sed -n *)",
+      "Bash(sudo grep *)",
+      "Bash(sudo find *)",
+      "Bash(sudo journalctl *)",
+      "Bash(systemctl status *)",
+      "Bash(systemctl list-units *)",
+      "Bash(systemctl --failed*)",
+      "Bash(systemctl is-active *)",
+      "Bash(sudo git -C /etc/nixos log *)",
+      "Bash(sudo git -C /etc/nixos status *)",
+      "Bash(sudo git -C /etc/nixos diff *)",
+      "Bash(sudo git -C /etc/nixos show *)",
+      "Bash(sudo nixos-rebuild dry-build *)"
+    ],
+    "deny": [
+      "Bash(sudo nixos-rebuild switch*)",
+      "Bash(git push*)",
+      "Bash(sudo git -C /etc/nixos push*)",
+      "Bash(sudo rm*)"
+    ]
+  }
+}
