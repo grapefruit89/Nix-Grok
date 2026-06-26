@@ -13,7 +13,7 @@
 { config, lib, ... }:
 
 let
-  reg = import ../lib/uid-registry.nix { inherit lib; };
+  reg = import ../../lib/uid-registry.nix { inherit lib; };
 in
 {
   options.my = {

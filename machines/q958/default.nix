@@ -17,16 +17,12 @@ in
 {
   imports = [
     ./hardware.nix
-    ../../modules/00-core.nix
-    ../../modules/05-uid-registry.nix
-    ../../modules/05-services-spec.nix
+    ../../modules/00-core
     ../../modules/05-storage-policy.nix
     ../../modules/05-forbidden-tech.nix
     ../../modules/05-runtime-guard.nix
-    ../../modules/05-sops.nix
     ../../modules/05-alerting.nix
     ../../modules/05-deferred-ops.nix
-    ../../modules/05-boot-watchdog.nix
     ../../modules/25-kernel-policy.nix
     ../../modules/26-kernel-hardening.nix
     ../../modules/27-hardened-core.nix
@@ -56,7 +52,6 @@ in
     ../../modules/91-security-assertions.nix
     ../../modules/dev/aider.nix
     ../../modules/dev/claude-code.nix
-    ../../modules/00-nixmeta-ban.nix
   ];
 
   nixpkgs.config.allowUnfree = true;

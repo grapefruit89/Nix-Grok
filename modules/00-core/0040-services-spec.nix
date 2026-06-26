@@ -17,9 +17,9 @@
 { config, lib, ... }:
 
 let
-  specLib = import ../lib/services-spec.nix { inherit lib; };
+  specLib = import ../../lib/services-spec.nix { inherit lib; };
   domain = config.my.configs.identity.domain;
-  dnsMap = import ../lib/dns-map.nix { inherit domain; };
+  dnsMap = import ../../lib/dns-map.nix { inherit domain; };
 in
 {
   options.my.services.spec = lib.mkOption {
