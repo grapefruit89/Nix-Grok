@@ -228,9 +228,10 @@ in
         enable = true;
         ports = lib.mkForce [ 22 ];
         settings = {
-          PermitRootLogin = lib.mkForce "yes";
-          PasswordAuthentication = lib.mkForce true;
-          KbdInteractiveAuthentication = lib.mkForce true;
+          # Root nur ueber die physische TTY-Konsole (autologin), nie ueber SSH.
+          PermitRootLogin = lib.mkForce "no";
+          PasswordAuthentication = lib.mkForce false;
+          KbdInteractiveAuthentication = lib.mkForce false;
         };
       };
 

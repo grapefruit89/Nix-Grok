@@ -26,8 +26,13 @@ in
       environmentFiles = [ "/var/lib/hermes/env" ];
 
       settings = {
-        model.default = "gemini-3-flash-preview";
-        model.provider = "google-gemini-cli";
+        model.default = "deepseek-ai/deepseek-v4-flash";
+        model.provider = "nvidia";
+        fallback_providers = [
+          { provider = "nvidia"; model = "meta/llama-3.3-70b-instruct"; }
+          { provider = "nvidia"; model = "google/gemma-4-31b-it"; }
+          { provider = "nvidia"; model = "deepseek-ai/deepseek-v4-pro"; }
+        ];
         context_compression = {
           threshold = 70;
           target_ratio = 0.30;
@@ -64,6 +69,9 @@ in
           if [ -f /var/lib/secrets/context7.env ]; then
             grep -q '^CONTEXT7_API_KEY=' /var/lib/secrets/context7.env 2>/dev/null && \
               grep '^CONTEXT7_API_KEY=' /var/lib/secrets/context7.env >> /var/lib/hermes/env || true
+          fi
+          if [ -f /var/lib/secrets/nvidia_nim_api_key ]; then
+            echo "NVIDIA_API_KEY=$(cat /var/lib/secrets/nvidia_nim_api_key)" >> /var/lib/hermes/env
           fi
         '';
       };

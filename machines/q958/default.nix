@@ -55,10 +55,12 @@ in
     ./boot-baseline.nix
     ../../modules/91-security-assertions.nix
     ../../modules/dev/aider.nix
+    ../../modules/dev/claude-code.nix
   ];
 
   nixpkgs.config.allowUnfree = true;
   services.aider.enable = true;
+  services.claude-code.enable = true;
 
   home-manager = {
     useGlobalPkgs = true;

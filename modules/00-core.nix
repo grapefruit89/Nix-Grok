@@ -45,19 +45,7 @@ in
         description = "true = nix-daemon idle (schont Dienste). false = volle Build-Power.";
       };
       zram-swap.enable = lib.mkEnableOption "Aggressive komprimierter ZRAM RAM-swap";
-      kernel-slim = {
-        enable = lib.mkEnableOption "Kernel module blacklist slimming (saves RAM, reduces Angriffsfläche)";
-        mode = lib.mkOption {
-          type = lib.types.enum [ "blank" "global-only" "homelab-strict" "homelab-relaxed" ];
-          default = "homelab-strict";
-          description = "Kernel slimming mode";
-        };
-        homelabProfile = lib.mkOption {
-          type = lib.types.enum [ "none" "headless-server" "desktop" ];
-          default = "none";
-          description = "Homelab hardware profile";
-        };
-      };
+      # kernel-slim Option lebt jetzt nur noch in modules/25-kernel-policy.nix (Duplikat entfernt)
     };
 
     mode = lib.mkOption {
@@ -235,6 +223,9 @@ in
         nix-diff
         nix-output-monitor
         nix-du
+        # Hygiene-Trio (statix war schon da): statix -> deadnix -> nixfmt-rfc-style
+        deadnix
+        nixfmt-rfc-style
       ];
     })
 

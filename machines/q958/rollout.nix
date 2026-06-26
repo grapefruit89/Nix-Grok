@@ -99,7 +99,6 @@ in
     zigbee-stack.enable = erstAb 7;
     semaphore.enable = erstAb 7;
     amp.enable = erstAb 7;
-    grok.enable = lib.mkForce true; # Headless-Dev — immer an, unabhängig von rollout.stufe
   };
 
   services.hermes-agent.enable = erstAb 7;

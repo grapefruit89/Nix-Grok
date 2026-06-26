@@ -28,10 +28,17 @@ in
     isNormalUser = lib.mkForce true;
     description = lib.mkForce emergency.description;
     extraGroups = lib.mkForce emergency.extraGroups;
-    hashedPassword = lib.mkForce emergency.passwordHash;
+    # Kein Passwort fuer den Notfall-User -- Wiedereinstieg laeuft ueber
+    # physische TTY-Root-Autologin-Konsole + moritz' SSH-Keys, nicht ueber
+    # ein zu merkendes Passwort (Entscheidung 2026-06-25).
+    hashedPassword = lib.mkForce null;
   };
 
   my.configs.server.lanIP = lib.mkForce lan.ip;
+
+  # Physische Konsole: root-Autologin auf tty1 -- kein Passwort, keine Huerde,
+  # wenn man koerperlich am Geraet sitzt (Entscheidung 2026-06-25).
+  services.getty.autologinUser = lib.mkForce "root";
 
   networking.networkmanager.enable = lib.mkForce false;
   networking.useDHCP = lib.mkForce false;
@@ -81,9 +88,8 @@ in
       message = "ACCESS: User '${emergency.name}' braucht Gruppe 'wheel' (sudo).";
     }
     {
-      assertion =
-        (config.users.users.${emergency.name}.hashedPassword or "") == emergency.passwordHash;
-      message = "ACCESS: Passwort-Hash für '${emergency.name}' fehlt oder wurde geändert.";
+      assertion = (config.users.users.${emergency.name}.hashedPassword or null) == null;
+      message = "ACCESS: '${emergency.name}' darf kein Passwort haben -- Wiedereinstieg nur via TTY-Autologin/SSH-Keys.";
     }
     {
       assertion = config.my.configs.server.lanIP == lan.ip;
@@ -106,8 +112,8 @@ in
       message = "ACCESS: SSH muss auf Port ${toString p.network.sshPort} lauschen.";
     }
     {
-      assertion = opensshSettings.PasswordAuthentication or false;
-      message = "ACCESS: SSH PasswordAuthentication muss true sein.";
+      assertion = !(opensshSettings.PasswordAuthentication or false);
+      message = "ACCESS: SSH PasswordAuthentication muss false sein -- nur SSH-Keys (Entscheidung 2026-06-25).";
     }
     {
       assertion =
