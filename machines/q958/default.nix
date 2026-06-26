@@ -26,10 +26,7 @@ in
     ../../modules/25-kernel-policy.nix
     ../../modules/26-kernel-hardening.nix
     ../../modules/27-hardened-core.nix
-    ../../modules/10-network.nix
-    ../../modules/10-ingress.nix
-    ../../modules/10-vpn-confinement.nix
-    ../../modules/10-gateway.nix
+    ../../modules/10-network
     ../../modules/15-firewall.nix
     ../../modules/20-security.nix
     ../../modules/30-storage.nix
