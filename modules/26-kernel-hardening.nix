@@ -62,21 +62,37 @@ in
         "/tmp" = {
           device = "tmpfs";
           fsType = "tmpfs";
-          options = [ "defaults" "noexec" "nosuid" "nodev" ];
+          options = [
+            "defaults"
+            "noexec"
+            "nosuid"
+            "nodev"
+          ];
         };
       })
       (lib.mkIf cfg.hardenDevShm {
         "/dev/shm" = {
           device = "shm";
           fsType = "tmpfs";
-          options = [ "defaults" "size=50%" "noexec" "nosuid" "nodev" ];
+          options = [
+            "defaults"
+            "size=50%"
+            "noexec"
+            "nosuid"
+            "nodev"
+          ];
         };
       })
       (lib.mkIf cfg.hardenRunLock {
         "/run/lock" = {
           device = "tmpfs";
           fsType = "tmpfs";
-          options = [ "defaults" "noexec" "nosuid" "nodev" ];
+          options = [
+            "defaults"
+            "noexec"
+            "nosuid"
+            "nodev"
+          ];
         };
       })
     ];
@@ -121,7 +137,8 @@ in
       # Core dumps discarded
       "kernel.core_pattern" = "|/bin/false";
       "kernel.panic_on_oops" = if cfg.panicOnOops then 1 else 0;
-    } // lib.mkIf (!vpnNeedsForward) {
+    }
+    // lib.mkIf (!vpnNeedsForward) {
       "net.ipv4.ip_forward" = 0;
     };
 

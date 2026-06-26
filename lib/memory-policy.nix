@@ -41,7 +41,8 @@ in
   inherit mkServiceLimits gb mb;
 
   # Tier 1 — Datenbank (RAM aus profile.nix hardware.ramGB)
-  postgres = ramGB:
+  postgres =
+    ramGB:
     mkServiceLimits {
       oomScore = -800;
       forceOom = true;
@@ -51,14 +52,16 @@ in
 
   # Tier 4 — Media (expendable, Transcode-Spitzen)
   jellyfin =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = 100;
       memoryMax = "6G";
       memoryHigh = "4G";
     };
 
   sabnzbd =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = 300;
       memoryMax = "2G";
       memoryHigh = "1536M";
@@ -66,13 +69,15 @@ in
 
   # Tier 1 — Ingress & Identität (OOM teils via critical-systemd.nix)
   caddy =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       memoryMax = "768M";
       memoryHigh = "512M";
     };
 
   pocketId =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = -900;
       forceOom = true;
       memoryMax = "256M";
@@ -81,21 +86,24 @@ in
 
   # Tier 3 — Observability
   loki =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = 300;
       memoryMax = "1G";
       memoryHigh = "768M";
     };
 
   vector =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = 200;
       memoryMax = "512M";
       memoryHigh = "384M";
     };
 
   grafana =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = 200;
       memoryMax = "512M";
       memoryHigh = "384M";
@@ -103,14 +111,16 @@ in
 
   # Tier 4 — *arr (Sonarr, Radarr, Readarr, Prowlarr via arr-helper.nix)
   arr =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = 200;
       memoryMax = "512M";
       memoryHigh = "384M";
     };
 
   audiobookshelf =
-    _: mkServiceLimits {
+    _:
+    mkServiceLimits {
       oomScore = 150;
       memoryMax = "1G";
       memoryHigh = "768M";

@@ -9,9 +9,7 @@
 { lib, stufe }:
 
 let
-  erstAb =
-    minStufe:
-    if stufe < minStufe then lib.mkForce false else lib.mkForce true;
+  erstAb = minStufe: if stufe < minStufe then lib.mkForce false else lib.mkForce true;
 in
 {
   inherit erstAb;

@@ -12,7 +12,12 @@
 #     - forge
 #     - git
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   caddy = import ../lib/caddy-helpers.nix { inherit lib; };
@@ -30,18 +35,34 @@ in
   options.my.services = {
     forgejo = {
       enable = lib.mkEnableOption "Forgejo self-hosted Git service";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.forgejo; description = "Forgejo HTTP port."; };
-      disableRegistration = lib.mkOption { type = lib.types.bool; default = true; description = "Disable public user registration."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.forgejo;
+        description = "Forgejo HTTP port.";
+      };
+      disableRegistration = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Disable public user registration.";
+      };
     };
 
     semaphore = {
       enable = lib.mkEnableOption "Semaphore Ansible Web UI";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.semaphore; description = "Semaphore HTTP port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.semaphore;
+        description = "Semaphore HTTP port.";
+      };
     };
 
     cockpit = {
       enable = lib.mkEnableOption "Cockpit Server Admin UI";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.cockpit; description = "Cockpit admin port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.cockpit;
+        description = "Cockpit admin port.";
+      };
       enableVirtualization = lib.mkOption {
         type = lib.types.bool;
         default = true;

@@ -14,6 +14,5 @@
   forgejo = "/run/forgejo/forgejo.sock";
   grafana = "/run/grafana/grafana.sock";
 
-  toCaddyUpstream = path:
-    "unix/${lib.removePrefix "/" path}";
+  toCaddyUpstream = path: "unix/${lib.removePrefix "/" path}";
 }

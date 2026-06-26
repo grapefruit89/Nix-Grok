@@ -7,7 +7,12 @@
 #     - hardware
 #     - tier-a
 # ---
-{ config, lib, modulesPath, ... }:
+{
+  config,
+  lib,
+  modulesPath,
+  ...
+}:
 
 let
   p = import ./profile.nix;
@@ -25,7 +30,10 @@ in
   fileSystems."/boot" = {
     device = "/dev/disk/by-label/${boot.label}";
     fsType = boot.fsType;
-    options = [ "fmask=${boot.fmask}" "dmask=${boot.dmask}" ];
+    options = [
+      "fmask=${boot.fmask}"
+      "dmask=${boot.dmask}"
+    ];
   };
 
   fileSystems."/" = {

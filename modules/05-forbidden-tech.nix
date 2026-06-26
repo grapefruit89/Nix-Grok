@@ -22,12 +22,9 @@ in
   config = {
     my.policy.forbidden-tech.enable = lib.mkDefault true;
 
-    assertions =
-      lib.optionals config.my.policy.forbidden-tech.enable (
-        policy.baselineAssertions config
-        ++ lib.optionals (config.my.security.firewall.enable or false) (
-          policy.firewallAssertions config
-        )
-      );
+    assertions = lib.optionals config.my.policy.forbidden-tech.enable (
+      policy.baselineAssertions config
+      ++ lib.optionals (config.my.security.firewall.enable or false) (policy.firewallAssertions config)
+    );
   };
 }

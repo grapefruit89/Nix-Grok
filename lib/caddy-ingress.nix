@@ -10,7 +10,11 @@
 #     - caddy
 #     - ingress
 # ---
-{ lib, caddy, vpnConn ? null }:
+{
+  lib,
+  caddy,
+  vpnConn ? null,
+}:
 
 let
   inherit (caddy) streamingBackend;
@@ -19,17 +23,19 @@ let
     name: entry:
     if vpnConn == null then
       mkUpstream entry
-    else if lib.elem name [ "sabnzbd" "prowlarr" ] then
+    else if
+      lib.elem name [
+        "sabnzbd"
+        "prowlarr"
+      ]
+    then
       "${vpnConn.connectionAddress vpnConn.cfg name}:${toString entry.port}"
     else
       mkUpstream entry;
 
   mkUpstream =
     entry:
-    if entry.socket or null != null then
-      "unix/${entry.socket}"
-    else
-      "127.0.0.1:${toString entry.port}";
+    if entry.socket or null != null then "unix/${entry.socket}" else "127.0.0.1:${toString entry.port}";
 
   mkFqdn = domain: entry: "${entry.subdomain}.${domain}";
 
@@ -144,7 +150,12 @@ let
       genSecurityOnlyVhost upstream
     else if name == "amp" then
       genSecurityOnlyVhost upstream
-    else if lib.elem name [ "home-assistant" "zigbee-stack" ] then
+    else if
+      lib.elem name [
+        "home-assistant"
+        "zigbee-stack"
+      ]
+    then
       genSecurityOnlyVhost upstream
     else
       genZoneVhost {
@@ -161,21 +172,15 @@ let
       blockyMetricsPort,
     }:
     let
-      ingress =
-        lib.filterAttrs (
-          name: entry:
-          (entry.subdomain or null) != null
-          && (entry.zone != "loopback")
-          && isEnabled name
-        ) spec;
+      ingress = lib.filterAttrs (
+        name: entry: (entry.subdomain or null) != null && (entry.zone != "loopback") && isEnabled name
+      ) spec;
 
-      mkHost = name: entry:
+      mkHost =
+        name: entry:
         let
           upstream =
-            if name == "blocky" then
-              "127.0.0.1:${toString blockyMetricsPort}"
-            else
-              vpnUpstream name entry;
+            if name == "blocky" then "127.0.0.1:${toString blockyMetricsPort}" else vpnUpstream name entry;
           fqdn = mkFqdn domain entry;
           extraConfig = genHostExtra {
             inherit name entry upstream;

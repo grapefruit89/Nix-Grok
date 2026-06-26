@@ -18,9 +18,9 @@ in
 rec {
   findNamespace =
     cfg: serviceName:
-    lib.findFirst (
-      nsName: lib.elem serviceName (cfg.namespaces.${nsName}.services or [ ])
-    ) null (lib.attrNames cfg.namespaces);
+    lib.findFirst (nsName: lib.elem serviceName (cfg.namespaces.${nsName}.services or [ ])) null (
+      lib.attrNames cfg.namespaces
+    );
 
   namespaceFor =
     cfg: serviceName:
@@ -49,11 +49,7 @@ rec {
       in
       if ns == null then "127.0.0.1" else ns.bridgeAddress;
 
-  isVpnConfined =
-    cfg: serviceName:
-    cfg.enable or false && namespaceFor cfg serviceName != null;
+  isVpnConfined = cfg: serviceName: cfg.enable or false && namespaceFor cfg serviceName != null;
 
-  servicePort =
-    ports: serviceName:
-    ports.${servicePorts.${serviceName} or serviceName} or null;
+  servicePort = ports: serviceName: ports.${servicePorts.${serviceName} or serviceName} or null;
 }

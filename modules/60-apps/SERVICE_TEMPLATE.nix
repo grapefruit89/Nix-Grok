@@ -27,20 +27,22 @@ in
   # 3) Rollout: machines/<host>/rollout.nix ist die einzige .enable-Quelle
 
   # options.my.services.<serviceName>.enable in modules/*/default.nix deklarieren
-  config = lib.mkIf false (lib.mkMerge [
-    {
-      # NixOS-Dienst aktivieren
-      # services.${serviceName} = { enable = true; ... };
-    }
+  config = lib.mkIf false (
+    lib.mkMerge [
+      {
+        # NixOS-Dienst aktivieren
+        # services.${serviceName} = { enable = true; ... };
+      }
 
-    # Fabrik: Caddy vHost aus dns-map + systemd-Hardening
-    (factory.mkService {
-      inherit config;
-      name = serviceName;
-      port = 8080; # config.my.ports.${serviceName}
-      mode = "sso"; # sso | tailscale-sso | streaming | security | direct
-      readWritePaths = [ "/var/lib/${serviceName}" ];
-      # host = "custom.${config.my.configs.identity.domain}"; # optional Override
-    })
-  ]);
+      # Fabrik: Caddy vHost aus dns-map + systemd-Hardening
+      (factory.mkService {
+        inherit config;
+        name = serviceName;
+        port = 8080; # config.my.ports.${serviceName}
+        mode = "sso"; # sso | tailscale-sso | streaming | security | direct
+        readWritePaths = [ "/var/lib/${serviceName}" ];
+        # host = "custom.${config.my.configs.identity.domain}"; # optional Override
+      })
+    ]
+  );
 }

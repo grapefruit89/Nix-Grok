@@ -19,8 +19,7 @@ let
       imports ? [ ],
     }:
     lib.concatStringsSep "\n" (
-      map (snippet: "import ${snippet}") imports
-      ++ [ "reverse_proxy ${upstream host port}" ]
+      map (snippet: "import ${snippet}") imports ++ [ "reverse_proxy ${upstream host port}" ]
     );
 
   mkProxyUnix =
@@ -49,36 +48,61 @@ in
 {
   inherit mkProxy streamingBackend;
 
-  proxySso = port: mkProxy { inherit port; imports = [ "sso_auth" ]; };
+  proxySso =
+    port:
+    mkProxy {
+      inherit port;
+      imports = [ "sso_auth" ];
+    };
 
-  proxyTailscaleSso = { port, host ? "127.0.0.1" }: mkProxy {
-    inherit port host;
-    imports = [ "tailscale_admin" "sso_auth" ];
-  };
+  proxyTailscaleSso =
+    {
+      port,
+      host ? "127.0.0.1",
+    }:
+    mkProxy {
+      inherit port host;
+      imports = [
+        "tailscale_admin"
+        "sso_auth"
+      ];
+    };
 
-  proxySecurity = port: mkProxy { inherit port; imports = [ "security_headers" ]; };
+  proxySecurity =
+    port:
+    mkProxy {
+      inherit port;
+      imports = [ "security_headers" ];
+    };
 
   proxyDirect = port: mkProxy { inherit port; };
 
-  proxyUnixSso = socketPath:
+  proxyUnixSso =
+    socketPath:
     mkProxyUnix {
       inherit socketPath;
       imports = [ "sso_auth" ];
     };
 
-  proxyUnixTailscaleSso = socketPath:
+  proxyUnixTailscaleSso =
+    socketPath:
     mkProxyUnix {
       inherit socketPath;
-      imports = [ "tailscale_admin" "sso_auth" ];
+      imports = [
+        "tailscale_admin"
+        "sso_auth"
+      ];
     };
 
-  proxyUnixSecurity = socketPath:
+  proxyUnixSecurity =
+    socketPath:
     mkProxyUnix {
       inherit socketPath;
       imports = [ "security_headers" ];
     };
 
-  proxyUnixDirect = socketPath:
+  proxyUnixDirect =
+    socketPath:
     mkProxyUnix {
       inherit socketPath;
       imports = [ ];

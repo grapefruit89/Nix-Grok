@@ -10,7 +10,12 @@
 #     - access
 #     - rollout
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   p = import ./profile.nix;
@@ -49,7 +54,8 @@ in
       Address = "${lan.ip}/${toString lan.prefixLength}";
       Gateway = lan.gateway;
       DNS = lan.dns;
-    } // lib.optionalAttrs (lib.elem lan.interface p.network.ipv6.disableOnInterfaces) {
+    }
+    // lib.optionalAttrs (lib.elem lan.interface p.network.ipv6.disableOnInterfaces) {
       IPv6AcceptRA = "no";
     };
   };
@@ -59,7 +65,10 @@ in
   );
 
   # Git-Repo liegt unter /home/nixos → Deploy-Key für grapefruit89/NixmitGROK
-  environment.systemPackages = [ pkgs.git pkgs.openssh ];
+  environment.systemPackages = [
+    pkgs.git
+    pkgs.openssh
+  ];
   programs.ssh.knownHosts.github = {
     hostNames = [ "github.com" ];
     publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6fj0Xq7y9eGOs90HzDPW3uTilh/Ar";
@@ -116,9 +125,7 @@ in
       message = "ACCESS: SSH PasswordAuthentication muss false sein -- nur SSH-Keys (Entscheidung 2026-06-25).";
     }
     {
-      assertion =
-        !config.my.security.firewall.enable
-        || lib.elem p.network.sshPort firewallPorts;
+      assertion = !config.my.security.firewall.enable || lib.elem p.network.sshPort firewallPorts;
       message = "ACCESS: Firewall aktiv → Port ${toString p.network.sshPort} muss erlaubt sein.";
     }
     {

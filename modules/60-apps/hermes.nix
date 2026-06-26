@@ -9,7 +9,12 @@
 #     - hermes
 #     - llm
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.hermes;
@@ -29,9 +34,18 @@ in
         model.default = "deepseek-ai/deepseek-v4-flash";
         model.provider = "nvidia";
         fallback_providers = [
-          { provider = "nvidia"; model = "meta/llama-3.3-70b-instruct"; }
-          { provider = "nvidia"; model = "google/gemma-4-31b-it"; }
-          { provider = "nvidia"; model = "deepseek-ai/deepseek-v4-pro"; }
+          {
+            provider = "nvidia";
+            model = "meta/llama-3.3-70b-instruct";
+          }
+          {
+            provider = "nvidia";
+            model = "google/gemma-4-31b-it";
+          }
+          {
+            provider = "nvidia";
+            model = "deepseek-ai/deepseek-v4-pro";
+          }
         ];
         context_compression = {
           threshold = 70;

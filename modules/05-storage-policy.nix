@@ -39,13 +39,12 @@ let
     "restic-backups-tier-a-sovereign"
   ];
 
-  markers =
-    policy.defaultTierCMarkers {
-      mountPoint = tierC.mountPoint;
-      automountParent = tierC.automountParent;
-      labels = tierC.labels;
-      legacyPrefixes = tierC.legacyPrefixes;
-    };
+  markers = policy.defaultTierCMarkers {
+    mountPoint = tierC.mountPoint;
+    automountParent = tierC.automountParent;
+    labels = tierC.labels;
+    legacyPrefixes = tierC.legacyPrefixes;
+  };
 in
 {
   options.my.configs.storage = {
@@ -67,7 +66,10 @@ in
       };
       labels = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "NIXMEDIA" "NIXBACKUP" ];
+        default = [
+          "NIXMEDIA"
+          "NIXBACKUP"
+        ];
       };
       legacyPrefixes = lib.mkOption {
         type = lib.types.listOf lib.types.str;
@@ -88,7 +90,8 @@ in
 
   config = {
     my.storage-policy.enable = lib.mkDefault true;
-  } // lib.mkIf config.my.storage-policy.enable {
+  }
+  // lib.mkIf config.my.storage-policy.enable {
     assertions = [
       (policy.mkTierCAssertion {
         exemptions = config.my.storage-policy.tierCExemptions;

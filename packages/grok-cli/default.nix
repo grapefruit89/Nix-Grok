@@ -6,7 +6,11 @@
 #     - grok
 #     - package
 # ---
-{ lib, stdenv, fetchurl }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+}:
 
 let
   version = "0.2.51";

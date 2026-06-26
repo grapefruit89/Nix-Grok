@@ -7,7 +7,13 @@
 #     - dev
 #     - claude
 # ---
-{ config, pkgs, lib, claude-code-pkg ? null, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  claude-code-pkg ? null,
+  ...
+}:
 
 {
   options.services.claude-code.enable = lib.mkEnableOption "Claude Code CLI (Anthropic)";

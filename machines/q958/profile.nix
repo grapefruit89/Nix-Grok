@@ -11,10 +11,12 @@
 # ---
 let
   localPath =
-    if builtins.pathExists ./profile.local.nix then ./profile.local.nix
-    else if builtins.pathExists /etc/nixos/machines/q958/profile.local.nix
-    then /etc/nixos/machines/q958/profile.local.nix
-    else null;
+    if builtins.pathExists ./profile.local.nix then
+      ./profile.local.nix
+    else if builtins.pathExists /etc/nixos/machines/q958/profile.local.nix then
+      /etc/nixos/machines/q958/profile.local.nix
+    else
+      null;
   local =
     if localPath != null then
       import localPath
@@ -38,7 +40,10 @@ in
     sortKey = "0_basis";
     # 8 rollierende NixOS-Generationen + 2 feste Baselines (boot-baseline.nix) ≈ 10 Menü-Einträge
     generationLimit = 8;
-    pinnedGenerations = [ 85 86 ];
+    pinnedGenerations = [
+      85
+      86
+    ];
     kernelParams = [ "i915.enable_guc=2" ];
   };
 
@@ -68,7 +73,10 @@ in
       endpoint = "91.148.245.70:51820";
       publicKey = "KgTUh3KLijVluDvNpzDCJJfrJ7EyLzYLmdHCksG4sRg=";
       address = "100.64.8.117/32";
-      dns = [ "198.18.0.1" "198.18.0.2" ];
+      dns = [
+        "198.18.0.1"
+        "198.18.0.2"
+      ];
     };
     dns = {
       bootstrap = [
@@ -93,10 +101,13 @@ in
     emergency = {
       name = "nixos";
       description = "Admin-Zugang (Notfall-Login)";
-      passwordHash = local.access.emergency.passwordHash or (
-        throw "access.emergency.passwordHash in machines/q958/profile.local.nix setzen"
-      );
-      extraGroups = [ "wheel" "networkmanager" ];
+      passwordHash =
+        local.access.emergency.passwordHash
+          or (throw "access.emergency.passwordHash in machines/q958/profile.local.nix setzen");
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+      ];
     };
   };
 
@@ -112,7 +123,12 @@ in
     gpu = "UHD 630";
     nic = "I219-LM";
     kvmModule = "kvm-intel";
-    initrdModules = [ "xhci_pci" "ahci" "usb_storage" "sd_mod" ];
+    initrdModules = [
+      "xhci_pci"
+      "ahci"
+      "usb_storage"
+      "sd_mod"
+    ];
   };
 
   storage = {
@@ -123,9 +139,21 @@ in
     # A/B = kein spinning device. A = NVMe, oder SATA wenn keine NVMe (q958).
     # B = immer SATA-SSD. C = HDD only (cold storage).
     tierPolicy = {
-      a = { medium = "ssd"; bus = [ "nvme" "ata" ]; };
-      b = { medium = "ssd"; bus = [ "ata" ]; };
-      c = { medium = "hdd"; bus = [ "ata" ]; };
+      a = {
+        medium = "ssd";
+        bus = [
+          "nvme"
+          "ata"
+        ];
+      };
+      b = {
+        medium = "ssd";
+        bus = [ "ata" ];
+      };
+      c = {
+        medium = "hdd";
+        bus = [ "ata" ];
+      };
     };
 
     systemLabels = [
@@ -163,8 +191,14 @@ in
     };
 
     tierC = {
-      labels = [ "NIXMEDIA" "NIXBACKUP" ];
-      legacyPrefixes = [ "TIER_C_" "DISK_STORAGE_" ];
+      labels = [
+        "NIXMEDIA"
+        "NIXBACKUP"
+      ];
+      legacyPrefixes = [
+        "TIER_C_"
+        "DISK_STORAGE_"
+      ];
       mountPoint = "/mnt/media";
       enabled = false;
     };
@@ -194,9 +228,8 @@ in
     };
 
     # Dev-Platzhalter: machines/q958/profile.local.nix (gitignored, rollout.stufe < 9)
-    devKeys = local.secrets.devKeys or (
-      throw "secrets.devKeys in machines/q958/profile.local.nix setzen"
-    );
+    devKeys =
+      local.secrets.devKeys or (throw "secrets.devKeys in machines/q958/profile.local.nix setzen");
   };
 
   integrations = {
@@ -243,8 +276,19 @@ in
       ];
     };
     firewall = {
-      lanCidrs = [ "192.168.0.0/16" "10.0.0.0/8" "172.16.0.0/12" ];
-      blockedCountries = [ "cn" "ru" "kp" "ir" "sy" "vn" ];
+      lanCidrs = [
+        "192.168.0.0/16"
+        "10.0.0.0/8"
+        "172.16.0.0/12"
+      ];
+      blockedCountries = [
+        "cn"
+        "ru"
+        "kp"
+        "ir"
+        "sy"
+        "vn"
+      ];
       allowLanDns = true;
       tailscaleNotrack = true;
     };
@@ -258,49 +302,53 @@ in
   restic = {
     healthcheckUrl = local.restic.healthcheckUrl or "";
     offsiteEnable =
-      let repo = (local.secrets.restic or { }).repository or "";
-      in repo != "";
+      let
+        repo = (local.secrets.restic or { }).repository or "";
+      in
+      repo != "";
   };
 
-  kernel = let
-    moduleRoles = {
-      e1000e = "Intel I219-LM Onboard-NIC (eno1)";
-      i915 = "Intel UHD 630 — Jellyfin VA-API";
-      ahci = "SATA-Controller — Tier-A SSD /dev/sda";
-      sd_mod = "SCSI-Disk-Treiber — Systemplatte";
-      libata = "ATA-Library — SATA";
-      scsi_mod = "SCSI-Core";
-      xhci_pci = "USB 3.0 — Tastatur, Install-Stick";
-      usb_storage = "USB-Mass-Storage";
-      usbhid = "USB-HID";
-      hid = "HID-Core";
-      kvm = "KVM-Virtualisierung";
-      kvm_intel = "KVM Intel (i3-9100)";
-      zram = "ZRAM-Swap";
-      mei_me = "Intel ME Interface — Q370 PCH";
-      intel_pch_thermal = "Intel PCH-Thermal — Q370";
+  kernel =
+    let
+      moduleRoles = {
+        e1000e = "Intel I219-LM Onboard-NIC (eno1)";
+        i915 = "Intel UHD 630 — Jellyfin VA-API";
+        ahci = "SATA-Controller — Tier-A SSD /dev/sda";
+        sd_mod = "SCSI-Disk-Treiber — Systemplatte";
+        libata = "ATA-Library — SATA";
+        scsi_mod = "SCSI-Core";
+        xhci_pci = "USB 3.0 — Tastatur, Install-Stick";
+        usb_storage = "USB-Mass-Storage";
+        usbhid = "USB-HID";
+        hid = "HID-Core";
+        kvm = "KVM-Virtualisierung";
+        kvm_intel = "KVM Intel (i3-9100)";
+        zram = "ZRAM-Swap";
+        mei_me = "Intel ME Interface — Q370 PCH";
+        intel_pch_thermal = "Intel PCH-Thermal — Q370";
+      };
+    in
+    {
+      # Zwiebelschale: lib/kernel/* = Schicht A+B, hier nur Schicht C (Host)
+      policy = {
+        mode = "homelab-strict";
+        homelabProfile = "headless-server";
+      };
+
+      inherit moduleRoles;
+      requiredModules = builtins.attrNames moduleRoles;
+
+      requiredInitrdModules = [
+        "xhci_pci"
+        "ahci"
+        "usb_storage"
+        "sd_mod"
+      ];
+
+      # Module außerhalb der Homelab-Whitelist, die dieser Host trotzdem braucht
+      whitelistExtra = [ ];
+
+      # Schicht C — Host-Blacklist (zusätzlich zu A+B)
+      blacklist = { };
     };
-  in {
-    # Zwiebelschale: lib/kernel/* = Schicht A+B, hier nur Schicht C (Host)
-    policy = {
-      mode = "homelab-strict";
-      homelabProfile = "headless-server";
-    };
-
-    inherit moduleRoles;
-    requiredModules = builtins.attrNames moduleRoles;
-
-    requiredInitrdModules = [
-      "xhci_pci"
-      "ahci"
-      "usb_storage"
-      "sd_mod"
-    ];
-
-    # Module außerhalb der Homelab-Whitelist, die dieser Host trotzdem braucht
-    whitelistExtra = [ ];
-
-    # Schicht C — Host-Blacklist (zusätzlich zu A+B)
-    blacklist = { };
-  };
 }

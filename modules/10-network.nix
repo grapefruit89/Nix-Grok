@@ -22,7 +22,12 @@
 #     - network
 #     - database
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgAdguard = config.my.services.adguardhome;
@@ -36,14 +41,16 @@ let
   dnsBootstrap = config.my.configs.network.dnsBootstrap;
   dnsPolicy = import ../lib/dns-policy.nix { inherit lib; };
   memory = import ../lib/memory-policy.nix { inherit lib; };
-  criticalSystemd = import ../lib/critical-systemd.nix { inherit lib; oomScore = -1000; };
+  criticalSystemd = import ../lib/critical-systemd.nix {
+    inherit lib;
+    oomScore = -1000;
+  };
   domain = config.my.configs.identity.domain;
   portAdguard = config.my.ports.adguard;
   caddySnippets = import ../lib/caddy-snippets.nix {
     inherit lib;
     pocketIdPort =
-      if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id
-      else null;
+      if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id else null;
     lanCidr = "192.168.0.0/16";
   };
 
@@ -60,8 +67,16 @@ in
     # 🛑 Blocky DNS Resolver
     blocky = {
       enable = lib.mkEnableOption "Blocky DNS Resolver";
-      port = lib.mkOption { type = lib.types.port; default = 53; description = "Blocky DNS listening port."; };
-      metricsPort = lib.mkOption { type = lib.types.port; default = 4000; description = "Blocky HTTP metrics port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 53;
+        description = "Blocky DNS listening port.";
+      };
+      metricsPort = lib.mkOption {
+        type = lib.types.port;
+        default = 4000;
+        description = "Blocky HTTP metrics port.";
+      };
       upstreamDns = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ "tcp-tls:1.1.1.1:853" ];
@@ -90,7 +105,11 @@ in
     # 🔗 Tailscale VPN
     tailscale = {
       enable = lib.mkEnableOption "Tailscale Zero-Trust VPN";
-      port = lib.mkOption { type = lib.types.port; default = 41641; description = "Tailscale UDP WireGuard port."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 41641;
+        description = "Tailscale UDP WireGuard port.";
+      };
     };
 
     # 🛡️ Privado VPN WireGuard Client
@@ -126,8 +145,16 @@ in
     # 🔑 PocketID Identity Provider
     pocket-id = {
       enable = lib.mkEnableOption "PocketID OIDC Passkey Provider";
-      port = lib.mkOption { type = lib.types.port; default = config.my.ports.pocket-id; description = "PocketID web interface listening port."; };
-      dataDir = lib.mkOption { type = lib.types.str; default = "/var/lib/pocket-id"; description = "Database state directory."; };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = config.my.ports.pocket-id;
+        description = "PocketID web interface listening port.";
+      };
+      dataDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/var/lib/pocket-id";
+        description = "Database state directory.";
+      };
       secretsFile = lib.mkOption {
         type = lib.types.str;
         default = "";
@@ -163,7 +190,11 @@ in
           http.address = "127.0.0.1:${toString portAdguard}";
 
           dns = {
-            bind_hosts = [ "127.0.0.1" lanIP tailscaleIP ];
+            bind_hosts = [
+              "127.0.0.1"
+              lanIP
+              tailscaleIP
+            ];
             port = 53;
             upstream_dns = [ "https://dns.cloudflare.com/dns-query" ];
             bootstrap_dns = dnsBootstrap;
@@ -195,19 +226,37 @@ in
           filtering = {
             protection_enabled = true;
             filtering_enabled = true;
-            safe_browsing = { enabled = true; };
-            parental = { enabled = false; };
-            safe_search = { enabled = false; };
+            safe_browsing = {
+              enabled = true;
+            };
+            parental = {
+              enabled = false;
+            };
+            safe_search = {
+              enabled = false;
+            };
           };
 
           rewrites = [
-            { domain = "nixhome.local"; answer = lanIP; }
-            { domain = "${domain}"; answer = lanIP; }
-            { domain = "*.${domain}"; answer = lanIP; }
+            {
+              domain = "nixhome.local";
+              answer = lanIP;
+            }
+            {
+              domain = "${domain}";
+              answer = lanIP;
+            }
+            {
+              domain = "*.${domain}";
+              answer = lanIP;
+            }
           ];
 
           clients.persistent = [
-            { ids = [ lanIP ]; name = "nixhome-server"; }
+            {
+              ids = [ lanIP ];
+              name = "nixhome-server";
+            }
           ];
 
           user_rules = [
@@ -225,10 +274,20 @@ in
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
         ProtectControlGroups = true;
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
         NoNewPrivileges = true;
-        CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
-        AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ];
+        CapabilityBoundingSet = [
+          "CAP_NET_BIND_SERVICE"
+          "CAP_NET_RAW"
+        ];
+        AmbientCapabilities = [
+          "CAP_NET_BIND_SERVICE"
+          "CAP_NET_RAW"
+        ];
         ReadWritePaths = [ "/var/lib/AdGuardHome" ];
         LockPersonality = true;
         RestrictRealtime = true;
@@ -255,7 +314,10 @@ in
           settings = {
             maxmemory = "256mb";
             maxmemory-policy = "allkeys-lru";
-            save = [ "900 1" "300 10" ];
+            save = [
+              "900 1"
+              "300 10"
+            ];
           };
         };
       };
@@ -411,38 +473,45 @@ in
       systemd.services.blocky.serviceConfig = lib.mkMerge [
         criticalSystemd
         {
-        ProtectSystem = lib.mkDefault "strict";
-        ProtectHome = lib.mkDefault true;
-        PrivateTmp = lib.mkDefault true;
-        PrivateDevices = lib.mkDefault true;
-        ProtectHostname = lib.mkDefault true;
-        ProtectClock = lib.mkDefault true;
-        ProtectKernelTunables = lib.mkDefault true;
-        ProtectKernelModules = lib.mkDefault true;
-        ProtectControlGroups = lib.mkDefault true;
-        RestrictNamespaces = lib.mkDefault true;
-        NoNewPrivileges = lib.mkDefault true;
-        PrivateNetwork = lib.mkDefault false;
-        RestrictAddressFamilies = lib.mkDefault (
-          if config.my.configs.network.ipv6.firewall then
-            [ "AF_INET" "AF_INET6" "AF_UNIX" ]
-          else
-            [ "AF_INET" "AF_UNIX" ]
-        );
-        CapabilityBoundingSet = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
-        AmbientCapabilities = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
-        SystemCallFilter = lib.mkDefault [
-          "@system-service"
-          "~@privileged"
-          "~@resources"
-          "~@mount"
-        ];
-        LockPersonality = lib.mkDefault true;
-        RestrictRealtime = lib.mkDefault true;
-        RestrictSUIDSGID = lib.mkDefault true;
-        ReadWritePaths = lib.mkDefault [ "/var/lib/blocky" ];
-        MemoryHigh = lib.mkDefault "200M";
-        MemoryMax = lib.mkDefault "500M";
+          ProtectSystem = lib.mkDefault "strict";
+          ProtectHome = lib.mkDefault true;
+          PrivateTmp = lib.mkDefault true;
+          PrivateDevices = lib.mkDefault true;
+          ProtectHostname = lib.mkDefault true;
+          ProtectClock = lib.mkDefault true;
+          ProtectKernelTunables = lib.mkDefault true;
+          ProtectKernelModules = lib.mkDefault true;
+          ProtectControlGroups = lib.mkDefault true;
+          RestrictNamespaces = lib.mkDefault true;
+          NoNewPrivileges = lib.mkDefault true;
+          PrivateNetwork = lib.mkDefault false;
+          RestrictAddressFamilies = lib.mkDefault (
+            if config.my.configs.network.ipv6.firewall then
+              [
+                "AF_INET"
+                "AF_INET6"
+                "AF_UNIX"
+              ]
+            else
+              [
+                "AF_INET"
+                "AF_UNIX"
+              ]
+          );
+          CapabilityBoundingSet = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
+          AmbientCapabilities = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
+          SystemCallFilter = lib.mkDefault [
+            "@system-service"
+            "~@privileged"
+            "~@resources"
+            "~@mount"
+          ];
+          LockPersonality = lib.mkDefault true;
+          RestrictRealtime = lib.mkDefault true;
+          RestrictSUIDSGID = lib.mkDefault true;
+          ReadWritePaths = lib.mkDefault [ "/var/lib/blocky" ];
+          MemoryHigh = lib.mkDefault "200M";
+          MemoryMax = lib.mkDefault "500M";
         }
       ];
     })
@@ -460,15 +529,25 @@ in
         permitCertUid = "caddy";
         useRoutingFeatures = "client";
         # DNS bleibt bei Blocky (127.0.0.1) — kein Tailscale MagicDNS in resolv.conf
-        extraUpFlags = [ "--ssh" "--accept-dns=false" "--accept-routes=true" ];
+        extraUpFlags = [
+          "--ssh"
+          "--accept-dns=false"
+          "--accept-routes=true"
+        ];
       };
       networking.firewall.trustedInterfaces = [ "tailscale0" ];
       networking.firewall.checkReversePath = "loose";
 
       systemd.services.tailscale-autoconnect = {
         description = "Automatic Tailscale Login";
-        after = [ "tailscaled.service" "network-online.target" ];
-        wants = [ "tailscaled.service" "network-online.target" ];
+        after = [
+          "tailscaled.service"
+          "network-online.target"
+        ];
+        wants = [
+          "tailscaled.service"
+          "network-online.target"
+        ];
         wantedBy = [ "multi-user.target" ];
         serviceConfig = {
           Type = "oneshot";
@@ -497,65 +576,78 @@ in
           ProtectHome = true;
           NoNewPrivileges = true;
           PrivateTmp = true;
-          CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
+          CapabilityBoundingSet = [
+            "CAP_NET_ADMIN"
+            "CAP_NET_RAW"
+          ];
         };
       };
     })
 
     # ── PRIVADO VPN WIREGUARD CLIENT ──────────────────────────────────────────
-    (lib.mkIf (
-      config.my.services.privado-vpn.enable
-      && !(config.my.services.vpn-confinement.enable or false)
-    ) {
+    (lib.mkIf
+      (config.my.services.privado-vpn.enable && !(config.my.services.vpn-confinement.enable or false))
+      {
 
+        networking.wg-quick.interfaces.privado =
+          let
+            ip = pkgs.iproute2;
+            vpnTable = "51820";
+            # Prowlarr + SABnzbd — nur Registry-UIDs über privado (Split-Tunnel)
+            vpnUids = [
+              config.my.users.registry.prowlarr
+              config.my.users.registry.sabnzbd
+            ];
+            uidRules = lib.concatMapStringsSep "\n" (
+              uid:
+              "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
+            ) vpnUids;
+            uidRulesDown = lib.concatMapStringsSep "\n" (
+              uid:
+              "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
+            ) vpnUids;
+          in
+          {
+            autostart = true;
+            address = [ config.my.services.privado-vpn.ipAddress ];
+            # Split-Tunnel (table=off): kein resolv.conf via wg-quick — vermeidet resolvconf-Signatur-Konflikt
+            dns = [ ];
+            privateKeyFile = config.my.services.privado-vpn.privateKeyFile;
+            table = "off";
 
-      networking.wg-quick.interfaces.privado = let
-        ip = pkgs.iproute2;
-        vpnTable = "51820";
-        # Prowlarr + SABnzbd — nur Registry-UIDs über privado (Split-Tunnel)
-        vpnUids = [
-          config.my.users.registry.prowlarr
-          config.my.users.registry.sabnzbd
-        ];
-        uidRules = lib.concatMapStringsSep "\n" (uid:
-          "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
-        ) vpnUids;
-        uidRulesDown = lib.concatMapStringsSep "\n" (uid:
-          "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
-        ) vpnUids;
-      in {
-        autostart = true;
-        address = [ config.my.services.privado-vpn.ipAddress ];
-        # Split-Tunnel (table=off): kein resolv.conf via wg-quick — vermeidet resolvconf-Signatur-Konflikt
-        dns = [ ];
-        privateKeyFile = config.my.services.privado-vpn.privateKeyFile;
-        table = "off";
+            postUp = ''
+              ${ip}/bin/ip route add default dev privado table ${vpnTable}
+              ${uidRules}
+            '';
+            preDown = ''
+              ${uidRulesDown}
+              ${ip}/bin/ip route flush table ${vpnTable} || true
+            '';
 
-        postUp = ''
-          ${ip}/bin/ip route add default dev privado table ${vpnTable}
-          ${uidRules}
-        '';
-        preDown = ''
-          ${uidRulesDown}
-          ${ip}/bin/ip route flush table ${vpnTable} || true
-        '';
+            peers = [
+              {
+                publicKey = config.my.services.privado-vpn.publicKey;
+                endpoint = config.my.services.privado-vpn.endpoint;
+                allowedIPs = [ "0.0.0.0/0" ];
+                persistentKeepalive = 25;
+              }
+            ];
+          };
 
-        peers = [{
-          publicKey = config.my.services.privado-vpn.publicKey;
-          endpoint = config.my.services.privado-vpn.endpoint;
-          allowedIPs = [ "0.0.0.0/0" ];
-          persistentKeepalive = 25;
-        }];
-      };
-
-
-    })
+      }
+    )
 
     # ── POCKETID IDENTITY PROVIDER ────────────────────────────────────────────
     (lib.mkIf config.my.services.pocket-id.enable {
       systemd.services.pocket-id = {
-        after = [ "postgresql.service" "network-online.target" ];
-        wants = [ "postgresql.service" "network-online.target" ];
+        after = [
+          "postgresql.service"
+          "network-online.target"
+        ];
+        wants = [
+          "postgresql.service"
+          "network-online.target"
+        ];
       };
 
       services.pocket-id = {

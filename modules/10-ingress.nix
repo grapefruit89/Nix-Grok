@@ -36,13 +36,13 @@ in
 
   config = {
     my.ingress.fromSpec.enable = lib.mkDefault config.services.caddy.enable;
-  } // lib.mkIf (config.services.caddy.enable && config.my.ingress.fromSpec.enable) {
-    services.caddy.virtualHosts =
-      ingressLib.genVirtualHosts {
-        spec = config.my.services.spec;
-        inherit domain;
-        isEnabled = enableMap.enabled config;
-        blockyMetricsPort = config.my.services.blocky.metricsPort or 4000;
-      };
+  }
+  // lib.mkIf (config.services.caddy.enable && config.my.ingress.fromSpec.enable) {
+    services.caddy.virtualHosts = ingressLib.genVirtualHosts {
+      spec = config.my.services.spec;
+      inherit domain;
+      isEnabled = enableMap.enabled config;
+      blockyMetricsPort = config.my.services.blocky.metricsPort or 4000;
+    };
   };
 }

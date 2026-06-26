@@ -45,12 +45,12 @@ in
   };
 
   # Blocky-DNS fürs LAN — nur auf eno1, nicht WAN-weit (vor nftables Stufe 8)
-  networking.firewall.interfaces.${lan.interface} = lib.mkIf (
-    config.my.services.blocky.enable && !config.my.security.firewall.enable
-  ) {
-    allowedUDPPorts = [ 53 ];
-    allowedTCPPorts = [ 53 ];
-  };
+  networking.firewall.interfaces.${lan.interface} =
+    lib.mkIf (config.my.services.blocky.enable && !config.my.security.firewall.enable)
+      {
+        allowedUDPPorts = [ 53 ];
+        allowedTCPPorts = [ 53 ];
+      };
 
   networking.firewall.allowedUDPPorts = lib.mkIf (
     config.my.services.tailscale.enable && !config.my.security.firewall.enable

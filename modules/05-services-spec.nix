@@ -37,21 +37,19 @@ in
       {
         assertion =
           !(config.services.caddy.enable or false) || (config.my.ingress.fromSpec.enable or false);
-        message =
-          "[SERVICES-SPEC] Caddy aktiv ohne fromSpec — alle vHosts müssen aus my.services.spec kommen.";
+        message = "[SERVICES-SPEC] Caddy aktiv ohne fromSpec — alle vHosts müssen aus my.services.spec kommen.";
       }
       {
         assertion =
           let
-            offenders =
-              lib.filterAttrs (
-                name: entry:
-                let
-                  expected = dnsMap.mapping.${name} or null;
-                  sub = entry.subdomain or null;
-                in
-                expected != null && sub != null && expected != "${sub}.${domain}"
-              ) config.my.services.spec;
+            offenders = lib.filterAttrs (
+              name: entry:
+              let
+                expected = dnsMap.mapping.${name} or null;
+                sub = entry.subdomain or null;
+              in
+              expected != null && sub != null && expected != "${sub}.${domain}"
+            ) config.my.services.spec;
           in
           offenders == { };
         message =
@@ -65,21 +63,24 @@ in
                 (dnsMap.mapping.${name} or null) != null && (e.subdomain or null) != null
               ) config.my.services.spec
             );
-            mismatches = lib.concatMapStringsSep "; " (
-              name:
-              let
-                e = config.my.services.spec.${name};
-              in
-              "${name}: spec=${e.subdomain}.${domain} dns-map=${dnsMap.mapping.${name}}"
-            ) (
-              lib.filter (
-                name:
-                let
-                  e = config.my.services.spec.${name};
-                in
-                (dnsMap.mapping.${name} or null) != "${e.subdomain}.${domain}"
-              ) names
-            );
+            mismatches =
+              lib.concatMapStringsSep "; "
+                (
+                  name:
+                  let
+                    e = config.my.services.spec.${name};
+                  in
+                  "${name}: spec=${e.subdomain}.${domain} dns-map=${dnsMap.mapping.${name}}"
+                )
+                (
+                  lib.filter (
+                    name:
+                    let
+                      e = config.my.services.spec.${name};
+                    in
+                    (dnsMap.mapping.${name} or null) != "${e.subdomain}.${domain}"
+                  ) names
+                );
           in
           "[SERVICES-SPEC] subdomain weicht von dns-map ab: ${mismatches}";
       }

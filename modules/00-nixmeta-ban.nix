@@ -30,9 +30,7 @@ let
       in
       if type == "directory" && name != ".git" && name != "stage-nixos" then
         collectNixFiles path
-      else if
-        type == "regular" && lib.hasSuffix ".nix" name && name != "00-nixmeta-ban.nix"
-      then
+      else if type == "regular" && lib.hasSuffix ".nix" name && name != "00-nixmeta-ban.nix" then
         [ path ]
       else
         [ ]

@@ -9,10 +9,11 @@
 #     - policy
 #     - sandbox
 # ---
-{ config
-, lib
-, pkgs
-, ...
+{
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 let
   # --------------------------------------------------------------------------
@@ -40,11 +41,13 @@ in
     # --------------------------------------------------------------------------
     assertions = [
       {
-        assertion = config.my.security.firewall.enable -> (config.my.services.blocky.enable || config.my.services.adguardhome.enable);
+        assertion =
+          config.my.security.firewall.enable
+          -> (config.my.services.blocky.enable || config.my.services.adguardhome.enable);
         message = "POLICY: Firewall aktiviert, aber kein DNS-Resolver (Blocky/AdGuard) — DNS-Leck möglich.";
       }
       {
-        assertion = config.my.services.blocky.enable -> (config.networking.nameservers == ["127.0.0.1"]);
+        assertion = config.my.services.blocky.enable -> (config.networking.nameservers == [ "127.0.0.1" ]);
         message = "POLICY: Blocky aktiviert, aber resolv.conf zeigt nicht auf 127.0.0.1 — DNS-Bypass möglich.";
       }
       {
@@ -56,7 +59,8 @@ in
         message = "POLICY: Tailscale ohne NOTRACK — Performance-Problem bei VPN-Traffic.";
       }
       {
-        assertion = config.my.services.vpn-confinement.enable -> config.my.security.firewall.skuidSegmentation.enable;
+        assertion =
+          config.my.services.vpn-confinement.enable -> config.my.security.firewall.skuidSegmentation.enable;
         message = "POLICY: VPN-Confinement ohne skuid-Segmentation — Usenet-UIDs können Firewall umgehen.";
       }
     ];

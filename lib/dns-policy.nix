@@ -20,10 +20,10 @@ let
     "sdns://"
   ];
 
-  isEncryptedUpstream = entry:
-    lib.any (prefix: lib.hasPrefix prefix entry) encryptedPrefixes;
+  isEncryptedUpstream = entry: lib.any (prefix: lib.hasPrefix prefix entry) encryptedPrefixes;
 
-  isPlaintextUpstream = entry:
+  isPlaintextUpstream =
+    entry:
     !isEncryptedUpstream entry
     && (
       builtins.match "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(:[0-9]+)?$" entry != null
@@ -37,5 +37,10 @@ let
   nonePlaintext = entries: lib.all (e: !isPlaintextUpstream e) entries;
 in
 {
-  inherit isEncryptedUpstream isPlaintextUpstream allEncrypted nonePlaintext;
+  inherit
+    isEncryptedUpstream
+    isPlaintextUpstream
+    allEncrypted
+    nonePlaintext
+    ;
 }

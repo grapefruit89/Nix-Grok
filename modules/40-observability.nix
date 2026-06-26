@@ -17,7 +17,12 @@
 #   tags:
 #     - observability
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   memory = import ../lib/memory-policy.nix { inherit lib; };
@@ -544,90 +549,91 @@ in
         '';
       in
       {
-      systemd.tmpfiles.rules = [
-        "d /etc/crowdsec 0755 root root -"
-        "L+ /etc/crowdsec/config.yaml - - - - ${crowdsecEtcConfig}"
-        "d /var/lib/crowdsec 0755 root root -"
-        "d /var/lib/crowdsec/data 0755 crowdsec crowdsec -"
-        "d /var/lib/crowdsec/config 0755 crowdsec crowdsec -"
-        "d /var/lib/crowdsec/hub 0755 crowdsec crowdsec -"
-      ];
-
-      services.crowdsec = {
-        enable = true;
-        hub.collections = [
-          "crowdsecurity/linux"
-          "crowdsecurity/sshd"
-          "crowdsecurity/caddy"
+        systemd.tmpfiles.rules = [
+          "d /etc/crowdsec 0755 root root -"
+          "L+ /etc/crowdsec/config.yaml - - - - ${crowdsecEtcConfig}"
+          "d /var/lib/crowdsec 0755 root root -"
+          "d /var/lib/crowdsec/data 0755 crowdsec crowdsec -"
+          "d /var/lib/crowdsec/config 0755 crowdsec crowdsec -"
+          "d /var/lib/crowdsec/hub 0755 crowdsec crowdsec -"
         ];
-        localConfig.acquisitions = [
-          {
-            source = "journalctl";
-            journalctl_filter = [ "_SYSTEMD_UNIT=sshd.service" ];
-            labels.type = "sshd";
-          }
-          {
-            source = "journalctl";
-            journalctl_filter = [ "_SYSTEMD_UNIT=caddy.service" ];
-            labels.type = "caddy";
-          }
-        ];
-        settings = {
-          general.api.server = {
-            enable = true;
-            listen_uri = "127.0.0.1:${toString config.my.ports.crowdsec}";
-          };
-          lapi.credentialsFile = "/var/lib/crowdsec/local_api_credentials.yaml";
-        };
-      };
 
-      systemd.services.crowdsec.serviceConfig = {
-        ExecStartPre = lib.mkOverride 50 [
-          " "
-          crowdsecSetupFixed
-          "${lib.getExe' pkgs.crowdsec "crowdsec"} -c /etc/crowdsec/config.yaml -t -error"
-          crowdsecPostSetup
-        ];
-        StateDirectory = "crowdsec";
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        NoNewPrivileges = true;
-        ReadWritePaths = [ "/var/lib/crowdsec" ];
-      };
-
-      services.crowdsec-firewall-bouncer = {
-        enable = true;
-        registerBouncer.enable = true;
-        settings = {
-          api_url = "http://127.0.0.1:${toString config.my.ports.crowdsec}/";
-          mode = "nftables";
-          nftables = {
-            ipv4_set_name = "crowdsec_blocked_ipv4";
-            table = "inet filter";
-            chain = "input";
-            ipv6.enabled = config.my.security.firewall.ipv6;
-          } // lib.optionalAttrs config.my.security.firewall.ipv6 {
-            ipv6_set_name = "crowdsec_blocked_ipv6";
+        services.crowdsec = {
+          enable = true;
+          hub.collections = [
+            "crowdsecurity/linux"
+            "crowdsecurity/sshd"
+            "crowdsecurity/caddy"
+          ];
+          localConfig.acquisitions = [
+            {
+              source = "journalctl";
+              journalctl_filter = [ "_SYSTEMD_UNIT=sshd.service" ];
+              labels.type = "sshd";
+            }
+            {
+              source = "journalctl";
+              journalctl_filter = [ "_SYSTEMD_UNIT=caddy.service" ];
+              labels.type = "caddy";
+            }
+          ];
+          settings = {
+            general.api.server = {
+              enable = true;
+              listen_uri = "127.0.0.1:${toString config.my.ports.crowdsec}";
+            };
+            lapi.credentialsFile = "/var/lib/crowdsec/local_api_credentials.yaml";
           };
         };
-      };
 
-      systemd.services.crowdsec-firewall-bouncer.serviceConfig = {
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        NoNewPrivileges = true;
-        CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
-      };
+        systemd.services.crowdsec.serviceConfig = {
+          ExecStartPre = lib.mkOverride 50 [
+            " "
+            crowdsecSetupFixed
+            "${lib.getExe' pkgs.crowdsec "crowdsec"} -c /etc/crowdsec/config.yaml -t -error"
+            crowdsecPostSetup
+          ];
+          StateDirectory = "crowdsec";
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          PrivateDevices = true;
+          ProtectKernelTunables = true;
+          ProtectKernelModules = true;
+          ProtectControlGroups = true;
+          NoNewPrivileges = true;
+          ReadWritePaths = [ "/var/lib/crowdsec" ];
+        };
+
+        services.crowdsec-firewall-bouncer = {
+          enable = true;
+          registerBouncer.enable = true;
+          settings = {
+            api_url = "http://127.0.0.1:${toString config.my.ports.crowdsec}/";
+            mode = "nftables";
+            nftables = {
+              ipv4_set_name = "crowdsec_blocked_ipv4";
+              table = "inet filter";
+              chain = "input";
+              ipv6.enabled = config.my.security.firewall.ipv6;
+            }
+            // lib.optionalAttrs config.my.security.firewall.ipv6 {
+              ipv6_set_name = "crowdsec_blocked_ipv6";
+            };
+          };
+        };
+
+        systemd.services.crowdsec-firewall-bouncer.serviceConfig = {
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          PrivateDevices = true;
+          ProtectKernelTunables = true;
+          ProtectKernelModules = true;
+          ProtectControlGroups = true;
+          NoNewPrivileges = true;
+          CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
+        };
       }
     ))
   ];

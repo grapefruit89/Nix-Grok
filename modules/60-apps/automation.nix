@@ -52,13 +52,20 @@ in
           ProtectHome = true;
           NoNewPrivileges = true;
           PrivateTmp = true;
-          ReadWritePaths = [ cfgPaperless.dataDir cfgPaperless.consumptionDir ];
+          ReadWritePaths = [
+            cfgPaperless.dataDir
+            cfgPaperless.consumptionDir
+          ];
           CapabilityBoundingSet = "";
           RestrictNamespaces = true;
           ProtectClock = true;
           ProtectHostname = true;
           LockPersonality = true;
-          RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+          RestrictAddressFamilies = [
+            "AF_INET"
+            "AF_INET6"
+            "AF_UNIX"
+          ];
         }
       ];
 
@@ -94,7 +101,11 @@ in
         RestrictNamespaces = lib.mkForce true;
         ProtectClock = lib.mkForce true;
         ProtectHostname = lib.mkForce true;
-        RestrictAddressFamilies = lib.mkForce [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = lib.mkForce [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
       };
 
       my.impermanence.extraPaths = [ cfgN8n.userFolder ];

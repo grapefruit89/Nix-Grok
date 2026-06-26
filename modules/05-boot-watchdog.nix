@@ -11,7 +11,12 @@
 #     - watchdog
 #     - systemd
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.boot-watchdog;
@@ -53,7 +58,10 @@ in
   config = lib.mkIf cfg.enable {
     systemd.services.boot-watchdog = {
       description = "Post-boot critical service health check (fail-fast)";
-      after = [ "multi-user.target" "network-online.target" ];
+      after = [
+        "multi-user.target"
+        "network-online.target"
+      ];
       wants = [ "network-online.target" ];
       serviceConfig = {
         Type = "oneshot";

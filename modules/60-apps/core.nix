@@ -31,7 +31,6 @@ in
   config = lib.mkMerge [
     (lib.mkIf cfgVaultwarden.enable {
 
-
       services.vaultwarden = {
         enable = true;
         dbBackend = "sqlite"; # Lokale SQLite DB für minimale externe Latenz
@@ -447,7 +446,11 @@ in
         ProtectClock = true;
         ProtectHostname = true;
         LockPersonality = true;
-        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
         ReadWritePaths = [
           "/var/lib/filebrowser"
           cfgFilebrowser.rootPath
@@ -455,36 +458,38 @@ in
       };
     })
 
-    (lib.mkIf cfgLinkwarden.enable (lib.mkMerge [
-      {
-        services.linkwarden = {
-          enable = true;
-          inherit (cfgLinkwarden) port;
-          environmentFile = "/var/lib/secrets/linkwarden.env";
-          environment = {
-            NEXTAUTH_URL = "https://${linksHost}/api/v1/auth";
+    (lib.mkIf cfgLinkwarden.enable (
+      lib.mkMerge [
+        {
+          services.linkwarden = {
+            enable = true;
+            inherit (cfgLinkwarden) port;
+            environmentFile = "/var/lib/secrets/linkwarden.env";
+            environment = {
+              NEXTAUTH_URL = "https://${linksHost}/api/v1/auth";
+            };
           };
-        };
-      }
+        }
 
-      (factory.mkService {
-        inherit config;
-        name = "linkwarden";
-        port = cfgLinkwarden.port;
-        mode = "sso";
-        caddyOnly = true;
-        persistDirs = [ "/var/lib/linkwarden" ];
-      })
+        (factory.mkService {
+          inherit config;
+          name = "linkwarden";
+          port = cfgLinkwarden.port;
+          mode = "sso";
+          caddyOnly = true;
+          persistDirs = [ "/var/lib/linkwarden" ];
+        })
 
-      {
-        systemd.services.linkwarden.serviceConfig = {
-          DynamicUser = true;
-          OOMScoreAdjust = 300;
-          ProtectClock = true;
-          ProtectHostname = true;
-        };
-      }
-    ]))
+        {
+          systemd.services.linkwarden.serviceConfig = {
+            DynamicUser = true;
+            OOMScoreAdjust = 300;
+            ProtectClock = true;
+            ProtectHostname = true;
+          };
+        }
+      ]
+    ))
 
     (lib.mkIf cfgOpenWebui.enable {
       services.open-webui = {
@@ -507,8 +512,14 @@ in
         ProtectHome = true;
         PrivateTmp = true;
         PrivateDevices = true;
-        SupplementaryGroups = [ "render" "video" ];
-        SystemCallFilter = [ "@system-service" "~@privileged" ];
+        SupplementaryGroups = [
+          "render"
+          "video"
+        ];
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+        ];
         OOMScoreAdjust = 200;
       };
     })

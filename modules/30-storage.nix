@@ -9,7 +9,12 @@
 #     - storage
 #     - impermanence
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   user = config.my.configs.identity.user;
@@ -30,7 +35,8 @@ let
       "/var/lib/grafana"
       "/var/lib/gatus"
       "/var/lib/crowdsec"
-    ] ++ lib.optional (user != "") "/home/${user}/.grok";
+    ]
+    ++ lib.optional (user != "") "/home/${user}/.grok";
     files = [
       "/etc/machine-id"
       "/etc/ssh/ssh_host_ed25519_key"
@@ -146,7 +152,11 @@ in
         "/" = lib.mkForce {
           device = "none";
           fsType = "tmpfs";
-          options = [ "defaults" "size=16G" "mode=755" ];
+          options = [
+            "defaults"
+            "size=16G"
+            "mode=755"
+          ];
         };
 
         "${cfgImp.persistMountPoint}" = {
@@ -154,31 +164,30 @@ in
           fsType = "ext4";
           neededForBoot = true;
         };
-      } // lib.listToAttrs (
-        map
-          (path: {
-            name = path;
-            value = {
-              device = "${cfgImp.persistMountPoint}${path}";
-              fsType = "none";
-              options = [ "bind" ];
-              depends = [ cfgImp.persistMountPoint ];
-            };
-          })
-          (tierAStatic.paths ++ config.my.impermanence.extraPaths)
-      ) // lib.listToAttrs (
-        map
-          (file: {
-            name = file;
-            value = {
-              device = "${cfgImp.persistMountPoint}${file}";
-              fsType = "none";
-              options = [ "bind" ];
-              depends = [ cfgImp.persistMountPoint ];
-            };
-          })
-          tierAStatic.files
-      ) // {
+      }
+      // lib.listToAttrs (
+        map (path: {
+          name = path;
+          value = {
+            device = "${cfgImp.persistMountPoint}${path}";
+            fsType = "none";
+            options = [ "bind" ];
+            depends = [ cfgImp.persistMountPoint ];
+          };
+        }) (tierAStatic.paths ++ config.my.impermanence.extraPaths)
+      )
+      // lib.listToAttrs (
+        map (file: {
+          name = file;
+          value = {
+            device = "${cfgImp.persistMountPoint}${file}";
+            fsType = "none";
+            options = [ "bind" ];
+            depends = [ cfgImp.persistMountPoint ];
+          };
+        }) tierAStatic.files
+      )
+      // {
         "${journaldPath}" = {
           device = "${cfgImp.persistMountPoint}${journaldPath}";
           fsType = "none";
@@ -198,8 +207,9 @@ in
       };
 
       systemd.tmpfiles.rules =
-        (map (p: "d ${cfgImp.persistMountPoint}${p} 0755 root root -")
-          (tierAStatic.paths ++ config.my.impermanence.extraPaths))
+        (map (p: "d ${cfgImp.persistMountPoint}${p} 0755 root root -") (
+          tierAStatic.paths ++ config.my.impermanence.extraPaths
+        ))
         ++ (map (p: "d ${p} 0755 root root -") tierB.paths)
         ++ [ "d ${cfgImp.persistMountPoint}${journaldPath} 0755 root root -" ];
     })
@@ -379,16 +389,19 @@ in
       lib.mkIf cfgMover.enable {
         systemd.services.nixhome-storage-mover = {
           description = "Precision Storage Cache Mover (rclone local engine)";
-          after = [ "local-fs.target" "network.target" ];
+          after = [
+            "local-fs.target"
+            "network.target"
+          ];
 
           serviceConfig = {
             Type = "oneshot";
             ExecStart = pkgs.writeShellScript "storage-mover" ''
               set -euo pipefail
-              
+
               # Check current SSD cache capacity
               CACHE_USAGE=$(df -h "${cfgMover.sourceDir}" | awk 'NR==2 {print $5}' | sed 's/%//')
-              
+
               # Helper to check if any of our storage disks are already spinning
               disks_spinning=false
               for dev in /dev/disk/by-label/DISK_STORAGE_* /dev/disk/by-label/TIER_C_*; do
@@ -435,7 +448,11 @@ in
             ProtectHome = true;
             PrivateTmp = true;
             PrivateNetwork = true;
-            CapabilityBoundingSet = [ "CAP_CHOWN" "CAP_FOWNER" "CAP_DAC_OVERRIDE" ];
+            CapabilityBoundingSet = [
+              "CAP_CHOWN"
+              "CAP_FOWNER"
+              "CAP_DAC_OVERRIDE"
+            ];
             ReadWritePaths = [
               cfgMover.sourceDir
               cfgMover.targetDir

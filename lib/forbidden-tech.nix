@@ -35,6 +35,8 @@ in
 
   # Wenn nftables-Firewall-Stack aktiv
   firewallAssertions = config: [
-    (must (config.networking.nftables.enable == true) "[POL-FT-005] nftables Pflicht: ${reasons.iptables}")
+    (must (
+      config.networking.nftables.enable == true
+    ) "[POL-FT-005] nftables Pflicht: ${reasons.iptables}")
   ];
 }

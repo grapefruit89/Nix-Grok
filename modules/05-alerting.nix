@@ -9,7 +9,12 @@
 #     - alerting
 #     - sre
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.alerting;
@@ -66,16 +71,16 @@ in
       };
     };
 
-    systemd.services.usenet.serviceConfig.OnFailure = lib.mkIf (
-      config.my.services.vpn-confinement.enable or false
-    ) (lib.mkDefault [ "alerting-onfailure.service" ]);
+    systemd.services.usenet.serviceConfig.OnFailure =
+      lib.mkIf (config.my.services.vpn-confinement.enable or false)
+        (lib.mkDefault [ "alerting-onfailure.service" ]);
 
-    systemd.services.restic-backups-tier-a-sovereign.serviceConfig.OnFailure = lib.mkIf (
-      config.my.services.restic-backup.enable or false
-    ) (lib.mkDefault [ "alerting-onfailure.service" ]);
+    systemd.services.restic-backups-tier-a-sovereign.serviceConfig.OnFailure =
+      lib.mkIf (config.my.services.restic-backup.enable or false)
+        (lib.mkDefault [ "alerting-onfailure.service" ]);
 
-    systemd.services.boot-watchdog.serviceConfig.OnFailure = lib.mkIf (
-      config.my.boot-watchdog.enable or false
+    systemd.services.boot-watchdog.serviceConfig.OnFailure = lib.mkIf (config.my.boot-watchdog.enable
+      or false
     ) (lib.mkDefault [ "alerting-onfailure.service" ]);
   };
 }

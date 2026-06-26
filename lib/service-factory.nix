@@ -28,35 +28,48 @@ let
       extra ? { },
     }:
     let
-      base =
-        {
-          ProtectSystem = lib.mkForce "strict";
-          ProtectHome = lib.mkForce true;
-          PrivateTmp = lib.mkForce true;
-          PrivateDevices = lib.mkForce privateDevices;
-          NoNewPrivileges = lib.mkForce true;
-          ProtectKernelTunables = lib.mkForce true;
-          ProtectKernelModules = lib.mkForce true;
-          ProtectControlGroups = lib.mkForce true;
-          RestrictRealtime = lib.mkForce (profile != "streamer");
-          RestrictSUIDSGID = lib.mkForce true;
-          LockPersonality = lib.mkForce true;
-          RestrictAddressFamilies = lib.mkForce [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-          ReadWritePaths = readWritePaths;
-        }
-        // lib.optionalAttrs (profile == "full") {
-          CapabilityBoundingSet = lib.mkForce "";
-          DevicePolicy = lib.mkForce "closed";
-          SystemCallFilter = lib.mkForce [ "@system-service" "~@privileged" "~@resources" ];
-        }
-        // lib.optionalAttrs (profile == "dotnet") {
-          SystemCallFilter = lib.mkForce [ "@system-service" "~@privileged" ];
-        }
-        // lib.optionalAttrs (profile == "streamer") {
-          UMask = lib.mkForce "0002";
-        };
+      base = {
+        ProtectSystem = lib.mkForce "strict";
+        ProtectHome = lib.mkForce true;
+        PrivateTmp = lib.mkForce true;
+        PrivateDevices = lib.mkForce privateDevices;
+        NoNewPrivileges = lib.mkForce true;
+        ProtectKernelTunables = lib.mkForce true;
+        ProtectKernelModules = lib.mkForce true;
+        ProtectControlGroups = lib.mkForce true;
+        RestrictRealtime = lib.mkForce (profile != "streamer");
+        RestrictSUIDSGID = lib.mkForce true;
+        LockPersonality = lib.mkForce true;
+        RestrictAddressFamilies = lib.mkForce [
+          "AF_INET"
+          "AF_INET6"
+          "AF_UNIX"
+        ];
+        ReadWritePaths = readWritePaths;
+      }
+      // lib.optionalAttrs (profile == "full") {
+        CapabilityBoundingSet = lib.mkForce "";
+        DevicePolicy = lib.mkForce "closed";
+        SystemCallFilter = lib.mkForce [
+          "@system-service"
+          "~@privileged"
+          "~@resources"
+        ];
+      }
+      // lib.optionalAttrs (profile == "dotnet") {
+        SystemCallFilter = lib.mkForce [
+          "@system-service"
+          "~@privileged"
+        ];
+      }
+      // lib.optionalAttrs (profile == "streamer") {
+        UMask = lib.mkForce "0002";
+      };
     in
-    lib.mkMerge [ base extra ];
+    lib.mkMerge [
+      base
+      extra
+    ];
 
   mkCaddyExtra =
     {
@@ -90,10 +103,16 @@ let
         else
           throw "mkCaddyExtra: port oder socketPath erforderlich";
     in
-    (if builtins.hasAttr mode proxy then proxy.${mode} else throw "mkCaddyExtra: unbekannter mode '${mode}'")
+    (
+      if builtins.hasAttr mode proxy then
+        proxy.${mode}
+      else
+        throw "mkCaddyExtra: unbekannter mode '${mode}'"
+    )
     + lib.optionalString (extra != "") "\n${extra}";
 
-  defaultPersistDirs = name: persistDirs: cacheDir:
+  defaultPersistDirs =
+    name: persistDirs: cacheDir:
     if persistDirs != [ ] then
       persistDirs
     else
@@ -133,7 +152,12 @@ rec {
       dnsMap = import ./dns-map.nix { inherit domain; };
       vhost = if host != null then host else dnsMap.host name;
       caddyExtra = mkCaddyExtra {
-        inherit mode port socketPath upstreamHost;
+        inherit
+          mode
+          port
+          socketPath
+          upstreamHost
+          ;
         extra = extraCaddy;
       };
       doIngress = if manageIngress != null then manageIngress else false;
@@ -175,7 +199,10 @@ rec {
       useGPU ? false,
       memoryPolicy ? null,
       extraSystemd ? { },
-      persistDirs ? [ "/var/lib/${name}" "/var/cache/${name}" ],
+      persistDirs ? [
+        "/var/lib/${name}"
+        "/var/cache/${name}"
+      ],
       manageIngress ? false,
       mode ? "sso",
     }:

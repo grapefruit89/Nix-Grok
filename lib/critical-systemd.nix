@@ -9,7 +9,10 @@
 #     - systemd
 #     - critical
 # ---
-{ lib, oomScore ? -900 }:
+{
+  lib,
+  oomScore ? -900,
+}:
 
 {
   Restart = lib.mkForce "always";

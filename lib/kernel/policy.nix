@@ -17,10 +17,14 @@ let
 
   flatten = attrs: lib.unique (lib.concatLists (lib.attrValues attrs));
 
-  homelabProfileBlacklist = profile:
-    if profile == "headless-server" then flatten homelabHeadless
-    else if profile == "desktop" then [ ]
-    else [ ];
+  homelabProfileBlacklist =
+    profile:
+    if profile == "headless-server" then
+      flatten homelabHeadless
+    else if profile == "desktop" then
+      [ ]
+    else
+      [ ];
 
   homelabWhitelistAll = flatten homelabWhitelist;
 
@@ -54,9 +58,7 @@ in
     let
       allowedModules = lib.unique (homelabWhitelistAll ++ whitelistExtra);
 
-      globalLayer =
-        flatten globalBlacklist
-        ++ exoticFilesystems;
+      globalLayer = flatten globalBlacklist ++ exoticFilesystems;
 
       homelabLayer =
         if mode == "homelab-strict" || mode == "homelab-relaxed" then
@@ -82,23 +84,19 @@ in
         else
           map (m: {
             assertion = lib.elem m allowedModules;
-            message =
-              "KERNEL-POLICY: Pflichtmodul '${m}' ist weder in der Homelab-Whitelist noch in kernel.whitelistExtra — Profil oder whitelistExtra anpassen.";
+            message = "KERNEL-POLICY: Pflichtmodul '${m}' ist weder in der Homelab-Whitelist noch in kernel.whitelistExtra — Profil oder whitelistExtra anpassen.";
           }) requiredModules;
 
       roleOf = m: moduleRoles.${m} or "Pflicht-Hardware (${hostLabel})";
 
-      blacklistAssertions =
-        map (m: {
-          assertion = !(lib.elem m safeBlacklist);
-          message =
-            "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) darf nicht geblacklistet werden — effektive Blacklist enthält es.";
-        }) (requiredModules ++ requiredInitrdModules);
+      blacklistAssertions = map (m: {
+        assertion = !(lib.elem m safeBlacklist);
+        message = "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) darf nicht geblacklistet werden — effektive Blacklist enthält es.";
+      }) (requiredModules ++ requiredInitrdModules);
 
       hostBlacklistAssertions = map (m: {
         assertion = !(lib.elem m hostBlacklist);
-        message =
-          "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) steht in kernel.blacklist — für diese Hardware verboten.";
+        message = "${hostLabel} KERNEL: Modul '${m}' (${roleOf m}) steht in kernel.blacklist — für diese Hardware verboten.";
       }) requiredModules;
     in
     {

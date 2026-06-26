@@ -7,6 +7,7 @@
 #     - entrypoint
 #     - q958
 # ---
-{ ... }: {
+{ ... }:
+{
   imports = [ ./machines/q958/default.nix ];
 }

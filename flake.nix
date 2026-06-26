@@ -44,7 +44,18 @@
     };
   };
 
-  outputs = { self, nixpkgs, impermanence, home-manager, hermes-agent, sops-nix, llm-agents, mcp-servers-nix, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      impermanence,
+      home-manager,
+      hermes-agent,
+      sops-nix,
+      llm-agents,
+      mcp-servers-nix,
+      ...
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -68,7 +79,14 @@
       nixosConfigurations = {
         q958 = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit self grok-cli claude-code-pkg mcpConfigFile; };
+          specialArgs = {
+            inherit
+              self
+              grok-cli
+              claude-code-pkg
+              mcpConfigFile
+              ;
+          };
           modules = [
             { nixpkgs.config.allowUnfree = true; }
             ./machines/q958/default.nix

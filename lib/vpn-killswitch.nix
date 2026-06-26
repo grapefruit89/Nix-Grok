@@ -12,5 +12,8 @@
 lib.optionalAttrs privadoEnabled {
   bindsTo = [ "sys-subsystem-net-devices-privado.device" ];
   after = [ "sys-subsystem-net-devices-privado.device" ];
-  serviceConfig.RestrictNetworkInterfaces = [ "lo" "privado" ];
+  serviceConfig.RestrictNetworkInterfaces = [
+    "lo"
+    "privado"
+  ];
 }

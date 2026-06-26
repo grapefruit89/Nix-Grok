@@ -77,9 +77,7 @@ in
         };
       })
 
-      (lib.mkIf (
-        useVpnKillSwitch && !(config.my.services.vpn-confinement.enable or false)
-      ) {
+      (lib.mkIf (useVpnKillSwitch && !(config.my.services.vpn-confinement.enable or false)) {
         systemd.services.${name} = vpnKillSwitchAttrs;
       })
     ];

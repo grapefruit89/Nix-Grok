@@ -8,7 +8,13 @@
 #     - grok
 #     - mcp
 # ---
-{ config, osConfig, pkgs, lib, ... }:
+{
+  config,
+  osConfig,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg = osConfig.my.services.grok;
@@ -18,7 +24,10 @@ let
   nixosDocsDbDir = "${config.home.homeDirectory}/.local/share/nix-grok";
   nixosDocsDbFile = "${nixosDocsDbDir}/nixos_docs.db";
   nixosDocsMcp = pkgs.callPackage ../../packages/nixos-docs-mcp { };
-  nixConfigDirs = [ "/etc/nixos" "/home/nixos" ];
+  nixConfigDirs = [
+    "/etc/nixos"
+    "/home/nixos"
+  ];
 
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
     set -euo pipefail
@@ -138,16 +147,19 @@ in
     username = "moritz";
     homeDirectory = "/home/moritz";
 
-    packages = with pkgs; [
-      htop
-      git
-      curl
-      jq
-    ] ++ lib.optionals cfg.enable [
-      pkgs.mcp-nixos
-      pkgs.mcp-server-git
-      nixosDocsMcp
-    ];
+    packages =
+      with pkgs;
+      [
+        htop
+        git
+        curl
+        jq
+      ]
+      ++ lib.optionals cfg.enable [
+        pkgs.mcp-nixos
+        pkgs.mcp-server-git
+        nixosDocsMcp
+      ];
 
     sessionVariables = lib.mkMerge [
       {

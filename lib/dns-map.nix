@@ -51,7 +51,5 @@ in
 {
   inherit domain mapping;
 
-  host =
-    key:
-    if builtins.hasAttr key mapping then mapping.${key} else fqdn key;
+  host = key: if builtins.hasAttr key mapping then mapping.${key} else fqdn key;
 }

@@ -20,11 +20,7 @@ let
   local = "127.0.0.1";
 
   mediaHost =
-    name:
-    if vpnConn.isVpnConfined vpnCfg name then
-      vpnConn.connectionAddress vpnCfg name
-    else
-      local;
+    name: if vpnConn.isVpnConfined vpnCfg name then vpnConn.connectionAddress vpnCfg name else local;
 
   mkHttp =
     {

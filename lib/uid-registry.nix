@@ -45,7 +45,8 @@ in
 
   groupAssertions = groups: [
     {
-      assertion = (lib.length (lib.attrValues groups)) == (lib.length (lib.unique (lib.attrValues groups)));
+      assertion =
+        (lib.length (lib.attrValues groups)) == (lib.length (lib.unique (lib.attrValues groups)));
       message = "[UID-REGISTRY] Doppelte GIDs in my.groups.registry";
     }
   ];

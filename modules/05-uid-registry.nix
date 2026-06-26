@@ -30,5 +30,6 @@ in
     };
   };
 
-  config.assertions = reg.userAssertions config.my.users.registry ++ reg.groupAssertions config.my.groups.registry;
+  config.assertions =
+    reg.userAssertions config.my.users.registry ++ reg.groupAssertions config.my.groups.registry;
 }

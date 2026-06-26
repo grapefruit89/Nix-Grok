@@ -81,9 +81,9 @@ let
   ipv6LanDrop =
     if (!cfg.ipv6 && config.my.configs.network.ipv6.disableOnInterfaces != [ ]) then
       ''
-        iifname { ${lib.concatStringsSep ", " (
-          map (i: "\"${i}\"") config.my.configs.network.ipv6.disableOnInterfaces
-        )} } meta nfproto ipv6 drop comment "IPv6 off on LAN ifaces"
+        iifname { ${
+          lib.concatStringsSep ", " (map (i: "\"${i}\"") config.my.configs.network.ipv6.disableOnInterfaces)
+        } } meta nfproto ipv6 drop comment "IPv6 off on LAN ifaces"
       ''
     else
       "";
@@ -123,10 +123,10 @@ lib.concatStringsSep "\n" [
       }
 
       ${lib.optionalString cfg.ipv6 ''
-      set crowdsec_blocked_ipv6 {
-        type ipv6_addr
-        flags interval
-      }
+        set crowdsec_blocked_ipv6 {
+          type ipv6_addr
+          flags interval
+        }
       ''}
 
       set portscan {
@@ -175,10 +175,10 @@ lib.concatStringsSep "\n" [
 
       chain in_lan {
         ${lib.optionalString hasLanIf ''
-        iifname "${lanIf}" ip saddr { ${lanCidrList} } accept comment "LAN trusted"
+          iifname "${lanIf}" ip saddr { ${lanCidrList} } accept comment "LAN trusted"
         ''}
         ${lib.optionalString (!hasLanIf) ''
-        ip saddr { ${lanCidrList} } accept comment "LAN trusted"
+          ip saddr { ${lanCidrList} } accept comment "LAN trusted"
         ''}
         return
       }

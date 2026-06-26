@@ -17,7 +17,12 @@
 #     - audiobookshelf
 #     - streaming
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.audiobookshelf;
@@ -28,44 +33,49 @@ let
   storageReady = config.my.services.storage.enable or false;
 in
 {
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    {
-      services.audiobookshelf = {
-        enable = true;
-        host = "127.0.0.1";
-        inherit port;
-        group = "media";
-      };
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        services.audiobookshelf = {
+          enable = true;
+          host = "127.0.0.1";
+          inherit port;
+          group = "media";
+        };
 
-      users.users.audiobookshelf.extraGroups = lib.mkAfter [ "media" "video" "render" ];
-
-      hardware.graphics = lib.mkIf cfg.enableQuickSync {
-        enable = lib.mkDefault true;
-        extraPackages = with pkgs; [
-          intel-media-driver
-          intel-compute-runtime
+        users.users.audiobookshelf.extraGroups = lib.mkAfter [
+          "media"
+          "video"
+          "render"
         ];
-      };
-    }
 
-    (factory.mkService {
-      inherit config;
-      name = "audiobookshelf";
-      inherit port;
-      mode = "streaming";
-      hardeningProfile = "node";
-      persistDirs = [ "/var/lib/audiobookshelf" ];
-      privateDevices = !cfg.enableQuickSync;
-      readWritePaths =
-        [ "/var/lib/audiobookshelf" ]
+        hardware.graphics = lib.mkIf cfg.enableQuickSync {
+          enable = lib.mkDefault true;
+          extraPackages = with pkgs; [
+            intel-media-driver
+            intel-compute-runtime
+          ];
+        };
+      }
+
+      (factory.mkService {
+        inherit config;
+        name = "audiobookshelf";
+        inherit port;
+        mode = "streaming";
+        hardeningProfile = "node";
+        persistDirs = [ "/var/lib/audiobookshelf" ];
+        privateDevices = !cfg.enableQuickSync;
+        readWritePaths = [
+          "/var/lib/audiobookshelf"
+        ]
         ++ lib.optionals storageReady [
           "${mediaRoot}/books"
           "${mediaRoot}/audiobooks"
           "${mediaRoot}/podcasts"
         ];
-      memoryPolicy = memory.audiobookshelf { };
-      extraSystemd =
-        {
+        memoryPolicy = memory.audiobookshelf { };
+        extraSystemd = {
           Restart = lib.mkForce "on-failure";
         }
         // lib.optionalAttrs cfg.enableQuickSync {
@@ -76,21 +86,22 @@ in
             "/dev/dri/renderD128 rw"
           ];
         };
-    })
+      })
 
-    (lib.mkIf cfg.enableQuickSync {
-      systemd.services.audiobookshelf.environment = {
-        LIBVA_DRIVER_NAME = "iHD";
-        LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
-      };
-    })
+      (lib.mkIf cfg.enableQuickSync {
+        systemd.services.audiobookshelf.environment = {
+          LIBVA_DRIVER_NAME = "iHD";
+          LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
+        };
+      })
 
-    (lib.mkIf storageReady {
-      systemd.tmpfiles.rules = [
-        "d ${mediaRoot}/books 0775 audiobookshelf media -"
-        "d ${mediaRoot}/audiobooks 0775 audiobookshelf media -"
-        "d ${mediaRoot}/podcasts 0775 audiobookshelf media -"
-      ];
-    })
-  ]);
+      (lib.mkIf storageReady {
+        systemd.tmpfiles.rules = [
+          "d ${mediaRoot}/books 0775 audiobookshelf media -"
+          "d ${mediaRoot}/audiobooks 0775 audiobookshelf media -"
+          "d ${mediaRoot}/podcasts 0775 audiobookshelf media -"
+        ];
+      })
+    ]
+  );
 }

@@ -9,7 +9,12 @@
 #     - media
 #     - sync
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgSonarr = config.my.services.sonarr;
@@ -22,7 +27,12 @@ let
   waitFor = import ../../lib/wait-for-api.nix { inherit lib pkgs; };
   ports = config.my.ports;
 
-  anyEnabled = cfgSonarr.enable || cfgRadarr.enable || cfgProwlarr.enable || cfgSabnzbd.enable || cfgJellyfin.enable;
+  anyEnabled =
+    cfgSonarr.enable
+    || cfgRadarr.enable
+    || cfgProwlarr.enable
+    || cfgSabnzbd.enable
+    || cfgJellyfin.enable;
 
   vpnNsAddress = vpnConn.connectionAddress vpnCfg "prowlarr";
   hostBridgeAddress = vpnConn.hostBridgeAddress vpnCfg "prowlarr";
@@ -89,7 +99,14 @@ in
         "jellyfin.service"
       ];
       wantedBy = [ "multi-user.target" ];
-      path = with pkgs; [ curl jq gnugrep coreutils python3 systemd ];
+      path = with pkgs; [
+        curl
+        jq
+        gnugrep
+        coreutils
+        python3
+        systemd
+      ];
 
       serviceConfig = {
         Type = "oneshot";
@@ -109,8 +126,7 @@ in
       };
 
       script =
-        (lib.optionalString (waitScripts != "") "${waitScripts}\n")
-        + builtins.readFile ./sync-script.sh;
+        (lib.optionalString (waitScripts != "") "${waitScripts}\n") + builtins.readFile ./sync-script.sh;
     };
   };
 }

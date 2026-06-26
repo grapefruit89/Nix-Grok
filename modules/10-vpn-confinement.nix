@@ -10,7 +10,12 @@
 #     - vpn
 #     - netns
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.services.vpn-confinement;
@@ -23,20 +28,18 @@ let
     prowlarr = ports.prowlarr;
   };
 
-  mkNetnsUnit = name: nsCfg:
+  mkNetnsUnit =
+    name: nsCfg:
     let
       wgIf = "wg-${name}";
       vethHost = "veth-${name}-br";
       vethNs = "veth-${name}";
       bridge = "${name}-br";
       openPorts = lib.filter (p: p != null) (map (s: servicePorts.${s} or null) nsCfg.services);
-      openPortRules = lib.concatMapStrings (
-        port:
-        ''
-          ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" tcp dport ${toString port} accept
-          ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" udp dport ${toString port} accept
-        ''
-      ) openPorts;
+      openPortRules = lib.concatMapStrings (port: ''
+        ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" tcp dport ${toString port} accept
+        ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" udp dport ${toString port} accept
+      '') openPorts;
       dnsLines = lib.concatMapStrings (dns: "nameserver ${dns}\n") nsCfg.dns;
     in
     {
@@ -71,9 +74,9 @@ let
         ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip route add default dev ${wgIf}
 
         ${lib.optionalString (dnsLines != "") ''
-          mkdir -p /etc/netns/${name}
-          cat > /etc/netns/${name}/resolv.conf <<'EOF'
-        ${dnsLines}EOF
+            mkdir -p /etc/netns/${name}
+            cat > /etc/netns/${name}/resolv.conf <<'EOF'
+          ${dnsLines}EOF
         ''}
 
         ${lib.optionalString nsCfg.killSwitch ''
@@ -102,11 +105,9 @@ let
         ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip addr add ${nsCfg.namespaceAddress}/24 dev ${vethNs}
         ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip link set dev ${vethNs} up
 
-        ${lib.concatMapStrings (
-          cidr: ''
-            ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip route add ${cidr} via ${nsCfg.bridgeAddress} dev ${vethNs} 2>/dev/null || true
-          ''
-        ) nsCfg.accessibleFrom}
+        ${lib.concatMapStrings (cidr: ''
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip route add ${cidr} via ${nsCfg.bridgeAddress} dev ${vethNs} 2>/dev/null || true
+        '') nsCfg.accessibleFrom}
 
         ${lib.optionalString nsCfg.healthcheck.enable ''
           if [ -n "${nsCfg.healthcheck.endpoint}" ]; then
@@ -134,15 +135,13 @@ let
     serviceConfig.NetworkNamespacePath = "/var/run/netns/${name}";
   };
 
-  serviceBinds =
-    lib.foldl' (
-      acc: nsName:
-      let
-        ns = cfg.namespaces.${nsName};
-      in
-      acc // lib.genAttrs ns.services (_: confinedAttrs nsName)
-    ) { }
-    (lib.attrNames cfg.namespaces);
+  serviceBinds = lib.foldl' (
+    acc: nsName:
+    let
+      ns = cfg.namespaces.${nsName};
+    in
+    acc // lib.genAttrs ns.services (_: confinedAttrs nsName)
+  ) { } (lib.attrNames cfg.namespaces);
 
   leakCheckScript = pkgs.writeShellScript "vpn-leak-check" ''
     set -euo pipefail
@@ -275,26 +274,30 @@ in
   config = lib.mkIf cfg.enable {
     boot.kernel.sysctl."net.ipv4.ip_forward" = lib.mkDefault 1;
 
-    systemd.services = netnsServices // serviceBinds // lib.mkIf (cfg.leakCheck.enable && primaryNs != "") {
-      vpn-leak-check = {
-        description = "VPN namespace egress leak check";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = leakCheckScript;
+    systemd.services =
+      netnsServices
+      // serviceBinds
+      // lib.mkIf (cfg.leakCheck.enable && primaryNs != "") {
+        vpn-leak-check = {
+          description = "VPN namespace egress leak check";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = leakCheckScript;
+          };
+        };
+      }
+      // lib.mkIf (cfg.vpnTest.enable && primaryNs != "") {
+        vpn-netns-test = {
+          description = "VPN namespace egress and DNS test";
+          after = lib.map (n: "${n}.service") nsNames;
+          bindsTo = lib.map (n: "${n}.service") nsNames;
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          script = "${vpnTestScript}/bin/vpn-netns-test";
         };
       };
-    } // lib.mkIf (cfg.vpnTest.enable && primaryNs != "") {
-      vpn-netns-test = {
-        description = "VPN namespace egress and DNS test";
-        after = lib.map (n: "${n}.service") nsNames;
-        bindsTo = lib.map (n: "${n}.service") nsNames;
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script = "${vpnTestScript}/bin/vpn-netns-test";
-      };
-    };
 
     systemd.timers = lib.mkIf (cfg.leakCheck.enable && primaryNs != "") {
       vpn-leak-check = {

@@ -10,7 +10,12 @@
 #     - smartd
 #     - scrutiny
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.disk-health;
@@ -80,7 +85,10 @@ in
 
     systemd.services.scrutiny = {
       description = "Scrutiny SMART disk health dashboard";
-      after = [ "smartd.service" "network.target" ];
+      after = [
+        "smartd.service"
+        "network.target"
+      ];
       wants = [ "smartd.service" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {

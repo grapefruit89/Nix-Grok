@@ -12,7 +12,12 @@
 #   tags:
 #     - iot
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgHass = config.my.services.home-assistant;
@@ -94,7 +99,12 @@ in
         isSystemUser = true;
         inherit (cfgHass) group;
         home = cfgHass.stateDir;
-        extraGroups = [ "dialout" "video" "media" ] ++ (lib.optional cfgHass.bluetooth "bluetooth");
+        extraGroups = [
+          "dialout"
+          "video"
+          "media"
+        ]
+        ++ (lib.optional cfgHass.bluetooth "bluetooth");
       };
       users.groups.${cfgHass.group} = { };
 
@@ -135,15 +145,22 @@ in
         description = lib.mkForce "Home Assistant Core (hardened)";
         environment.PYTHONPYCACHEPREFIX = "${cfgHass.cacheDir}/pycache";
         serviceConfig = {
-          LoadCredential = lib.optional (cfgHass.secretFile != null) "HA_SECRET:${toString cfgHass.secretFile}";
+          LoadCredential = lib.optional (
+            cfgHass.secretFile != null
+          ) "HA_SECRET:${toString cfgHass.secretFile}";
           MemoryMax = "2G";
           CPUWeight = 70;
           OOMScoreAdjust = 300;
           # numpy/Pillow native extensions need executable mappings — nixpkgs default breaks HA
           MemoryDenyWriteExecute = lib.mkForce false;
           ReadWritePaths = lib.mkAfter [ cfgHass.cacheDir ];
-          PrivateDevices = if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then lib.mkForce false else true;
-          DeviceAllow = (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
+          PrivateDevices =
+            if (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) || cfgHass.bluetooth then
+              lib.mkForce false
+            else
+              true;
+          DeviceAllow =
+            (lib.optional (lib.hasPrefix "/dev/" cfgHass.zigbeeDevice) "${cfgHass.zigbeeDevice} rw")
             ++ (lib.optional cfgHass.bluetooth "/dev/rfkill rw")
             ++ [ "/dev/dri/renderD128 rw" ];
         };
@@ -174,27 +191,31 @@ in
       services = {
         mosquitto = {
           enable = true;
-          listeners = [{
-            port = cfgZigbee.mqttPort;
-            address = "127.0.0.1";
-            acl = [ "pattern readwrite #" ];
-            settings.allow_anonymous = false;
-            users = {
-              "zigbee2mqtt" = {
-                hashedPasswordFile = "/var/lib/secrets/mosquitto_password";
+          listeners = [
+            {
+              port = cfgZigbee.mqttPort;
+              address = "127.0.0.1";
+              acl = [ "pattern readwrite #" ];
+              settings.allow_anonymous = false;
+              users = {
+                "zigbee2mqtt" = {
+                  hashedPasswordFile = "/var/lib/secrets/mosquitto_password";
+                };
+                homeassistant = {
+                  hashedPasswordFile = "/var/lib/secrets/mosquitto_hass_password";
+                };
               };
-              homeassistant = {
-                hashedPasswordFile = "/var/lib/secrets/mosquitto_hass_password";
-              };
-            };
-          }];
+            }
+          ];
         };
 
         zigbee2mqtt = {
           enable = true;
           inherit (cfgZigbee) dataDir;
           settings = {
-            homeassistant = { enabled = true; };
+            homeassistant = {
+              enabled = true;
+            };
             permit_join = false;
             mqtt = {
               base_topic = "zigbee2mqtt";
@@ -246,9 +267,15 @@ in
               ProtectHome = true;
               PrivateTmp = true;
               NoNewPrivileges = true;
-              PrivateDevices = lib.mkForce (if (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) then false else true);
+              PrivateDevices = lib.mkForce (
+                if (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) then false else true
+              );
               DeviceAllow = lib.optional (lib.hasPrefix "/dev/" cfgZigbee.zigbeeDevice) "${cfgZigbee.zigbeeDevice} rw";
-              RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
+              RestrictAddressFamilies = [
+                "AF_INET"
+                "AF_INET6"
+                "AF_UNIX"
+              ];
               EnvironmentFile = "/var/lib/secrets/zigbee2mqtt.env";
             };
           };
@@ -260,7 +287,10 @@ in
         ];
       };
 
-      users.users.zigbee2mqtt.extraGroups = [ "mqtt" "dialout" ];
+      users.users.zigbee2mqtt.extraGroups = [
+        "mqtt"
+        "dialout"
+      ];
       users.users.mosquitto.extraGroups = [ "mqtt" ];
     })
   ];

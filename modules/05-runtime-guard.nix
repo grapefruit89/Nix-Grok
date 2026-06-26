@@ -8,7 +8,12 @@
 #     - security
 #     - runtime
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.my.security.runtime-guard;

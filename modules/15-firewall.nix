@@ -14,7 +14,12 @@
 #     - firewall
 #     - nftables
 # ---
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg = config.my.security.firewall;
@@ -28,7 +33,11 @@ in
 
     lanCidrs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "192.168.0.0/16" "10.0.0.0/8" "172.16.0.0/12" ];
+      default = [
+        "192.168.0.0/16"
+        "10.0.0.0/8"
+        "172.16.0.0/12"
+      ];
       description = "Vertrauenswürdige LAN-CIDRs — vor Geo-Block akzeptiert.";
     };
 
@@ -46,7 +55,14 @@ in
 
     blockedCountries = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "cn" "ru" "kp" "ir" "sy" "vn" ];
+      default = [
+        "cn"
+        "ru"
+        "kp"
+        "ir"
+        "sy"
+        "vn"
+      ];
       description = "ISO-Ländercodes für ipdeny.com → geoip_blocked Set (Blocklist).";
     };
 
@@ -91,11 +107,11 @@ in
     # Sicherheits-Assertions für Firewall-Konfiguration
     assertions = [
       {
-        assertion = cfg.lanCidrs != [];
+        assertion = cfg.lanCidrs != [ ];
         message = "FIREWALL: lanCidrs darf nicht leer sein — mindestens ein vertrauenswürdiges Netz definieren.";
       }
       {
-        assertion = cfg.blockedCountries != [];
+        assertion = cfg.blockedCountries != [ ];
         message = "FIREWALL: blockedCountries sollte nicht leer sein — Geo-Blocking aktivieren.";
       }
       {
@@ -110,7 +126,10 @@ in
 
     systemd.services.nftables-geoip-update = {
       description = "Geo-IP blocklist → nftables set geoip_blocked";
-      after = [ "network-online.target" "nftables.service" ];
+      after = [
+        "network-online.target"
+        "nftables.service"
+      ];
       wants = [ "network-online.target" ];
       serviceConfig = {
         Type = "oneshot";

@@ -15,7 +15,8 @@
 { lib }:
 
 let
-  pathStringsFromService = svc:
+  pathStringsFromService =
+    svc:
     lib.flatten [
       (svc.serviceConfig.ReadWritePaths or [ ])
       (svc.serviceConfig.BindPaths or [ ])
@@ -86,5 +87,11 @@ let
 
 in
 {
-  inherit usesTierC unauthorizedTierCServices mkTierCAssertion defaultTierCMarkers pathStringsFromService;
+  inherit
+    usesTierC
+    unauthorizedTierCServices
+    mkTierCAssertion
+    defaultTierCMarkers
+    pathStringsFromService
+    ;
 }

@@ -7,7 +7,12 @@
 #     - secrets
 #     - dev
 # ---
-{ lib, secretsDir, devKeys, files }:
+{
+  lib,
+  secretsDir,
+  devKeys,
+  files,
+}:
 
 let
   # Nur Keys mit festem Dev-Wert in profile.nix — kein Zufall, kein openssl rand
@@ -67,15 +72,15 @@ let
 
   isUnset = value: value == "" || lib.hasPrefix "CHANGE-ME" value;
 
-  warningBullet = e:
+  warningBullet =
+    e:
     let
-      status =
-        if isUnset e.value
-        then "MANUELL SETZEN"
-        else "DEV-PLATZHALTER — vor Production ersetzen";
-    in "  • ${e.label}: ${e.path} (${status})";
+      status = if isUnset e.value then "MANUELL SETZEN" else "DEV-PLATZHALTER — vor Production ersetzen";
+    in
+    "  • ${e.label}: ${e.path} (${status})";
 
-  mkWarning = { rolloutStufe, mode }:
+  mkWarning =
+    { rolloutStufe, mode }:
     lib.optionalString (mode == "development") ''
       ══ q958 DEVELOPMENT MODE (rollout.stufe = ${toString rolloutStufe}) ══
       Platzhalter-Secrets aktiv — vor SOPS/Production durch echte Werte ersetzen:
@@ -91,5 +96,10 @@ let
     '';
 in
 {
-  inherit provisioned isUnset mkWarning warningBullet;
+  inherit
+    provisioned
+    isUnset
+    mkWarning
+    warningBullet
+    ;
 }

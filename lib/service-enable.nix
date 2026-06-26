@@ -12,8 +12,7 @@
 
 let
   enabled =
-    config:
-    name:
+    config: name:
     let
       mySvc = config.my.services or { };
       sec = config.my.security or { };

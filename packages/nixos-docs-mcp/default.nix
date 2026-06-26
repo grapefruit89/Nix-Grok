@@ -6,7 +6,12 @@
 #     - mcp
 #     - nixos-docs
 # ---
-{ lib, buildNpmPackage, fetchNpmDeps, nodejs_22 }:
+{
+  lib,
+  buildNpmPackage,
+  fetchNpmDeps,
+  nodejs_22,
+}:
 
 buildNpmPackage (_finalAttrs: {
   pname = "nixos-docs-mcp";

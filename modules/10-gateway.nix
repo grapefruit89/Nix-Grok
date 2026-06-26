@@ -15,7 +15,12 @@
 #     - ddns
 #     - cloudflare
 # ---
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfgDdns = config.my.services.ddns-updater;
@@ -93,7 +98,10 @@ in
     (lib.mkIf (cfgGuard.enable && cfgDdns.enable) {
       systemd.services.dns-guard = {
         description = "Cloudflare DNS-Konflikt-Check (*.subdomain)";
-        after = [ "network-online.target" "q958-secrets-provision.service" ];
+        after = [
+          "network-online.target"
+          "q958-secrets-provision.service"
+        ];
         wants = [ "network-online.target" ];
         serviceConfig = {
           Type = "oneshot";
@@ -125,7 +133,11 @@ in
             echo "dns-guard: ok — kein Wildcard-Konflikt für *.$WILDCARD"
           '';
         };
-        path = with pkgs; [ curl jq coreutils ];
+        path = with pkgs; [
+          curl
+          jq
+          coreutils
+        ];
       };
 
       systemd.timers.dns-guard = {
