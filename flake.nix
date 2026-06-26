@@ -37,9 +37,14 @@
       url = "github:numtide/llm-agents.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    mcp-servers-nix = {
+      url = "github:natsukium/mcp-servers-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, impermanence, home-manager, hermes-agent, sops-nix, llm-agents, ... }:
+  outputs = { self, nixpkgs, impermanence, home-manager, hermes-agent, sops-nix, llm-agents, mcp-servers-nix, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -48,6 +53,14 @@
       };
       grok-cli = pkgs.callPackage ./packages/grok-cli { };
       claude-code-pkg = llm-agents.packages.${system}.claude-code;
+      mcpConfigFile = mcp-servers-nix.lib.mkConfig pkgs {
+        format = "json";
+        programs.context7 = {
+          enable = true;
+          envFile = "/var/lib/secrets/context7.env";
+        };
+        programs.nixos.enable = true;
+      };
     in
     {
       packages.${system}.grok-cli = grok-cli;
@@ -55,7 +68,7 @@
       nixosConfigurations = {
         q958 = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit self grok-cli claude-code-pkg; };
+          specialArgs = { inherit self grok-cli claude-code-pkg mcpConfigFile; };
           modules = [
             { nixpkgs.config.allowUnfree = true; }
             ./machines/q958/default.nix
