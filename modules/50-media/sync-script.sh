@@ -265,6 +265,12 @@ fi
 
 # 3. APIs werden von sync.nix (wait-for-api) abgewartet
 
+# Prowlarr-API-Abschnitt: nur ausführen wenn VPN + Prowlarr erreichbar
+if [ "${PROWLARR_REACHABLE:-false}" = "false" ]; then
+  echo "Prowlarr-API-Sync übersprungen (VPN nicht konfiguriert oder Prowlarr nicht erreichbar)."
+  echo "Locale-Sync abgeschlossen. Fertig."
+  exit 0
+fi
 # 4. Configure SceneNZBs Indexer in Prowlarr
 CURRENT_INDEXERS=$(curl -s -H "X-Api-Key: $PROWLARR_KEY" "http://${VPN_HOST}:${PROWLARR_PORT}/api/v1/indexer")
 HAS_SCENE=$(echo "$CURRENT_INDEXERS" | jq '.[] | select(.name == "SceneNZBs" or .name == "Scence")')

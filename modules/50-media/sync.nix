@@ -126,7 +126,26 @@ in
       };
 
       script =
-        (lib.optionalString (waitScripts != "") "${waitScripts}\n") + builtins.readFile ./sync-script.sh;
+        (
+          if waitScripts != "" then
+            ''
+              if systemctl is-active --quiet privado-vpn.service; then
+                if ${waitScripts}; then
+                  PROWLARR_REACHABLE=true
+                else
+                  echo "Prowlarr nicht erreichbar nach Wartezeit — Prowlarr-API-Sync wird übersprungen."
+                  PROWLARR_REACHABLE=false
+                fi
+              else
+                echo "privado-vpn.service nicht aktiv — Prowlarr-VPN-Sync wird übersprungen."
+                PROWLARR_REACHABLE=false
+              fi
+              export PROWLARR_REACHABLE
+            ''
+          else
+            ""
+        )
+        + builtins.readFile ./sync-script.sh;
     };
   };
 }
