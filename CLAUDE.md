@@ -90,9 +90,29 @@ sein, bevor committed wird.
   solange `privado-vpn.service` inaktiv ist (kein WireGuard-Key in
   `profile.local.nix` eingetragen — bewusst offen). Locale-Sync (Jellyfin,
   SABnzbd) läuft durch. Service endet mit exit 0.
-- Volle Architektur-Migration (`modules/` → strikt flache `00`–`90`-Ordner
-  mit `NNss`-Dateinamen, `machines/` → `hosts/`) ist **geplant, in Arbeit**
-  — Domäne `00-core/` ist der erste Schritt.
+- **Architektur-Migration** (`modules/` → strikt flache `00`–`90`-Ordner
+  mit `NNss`-Dateinamen, `machines/` → `hosts/`) ist **in Arbeit** —
+  `00-core/` und `10-network/` sind fertig, restliche Domänen folgen.
+- **python3 fehlt im System-PATH** — der NIXMETA-Pre-Commit-Hook in
+  `.git/hooks/pre-commit` prüft am Anfang, ob `python3` verfügbar ist, und
+  überspringt sich selbst still, wenn nicht. Solange Python nicht im
+  `environment.systemPackages` steht, hat der Hook keine Wirkung.
+- **stage-nixos/ im Repo-Root**: Verzeichnis mit veralteten Staging-Dateien,
+  gitignored (also kein Versionsschutz). Kandidat für Verschiebung nach
+  `/home/moritz/.archive-2026-06-25/stage-nixos/` — aber erst prüfen, ob
+  der Mensch es noch als Referenz braucht. Nicht von selbst löschen.
+- **Tote Grok-Reste im Repo**: `modules/60-apps/grok.nix`,
+  `packages/grok-cli/`, Flake-Wiring in `flake.nix`, Block in
+  `users/moritz/home.nix` — alles deaktiviert aber noch vorhanden.
+  Aufräumen sobald der Mensch grünes Licht gibt.
+- **Doppelte `hermes-agent.enable`-Zeile**: `services.hermes-agent.enable = true`
+  steht sowohl in `machines/q958/default.nix` als auch in
+  `machines/q958/rollout.nix`. Laut Regel: enable-Flags gehören nur in
+  `rollout.nix`. Zeile in `default.nix` ist redundant und kann entfernt
+  werden.
+- **Semaphore/AMP auf Podman**: Beide Services laufen aktuell containerisiert
+  via Podman. Vor einer Neukonfiguration prüfen: `nix search nixpkgs semaphore`
+  — falls native Pakete existieren, ist der Podman-Umweg vermeidbar.
 
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 

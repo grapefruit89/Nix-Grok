@@ -159,7 +159,7 @@ Sonderannotationen (das wäre NIXMETA und damit verboten).
 2. **YAML-Metadatenheader** auf jeder Datei (siehe oben).
 3. **Eine Datei pro Funktion/Anwendung** — Ausnahme: *arr-Stack (s.o.).
 4. **Keine `.nix`-Dateien direkt in `/modules/`** — nur in den 10 Domänen-Ordnern.
-5. **Richtwert ~400–500 Zeilen** pro Datei — Daumenregel, keine harte Grenze.
+5. **Obergrenze ~500 Zeilen** pro Datei — Überschreiten nur mit expliziter Begründung im Header.
    `lib/service-factory.nix` und `lib/services-spec.nix` dürfen länger sein,
    wenn künstliches Aufteilen die Lesbarkeit verschlechtern würde.
 6. **Bevorzugt nix-pkgs** statt Adhoc-Binaries/Skripte. Ausnahme: generisches
