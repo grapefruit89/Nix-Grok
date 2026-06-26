@@ -110,9 +110,6 @@ sein, bevor committed wird.
   `machines/q958/rollout.nix`. Laut Regel: enable-Flags gehören nur in
   `rollout.nix`. Zeile in `default.nix` ist redundant und kann entfernt
   werden.
-- **Semaphore/AMP auf Podman**: Beide Services laufen aktuell containerisiert
-  via Podman. Vor einer Neukonfiguration prüfen: `nix search nixpkgs semaphore`
-  — falls native Pakete existieren, ist der Podman-Umweg vermeidbar.
 
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 
