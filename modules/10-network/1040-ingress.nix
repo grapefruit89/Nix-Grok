@@ -14,16 +14,16 @@
 { config, lib, ... }:
 
 let
-  caddy = import ../lib/caddy-helpers.nix { inherit lib; };
-  vpnConnLib = import ../lib/vpn-connection.nix { inherit lib; };
-  ingressLib = import ../lib/caddy-ingress.nix {
+  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
+  vpnConnLib = import ../../lib/vpn-connection.nix { inherit lib; };
+  ingressLib = import ../../lib/caddy-ingress.nix {
     inherit lib caddy;
     vpnConn = {
       cfg = config.my.services.vpn-confinement;
       connectionAddress = vpnConnLib.connectionAddress;
     };
   };
-  enableMap = import ../lib/service-enable.nix { inherit lib; };
+  enableMap = import ../../lib/service-enable.nix { inherit lib; };
 
   domain = config.my.configs.identity.domain;
 in

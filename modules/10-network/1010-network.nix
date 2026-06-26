@@ -34,20 +34,20 @@ let
   cfgValkey = config.my.services.valkey;
   cfgPostgres = config.my.services.postgresql;
   ramGB = config.my.configs.hardware.ramGB;
-  sockets = import ../lib/unix-sockets.nix { inherit lib; };
+  sockets = import ../../lib/unix-sockets.nix { inherit lib; };
 
   lanIP = config.my.configs.server.lanIP;
   tailscaleIP = config.my.configs.server.tailscaleIP;
   dnsBootstrap = config.my.configs.network.dnsBootstrap;
-  dnsPolicy = import ../lib/dns-policy.nix { inherit lib; };
-  memory = import ../lib/memory-policy.nix { inherit lib; };
-  criticalSystemd = import ../lib/critical-systemd.nix {
+  dnsPolicy = import ../../lib/dns-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  criticalSystemd = import ../../lib/critical-systemd.nix {
     inherit lib;
     oomScore = -1000;
   };
   domain = config.my.configs.identity.domain;
   portAdguard = config.my.ports.adguard;
-  caddySnippets = import ../lib/caddy-snippets.nix {
+  caddySnippets = import ../../lib/caddy-snippets.nix {
     inherit lib;
     pocketIdPort =
       if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id else null;

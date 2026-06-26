@@ -25,7 +25,7 @@
 let
   cfgDdns = config.my.services.ddns-updater;
   cfgGuard = config.my.services.dns-guard;
-  factory = import ../lib/service-factory.nix { inherit lib; };
+  factory = import ../../lib/service-factory.nix { inherit lib; };
   portDdns = config.my.ports.ddns-updater;
   ddnsCfg = config.my.configs.ddns;
 in
