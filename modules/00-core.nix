@@ -225,7 +225,7 @@ in
         nix-du
         # Hygiene-Trio (statix war schon da): statix -> deadnix -> nixfmt-rfc-style
         deadnix
-        nixfmt-rfc-style
+        nixfmt
       ];
     })
 

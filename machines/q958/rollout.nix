@@ -95,6 +95,7 @@ in
     linkwarden.enable = erstAb 7;
     open-webui.enable = erstAb 7;
     hermes.enable = erstAb 7;
+    hermes.containerMode = false; # nativ statt Podman (Entscheidung 2026-06-26)
     home-assistant.enable = erstAb 7;
     zigbee-stack.enable = erstAb 7;
     semaphore.enable = erstAb 7;
