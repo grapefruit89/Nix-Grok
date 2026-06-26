@@ -319,13 +319,6 @@ in
                 };
               }
               {
-                Semaphore = {
-                  href = "https://semaphore.${domain}";
-                  description = "Ansible UI";
-                  icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/semaphore.svg";
-                };
-              }
-              {
                 Speedtest = {
                   href = "https://speedtest.${domain}";
                   description = "Netzwerk-Test";

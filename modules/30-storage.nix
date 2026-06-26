@@ -333,7 +333,6 @@ in
           "${cfgImp.persistMountPoint}/var/lib/paperless"
           "${cfgImp.persistMountPoint}/var/lib/linkwarden"
           "${cfgImp.persistMountPoint}/var/lib/forgejo"
-          "${cfgImp.persistMountPoint}/var/lib/semaphore"
           "/home/${config.my.configs.identity.user}/.grok"
           "${cfgImp.persistMountPoint}/var/lib/grafana"
           "${cfgImp.persistMountPoint}/etc/nixos"

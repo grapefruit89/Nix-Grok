@@ -41,7 +41,6 @@ let
     scrutiny = fqdn "scrutiny";
     grafana = fqdn "grafana";
     forgejo = fqdn "git";
-    semaphore = fqdn "semaphore";
     cockpit = fqdn "admin";
     amp = fqdn "amp";
     "zigbee-stack" = fqdn "zigbee";

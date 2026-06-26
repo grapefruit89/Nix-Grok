@@ -2,12 +2,11 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Forgejo Git, Semaphore Ansible-UI, Cockpit
+#   purpose: Forgejo Git, Cockpit
 #   lib:
 #     - lib/unix-sockets.nix
 #   services:
 #     - forgejo
-#     - semaphore
 #   tags:
 #     - forge
 #     - git
@@ -23,7 +22,6 @@ let
   caddy = import ../lib/caddy-helpers.nix { inherit lib; };
   sockets = import ../lib/unix-sockets.nix { inherit lib; };
   cfgForgejo = config.my.services.forgejo;
-  cfgSemaphore = config.my.services.semaphore;
   cfgCockpit = config.my.services.cockpit;
   domain = config.my.configs.identity.domain;
 
@@ -44,15 +42,6 @@ in
         type = lib.types.bool;
         default = true;
         description = "Disable public user registration.";
-      };
-    };
-
-    semaphore = {
-      enable = lib.mkEnableOption "Semaphore Ansible Web UI";
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = config.my.ports.semaphore;
-        description = "Semaphore HTTP port.";
       };
     };
 
@@ -120,32 +109,6 @@ in
       };
 
       my.impermanence.extraPaths = [ "/var/lib/forgejo" ];
-    })
-
-    # ── SEMAPHORE ANSIBLE WEB UI ──────────────────────────────────────────────
-    (lib.mkIf cfgSemaphore.enable {
-      virtualisation.oci-containers = {
-        backend = "podman";
-        containers.semaphore = {
-          image = "docker.io/semaphoreui/semaphore:latest";
-          ports = [ "127.0.0.1:${toString cfgSemaphore.port}:3000" ];
-          environment = {
-            SEMAPHORE_DB_DIALECT = "sqlite";
-            SEMAPHORE_PLAYBOOK_PATH = "/var/lib/semaphore/playbooks";
-            SEMAPHORE_DB_PATH = "/var/lib/semaphore/semaphore.db";
-          };
-          volumes = [
-            "/var/lib/semaphore:/var/lib/semaphore"
-          ];
-        };
-      };
-
-      virtualisation.podman = {
-        enable = true;
-        dockerCompat = true;
-      };
-
-      my.impermanence.extraPaths = [ "/var/lib/semaphore" ];
     })
 
     # ── COCKPIT SERVER ADMIN UI ───────────────────────────────────────────────

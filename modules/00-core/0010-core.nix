@@ -243,11 +243,6 @@ in
         default = 3010;
         description = "Forgejo HTTP port.";
       };
-      semaphore = lib.mkOption {
-        type = lib.types.port;
-        default = 3015;
-        description = "Semaphore HTTP port.";
-      };
       cockpit = lib.mkOption {
         type = lib.types.port;
         default = 9090;

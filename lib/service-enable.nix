@@ -46,7 +46,6 @@ let
         home-assistant = mySvc.home-assistant.enable or false;
         zigbee-stack = mySvc.zigbee-stack.enable or false;
         forgejo = mySvc.forgejo.enable or false;
-        semaphore = mySvc.semaphore.enable or false;
         amp = mySvc.amp.enable or false;
       };
     in

@@ -91,7 +91,6 @@ in
     hermes.containerMode = false; # nativ statt Podman (Entscheidung 2026-06-26)
     home-assistant.enable = erstAb 7;
     zigbee-stack.enable = erstAb 7;
-    semaphore.enable = erstAb 7;
     amp.enable = erstAb 7;
   };
 

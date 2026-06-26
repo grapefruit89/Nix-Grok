@@ -353,14 +353,6 @@ let
         command = "/run/current-system/sw/bin/check-forgejo-uds";
       })
     ]
-    ++ lib.optionals (config.my.services.semaphore.enable or false) [
-      (mkHttp {
-        name = "semaphore";
-        group = "forge";
-        host = local;
-        port = ports.semaphore;
-      })
-    ]
     ++ lib.optionals (config.my.services.cockpit.enable or false) [
       (mkTcp {
         name = "cockpit";

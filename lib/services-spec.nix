@@ -242,12 +242,6 @@ let
       subdomain = "git";
       description = "Git Forge";
     };
-    semaphore = {
-      port = ports.semaphore;
-      zone = "family-pocketid";
-      subdomain = "semaphore";
-      description = "Ansible UI";
-    };
     amp = {
       port = ports.amp;
       zone = "family-pocketid";
