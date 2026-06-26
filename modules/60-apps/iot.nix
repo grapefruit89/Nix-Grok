@@ -15,7 +15,6 @@
 { config, lib, pkgs, ... }:
 
 let
-  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
   cfgHass = config.my.services.home-assistant;
   cfgZigbee = config.my.services.zigbee-stack;
   domain = config.my.configs.identity.domain;

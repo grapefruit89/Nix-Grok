@@ -20,8 +20,6 @@
 let
   cfgDdns = config.my.services.ddns-updater;
   cfgGuard = config.my.services.dns-guard;
-  domain = config.my.configs.identity.domain;
-  dnsMap = import ../lib/dns-map.nix { inherit domain; };
   factory = import ../lib/service-factory.nix { inherit lib; };
   portDdns = config.my.ports.ddns-updater;
   ddnsCfg = config.my.configs.ddns;

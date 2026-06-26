@@ -20,7 +20,6 @@
 { config, lib, pkgs, ... }:
 
 let
-  caddy = import ../lib/caddy-helpers.nix { inherit lib; };
   memory = import ../lib/memory-policy.nix { inherit lib; };
   sockets = import ../lib/unix-sockets.nix { inherit lib; };
   cfgGatus = config.my.services.gatus;

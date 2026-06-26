@@ -6,7 +6,7 @@
 #   tags:
 #     - locale
 # ---
-{ config, lib, pkgs, ... }:
+{ ... }:
 
 {
   my.configs.locale = {

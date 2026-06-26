@@ -16,7 +16,6 @@ let
   homelabWhitelist = import ./whitelist-homelab.nix;
 
   flatten = attrs: lib.unique (lib.concatLists (lib.attrValues attrs));
-  flattenLists = lists: lib.unique (lib.concatLists lists);
 
   homelabProfileBlacklist = profile:
     if profile == "headless-server" then flatten homelabHeadless

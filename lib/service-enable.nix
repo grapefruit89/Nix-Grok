@@ -8,7 +8,7 @@
 #     - services-spec
 #     - ingress
 # ---
-{ lib }:
+{ ... }:
 
 let
   enabled =

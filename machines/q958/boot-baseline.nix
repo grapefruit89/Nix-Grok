@@ -7,7 +7,7 @@
 #     - boot
 #     - baseline
 # ---
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 
 let
   p = import ./profile.nix;

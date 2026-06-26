@@ -8,7 +8,7 @@
 #   tags:
 #     - mcp
 # ---
-{ pkgs, lib, mcpConfigFile, ... }:
+{ pkgs, mcpConfigFile, ... }:
 {
   # Schreibt die ueber natsukium/mcp-servers-nix generierte Konfiguration
   # nach /etc/nixos/.mcp.json -- Claude Code laedt dieses Projekt-Scope-File

@@ -65,14 +65,6 @@ let
     in
     dups;
 
-  portConflictMessage = prefix: ports:
-    let
-      dups = findDuplicatePorts ports;
-    in
-    lib.optionalString (dups != [ ]) (
-      "${prefix}: doppelte Ports ${lib.concatStringsSep ", " (map toString dups)}"
-    );
-
   mkDefaultSpec =
     ports:
     {

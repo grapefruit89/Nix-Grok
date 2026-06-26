@@ -39,9 +39,6 @@ let
   criticalSystemd = import ../lib/critical-systemd.nix { inherit lib; oomScore = -1000; };
   domain = config.my.configs.identity.domain;
   portAdguard = config.my.ports.adguard;
-  portValkey = config.my.ports.valkey;
-
-  caddy = import ../lib/caddy-helpers.nix { inherit lib; };
   caddySnippets = import ../lib/caddy-snippets.nix {
     inherit lib;
     pocketIdPort =

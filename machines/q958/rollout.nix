@@ -11,7 +11,7 @@
 #     - rollout
 #     - enable
 # ---
-{ config, lib, ... }:
+{ lib, ... }:
 
 let
   p = import ./profile.nix;

@@ -12,22 +12,11 @@
 #     - apps
 #     - caddy
 # ---
-{ config, lib, pkgs, ... }:
+{ config, lib, ... }:
 
 let
   criticalSystemd = import ../../lib/critical-systemd.nix { inherit lib; oomScore = -900; };
   memory = import ../../lib/memory-policy.nix { inherit lib; };
-  cfgVaultwarden = config.my.services.vaultwarden;
-  cfgHomepage = config.my.services.homepage;
-  cfgHass = config.my.services.home-assistant;
-  cfgZigbee = config.my.services.zigbee-stack;
-  cfgPaperless = config.my.services.paperless;
-  cfgN8n = config.my.services.n8n;
-  cfgFilebrowser = config.my.services.filebrowser;
-  cfgLinkwarden = config.my.services.linkwarden;
-  cfgOpenWebui = config.my.services.open-webui;
-  cfgHermes = config.my.services.hermes;
-  cfgGrok = config.my.services.grok;
 
 in
 {

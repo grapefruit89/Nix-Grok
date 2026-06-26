@@ -7,7 +7,7 @@
 #     - secrets
 #     - provision
 # ---
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 
 let
   p = import ./profile.nix;

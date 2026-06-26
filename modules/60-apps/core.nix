@@ -9,10 +9,9 @@
 #   tags:
 #     - apps
 # ---
-{ config, lib, pkgs, ... }:
+{ config, lib, ... }:
 
 let
-  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
   factory = import ../../lib/service-factory.nix { inherit lib; };
   cfgVaultwarden = config.my.services.vaultwarden;
   cfgHomepage = config.my.services.homepage;

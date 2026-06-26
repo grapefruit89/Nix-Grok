@@ -8,7 +8,7 @@
 #     - policy
 #     - security
 # ---
-{ lib }:
+{ ... }:
 
 let
   must = assertion: message: { inherit assertion message; };

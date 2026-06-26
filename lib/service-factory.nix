@@ -63,7 +63,6 @@ let
       mode ? "sso",
       port ? null,
       socketPath ? null,
-      upstreamHost ? "127.0.0.1",
       extra ? "",
     }:
     let

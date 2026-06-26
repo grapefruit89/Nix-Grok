@@ -15,7 +15,6 @@
 let
   storage = config.my.configs.storage;
   tierCMount = storage.tierC.mountPoint;
-  tierBMount = storage.tierB.mountPoint;
 in
 {
   options.my.storage.deferred = {

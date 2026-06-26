@@ -8,7 +8,7 @@
 # ---
 { lib, buildNpmPackage, fetchNpmDeps, nodejs_22 }:
 
-buildNpmPackage (finalAttrs: {
+buildNpmPackage (_finalAttrs: {
   pname = "nixos-docs-mcp";
   version = "1.0.0";
 

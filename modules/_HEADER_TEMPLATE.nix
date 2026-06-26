@@ -11,15 +11,14 @@
 # state_dir: null
 # tags: []
 # ---
-{ config, lib, pkgs, ... }:
+{ config, lib, ... }:
 
 let
   # Service-Name = Datei-Slug ohne Nummer (z.B. "sonarr" fuer 5020-sonarr.nix)
   serviceName = "";
 
   # Isomorphe Nummer: NNss = Domaene + Position. Identisch fuer UID + Port.
-  # Beispiel: domain "50" + Position "20" (zweiter Dienst) = 5020.
-  serviceNumber = null; # z.B. 5020
+  # Beispiel: domain "50" + Position "20" (zweiter Dienst) = 5020. # z.B. 5020
 
   cfg = config.my.services.${serviceName} or { };
 in

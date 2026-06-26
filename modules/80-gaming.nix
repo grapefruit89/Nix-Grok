@@ -13,7 +13,6 @@
 
 let
   cfg = config.my.services.amp;
-  domain = config.my.configs.identity.domain;
 
   ampBin = "${cfg.dataDir}/opt/cubecoders/amp/ampinstmgr";
 

@@ -14,7 +14,7 @@
 #     - template
 #     - onboarding
 # ---
-{ config, lib, pkgs, ... }:
+{ config, lib, ... }:
 
 let
   # 1) Service-Name = dns-map-Schlüssel (oder eigenen host setzen)
