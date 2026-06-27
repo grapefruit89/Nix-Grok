@@ -26,6 +26,7 @@ in
     ../../modules/10-network
     ../../modules/50-media
     ../../modules/60-apps
+    ../../modules/70-home-automation
     ../../users/moritz/default.nix
     ./kernel-slim.nix
     ./access.nix

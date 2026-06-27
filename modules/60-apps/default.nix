@@ -26,7 +26,6 @@ in
   imports = [
     ./grok.nix
     ./61-core.nix
-    ./iot.nix
     ./automation.nix
     ./hermes.nix
     ./forge.nix
@@ -59,102 +58,6 @@ in
         type = lib.types.str;
         default = "";
         description = "Optional external Agent Zero URL (set in machines/<host>/profile.nix).";
-      };
-    };
-
-    home-assistant = {
-      enable = lib.mkEnableOption "Home Assistant (IoT)";
-      user = lib.mkOption {
-        type = lib.types.str;
-        default = "hass";
-        description = "Home Assistant system user.";
-      };
-      group = lib.mkOption {
-        type = lib.types.str;
-        default = "hass";
-        description = "Home Assistant system group.";
-      };
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 8123;
-        description = "Home Assistant port.";
-      };
-      stateDir = lib.mkOption {
-        type = lib.types.str;
-        default = "/var/lib/hass";
-        description = "State directory (Tier A).";
-      };
-      cacheDir = lib.mkOption {
-        type = lib.types.str;
-        default = "/var/cache/home-assistant";
-        description = "Python cache directory (Tier B).";
-      };
-      mediaDir = lib.mkOption {
-        type = lib.types.str;
-        default = "/var/lib/home-assistant/media";
-        description = "Media directory (Tier C).";
-      };
-      zigbeeDevice = lib.mkOption {
-        type = lib.types.str;
-        default = "";
-        description = "SLZB-06 socket or serial path (set in machines/<host>/profile.nix).";
-      };
-      bluetooth = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-        description = "Enable bluetooth device access.";
-      };
-      secretFile = lib.mkOption {
-        type = lib.types.nullOr lib.types.path;
-        default = null;
-        description = "Path to local secrets file.";
-      };
-      extraComponents = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [ ];
-        description = "Extra components to load.";
-      };
-      trustedProxies = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [
-          "127.0.0.1"
-          "::1"
-        ];
-        description = "List of trusted upstream proxies.";
-      };
-    };
-
-    zigbee-stack = {
-      enable = lib.mkEnableOption "Zigbee Stack (Mosquitto + Zigbee2MQTT)";
-      mqttPort = lib.mkOption {
-        type = lib.types.port;
-        default = 1883;
-        description = "Local Mosquitto port.";
-      };
-      zigbeePort = lib.mkOption {
-        type = lib.types.port;
-        default = 8075;
-        description = "Zigbee2MQTT port.";
-      };
-      zigbeeDevice = lib.mkOption {
-        type = lib.types.str;
-        default = "";
-        description = "SLZB-06 socket or serial path (set in machines/<host>/profile.nix).";
-      };
-      adapter = lib.mkOption {
-        type = lib.types.enum [
-          "ember"
-          "zstack"
-          "deconz"
-          "ezsp"
-        ];
-        default = "ember";
-        description = "Ember adapter type.";
-      };
-      dataDir = lib.mkOption {
-        type = lib.types.str;
-        default = "/var/lib/zigbee2mqtt";
-        description = "Zigbee2MQTT data folder.";
       };
     };
 

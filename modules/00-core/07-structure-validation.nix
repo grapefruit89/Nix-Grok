@@ -12,6 +12,7 @@ let
     "40-observability"
     "50-media"
     "60-apps"
+    "70-home-automation"
     "80-agents"
     "90-policy"
   ];
