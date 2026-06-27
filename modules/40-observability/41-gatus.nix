@@ -223,12 +223,10 @@ in
           install -D -m 600 -o gatus -g gatus /var/lib/secrets/gatus_ssh_key /var/lib/gatus/ssh_key
         fi
       '';
+      environment.GATUS_CONFIG_PATH = lib.mkForce cfg.endpointsFile;
       serviceConfig = lib.mkMerge [
-        (hardening.mkHardened { caps = [ "CAP_NET_RAW" ]; })
-        {
-          Environment = lib.mkForce [ "GATUS_CONFIG_PATH=${cfg.endpointsFile}" ];
-          StateDirectory = "gatus";
-        }
+        (hardening.mkHardened { })
+        { StateDirectory = "gatus"; }
       ];
     };
   };

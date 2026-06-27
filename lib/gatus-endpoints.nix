@@ -132,6 +132,13 @@ let
         timeout = "25s";
       })
       (mkSsh {
+        name = "mergerfs-external-pool";
+        group = "storage";
+        command = "/run/current-system/sw/bin/check-external-pool";
+        interval = "5m";
+        timeout = "25s";
+      })
+      (mkSsh {
         name = "storage-permissions-drift";
         group = "storage";
         command = "/run/current-system/sw/bin/check-permissions-drift";

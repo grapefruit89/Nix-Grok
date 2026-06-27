@@ -38,11 +38,6 @@ in
       default = config.my.ports.loki;
       description = "Port for the Loki API server.";
     };
-    grafanaPort = lib.mkOption {
-      type = lib.types.port;
-      default = config.my.ports.grafana;
-      description = "Port for the Grafana web dashboard.";
-    };
   };
 
   config = lib.mkIf cfgObs.enable {
@@ -179,15 +174,18 @@ in
         }
       ];
 
-      vector.serviceConfig = lib.mkMerge [
-        (memory.vector { })
-        (hardening.mkHardened { rw = [ "/var/lib/vector" ]; })
-        {
-          StateDirectory = "vector";
-          StateDirectoryMode = "0750";
-          CapabilityBoundingSet = "";
-        }
-      ];
+      vector = {
+        after = [ "loki.service" ];
+        serviceConfig = lib.mkMerge [
+          (memory.vector { })
+          (hardening.mkHardened { rw = [ "/var/lib/vector" ]; })
+          {
+            StateDirectory = "vector";
+            StateDirectoryMode = "0750";
+            CapabilityBoundingSet = "";
+          }
+        ];
+      };
 
       grafana = {
         preStart = lib.mkAfter ''

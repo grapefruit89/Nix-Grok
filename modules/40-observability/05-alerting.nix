@@ -70,7 +70,11 @@ in
         };
       };
 
-      usenet.serviceConfig.OnFailure = lib.mkIf (config.my.services.vpn-confinement.enable or false) (
+      sabnzbd.serviceConfig.OnFailure = lib.mkIf (config.my.services.vpn-confinement.enable or false) (
+        lib.mkDefault [ "alerting-onfailure.service" ]
+      );
+
+      prowlarr.serviceConfig.OnFailure = lib.mkIf (config.my.services.vpn-confinement.enable or false) (
         lib.mkDefault [ "alerting-onfailure.service" ]
       );
 
