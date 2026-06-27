@@ -131,6 +131,34 @@ aktuellen HEAD ein Dry-Build-Flag gesetzt ist — nützlich als Voraussetzung.
 - ***arr-UID-Migration** noch ausstehend: `scripts/migrate-arr-uids.sh` einmalig
   nach dem nächsten switch ausführen (chown auf `/persist/var/lib/{sonarr,...}`).
 
+## MCP-Tools — PFLICHT bei Paket- und Optionsfragen
+
+Trainingsdaten sind bis zu 18 Monate alt. Für Live-Daten IMMER die MCP-Server nutzen
+**bevor** du eine Annahme über nixpkgs-Pakete, NixOS-Optionen, Caddy-Direktiven, etc. triffst.
+
+### nixos-MCP (nixpkgs live-Suche)
+Nutze `mcp__nixos__nix` für:
+- Paket-Existenz prüfen: `{"action":"info","query":"<pkg>","channel":"nixos-unstable"}`
+- NixOS-Optionen durchsuchen: `{"action":"search","query":"<option>","type":"options"}`
+- Home-Manager-Optionen: `{"action":"search","source":"home-manager","query":"<option>"}`
+- Binary-Cache-Check: `{"action":"cache","query":"<pkg>"}`
+
+Wann: **Immer**, wenn du ein NixOS-Modul, ein `services.*`-Attribut oder einen
+Paket-Namen nennst, den du nicht in den letzten 5 Minuten live verifiziert hast.
+"Ich weiß das aus Training" reicht nicht — `fetchurl`-Hashes, Plugin-Versionen,
+Moduloptionen ändern sich ständig.
+
+### Context7-MCP (Bibliotheks-Dokumentation)
+Nutze `mcp__claude_ai_Context7__resolve-library-id` + `query-docs` für:
+- Caddy-Direktiven und -Konfiguration
+- systemd-Unit-Optionen
+- Jellyfin/Navidrome/Audiobookshelf API-Details
+- NixOS-Flake-Struktur und -API
+- Jede Bibliothek, über die du nicht 100% sicher bist
+
+Ablauf: erst `resolve-library-id` mit dem Library-Namen, dann `query-docs` mit
+der Library-ID und der spezifischen Frage.
+
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 
 1. **`nixos-rebuild switch` führt nur der Mensch aus** — niemals automatisch,
