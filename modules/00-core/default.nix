@@ -20,5 +20,6 @@
     ./04-services-spec.nix
     ./05-sops.nix
     ./06-boot-watchdog.nix
+    ./07-structure-validation.nix
   ];
 }
