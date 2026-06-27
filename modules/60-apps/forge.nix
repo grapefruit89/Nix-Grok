@@ -19,7 +19,7 @@
 }:
 
 let
-  caddy = import ../lib/caddy-helpers.nix { inherit lib; };
+  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
   cfgCockpit = config.my.services.cockpit;
   domain = config.my.configs.identity.domain;
 

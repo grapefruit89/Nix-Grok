@@ -12,7 +12,7 @@
 { config, lib, ... }:
 
 let
-  policy = import ../lib/forbidden-tech.nix { inherit lib; };
+  policy = import ../../lib/forbidden-tech.nix { inherit lib; };
 in
 {
   options.my.policy.forbidden-tech = {

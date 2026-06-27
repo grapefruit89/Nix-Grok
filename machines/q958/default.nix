@@ -18,25 +18,14 @@ in
   imports = [
     ./hardware.nix
     ../../modules/00-core
-    ../../modules/05-storage-policy.nix
-    ../../modules/05-forbidden-tech.nix
-    ../../modules/05-runtime-guard.nix
-    ../../modules/05-alerting.nix
-    ../../modules/05-deferred-ops.nix
-    ../../modules/25-kernel-policy.nix
-    ../../modules/26-kernel-hardening.nix
-    ../../modules/27-hardened-core.nix
+    ../../modules/20-security
+    ../../modules/30-storage
+    ../../modules/40-observability
+    ../../modules/80-agents
+    ../../modules/90-policy
     ../../modules/10-network
-    ../../modules/15-firewall.nix
-    ../../modules/20-security.nix
-    ../../modules/30-storage.nix
-    ../../modules/35-automount.nix
-    ../../modules/36-disk-health.nix
-    ../../modules/40-observability.nix
     ../../modules/50-media
     ../../modules/60-apps
-    ../../modules/70-forge.nix
-    ../../modules/80-gaming.nix
     ../../users/moritz/default.nix
     ./kernel-slim.nix
     ./access.nix
@@ -46,10 +35,6 @@ in
     ./dev-mode.nix
     ./rollout.nix
     ./boot-baseline.nix
-    ../../modules/91-security-assertions.nix
-    ../../modules/dev/aider.nix
-    ../../modules/dev/claude-code.nix
-    ../../modules/mcp-server
   ];
 
   nixpkgs.config.allowUnfree = true;

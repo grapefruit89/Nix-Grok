@@ -24,7 +24,7 @@
 let
   cfg = config.my.security.firewall;
   blockedCountryList = lib.concatStringsSep " " cfg.blockedCountries;
-  ruleset = import ../lib/nftables-rules.nix { inherit lib config; };
+  ruleset = import ../../lib/nftables-rules.nix { inherit lib config; };
 
 in
 {

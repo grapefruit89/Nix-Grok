@@ -16,7 +16,7 @@
 { config, lib, ... }:
 
 let
-  policy = import ../lib/storage-policy.nix { inherit lib; };
+  policy = import ../../lib/storage-policy.nix { inherit lib; };
   storage = config.my.configs.storage;
   tierC = storage.tierC;
 

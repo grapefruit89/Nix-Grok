@@ -29,6 +29,8 @@ in
     ./iot.nix
     ./automation.nix
     ./hermes.nix
+    ./forge.nix
+    ./gaming.nix
   ];
 
   options.my.services = {

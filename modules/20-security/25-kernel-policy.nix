@@ -12,7 +12,7 @@
 { lib, ... }:
 
 let
-  policy = import ../lib/kernel/policy.nix { inherit lib; };
+  policy = import ../../lib/kernel/policy.nix { inherit lib; };
 in
 {
   options.my.core.kernel-slim = {

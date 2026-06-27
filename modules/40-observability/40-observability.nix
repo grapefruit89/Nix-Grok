@@ -29,15 +29,15 @@
 }:
 
 let
-  memory = import ../lib/memory-policy.nix { inherit lib; };
-  sockets = import ../lib/unix-sockets.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  sockets = import ../../lib/unix-sockets.nix { inherit lib; };
   cfgGatus = config.my.services.gatus;
   cfgObs = config.my.observability;
   cfgCrowdsec = config.my.security.crowdsec;
   cfgVM = config.my.observability.victoriametrics;
   domain = config.my.configs.identity.domain;
   yaml = pkgs.formats.yaml { };
-  gatusLib = import ../lib/gatus-endpoints.nix { inherit lib config; };
+  gatusLib = import ../../lib/gatus-endpoints.nix { inherit lib config; };
 
 in
 {
