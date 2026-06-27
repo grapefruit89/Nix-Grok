@@ -181,6 +181,12 @@ let
       subdomain = "audiobookshelf";
       description = "Audiobooks";
     };
+    navidrome = {
+      port = ports.navidrome;
+      zone = "family-pocketid";
+      subdomain = "music";
+      description = "Music Server (API bypass für SubSonic-Clients)";
+    };
     vaultwarden = {
       port = ports.vaultwarden;
       zone = "family-pocketid";

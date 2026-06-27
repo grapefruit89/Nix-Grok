@@ -72,6 +72,25 @@ let
     }
   '';
 
+  # Navidrome: SSO für Web-UI; SubSonic/OpenSubsonic-Clients (/rest/*) und Share-Links (/share/*)
+  # dürfen nicht durch SSO — sie nutzen Token-Auth in der URL/Header.
+  genNavidromeVhost = port: ''
+    import streamer_headers
+    import security_headers
+
+    @navidrome_api {
+      path /rest/*
+      path /share/*
+    }
+    handle @navidrome_api {
+      ${streamingBackend port}
+    }
+    handle {
+      import sso_auth
+      ${streamingBackend port}
+    }
+  '';
+
   genVaultwardenVhost = port: ''
     import security_headers
 
@@ -143,6 +162,8 @@ let
       genAuthVhost upstream
     else if name == "jellyfin" then
       genJellyfinVhost entry.port
+    else if name == "navidrome" then
+      genNavidromeVhost entry.port
     else if name == "vaultwarden" then
       genVaultwardenVhost entry.port
     else if name == "homepage" then
