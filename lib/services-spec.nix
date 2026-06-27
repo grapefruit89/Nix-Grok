@@ -88,7 +88,7 @@ let
       description = "Loki ingest";
     };
 
-    # --- admin-hangar (tailscale_admin / LAN) ---
+    # --- admin-hangar (private_admin / LAN + Netbird) ---
     gatus = {
       port = ports.gatus;
       zone = "admin-hangar";
@@ -119,11 +119,11 @@ let
       subdomain = "admin";
       description = "Host Admin";
     };
-    blocky = {
-      port = 53;
+    technitium-dns-server = {
+      port = ports.technitium-dns;
       zone = "admin-hangar";
       subdomain = "dns";
-      description = "DNS Resolver UI";
+      description = "Technitium DNS Server";
     };
     ddns-updater = {
       port = ports.ddns-updater;
@@ -222,12 +222,6 @@ let
       zone = "family-pocketid";
       subdomain = "paperless";
       description = "Documents";
-    };
-    n8n = {
-      port = ports.n8n;
-      zone = "family-pocketid";
-      subdomain = "n8n";
-      description = "Automation";
     };
     home-assistant = {
       port = 8123;

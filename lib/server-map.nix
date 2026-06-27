@@ -47,14 +47,6 @@ _: {
       sso = false;
       note = "IANA-Standard, IoT";
     };
-    blocky-dns = {
-      id = null;
-      transport = "ext:53";
-      module = "10-network";
-      sso = false;
-      note = "DNS-Standard";
-    };
-
     # ── 40-observability ───────────────────────────────────────────────────────
     grafana = {
       id = 4001;
@@ -161,12 +153,6 @@ _: {
     paperless = {
       id = 6003;
       transport = "uds:/run/paperless/paperless.sock";
-      module = "60-apps";
-      sso = true;
-    };
-    n8n = {
-      id = 6004;
-      transport = "tcp:6004";
       module = "60-apps";
       sso = true;
     };

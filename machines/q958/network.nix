@@ -2,12 +2,10 @@
 # meta:
 #   layer: 2
 #   role: machine
-#   purpose: Verdrahtung Netzwerk — Blocky, Tailscale, Pocket-ID, Privado
-#   docs:
-#     - docs/AUDIT-blocky-caddy-ipv6.md
+#   purpose: Verdrahtung Netzwerk — Technitium, Netbird, Pocket-ID, Privado
 #   services:
-#     - blocky
-#     - tailscale
+#     - technitium-dns-server
+#     - netbird
 #     - pocket-id
 #   tags:
 #     - network
@@ -36,7 +34,8 @@ in
   my.security.firewall.ipv6 = p.network.ipv6.firewall;
 
   my.services = {
-    blocky.upstreamDns = p.network.blocky.upstream;
+    netbird.domain = "netbird.${config.my.configs.identity.domain}";
+    netbird.setupKeyFile = secretPath "netbirdSetupKey";
     pocket-id.secretsFile = secretPath "pocketId";
     privado-vpn = {
       privateKeyFile = secretPath "privadoKey";
@@ -47,15 +46,11 @@ in
     };
   };
 
-  # Blocky-DNS fürs LAN — nur auf eno1, nicht WAN-weit (vor nftables Stufe 8)
+  # Technitium DNS für LAN — nur auf eno1, nicht WAN-weit (vor nftables Stufe 8)
   networking.firewall.interfaces.${lan.interface} =
-    lib.mkIf (config.my.services.blocky.enable && !config.my.security.firewall.enable)
+    lib.mkIf (config.my.services.technitium-dns-server.enable && !config.my.security.firewall.enable)
       {
         allowedUDPPorts = [ 53 ];
         allowedTCPPorts = [ 53 ];
       };
-
-  networking.firewall.allowedUDPPorts = lib.mkIf (
-    config.my.services.tailscale.enable && !config.my.security.firewall.enable
-  ) (lib.mkForce [ config.my.services.tailscale.port ]);
 }

@@ -2,14 +2,13 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Paperless-ngx und n8n Workflow-Automatisierung
+#   purpose: Paperless-ngx Dokumentenarchiv
 #   docs:
 #     - docs/memory_oom.md
 #   lib:
 #     - lib/memory-policy.nix
 #   services:
 #     - paperless-web
-#     - n8n
 #   tags:
 #     - automation
 # ---
@@ -21,7 +20,6 @@
 let
   memory = import ../../lib/memory-policy.nix { inherit lib; };
   cfgPaperless = config.my.services.paperless;
-  cfgN8n = config.my.services.n8n;
   domain = config.my.configs.identity.domain;
 in
 {
@@ -79,38 +77,6 @@ in
         cfgPaperless.dataDir
         cfgPaperless.consumptionDir
       ];
-    })
-
-    (lib.mkIf cfgN8n.enable {
-      services.n8n = {
-        enable = true;
-        environment = {
-          N8N_PORT = toString cfgN8n.port;
-          N8N_BASE_URL = "https://n8n.${domain}";
-          N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS = "true";
-          GENERIC_TIMEZONE = "Europe/Berlin";
-        };
-      };
-
-      systemd.services.n8n.serviceConfig = {
-        ProtectSystem = lib.mkForce "strict";
-        ProtectHome = lib.mkForce true;
-        NoNewPrivileges = lib.mkForce true;
-        PrivateTmp = lib.mkForce true;
-        ReadWritePaths = lib.mkForce [ cfgN8n.userFolder ];
-        LockPersonality = lib.mkForce true;
-        CapabilityBoundingSet = lib.mkForce "";
-        RestrictNamespaces = lib.mkForce true;
-        ProtectClock = lib.mkForce true;
-        ProtectHostname = lib.mkForce true;
-        RestrictAddressFamilies = lib.mkForce [
-          "AF_INET"
-          "AF_INET6"
-          "AF_UNIX"
-        ];
-      };
-
-      my.impermanence.extraPaths = [ cfgN8n.userFolder ];
     })
   ];
 }

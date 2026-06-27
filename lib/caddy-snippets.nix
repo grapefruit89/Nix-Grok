@@ -2,7 +2,7 @@
 # meta:
 #   layer: 5
 #   role: lib
-#   purpose: Gemeinsame Caddyfile-Snippets — SSO, Security-Header, Tailscale
+#   purpose: Gemeinsame Caddyfile-Snippets — SSO, Security-Header, Private-Admin
 #   tags:
 #     - caddy
 #     - snippets
@@ -13,7 +13,7 @@
   lanCidr ? "192.168.0.0/16",
 }:
 let
-  tailscaleCidr = "100.64.0.0/10";
+  privateCidr = "100.64.0.0/10";
 in
 {
   extraConfig = ''
@@ -28,8 +28,8 @@ in
       }
     }
 
-    (tailscale_admin) {
-      @external not remote_ip ${tailscaleCidr} 127.0.0.0/8 ::1/128 ${lanCidr}
+    (private_admin) {
+      @external not remote_ip ${privateCidr} 127.0.0.0/8 ::1/128 ${lanCidr}
       respond @external "Forbidden" 403
     }
 

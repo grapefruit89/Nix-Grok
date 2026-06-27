@@ -63,19 +63,9 @@ in
       dns = [ "127.0.0.1" ];
       systemdNetworkName = "10-lan";
     };
-    tailscaleIP = "100.64.0.1";
+    netbirdIP = "100.64.0.1";
     sshPort = 22;
     productionSshPort = 53844;
-    blocky = {
-      upstream = [
-        "tcp-tls:1.1.1.1:853" # Cloudflare
-        "tcp-tls:1.0.0.1:853"
-        "tcp-tls:9.9.9.9:853" # Quad9
-        "tcp-tls:149.112.112.112:853"
-        "tcp-tls:194.242.2.2:853" # Mullvad
-        "tcp-tls:dnsforge.de:853"
-      ];
-    };
     privado = {
       endpoint = "91.148.245.70:51820";
       publicKey = "KgTUh3KLijVluDvNpzDCJJfrJ7EyLzYLmdHCksG4sRg=";
@@ -92,7 +82,7 @@ in
         "tcp-tls:149.112.112.112:853"
       ];
     };
-    # IPv6 Homelab: ad acta — nur v4 auf LAN-PHY (eno1). Ausnahme: tailscale0 (Mesh).
+    # IPv6 Homelab: ad acta — nur v4 auf LAN-PHY (eno1). Ausnahme: wt0 (Netbird/Mesh).
     ipv6 = {
       disableOnInterfaces = [ "eno1" ];
       firewall = false;
@@ -228,7 +218,7 @@ in
   secrets = {
     dir = "/var/lib/secrets";
     files = {
-      tailscaleToken = "tailscale_token";
+      netbirdSetupKey = "netbird_setup_key";
       pocketId = "pocket-id.env";
       context7 = "context7.env";
       privadoKey = "privado_private_key";
@@ -301,7 +291,7 @@ in
         "vn"
       ];
       allowLanDns = true;
-      tailscaleNotrack = true;
+      netbirdNotrack = true;
     };
   };
 

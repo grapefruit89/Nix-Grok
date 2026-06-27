@@ -79,13 +79,13 @@ in
     ipv6 = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "IPv6-Input-Regeln (CrowdSec v6). false wenn LAN nur v4 (Tailscale bleibt über iifname tailscale0).";
+      description = "IPv6-Input-Regeln (CrowdSec v6). false wenn LAN nur v4 (Netbird bleibt über iifname wt0).";
     };
 
-    tailscaleNotrack = lib.mkOption {
+    netbirdNotrack = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "raw-Table NOTRACK für tailscale0 — weniger conntrack-CPU.";
+      description = "raw-Table NOTRACK für wt0 (Netbird) — weniger conntrack-CPU.";
     };
 
     skuidSegmentation = {

@@ -21,7 +21,7 @@ let
   defaultCategories = {
     infra = [
       "cloudflare_token"
-      "tailscale_token"
+      "netbird_setup_key"
       "restic_password"
       "privado_private_key"
       "gatus_ssh_key"

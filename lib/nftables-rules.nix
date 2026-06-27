@@ -28,7 +28,7 @@ let
       (config.my.security ? dropbear-rescue) && config.my.security.dropbear-rescue.enable
     ) config.my.security.dropbear-rescue.port;
   sshPortList = lib.concatStringsSep ", " (map toString sshPorts);
-  tailscalePort = toString config.my.services.tailscale.port;
+  netbirdWgPort = "51820";
   wanIf = cfg.wanInterface;
   hasWanIf = wanIf != "";
 
@@ -41,7 +41,7 @@ let
   skuidArrGuard =
     if cfg.skuidSegmentation.enable then
       ''
-        tcp dport { ${arrPorts} } ct state new ip saddr != { 127.0.0.0/8, ${lanCidrList}, 100.64.0.0/10 } drop comment "arr LAN/Tailscale only"
+        tcp dport { ${arrPorts} } ct state new ip saddr != { 127.0.0.0/8, ${lanCidrList}, 100.64.0.0/10 } drop comment "arr LAN/VPN only"
       ''
     else
       "";
@@ -49,7 +49,7 @@ let
   skuidUsenetGuard =
     if cfg.skuidSegmentation.enable then
       ''
-        meta skuid { ${toString uids.prowlarr}, ${toString uids.sabnzbd} } oifname != "lo" oifname != "tailscale0" oifname != "privado" oifname != "veth-usenet" oifname != "veth-usenet-br" oifname != "usenet-br" ip daddr != { ${lanCidrList}, 192.168.15.0/24 } drop comment "usenet UIDs egress"
+        meta skuid { ${toString uids.prowlarr}, ${toString uids.sabnzbd} } oifname != "lo" oifname != "wt0" oifname != "privado" oifname != "veth-usenet" oifname != "veth-usenet-br" oifname != "usenet-br" ip daddr != { ${lanCidrList}, 192.168.15.0/24 } drop comment "usenet UIDs egress"
       ''
     else
       "";
@@ -91,12 +91,12 @@ let
       "";
 
   rawNotrack =
-    if cfg.tailscaleNotrack then
+    if cfg.netbirdNotrack then
       ''
         table inet raw {
           chain prerouting {
             type filter hook prerouting priority -300; policy accept;
-            iifname "tailscale0" notrack comment "Tailscale NOTRACK"
+            iifname "wt0" notrack comment "Netbird NOTRACK"
           }
         }
       ''
@@ -158,7 +158,7 @@ lib.concatStringsSep "\n" [
 
       chain in_trusted {
         iifname "lo" accept
-        iifname "tailscale0" accept comment "Tailscale"
+        iifname "wt0" accept comment "Tailscale"
         iifname "privado" accept comment "Privado WG egress"
         ct state established,related accept
         ct state invalid drop comment "Invalid TCP state"
@@ -192,7 +192,7 @@ lib.concatStringsSep "\n" [
         ip protocol icmp accept
         tcp flags & (syn|ack) == syn ct state new add @portscan { ip saddr limit rate 30/minute burst 5 packets } drop comment "Portscan"
         tcp flags & (syn|ack) == syn limit rate over 20/second burst 40 packets drop comment "SYN flood"
-        udp dport ${tailscalePort} accept comment "Tailscale UDP"
+        udp dport { ${netbirdWgPort}, 3478, 10000 } accept comment "Netbird WireGuard + STUN + Signal"
         ip protocol udp ct state new limit rate over 50/second burst 100 packets drop comment "UDP flood"
         ${skuidArrGuard}
         ${dbInputGuard}
@@ -207,8 +207,8 @@ lib.concatStringsSep "\n" [
 
       chain forward {
         type filter hook forward priority filter; policy drop;
-        iifname "tailscale0" accept
-        oifname "tailscale0" accept
+        iifname "wt0" accept
+        oifname "wt0" accept
       }
 
       chain output {

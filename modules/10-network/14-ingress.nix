@@ -45,7 +45,6 @@ in
       spec = config.my.services.spec;
       inherit domain;
       isEnabled = enableMap.enabled config;
-      blockyMetricsPort = config.my.services.blocky.metricsPort or 4000;
     };
   };
 }

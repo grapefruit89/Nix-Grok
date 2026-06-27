@@ -25,7 +25,7 @@ let
         grafana = config.services.grafana.enable or false;
         sabnzbd = mySvc.sabnzbd.enable or false;
         cockpit = mySvc.cockpit.enable or false;
-        blocky = mySvc.blocky.enable or false;
+        technitium-dns-server = mySvc.technitium-dns-server.enable or false;
         ddns-updater = mySvc.ddns-updater.enable or false;
         pocket-id = mySvc.pocket-id.enable or false;
         jellyfin = mySvc.jellyfin.enable or false;
@@ -41,7 +41,6 @@ let
         linkwarden = mySvc.linkwarden.enable or false;
         open-webui = mySvc.open-webui.enable or false;
         paperless = mySvc.paperless.enable or false;
-        n8n = mySvc.n8n.enable or false;
         home-assistant = mySvc.home-assistant.enable or false;
         zigbee-stack = mySvc.zigbee-stack.enable or false;
         amp = mySvc.amp.enable or false;

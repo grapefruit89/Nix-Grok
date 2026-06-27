@@ -47,7 +47,7 @@ let
       reverse_proxy ${upstream}
     }
     handle /admin/* {
-      import tailscale_admin
+      import private_admin
       reverse_proxy ${upstream}
     }
     handle {
@@ -117,7 +117,7 @@ let
     }:
     if zone == "admin-hangar" then
       ''
-        import tailscale_admin
+        import private_admin
         import security_headers
         reverse_proxy ${upstream}
       ''
@@ -189,7 +189,6 @@ let
       spec,
       domain,
       isEnabled,
-      blockyMetricsPort,
     }:
     let
       ingress = lib.filterAttrs (
@@ -199,8 +198,7 @@ let
       mkHost =
         name: entry:
         let
-          upstream =
-            if name == "blocky" then "127.0.0.1:${toString blockyMetricsPort}" else vpnUpstream name entry;
+          upstream = vpnUpstream name entry;
           fqdn = mkFqdn domain entry;
           extraConfig = genHostExtra {
             inherit name entry upstream;

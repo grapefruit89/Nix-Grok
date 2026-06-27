@@ -98,9 +98,10 @@ in
           type = lib.types.str;
           description = "Server LAN IP (set in machines/<host>/profile.nix).";
         };
-        tailscaleIP = lib.mkOption {
+        netbirdIP = lib.mkOption {
           type = lib.types.str;
-          description = "Server Tailscale IP (set in machines/<host>/profile.nix).";
+          default = "";
+          description = "Server Netbird IP (nach 'netbird up' mit 'netbird status' ermitteln und in profile.nix eintragen).";
         };
       };
       network = {
@@ -111,13 +112,13 @@ in
             "tcp-tls:9.9.9.9:853"
             "tcp-tls:149.112.112.112:853"
           ];
-          description = "Verschlüsselter Blocky-Bootstrap (DoT/DoH) — niemals Klartext-IP.";
+          description = "Verschlüsselter DNS-Bootstrap (DoT/DoH) — niemals Klartext-IP.";
         };
         ipv6 = {
           disableOnInterfaces = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [ ];
-            description = "Physische Interfaces ohne IPv6 (sysctl + systemd-networkd). Tailscale/WG nicht listen.";
+            description = "Physische Interfaces ohne IPv6 (sysctl + systemd-networkd). Netbird/WG nicht listen.";
           };
           firewall = lib.mkOption {
             type = lib.types.bool;
@@ -223,11 +224,6 @@ in
         type = lib.types.port;
         default = 6003;
         description = "Paperless-ngx port.";
-      };
-      n8n = lib.mkOption {
-        type = lib.types.port;
-        default = 6004;
-        description = "n8n port.";
       };
       filebrowser = lib.mkOption {
         type = lib.types.port;

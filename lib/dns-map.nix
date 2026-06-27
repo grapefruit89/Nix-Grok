@@ -34,9 +34,8 @@ let
     "open-webui" = fqdn "ai";
     "home-assistant" = fqdn "home";
     "pocket-id" = fqdn "auth";
-    blocky = fqdn "dns";
+    technitium-dns-server = fqdn "dns";
     paperless = fqdn "paperless";
-    n8n = fqdn "n8n";
     gatus = fqdn "gatus";
     scrutiny = fqdn "scrutiny";
     grafana = fqdn "grafana";

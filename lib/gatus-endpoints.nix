@@ -109,7 +109,7 @@ let
       port = 443;
     })
     (mkDns {
-      name = "blocky-dns";
+      name = "technitium-dns";
       group = "critical";
       queryName = "cloudflare.com";
     })
@@ -315,15 +315,6 @@ let
         host = local;
         port = ports.paperless;
         path = "/api/";
-      })
-    ]
-    ++ lib.optionals svc.n8n.enable [
-      (mkHttp {
-        name = "n8n";
-        group = "apps";
-        host = local;
-        port = ports.n8n;
-        path = "/healthz";
       })
     ]
     ++ lib.optionals svc.open-webui.enable [

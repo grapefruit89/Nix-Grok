@@ -57,11 +57,10 @@ in
   my.impermanence.enable = erstAb 9;
 
   my.services = {
-    technitium-dns-server.enable = lib.mkForce false; # Blocky ist unser DNS (Port-53-Konflikt)
+    technitium-dns-server.enable = erstAb 2;
     valkey.enable = erstAb 2;
     postgresql.enable = lib.mkForce false;
-    blocky.enable = erstAb 2;
-    tailscale.enable = erstAb 2;
+    netbird.enable = erstAb 2;
     pocket-id.enable = erstAb 2; # /var/lib/secrets/pocket-id.env (secrets-provision)
     privado-vpn.enable = erstAb 6; # Usenet: SABnzbd + Prowlarr — Key in profile.local.nix
 
@@ -84,7 +83,6 @@ in
     vaultwarden.enable = erstAb 7;
     homepage.enable = erstAb 7;
     paperless.enable = erstAb 7;
-    n8n.enable = erstAb 7;
     filebrowser.enable = erstAb 7;
     linkwarden.enable = erstAb 7;
     open-webui.enable = erstAb 7;

@@ -54,7 +54,7 @@ in
       imports = [ "sso_auth" ];
     };
 
-  proxyTailscaleSso =
+  proxyPrivateSso =
     {
       port,
       host ? "127.0.0.1",
@@ -62,7 +62,7 @@ in
     mkProxy {
       inherit port host;
       imports = [
-        "tailscale_admin"
+        "private_admin"
         "sso_auth"
       ];
     };
@@ -83,12 +83,12 @@ in
       imports = [ "sso_auth" ];
     };
 
-  proxyUnixTailscaleSso =
+  proxyUnixPrivateSso =
     socketPath:
     mkProxyUnix {
       inherit socketPath;
       imports = [
-        "tailscale_admin"
+        "private_admin"
         "sso_auth"
       ];
     };

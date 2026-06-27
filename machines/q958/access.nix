@@ -19,7 +19,6 @@
 let
   p = import ./profile.nix;
   lan = p.network.lan;
-  dnsPolicy = import ../../lib/dns-policy.nix { inherit lib; };
   emergency = p.access.emergency;
 
   lanNetwork = config.systemd.network.networks.${lan.systemdNetworkName} or { };
@@ -129,13 +128,8 @@ in
     }
     {
       assertion =
-        !(config.my.services.blocky.enable or false)
-        || (
-          lan.dns == [ "127.0.0.1" ]
-          && dnsPolicy.allEncrypted p.network.blocky.upstream
-          && dnsPolicy.allEncrypted p.network.dns.bootstrap
-        );
-      message = "ACCESS: WAN-DNS nur via Blocky/DoT — LAN-DNS nur 127.0.0.1, keine Klartext-Upstreams in profile.nix.";
+        !(config.my.services.technitium-dns-server.enable or false) || lan.dns == [ "127.0.0.1" ];
+      message = "ACCESS: Technitium aktiv → LAN-DNS muss 127.0.0.1 sein.";
     }
   ];
 }

@@ -82,20 +82,6 @@ in
       };
     };
 
-    n8n = {
-      enable = lib.mkEnableOption "n8n Workflow Automation Platform";
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = config.my.ports.n8n;
-        description = "n8n port.";
-      };
-      userFolder = lib.mkOption {
-        type = lib.types.str;
-        default = "/var/lib/n8n";
-        description = "n8n state directory.";
-      };
-    };
-
     filebrowser = {
       enable = lib.mkEnableOption "Filebrowser Web File Manager";
       port = lib.mkOption {
@@ -142,15 +128,15 @@ in
   # Caddy .enable nur in machines/<host>/rollout.nix — hier nur Hardening
   config = lib.mkIf config.services.caddy.enable {
     systemd.services.caddy = {
-      # Blocky → PostgreSQL → Caddy (ACME + forward_auth ohne Deadlock)
+      # Technitium → PostgreSQL → Caddy (ACME + forward_auth ohne Deadlock)
       after = lib.mkAfter (
-        lib.optional config.my.services.blocky.enable "blocky.service"
+        lib.optional config.my.services.technitium-dns-server.enable "technitium-dns-server.service"
         ++ lib.optional config.my.services.pocket-id.enable "postgresql.service"
         ++ [ "network-online.target" ]
       );
-      wants = lib.optional config.my.services.blocky.enable "blocky.service" ++ [
-        "network-online.target"
-      ];
+      wants =
+        lib.optional config.my.services.technitium-dns-server.enable "technitium-dns-server.service"
+        ++ [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
     };
 

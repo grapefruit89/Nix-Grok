@@ -27,7 +27,7 @@ let
       "/var/lib/secrets"
       "/var/lib/nixos"
       "/etc/nixos"
-      "/var/lib/tailscale"
+      "/var/lib/netbird"
       "/var/lib/postgresql"
       "/var/lib/caddy"
       "/var/lib/loki"
@@ -351,7 +351,7 @@ in
         # Stop active database and application services to prevent write drift during backup
         backupPrepareCommand = ''
           echo "Stopping active web applications and database services..."
-          systemctl stop paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden vaultwarden zigbee2mqtt || true
+          systemctl stop paperless-web paperless-scheduler paperless-task-queue home-assistant linkwarden vaultwarden zigbee2mqtt || true
           systemctl stop mosquitto postgresql || true
         '';
 
@@ -359,7 +359,7 @@ in
         backupCleanupCommand = ''
           echo "Restarting database and web applications..."
           systemctl start postgresql mosquitto || true
-          systemctl start paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden vaultwarden zigbee2mqtt || true
+          systemctl start paperless-web paperless-scheduler paperless-task-queue home-assistant linkwarden vaultwarden zigbee2mqtt || true
         '';
       };
 

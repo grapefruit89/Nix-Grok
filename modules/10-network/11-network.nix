@@ -2,20 +2,18 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Blocky DNS, Valkey, PostgreSQL, Tailscale, Pocket-ID, Privado
+#   purpose: Technitium DNS, Valkey, PostgreSQL, Netbird VPN, Pocket-ID, Privado
 #   docs:
 #     - docs/adr/001-dns-dot-fail-closed.md
 #     - docs/adr/002-ipv6-homelab-v4-only.md
-#     - docs/AUDIT-blocky-caddy-ipv6.md
 #   lib:
-#     - lib/dns-policy.nix
 #     - lib/memory-policy.nix
 #     - lib/critical-systemd.nix
 #   services:
-#     - blocky
+#     - technitium-dns-server
 #     - postgresql
 #     - redis-valkey
-#     - tailscaled
+#     - netbird
 #     - pocket-id
 #   tags:
 #     - dns
@@ -32,16 +30,11 @@ let
   cfgTechnitium = config.my.services.technitium-dns-server;
   cfgValkey = config.my.services.valkey;
   cfgPostgres = config.my.services.postgresql;
+  cfgNetbird = config.my.services.netbird;
   ramGB = config.my.configs.hardware.ramGB;
   sockets = import ../../lib/unix-sockets.nix { inherit lib; };
 
-  lanIP = config.my.configs.server.lanIP;
-  dnsPolicy = import ../../lib/dns-policy.nix { inherit lib; };
   memory = import ../../lib/memory-policy.nix { inherit lib; };
-  criticalSystemd = import ../../lib/critical-systemd.nix {
-    inherit lib;
-    oomScore = -1000;
-  };
   domain = config.my.configs.identity.domain;
   caddySnippets = import ../../lib/caddy-snippets.nix {
     inherit lib;
@@ -59,55 +52,18 @@ in
     valkey.enable = lib.mkEnableOption "Valkey cache server (Redis-fork)";
     postgresql.enable = lib.mkEnableOption "PostgreSQL database server";
 
-    # 🛑 Blocky DNS Resolver
-    blocky = {
-      enable = lib.mkEnableOption "Blocky DNS Resolver";
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 53;
-        description = "Blocky DNS listening port.";
+    # 🌐 Netbird Self-Hosted VPN
+    netbird = {
+      enable = lib.mkEnableOption "Netbird Self-Hosted VPN (Management + Signal + Client)";
+      domain = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Domain for Netbird management server (e.g. netbird.example.com).";
       };
-      metricsPort = lib.mkOption {
-        type = lib.types.port;
-        default = 4000;
-        description = "Blocky HTTP metrics port.";
-      };
-      upstreamDns = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [
-          "tcp-tls:1.1.1.1:853"
-          "tcp-tls:9.9.9.9:853"
-          "tcp-tls:149.112.112.112:853"
-        ];
-        description = "Blocky-Upstreams — nur DoT (tcp-tls:host:853), DoH (https://…) oder DoQ.";
-      };
-      enableBlocking = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "DNS-Blocklists (StevenBlack etc.) — Adblock in Blocky, nicht nftables.";
-      };
-      blockingLists = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.listOf lib.types.str);
-        default = {
-          ads = [
-            "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-            "https://adaway.org/hosts.txt"
-          ];
-          tracking = [
-            "https://v.firebog.net/hosts/Easyprivacy.txt"
-          ];
-        };
-        description = "Blocky denylists — Gruppenname → URL-Liste.";
-      };
-    };
-
-    # 🔗 Tailscale VPN
-    tailscale = {
-      enable = lib.mkEnableOption "Tailscale Zero-Trust VPN";
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 41641;
-        description = "Tailscale UDP WireGuard port.";
+      setupKeyFile = lib.mkOption {
+        type = lib.types.str;
+        default = "/var/lib/secrets/netbird_setup_key";
+        description = "Path to file containing the Netbird setup key for auto-login.";
       };
     };
 
@@ -166,7 +122,7 @@ in
   # CONFIG
   # ============================================================================
   config = lib.mkMerge [
-    # ── IPv6: gezielt pro Interface aus (Tailscale/WG unberührt) ─────────────
+    # ── IPv6: gezielt pro Interface aus (Netbird/WG unberührt) ──────────────
     {
       boot.kernel.sysctl = lib.mkMerge (
         map (iface: {
@@ -180,6 +136,41 @@ in
     # ── TECHNITIUM DNS SERVER ─────────────────────────────────────────────────
     (lib.mkIf cfgTechnitium.enable {
       services.technitium-dns-server.enable = true;
+
+      services.resolved.enable = lib.mkForce false;
+      networking.nameservers = lib.mkForce [ "127.0.0.1" ];
+      networking.resolvconf.enable = lib.mkForce false;
+
+      environment.etc."resolv.conf".text = ''
+        # NixOS/Technitium — lokaler Resolver auf Port 53
+        nameserver 127.0.0.1
+      '';
+
+      networking.enableIPv6 = lib.mkDefault false;
+
+      my.impermanence.extraPaths = [ "/var/lib/technitium-dns-server" ];
+
+      systemd.services.technitium-dns-server = {
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
+        before = lib.mkIf config.services.caddy.enable [ "caddy.service" ];
+      };
+
+      assertions = [
+        {
+          assertion = config.networking.nameservers == [ "127.0.0.1" ];
+          message = "DNS: resolv.conf darf nur 127.0.0.1 (Technitium) — kein 1.1.1.1-Bypass.";
+        }
+        {
+          assertion = config.my.configs.network.ipv6.firewall == false;
+          message = "IPv6: Homelab-v4-only — my.configs.network.ipv6.firewall muss false sein.";
+        }
+        {
+          assertion = !(config.networking.enableIPv6 or true);
+          message = "IPv6: networking.enableIPv6 muss false sein — Kernel-Ebene muss IPv6 deaktivieren.";
+        }
+      ];
     })
 
     # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────
@@ -274,220 +265,48 @@ in
       ];
     })
 
-    # ── BLOCKY DNS RESOLVER ───────────────────────────────────────────────────
-    (lib.mkIf config.my.services.blocky.enable {
-      services.resolved.enable = lib.mkForce false;
-
-      my.impermanence.extraPaths = [ "/var/lib/blocky" ];
-
-      systemd.tmpfiles.rules = [
-        "d /var/lib/blocky 0755 root root -"
-      ];
-
-      services.blocky = {
+    # ── NETBIRD SELF-HOSTED VPN ───────────────────────────────────────────────
+    (lib.mkIf cfgNetbird.enable {
+      services.netbird.server = {
         enable = true;
-        settings = {
-          connectIPVersion = "v4";
-          ports = {
-            dns = config.my.services.blocky.port;
-            http = config.my.services.blocky.metricsPort;
-          };
-          upstreams.groups.default = config.my.services.blocky.upstreamDns;
-          bootstrapDns = config.my.configs.network.dnsBootstrap;
-          dnssec = {
-            validate = true;
-          };
-          filtering = {
-            queryTypes = [ "AAAA" ];
-          };
-          customDNS = {
-            mapping = {
-              "nixhome.local" = lanIP;
-              "${domain}" = lanIP;
-              "*.${domain}" = lanIP;
-            };
-          };
-        }
-        // lib.optionalAttrs config.my.services.blocky.enableBlocking {
-          blocking = {
-            denylists = config.my.services.blocky.blockingLists;
-            clientGroupsBlock.default = lib.attrNames config.my.services.blocky.blockingLists;
-          };
+        domain = cfgNetbird.domain;
+        enableNginx = false;
+        management = {
+          enableNginx = false;
+          domain = cfgNetbird.domain;
+          turnDomain = cfgNetbird.domain;
+          oidcConfigEndpoint = "https://auth.${domain}/.well-known/openid-configuration";
+        };
+        signal.enableNginx = false;
+        dashboard.settings = {
+          AUTH_AUTHORITY = "https://auth.${domain}";
         };
       };
 
-      networking.enableIPv6 = lib.mkDefault false;
-      networking.nameservers = lib.mkForce [ "127.0.0.1" ];
-
-      networking.resolvconf.enable = lib.mkForce false;
-
-      environment.etc."resolv.conf".text = ''
-        # NixOS/Blocky — nur lokaler Resolver (DoT egress via Blocky)
-        nameserver 127.0.0.1
-      '';
-
-      assertions = [
-        {
-          assertion = dnsPolicy.allEncrypted config.my.services.blocky.upstreamDns;
-          message = "DNS: Blocky-Upstreams müssen verschlüsselt sein (tcp-tls:/https://) — kein Klartext.";
-        }
-        {
-          assertion = dnsPolicy.allEncrypted config.my.configs.network.dnsBootstrap;
-          message = "DNS: Blocky-Bootstrap muss verschlüsselt sein — kein Klartext.";
-        }
-        {
-          assertion = dnsPolicy.nonePlaintext config.my.services.blocky.upstreamDns;
-          message = "DNS: Klartext-Upstreams in blocky.upstreamDns erkannt.";
-        }
-        {
-          assertion = config.networking.nameservers == [ "127.0.0.1" ];
-          message = "DNS: resolv.conf darf nur 127.0.0.1 (Blocky) — kein 1.1.1.1-Bypass.";
-        }
-        {
-          assertion = config.my.configs.network.ipv6.firewall == false;
-          message = "IPv6: Homelab-v4-only — my.configs.network.ipv6.firewall muss false sein.";
-        }
-        {
-          assertion = !(config.networking.enableIPv6 or true);
-          message = "IPv6: networking.enableIPv6 muss false sein — Kernel-Ebene muss IPv6 deaktivieren.";
-        }
-        {
-          assertion = lib.length config.my.services.blocky.upstreamDns >= 3;
-          message = "DNS: Mindestens 3 DoT-Upstream-Server erforderlich (aktuell: ${toString (lib.length config.my.services.blocky.upstreamDns)}).";
-        }
-        {
-          assertion = lib.length config.my.configs.network.dnsBootstrap >= 3;
-          message = "DNS: Mindestens 3 Bootstrap-DoT-Server erforderlich (aktuell: ${toString (lib.length config.my.configs.network.dnsBootstrap)}).";
-        }
-        {
-          assertion = lib.all (s: lib.hasPrefix "tcp-tls:" s) config.my.services.blocky.upstreamDns;
-          message = "DNS: Alle Blocky-Upstreams müssen tcp-tls:-Format haben — kein https:// oder Klartext.";
-        }
-        {
-          assertion = lib.all (s: lib.hasPrefix "tcp-tls:" s) config.my.configs.network.dnsBootstrap;
-          message = "DNS: Alle Bootstrap-Upstreams müssen tcp-tls:-Format haben — kein https:// oder Klartext.";
-        }
-      ];
-
-      systemd.services.blocky = {
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        wantedBy = [ "multi-user.target" ];
-        before = lib.mkIf config.services.caddy.enable [ "caddy.service" ];
-      };
-
-      systemd.services.blocky.serviceConfig = lib.mkMerge [
-        criticalSystemd
-        {
-          ProtectSystem = lib.mkDefault "strict";
-          ProtectHome = lib.mkDefault true;
-          PrivateTmp = lib.mkDefault true;
-          PrivateDevices = lib.mkDefault true;
-          ProtectHostname = lib.mkDefault true;
-          ProtectClock = lib.mkDefault true;
-          ProtectKernelTunables = lib.mkDefault true;
-          ProtectKernelModules = lib.mkDefault true;
-          ProtectControlGroups = lib.mkDefault true;
-          RestrictNamespaces = lib.mkDefault true;
-          NoNewPrivileges = lib.mkDefault true;
-          PrivateNetwork = lib.mkDefault false;
-          RestrictAddressFamilies = lib.mkDefault (
-            if config.my.configs.network.ipv6.firewall then
-              [
-                "AF_INET"
-                "AF_INET6"
-                "AF_UNIX"
-              ]
-            else
-              [
-                "AF_INET"
-                "AF_UNIX"
-              ]
-          );
-          CapabilityBoundingSet = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
-          AmbientCapabilities = lib.mkDefault [ "CAP_NET_BIND_SERVICE" ];
-          SystemCallFilter = lib.mkDefault [
-            "@system-service"
-            "~@privileged"
-            "~@resources"
-            "~@mount"
-          ];
-          LockPersonality = lib.mkDefault true;
-          RestrictRealtime = lib.mkDefault true;
-          RestrictSUIDSGID = lib.mkDefault true;
-          ReadWritePaths = lib.mkDefault [ "/var/lib/blocky" ];
-          MemoryHigh = lib.mkDefault "200M";
-          MemoryMax = lib.mkDefault "500M";
-        }
-      ];
-    })
-
-    # ── TAILSCALE VPN ─────────────────────────────────────────────────────────
-    (lib.mkIf config.my.services.tailscale.enable {
-      systemd.tmpfiles.rules = [
-        "d /var/lib/secrets 0700 root root -"
-      ];
-
-      services.tailscale = {
-        enable = true;
+      services.netbird.clients.default = {
+        interface = "wt0";
+        port = 51820;
         openFirewall = true;
-        port = config.my.services.tailscale.port;
-        permitCertUid = "caddy";
-        useRoutingFeatures = "client";
-        # DNS bleibt bei Blocky (127.0.0.1) — kein Tailscale MagicDNS in resolv.conf
-        extraUpFlags = [
-          "--ssh"
-          "--accept-dns=false"
-          "--accept-routes=true"
-        ];
-      };
-      networking.firewall.trustedInterfaces = [ "tailscale0" ];
-      networking.firewall.checkReversePath = "loose";
-
-      systemd.services.tailscale-autoconnect = {
-        description = "Automatic Tailscale Login";
-        after = [
-          "tailscaled.service"
-          "network-online.target"
-        ];
-        wants = [
-          "tailscaled.service"
-          "network-online.target"
-        ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = pkgs.writeShellScript "tailscale-auth" ''
-            sleep 2
-            TOKEN_FILE=''${TOKEN_FILE:-/var/lib/secrets/tailscale_token}
-            if [ ! -f "$TOKEN_FILE" ]; then
-              echo "tailscale-autoconnect: kein $TOKEN_FILE — manuell: tailscale up"
-              exit 0
-            fi
-            status=$(${pkgs.tailscale}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -r .BackendState)
-            if [ "$status" = "NeedsLogin" ] || [ "$status" = "Stopped" ]; then
-              ${pkgs.tailscale}/bin/tailscale up --authkey="$(cat "$TOKEN_FILE")"
-            fi
-          '';
+        login = {
+          enable = true;
+          setupKeyFile = cfgNetbird.setupKeyFile;
         };
       };
 
-      systemd.services.tailscaled = {
-        stopIfChanged = false;
-        serviceConfig = {
-          Restart = "always";
-          RestartSec = "2s";
-          OOMScoreAdjust = -1000;
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          NoNewPrivileges = true;
-          PrivateTmp = true;
-          CapabilityBoundingSet = [
-            "CAP_NET_ADMIN"
-            "CAP_NET_RAW"
-          ];
-        };
+      networking.firewall = {
+        trustedInterfaces = [ "wt0" ];
+        checkReversePath = "loose";
+        allowedUDPPorts = [
+          3478
+          10000
+        ];
+        allowedTCPPorts = [
+          33073
+          10000
+        ];
       };
+
+      my.impermanence.extraPaths = [ "/var/lib/netbird-default" ];
     })
 
     # ── PRIVADO VPN WIREGUARD CLIENT ──────────────────────────────────────────

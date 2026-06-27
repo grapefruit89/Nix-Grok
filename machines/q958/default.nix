@@ -85,7 +85,7 @@ in
       };
       server = {
         lanIP = p.network.lan.ip;
-        tailscaleIP = p.network.tailscaleIP;
+        netbirdIP = p.network.netbirdIP;
       };
       storage = {
         tierB.mountPoint = p.storage.fastPoolMountPoint;
@@ -148,7 +148,7 @@ in
         blockedCountries = p.security.firewall.blockedCountries;
         allowLanDns = p.security.firewall.allowLanDns;
         lanInterface = p.network.lan.interface;
-        tailscaleNotrack = p.security.firewall.tailscaleNotrack;
+        netbirdNotrack = p.security.firewall.netbirdNotrack;
       };
     };
 
