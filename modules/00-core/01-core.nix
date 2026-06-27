@@ -387,8 +387,11 @@ in
         nix-diff
         nix-output-monitor
         nix-du
-        # Hygiene-Trio (statix war schon da): statix -> deadnix -> nixfmt-rfc-style
+        # Hygiene-Trio: statix + deadnix + alejandra (pre-commit hook in .pre-commit-config.yaml)
+        statix
         deadnix
+        alejandra
+        pre-commit
         nixfmt
       ];
     })
