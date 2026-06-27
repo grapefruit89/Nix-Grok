@@ -2,7 +2,7 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy
+#   purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy + Pocket-ID SSO-Plugin
 #   docs:
 #     - docs/memory_oom.md
 #   lib:
@@ -13,7 +13,19 @@
 #   tags:
 #     - media
 #     - jellyfin
+#     - oidc
 # ---
+#
+# Jellyfin SSO (jellyfin-plugin-sso v4.0.0.3):
+#   1. Pocket-ID → Applications → New → Name: "Jellyfin"
+#      Callback URL: https://jellyfin.DOMAIN/sso/OID/redirect/PocketID
+#   2. client_id + client_secret in profile.local.nix:
+#        secrets.oidc.jellyfin = { clientId = "…"; clientSecret = "…"; };
+#   3. nixos-rebuild switch → /var/lib/secrets/jellyfin-oidc.env + SSO-Auth.xml erscheinen
+#   4. In Jellyfin → Dashboard → Plugins → SSO-Auth: Provider "PocketID" sollte aktiv sein
+#
+# Jellyseerr nutzt Jellyfin-Auth → benötigt kein eigenes OIDC.
+#
 {
   config,
   lib,
@@ -34,6 +46,46 @@ let
   localeUi = lib.replaceStrings [ "_" ] [ "-" ] (locale.default or "de_DE.UTF-8");
   localeCc = lib.toUpper (lib.substring 3 2 localeUi);
   jellyfinUrl = "https://${dnsMap.host "jellyfin"}";
+
+  # SSO-Plugin v4.0.0.3 — als Nix-Derivation aus GitHub-Release
+  jellyfinSsoPlugin =
+    pkgs.runCommand "jellyfin-plugin-sso"
+      {
+        src = pkgs.fetchurl {
+          url = "https://github.com/9p4/jellyfin-plugin-sso/releases/download/v4.0.0.3/sso-authentication_4.0.0.3.zip";
+          hash = "sha256-3glRJVvsTtZGA3ZB5+CqEhCzoAoUFAZUgIe+2ZTLm90=";
+        };
+        nativeBuildInputs = [ pkgs.unzip ];
+      }
+      ''
+        mkdir -p "$out"
+        unzip "$src" -d "$out"
+      '';
+
+  jellyfinSsoXml = pkgs.writeText "jellyfin-sso-config.xml" ''
+    <?xml version="1.0" encoding="utf-8"?>
+    <PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+      <SSOConfigs>
+        <OIDProviderConfig>
+          <OIDEndpoint>https://auth.${domain}</OIDEndpoint>
+          <OIDClientID>@CLIENT_ID@</OIDClientID>
+          <OIDSecret>@CLIENT_SECRET@</OIDSecret>
+          <Enabled>true</Enabled>
+          <EnableAllFolders>true</EnableAllFolders>
+          <EnableAuthorization>false</EnableAuthorization>
+          <EnableAllUsers>true</EnableAllUsers>
+          <SetDefaultProvider>true</SetDefaultProvider>
+          <EnableFolderRoles>false</EnableFolderRoles>
+        </OIDProviderConfig>
+      </SSOConfigs>
+      <BrandingOptions>
+        <Options>
+          <Provider>oidc</Provider>
+          <DefaultProvider>PocketID</DefaultProvider>
+        </Options>
+      </BrandingOptions>
+    </PluginConfiguration>
+  '';
 
   jellyfinConfigSeeds = pkgs.runCommand "jellyfin-config-seeds" { } ''
     mkdir -p $out
@@ -57,15 +109,46 @@ in
             openFirewall = false;
           };
 
-          systemd.services.jellyfin.preStart = lib.mkBefore ''
-            install -d -m 0750 -o jellyfin -g jellyfin /var/lib/jellyfin/config
-            for seed in system.xml network.xml; do
-              if [ ! -f "/var/lib/jellyfin/config/$seed" ]; then
-                install -m 0640 -o jellyfin -g jellyfin \
-                  ${jellyfinConfigSeeds}/$seed /var/lib/jellyfin/config/$seed
-              fi
-            done
-          '';
+          systemd.services.jellyfin.preStart = lib.mkBefore (
+            ''
+              install -d -m 0750 -o jellyfin -g jellyfin /var/lib/jellyfin/config
+              for seed in system.xml network.xml; do
+                if [ ! -f "/var/lib/jellyfin/config/$seed" ]; then
+                  install -m 0640 -o jellyfin -g jellyfin \
+                    ${jellyfinConfigSeeds}/$seed /var/lib/jellyfin/config/$seed
+                fi
+              done
+            ''
+            +
+              # SSO-Plugin installieren (idempotent via Versionspfad)
+              ''
+                PLUGIN_DIR="/var/lib/jellyfin/plugins/sso-authentication_4.0.0.3"
+                if [ ! -d "$PLUGIN_DIR" ]; then
+                  install -d -m 0755 -o jellyfin -g jellyfin "$PLUGIN_DIR"
+                  find ${jellyfinSsoPlugin} -maxdepth 3 \( -name "*.dll" -o -name "meta.json" \) | \
+                    while read -r f; do
+                      install -m 0644 -o jellyfin -g jellyfin "$f" "$PLUGIN_DIR/"
+                    done
+                fi
+
+                # SSO-Konfiguration aus Secrets (nur wenn /var/lib/secrets/jellyfin-oidc.env existiert)
+                if [ -f /var/lib/secrets/jellyfin-oidc.env ]; then
+                  _JF_ID=$(grep -m1 '^ND_OIDCCLIENTID=' /var/lib/secrets/jellyfin-oidc.env | cut -d= -f2-)
+                  _JF_SECRET=$(grep -m1 '^ND_OIDCCLIENTSECRET=' /var/lib/secrets/jellyfin-oidc.env | cut -d= -f2-)
+                  install -d -m 0750 -o jellyfin -g jellyfin \
+                    /var/lib/jellyfin/config/PluginConfiguration
+                  ${pkgs.gnused}/bin/sed \
+                    -e "s|@CLIENT_ID@|$_JF_ID|g" \
+                    -e "s|@CLIENT_SECRET@|$_JF_SECRET|g" \
+                    ${jellyfinSsoXml} | \
+                    ${pkgs.coreutils}/bin/tee \
+                      /var/lib/jellyfin/config/PluginConfiguration/SSO-Auth.xml > /dev/null
+                  chown jellyfin:jellyfin /var/lib/jellyfin/config/PluginConfiguration/SSO-Auth.xml
+                  chmod 0640 /var/lib/jellyfin/config/PluginConfiguration/SSO-Auth.xml
+                  unset _JF_ID _JF_SECRET
+                fi
+              ''
+          );
 
           hardware.graphics = {
             enable = true;

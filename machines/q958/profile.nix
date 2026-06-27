@@ -233,6 +233,9 @@ in
       context7 = "context7.env";
       privadoKey = "privado_private_key";
       privadoEnv = "privado.env";
+      # OIDC-Secrets (provisioniert wenn secrets.oidc.* in profile.local.nix gesetzt)
+      jellyfinOidc = "jellyfin-oidc.env";
+      navdromeOidc = "navidrome-oidc.env";
     };
 
     # Dev-Platzhalter: machines/q958/profile.local.nix (gitignored, rollout.stufe < 9)

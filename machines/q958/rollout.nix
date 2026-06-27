@@ -74,6 +74,7 @@ in
     jellyfin.enable = erstAb 6;
     jellyseerr.enable = erstAb 6;
     audiobookshelf.enable = erstAb 6;
+    navidrome.enable = erstAb 6;
     sonarr.enable = erstAb 6;
     radarr.enable = erstAb 6;
     readarr.enable = erstAb 6;

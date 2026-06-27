@@ -124,6 +124,14 @@ in
       memoryHigh = "768M";
     };
 
+  navidrome =
+    _:
+    mkServiceLimits {
+      oomScore = 200;
+      memoryMax = "512M";
+      memoryHigh = "384M";
+    };
+
   # Tier 5 — Apps (Slice = gemeinsames 2G-Budget für alle Paperless-Units)
   paperless = {
     slice = {

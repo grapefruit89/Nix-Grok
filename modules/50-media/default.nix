@@ -12,6 +12,7 @@
   imports = [
     ./jellyfin.nix
     ./audiobookshelf.nix
+    ./navidrome.nix
     ./arr.nix
     ./sabnzbd.nix
     ./sync.nix
@@ -34,5 +35,6 @@
         description = "Intel VA-API f\u00fcr ffmpeg-Transcode (iGPU UHD 630).";
       };
     };
+    navidrome.enable = lib.mkEnableOption "Navidrome Music Server mit Pocket-ID OIDC";
   };
 }

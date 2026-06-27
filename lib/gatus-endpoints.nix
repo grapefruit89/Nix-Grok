@@ -280,6 +280,14 @@ let
         host = local;
         port = ports.audiobookshelf;
       })
+    ]
+    ++ lib.optionals svc.navidrome.enable [
+      (mkHttp {
+        name = "navidrome";
+        group = "media";
+        host = local;
+        port = ports.navidrome;
+      })
     ];
 
   apps =

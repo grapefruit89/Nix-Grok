@@ -35,6 +35,8 @@ let
   moritz = (import ../../users/moritz/profile.nix).name;
   cfToken = (local.secrets.cloudflare or { }).apiToken or "";
   ddnsZone = p.network.ddns.zone;
+  oidcJellyfin = local.secrets.oidc.jellyfin or { };
+  oidcNavidrome = local.secrets.oidc.navidrome or { };
   ddnsRecord = p.network.ddns.record;
   ddnsFqdn = "${ddnsRecord}.${ddnsZone}";
 
@@ -59,6 +61,30 @@ let
 
         echo "${dk.grafana.secretKey}" > ${secretsDir}/grafana_secret_key
         chmod 600 ${secretsDir}/grafana_secret_key
+
+        # OIDC-Secrets: Jellyfin + Navidrome — nur provisionieren wenn in profile.local.nix gesetzt
+        # Pocket-ID → Applications → New → Callback-URL prüfen, dann clientId+clientSecret hier setzen:
+        #   secrets.oidc.jellyfin  = { clientId = "..."; clientSecret = "..."; };
+        #   secrets.oidc.navidrome = { clientId = "..."; clientSecret = "..."; };
+        _jf_id="${oidcJellyfin.clientId or ""}"
+        _jf_secret="${oidcJellyfin.clientSecret or ""}"
+        if [ -n "$_jf_id" ] && [ -n "$_jf_secret" ]; then
+          { echo "ND_OIDCCLIENTID=$_jf_id"; echo "ND_OIDCCLIENTSECRET=$_jf_secret"; } \
+            > ${secretsDir}/${p.secrets.files.jellyfinOidc}
+          chmod 600 ${secretsDir}/${p.secrets.files.jellyfinOidc}
+        fi
+        unset _jf_id _jf_secret
+        _nd_id="${oidcNavidrome.clientId or ""}"
+        _nd_secret="${oidcNavidrome.clientSecret or ""}"
+        if [ -n "$_nd_id" ] && [ -n "$_nd_secret" ]; then
+          {
+            echo "ND_OIDCENABLED=true"
+            echo "ND_OIDCCLIENTID=$_nd_id"
+            echo "ND_OIDCCLIENTSECRET=$_nd_secret"
+          } > ${secretsDir}/${p.secrets.files.navdromeOidc}
+          chmod 600 ${secretsDir}/${p.secrets.files.navdromeOidc}
+        fi
+        unset _nd_id _nd_secret
 
         echo "${dk.restic.password}" > ${secretsDir}/restic_password
         chmod 600 ${secretsDir}/restic_password

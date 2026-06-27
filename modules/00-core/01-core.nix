@@ -184,6 +184,11 @@ in
         default = 5008;
         description = "Audiobookshelf port.";
       };
+      navidrome = lib.mkOption {
+        type = lib.types.port;
+        default = 5009;
+        description = "Navidrome Music Server port.";
+      };
       ddns-updater = lib.mkOption {
         type = lib.types.port;
         default = 1003;
