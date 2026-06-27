@@ -109,7 +109,11 @@ in
       network = {
         dnsBootstrap = lib.mkOption {
           type = lib.types.listOf lib.types.str;
-          default = [ "tcp-tls:1.1.1.1:853" ];
+          default = [
+            "tcp-tls:1.1.1.1:853"
+            "tcp-tls:9.9.9.9:853"
+            "tcp-tls:149.112.112.112:853"
+          ];
           description = "Verschlüsselter Blocky-Bootstrap (DoT/DoH) — niemals Klartext-IP.";
         };
         ipv6 = {
@@ -128,10 +132,10 @@ in
     };
 
     ports = {
-      adguard = lib.mkOption {
+      technitium-dns = lib.mkOption {
         type = lib.types.port;
-        default = 3053;
-        description = "AdGuard Home port.";
+        default = 1002;
+        description = "Technitium DNS Server web UI port (1002).";
       };
       valkey = lib.mkOption {
         type = lib.types.port;
@@ -145,57 +149,57 @@ in
       };
       jellyfin = lib.mkOption {
         type = lib.types.port;
-        default = 8096;
+        default = 5001;
         description = "Jellyfin port.";
       };
       jellyseerr = lib.mkOption {
         type = lib.types.port;
-        default = 5055;
+        default = 5002;
         description = "Jellyseerr port.";
       };
       sonarr = lib.mkOption {
         type = lib.types.port;
-        default = 8989;
+        default = 5003;
         description = "Sonarr port.";
       };
       radarr = lib.mkOption {
         type = lib.types.port;
-        default = 7878;
+        default = 5004;
         description = "Radarr port.";
       };
       readarr = lib.mkOption {
         type = lib.types.port;
-        default = 8787;
+        default = 5005;
         description = "Readarr port.";
       };
       prowlarr = lib.mkOption {
         type = lib.types.port;
-        default = 9696;
+        default = 5006;
         description = "Prowlarr port.";
       };
       sabnzbd = lib.mkOption {
         type = lib.types.port;
-        default = 8080;
+        default = 5007;
         description = "SABnzbd port.";
       };
       audiobookshelf = lib.mkOption {
         type = lib.types.port;
-        default = 13378;
-        description = "Audiobookshelf port (nicht 8000 — Vaultwarden).";
+        default = 5008;
+        description = "Audiobookshelf port.";
       };
       ddns-updater = lib.mkOption {
         type = lib.types.port;
-        default = 10100;
+        default = 1003;
         description = "DDNS-Updater WebUI/API port.";
       };
       vaultwarden = lib.mkOption {
         type = lib.types.port;
-        default = 8000;
+        default = 6001;
         description = "Vaultwarden port.";
       };
       homepage = lib.mkOption {
         type = lib.types.port;
-        default = 8082;
+        default = 6002;
         description = "Homepage port.";
       };
       mqtt = lib.mkOption {
@@ -205,77 +209,77 @@ in
       };
       zigbee2mqtt = lib.mkOption {
         type = lib.types.port;
-        default = 8075;
+        default = 1004;
         description = "Zigbee2MQTT frontend port.";
       };
       pocket-id = lib.mkOption {
         type = lib.types.port;
-        default = 8083;
+        default = 1001;
         description = "PocketID port.";
       };
       paperless = lib.mkOption {
         type = lib.types.port;
-        default = 28981;
+        default = 6003;
         description = "Paperless-ngx port.";
       };
       n8n = lib.mkOption {
         type = lib.types.port;
-        default = 5678;
+        default = 6004;
         description = "n8n port.";
       };
       filebrowser = lib.mkOption {
         type = lib.types.port;
-        default = 20001;
+        default = 6005;
         description = "Filebrowser port.";
       };
       linkwarden = lib.mkOption {
         type = lib.types.port;
-        default = 3000;
+        default = 6006;
         description = "Linkwarden port.";
       };
       open-webui = lib.mkOption {
         type = lib.types.port;
-        default = 3080;
+        default = 6007;
         description = "Open WebUI port.";
-      };
-      forgejo = lib.mkOption {
-        type = lib.types.port;
-        default = 3010;
-        description = "Forgejo HTTP port.";
       };
       cockpit = lib.mkOption {
         type = lib.types.port;
-        default = 9090;
+        default = 7003;
         description = "Cockpit admin port.";
       };
       amp = lib.mkOption {
         type = lib.types.port;
-        default = 8085;
+        default = 7004;
         description = "AMP Web UI port.";
       };
       crowdsec = lib.mkOption {
         type = lib.types.port;
-        default = 8091;
-        description = "CrowdSec LAPI port (nicht 8080 — SABnzbd).";
+        default = 4004;
+        description = "CrowdSec LAPI port.";
       };
       gatus = lib.mkOption {
         type = lib.types.port;
-        default = 8084;
+        default = 4003;
         description = "Gatus Web UI port.";
       };
       scrutiny = lib.mkOption {
         type = lib.types.port;
-        default = 8086;
+        default = 4005;
         description = "Scrutiny SMART dashboard port.";
+      };
+      victoriametrics = lib.mkOption {
+        type = lib.types.port;
+        default = 4006;
+        description = "VictoriaMetrics TSDB port.";
       };
       loki = lib.mkOption {
         type = lib.types.port;
-        default = 3100;
+        default = 4002;
         description = "Loki API port.";
       };
       grafana = lib.mkOption {
         type = lib.types.port;
-        default = 3005;
+        default = 4001;
         description = "Grafana Web UI port.";
       };
     };

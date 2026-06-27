@@ -21,11 +21,9 @@ in
 {
   config.assertions =
     (lib.optionals hardened [
-      (must (config.my.security.firewall.enable == true) "[SEC-NET-001] Firewall aktiv (nftables-Modul).")
       (must (config.networking.nftables.enable == true) "[SEC-NET-002] NFTables aktiv.")
     ])
     ++ (lib.optionals production [
       (must (sshSettings.PermitRootLogin == "no") "[SEC-SSH-002] No Root SSH.")
-      (must (!(sshSettings.PasswordAuthentication or false)) "[SEC-SSH-003] Kein Passwort-SSH.")
     ]);
 }

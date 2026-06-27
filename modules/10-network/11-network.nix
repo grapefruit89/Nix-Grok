@@ -30,7 +30,7 @@
 }:
 
 let
-  cfgAdguard = config.my.services.adguardhome;
+  cfgTechnitium = config.my.services.technitium-dns-server;
   cfgValkey = config.my.services.valkey;
   cfgPostgres = config.my.services.postgresql;
   ramGB = config.my.configs.hardware.ramGB;
@@ -46,7 +46,6 @@ let
     oomScore = -1000;
   };
   domain = config.my.configs.identity.domain;
-  portAdguard = config.my.ports.adguard;
   caddySnippets = import ../../lib/caddy-snippets.nix {
     inherit lib;
     pocketIdPort =
@@ -60,7 +59,7 @@ in
   # OPTIONS
   # ============================================================================
   options.my.services = {
-    adguardhome.enable = lib.mkEnableOption "AdGuardHome DNS Filter and Resolver";
+    technitium-dns-server.enable = lib.mkEnableOption "Technitium DNS Server";
     valkey.enable = lib.mkEnableOption "Valkey cache server (Redis-fork)";
     postgresql.enable = lib.mkEnableOption "PostgreSQL database server";
 
@@ -79,7 +78,11 @@ in
       };
       upstreamDns = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "tcp-tls:1.1.1.1:853" ];
+        default = [
+            "tcp-tls:1.1.1.1:853"
+            "tcp-tls:9.9.9.9:853"
+            "tcp-tls:149.112.112.112:853"
+          ];
         description = "Blocky-Upstreams — nur DoT (tcp-tls:host:853), DoH (https://…) oder DoQ.";
       };
       enableBlocking = lib.mkOption {
@@ -178,123 +181,9 @@ in
       );
     }
 
-    # ── ADGUARD HOME ──────────────────────────────────────────────────────────
-    (lib.mkIf cfgAdguard.enable {
-      services.adguardhome = {
-        enable = true;
-        host = "127.0.0.1";
-        port = portAdguard;
-        openFirewall = false;
-
-        settings = {
-          http.address = "127.0.0.1:${toString portAdguard}";
-
-          dns = {
-            bind_hosts = [
-              "127.0.0.1"
-              lanIP
-              tailscaleIP
-            ];
-            port = 53;
-            upstream_dns = [ "https://dns.cloudflare.com/dns-query" ];
-            bootstrap_dns = dnsBootstrap;
-            cache_size = 33554432; # 32MB Cache
-            cache_ttl_min = 300;
-            cache_ttl_max = 86400; # Max TTL 24h
-            cache_optimistic = true;
-            filtering_enabled = true;
-            filters_update_interval = 24;
-            edns_cs_enabled = false;
-            dnssec_enabled = true;
-            all_servers = false;
-            fastest_addr = true;
-          };
-
-          querylog = {
-            enabled = true;
-            file_enabled = true;
-            interval = "24h";
-            size_memory = 1000;
-            add_timestamps = true;
-          };
-
-          statistics = {
-            enabled = true;
-            interval = "168h"; # 7 Tage
-          };
-
-          filtering = {
-            protection_enabled = true;
-            filtering_enabled = true;
-            safe_browsing = {
-              enabled = true;
-            };
-            parental = {
-              enabled = false;
-            };
-            safe_search = {
-              enabled = false;
-            };
-          };
-
-          rewrites = [
-            {
-              domain = "nixhome.local";
-              answer = lanIP;
-            }
-            {
-              domain = "${domain}";
-              answer = lanIP;
-            }
-            {
-              domain = "*.${domain}";
-              answer = lanIP;
-            }
-          ];
-
-          clients.persistent = [
-            {
-              ids = [ lanIP ];
-              name = "nixhome-server";
-            }
-          ];
-
-          user_rules = [
-            "@@||nixhome.local^"
-            "@@||${domain}^"
-          ];
-        };
-      };
-
-      systemd.services.AdGuardHome.serviceConfig = {
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictAddressFamilies = [
-          "AF_INET"
-          "AF_INET6"
-          "AF_UNIX"
-        ];
-        NoNewPrivileges = true;
-        CapabilityBoundingSet = [
-          "CAP_NET_BIND_SERVICE"
-          "CAP_NET_RAW"
-        ];
-        AmbientCapabilities = [
-          "CAP_NET_BIND_SERVICE"
-          "CAP_NET_RAW"
-        ];
-        ReadWritePaths = [ "/var/lib/AdGuardHome" ];
-        LockPersonality = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        SystemCallFilter = [ "@system-service" ];
-        OOMScoreAdjust = -200;
-      };
+    # ── TECHNITIUM DNS SERVER ─────────────────────────────────────────────────
+    (lib.mkIf cfgTechnitium.enable {
+      services.technitium-dns-server.enable = true;
     })
 
     # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────
@@ -431,6 +320,7 @@ in
         };
       };
 
+      networking.enableIPv6 = lib.mkDefault false;
       networking.nameservers = lib.mkForce [ "127.0.0.1" ];
 
       networking.resolvconf.enable = lib.mkForce false;
@@ -460,6 +350,26 @@ in
         {
           assertion = config.my.configs.network.ipv6.firewall == false;
           message = "IPv6: Homelab-v4-only — my.configs.network.ipv6.firewall muss false sein.";
+        }
+        {
+          assertion = !(config.networking.enableIPv6 or true);
+          message = "IPv6: networking.enableIPv6 muss false sein — Kernel-Ebene muss IPv6 deaktivieren.";
+        }
+        {
+          assertion = lib.length config.my.services.blocky.upstreamDns >= 3;
+          message = "DNS: Mindestens 3 DoT-Upstream-Server erforderlich (aktuell: ${toString (lib.length config.my.services.blocky.upstreamDns)}).";
+        }
+        {
+          assertion = lib.length config.my.configs.network.dnsBootstrap >= 3;
+          message = "DNS: Mindestens 3 Bootstrap-DoT-Server erforderlich (aktuell: ${toString (lib.length config.my.configs.network.dnsBootstrap)}).";
+        }
+        {
+          assertion = lib.all (s: lib.hasPrefix "tcp-tls:" s) config.my.services.blocky.upstreamDns;
+          message = "DNS: Alle Blocky-Upstreams müssen tcp-tls:-Format haben — kein https:// oder Klartext.";
+        }
+        {
+          assertion = lib.all (s: lib.hasPrefix "tcp-tls:" s) config.my.configs.network.dnsBootstrap;
+          message = "DNS: Alle Bootstrap-Upstreams müssen tcp-tls:-Format haben — kein https:// oder Klartext.";
         }
       ];
 

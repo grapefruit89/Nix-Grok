@@ -56,17 +56,12 @@ let
     };
   };
 
-  mkArr =
-    name: app:
-    lib.mkIf config.my.services.${name}.enable (
-      arrHelper.mkArrService (
-        {
-          inherit name;
-          dataDir = "/var/lib/${name}";
-        }
-        // app
-      )
-    );
+  mkArr = name: app:
+    let
+      dataDir = "/var/lib/${name}";
+    in
+    lib.mkIf config.my.services.${name}.enable
+      (arrHelper.mkArrService ({ inherit name dataDir; } // app));
 
 in
 {

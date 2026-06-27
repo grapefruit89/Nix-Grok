@@ -2,10 +2,14 @@
 # meta:
 #   layer: 5
 #   role: lib
-#   purpose: Kernel-Blacklist global — Datacenter/Legacy/Sicherheit
+#   purpose: Kernel-Blacklist global — Datacenter/Legacy/Sicherheit/Netzwerkprotokolle
+#   docs:
+#     - docs/adr/002-ipv6-homelab-v4-only.md
 #   tags:
 #     - kernel
 #     - blacklist
+#     - ipv6
+#     - network-security
 # ---
 {
   securityLegacy = [
@@ -27,7 +31,6 @@
     "e100"
     "eepro100"
     "e1000"
-    "igb"
     "igbvf"
     "ixgbe"
     "ixgbevf"
@@ -113,6 +116,14 @@
     "mlx5_ib"
     "siw"
     "mana_ib"
+  ];
+
+  networkProtocols = [
+    "ipv6"
+    "dccp"
+    "sctp"
+    "tipc"
+    "rds"
   ];
 
   legacyBus = [

@@ -14,11 +14,11 @@
 
 {
   imports = [
-    ./0010-core.nix
-    ./0020-nixmeta-ban.nix
-    ./0030-uid-registry.nix
-    ./0040-services-spec.nix
-    ./0050-sops.nix
-    ./0060-boot-watchdog.nix
+    ./01-core.nix
+    ./02-nixmeta-ban.nix
+    ./03-uid-registry.nix
+    ./04-services-spec.nix
+    ./05-sops.nix
+    ./06-boot-watchdog.nix
   ];
 }

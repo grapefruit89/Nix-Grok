@@ -25,7 +25,7 @@ in
 {
   imports = [
     ./grok.nix
-    ./core.nix
+    ./61-core.nix
     ./iot.nix
     ./automation.nix
     ./hermes.nix

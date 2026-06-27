@@ -57,10 +57,10 @@ in
         security = {
           command_approval = true;
         };
+
+        # MCP-Server: siehe modules/mcp-server/default.nix
       };
-
     };
-
     services.hermes-agent.container.enable = lib.mkIf cfg.containerMode true;
     services.hermes-agent.container.backend = lib.mkIf cfg.containerMode "podman";
     services.hermes-agent.container.hostUsers = lib.mkIf cfg.containerMode [ identityUser ];
@@ -92,9 +92,6 @@ in
       wantedBy = [ "multi-user.target" ];
       before = [ "hermes-agent.service" ];
     };
-
-    # Context7: Key in /var/lib/hermes/env (aus context7.env) — dann:
-    #   hermes mcp add context7 --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: $CONTEXT7_API_KEY"
 
     # Kein root-WebUI — Gateway läuft als User hermes mit upstream-Härtung
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.exposeGatewayPort [ cfg.port ];

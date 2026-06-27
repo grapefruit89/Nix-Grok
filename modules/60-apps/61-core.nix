@@ -6,6 +6,9 @@
 #   services:
 #     - vaultwarden
 #     - homepage
+#     - filebrowser
+#     - linkwarden
+#     - open-webui
 #   tags:
 #     - apps
 # ---
@@ -475,7 +478,6 @@ in
 
         {
           systemd.services.linkwarden.serviceConfig = {
-            DynamicUser = true;
             OOMScoreAdjust = 300;
             ProtectClock = true;
             ProtectHostname = true;

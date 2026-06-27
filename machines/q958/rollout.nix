@@ -54,12 +54,13 @@ in
   my.alerting.enable = erstAb 8;
 
   my.observability.enable = erstAb 4;
+  my.observability.victoriametrics.enable = erstAb 7;
   my.impermanence.enable = erstAb 9;
 
   my.services = {
-    adguardhome.enable = lib.mkForce false; # Blocky ist unser DNS (Port-53-Konflikt)
+    technitium-dns-server.enable = lib.mkForce false; # Blocky ist unser DNS (Port-53-Konflikt)
     valkey.enable = erstAb 2;
-    postgresql.enable = erstAb 2;
+    postgresql.enable = lib.mkForce false;
     blocky.enable = erstAb 2;
     tailscale.enable = erstAb 2;
     pocket-id.enable = erstAb 2; # /var/lib/secrets/pocket-id.env (secrets-provision)

@@ -7,7 +7,7 @@
 #     - wiring
 #     - q958
 # ---
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 let
   p = import ./profile.nix;
@@ -49,6 +49,7 @@ in
     ../../modules/91-security-assertions.nix
     ../../modules/dev/aider.nix
     ../../modules/dev/claude-code.nix
+    ../../modules/mcp-server
   ];
 
   nixpkgs.config.allowUnfree = true;
@@ -197,5 +198,28 @@ in
   };
 
   system.stateVersion = p.system.stateVersion;
-  services.hermes-agent.enable = true;
+  services.hermes-agent = {
+    enable = true;
+    settings.model = {
+      base_url = "https://openrouter.ai/api/v1";
+      # === FREIE MODELLE (kein Verbrauch) ===
+      default = "qwen/qwen3-coder:free";       # Code-optimiert, 1M ctx
+      # default = "nvidia/nemotron-3-ultra-550b-a55b:free"; # 550B, 1M ctx
+      # default = "nvidia/nemotron-3-super-120b-a12b:free"; # 120B, 1M ctx
+      # default = "qwen/qwen3-next-80b-a3b-instruct:free";  # allgemein, 262k ctx
+      # === GÜNSTIGE BEZAHLTE (Fallback wenn free überlastet) ===
+      # default = "deepseek/deepseek-v4-flash";             # $0.09/M, 1M ctx
+      # default = "qwen/qwen3-coder-30b-a3b-instruct";     # $0.07/M, 160k ctx
+      # default = "deepseek/deepseek-chat-v3-0324";        # $0.20/M, 163k ctx
+      # default = "qwen/qwen3-235b-a22b-2507";             # $0.09/M, 262k ctx
+    };
+    environmentFiles = [ "/var/lib/secrets/hermes.env" ];
+    mcpServers.nixos-docs = {
+      command = "${pkgs.python3}/bin/python3";
+      args = [ "/var/lib/hermes/nixos-docs-mcp.py" ];
+    };
+    mcpServers.exa = {
+      url = "https://mcp.exa.ai/mcp";
+    };
+  };
 }

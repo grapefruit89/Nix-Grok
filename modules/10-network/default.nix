@@ -14,9 +14,9 @@
 
 {
   imports = [
-    ./1010-network.nix
-    ./1020-vpn-confinement.nix
-    ./1030-gateway.nix
-    ./1040-ingress.nix
+    ./11-network.nix
+    ./12-vpn-confinement.nix
+    ./13-gateway.nix
+    ./14-ingress.nix
   ];
 }

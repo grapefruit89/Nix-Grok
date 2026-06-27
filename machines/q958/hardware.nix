@@ -22,14 +22,16 @@ in
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  boot.initrd.availableKernelModules = p.hardware.initrdModules;
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ p.hardware.kvmModule ];
-  boot.extraModulePackages = [ ];
+  boot = {
+    initrd.availableKernelModules = p.hardware.initrdModules;
+    initrd.kernelModules = [ ];
+    kernelModules = [ p.hardware.kvmModule ];
+    extraModulePackages = [ ];
+  };
 
   fileSystems."/boot" = {
     device = "/dev/disk/by-label/${boot.label}";
-    fsType = boot.fsType;
+    inherit (boot) fsType;
     options = [
       "fmask=${boot.fmask}"
       "dmask=${boot.dmask}"
@@ -38,7 +40,7 @@ in
 
   fileSystems."/" = {
     device = "/dev/disk/by-label/${persist.label}";
-    fsType = persist.fsType;
+    inherit (persist) fsType;
   };
 
   swapDevices = [ ];

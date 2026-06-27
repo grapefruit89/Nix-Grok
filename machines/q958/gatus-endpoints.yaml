@@ -37,20 +37,6 @@ endpoints:
     conditions:
       - "[DNS_RC] == NOERROR"
 
-  - name: "postgresql"
-    group: "core"
-    url: "ssh://127.0.0.1:22"
-    interval: "1m"
-    conditions:
-      - "[CONNECTED] == true"
-      - "[STATUS] == 0"
-      - "[BODY] == OK*"
-    ssh:
-      username: "monitoring"
-      private-key: "/var/lib/gatus/ssh_key"
-      body:
-        command: "/run/current-system/sw/bin/check-postgres-uds"
-
   - name: "valkey"
     group: "core"
     url: "ssh://127.0.0.1:22"

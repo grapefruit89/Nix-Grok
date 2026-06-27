@@ -37,11 +37,6 @@
       url = "github:numtide/llm-agents.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    mcp-servers-nix = {
-      url = "github:natsukium/mcp-servers-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -53,7 +48,6 @@
       hermes-agent,
       sops-nix,
       llm-agents,
-      mcp-servers-nix,
       ...
     }:
     let
@@ -64,14 +58,6 @@
       };
       grok-cli = pkgs.callPackage ./packages/grok-cli { };
       claude-code-pkg = llm-agents.packages.${system}.claude-code;
-      mcpConfigFile = mcp-servers-nix.lib.mkConfig pkgs {
-        format = "json";
-        programs.context7 = {
-          enable = true;
-          envFile = "/var/lib/secrets/context7.env";
-        };
-        programs.nixos.enable = true;
-      };
     in
     {
       packages.${system}.grok-cli = grok-cli;
@@ -84,7 +70,6 @@
               self
               grok-cli
               claude-code-pkg
-              mcpConfigFile
               ;
           };
           modules = [

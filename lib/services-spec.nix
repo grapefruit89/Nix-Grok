@@ -236,12 +236,6 @@ let
       subdomain = "zigbee";
       description = "Zigbee UI";
     };
-    forgejo = {
-      socket = "/run/forgejo/forgejo.sock";
-      zone = "family-pocketid";
-      subdomain = "git";
-      description = "Git Forge";
-    };
     amp = {
       port = ports.amp;
       zone = "family-pocketid";

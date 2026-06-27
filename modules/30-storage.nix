@@ -332,7 +332,6 @@ in
           "${cfgImp.persistMountPoint}/var/lib/zigbee2mqtt"
           "${cfgImp.persistMountPoint}/var/lib/paperless"
           "${cfgImp.persistMountPoint}/var/lib/linkwarden"
-          "${cfgImp.persistMountPoint}/var/lib/forgejo"
           "/home/${config.my.configs.identity.user}/.grok"
           "${cfgImp.persistMountPoint}/var/lib/grafana"
           "${cfgImp.persistMountPoint}/etc/nixos"
@@ -355,7 +354,7 @@ in
         # Stop active database and application services to prevent write drift during backup
         backupPrepareCommand = ''
           echo "Stopping active web applications and database services..."
-          systemctl stop paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden forgejo vaultwarden zigbee2mqtt || true
+          systemctl stop paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden vaultwarden zigbee2mqtt || true
           systemctl stop mosquitto postgresql || true
         '';
 
@@ -363,7 +362,7 @@ in
         backupCleanupCommand = ''
           echo "Restarting database and web applications..."
           systemctl start postgresql mosquitto || true
-          systemctl start paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden forgejo vaultwarden zigbee2mqtt || true
+          systemctl start paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden vaultwarden zigbee2mqtt || true
         '';
 
       };

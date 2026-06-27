@@ -4,6 +4,13 @@
 #   role: machine
 #   purpose: Einzige Datenquelle aller q958-Maschinenwerte
 #   docs:
+#     - docs/adr/001-dns-dot-fail-closed.md
+#     - docs/adr/002-ipv6-homelab-v4-only.md
+#   tags:
+#     - dns
+#     - ipv6
+#     - profile
+#   docs:
 #     - docs/ROADMAP.md
 #   tags:
 #     - profile
@@ -82,6 +89,7 @@ in
       bootstrap = [
         "tcp-tls:1.1.1.1:853"
         "tcp-tls:9.9.9.9:853"
+        "tcp-tls:149.112.112.112:853"
       ];
     };
     # IPv6 Homelab: ad acta — nur v4 auf LAN-PHY (eno1). Ausnahme: tailscale0 (Mesh).

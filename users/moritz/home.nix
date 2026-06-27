@@ -31,17 +31,13 @@ let
 
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
     set -euo pipefail
-    export HOME="${config.home.homeDirectory}"
-    cd "$HOME"
-    export npm_config_cache="$HOME/.cache/npm"
-    mkdir -p "$npm_config_cache"
     KEY_FILE="${context7KeyFile}"
     if [ ! -s "$KEY_FILE" ]; then
       echo "Context7 API-Key fehlt. Bitte: set-context7-api-key" >&2
       exit 1
     fi
-    exec ${pkgs.nodejs_22}/bin/npx -y @upstash/context7-mcp@latest \
-      --api-key "$(<"$KEY_FILE")"
+    export CONTEXT7_API_KEY="$(<"$KEY_FILE")"
+    exec ${pkgs.context7-mcp}/bin/context7-mcp
   '';
 
   setContext7ApiKey = pkgs.writeShellScript "set-context7-api-key" ''
@@ -215,8 +211,7 @@ in
       [features]
       telemetry = false
 
-      # Context7 — stdio (HTTP/OAuth klappt in Grok aktuell nicht zuverlässig)
-      # Key: set-context7-api-key → https://context7.com/dashboard
+      # Context7 — stdio, Key: set-context7-api-key → https://context7.com/dashboard
       [mcp_servers.context7]
       command = "${config.home.homeDirectory}/.local/bin/context7-mcp"
       enabled = true
@@ -261,6 +256,9 @@ in
       "${stateDir}/bin/grok" completions zsh > "${stateDir}/completions/zsh/_grok" 2>/dev/null || true
     fi
   '';
+
+  # MCP-Server: siehe modules/mcp-server/default.nix
+
 
   programs.git = {
     enable = true;

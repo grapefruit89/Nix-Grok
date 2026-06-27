@@ -50,16 +50,31 @@ den Originalwert. Typischer Bug: ein Script mit Mode 755 (ausführbar) wird
 nach `install` ohne `-m` zu 644 und scheitert beim Ausführen. Vor jedem
 `install` erst `sudo ls -la <zielpfad>` ausführen und den Mode übernehmen.
 
-Nach jeder Änderung: `sudo nixos-rebuild dry-build --impure` muss grün
-sein, bevor committed wird.
+## Rebuild-Workflow — Dry-Run-Gate (Pflicht)
 
-## Was JETZT Stand ist (Stand: 2026-06-26, nach dem ersten Switch)
+**Niemals** `nixos-rebuild switch` direkt ausführen. Immer zuerst:
+
+```bash
+# 1. Dry-Build verifizieren (läuft auch als Claude-Schritt):
+sudo scripts/nixos-rebuild-safe.sh
+
+# 2. Erst wenn "✓ Dry-build erfolgreich" erscheint, switch ausführen.
+#    Empfehlung: in tmux (SSH-sicher, überlebt Verbindungsabbrüche):
+tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; echo "Exit: $?"; read'
+```
+
+Warum tmux: `nixos-rebuild switch` starb bisher mit exit 137 (SIGKILL) bei
+SSH-Disconnect, weil der Terminal-Prozessgraph den SIGHUP weiterleitet.
+tmux entkoppelt den Build-Prozess vom SSH-Terminal.
+
+Das Script `scripts/nixos-rebuild-safe.sh check` prüft, ob für den
+aktuellen HEAD ein Dry-Build-Flag gesetzt ist — nützlich als Voraussetzung.
+
+## Was JETZT Stand ist (Stand: 2026-06-27, nach Unified-Port-UID-Migration)
 
 - `/etc/nixos` **existiert**, ist ein Git-Repo (`origin` = `github.com/grapefruit89/Nix-Grok`),
   Owner ist der User `nixos` (nicht `moritz`, nicht `root`) — Zugriff auf
   Dateien dort nur via `sudo`.
-- Heute zum ersten Mal seit Wochen erfolgreich `nixos-rebuild switch --impure`
-  gefahren. Läuft jetzt auf Generation, gebaut aus dem aktuellen `main`.
 - **Aktiv und laufend:** Jellyfin, Sonarr/Radarr/Readarr/Prowlarr (über
   `modules/50-media/arr.nix`, eine gemeinsame Fabrik), SABnzbd, Vaultwarden,
   PostgreSQL, Grafana/Loki/Gatus, Caddy, CrowdSec, Hermes-Agent (nativ,
@@ -78,6 +93,12 @@ sein, bevor committed wird.
 - Der `nixos`-Emergency-User hat kein Passwort mehr, existiert aber noch
   als Account (Löschen steht noch aus — braucht erst einen Ownership-Umzug
   von `/etc/nixos`, weg vom `nixos`-User).
+- **Unified Port=UID=FolderPrefix Schema** implementiert (ADR-011):
+  ID = Port = UID = Ordner-Präfix (4-stellig). Quellen: `lib/uid-registry.nix`,
+  `lib/server-map.nix`, `modules/00-core/01-core.nix`.
+- **NixOS-Docs MCP** (`scripts/nixos-docs-mcp.py`): FTS5 + sqlite-vec +
+  Hybrid-RRF-Suche auf `data/nixos_docs.sqlite`. Nach rebuild aktivieren
+  und in `modules/mcp-server/default.nix` eintragen.
 
 ## Bekannte offene Baustellen (nicht überraschend, nicht von dir verursacht)
 
@@ -105,23 +126,23 @@ sein, bevor committed wird.
   `packages/grok-cli/`, Flake-Wiring in `flake.nix`, Block in
   `users/moritz/home.nix` — alles deaktiviert aber noch vorhanden.
   Aufräumen sobald der Mensch grünes Licht gibt.
-- **Doppelte `hermes-agent.enable`-Zeile**: `services.hermes-agent.enable = true`
-  steht sowohl in `machines/q958/default.nix` als auch in
-  `machines/q958/rollout.nix`. Laut Regel: enable-Flags gehören nur in
-  `rollout.nix`. Zeile in `default.nix` ist redundant und kann entfernt
-  werden.
+- **NixOS-Docs MCP** noch nicht in `modules/mcp-server/default.nix` verdrahtet
+  — `scripts/nixos-docs-mcp.py` existiert, braucht noch systemd-Service-Definition.
+- ***arr-UID-Migration** noch ausstehend: `scripts/migrate-arr-uids.sh` einmalig
+  nach dem nächsten switch ausführen (chown auf `/persist/var/lib/{sonarr,...}`).
 
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 
-1. **`nixos-rebuild switch` führt nur der Mensch aus.** Niemals automatisch,
+1. **`nixos-rebuild switch` führt nur der Mensch aus** — niemals automatisch,
    auch nicht nach erfolgreichem Dry-Build, auch nicht auf Zuruf.
+   Vorher immer: `sudo scripts/nixos-rebuild-safe.sh` (Dry-Run-Gate).
 2. **`git push` nur nach expliziter, klarer Zustimmung im Chat** — nicht
    vorher einfach annehmen.
 3. Secrets niemals in Git. `machines/q958/profile.local.nix` ist gitignored.
 4. NIXMETA (`# !type`-Annotationen) ist permanent verboten — siehe
    `modules/00-nixmeta-ban.nix` und `tools/validate_headers.py`.
-5. Vor jeder Änderung: `nixos-rebuild dry-build --impure` muss grün sein,
-   bevor irgendetwas committed wird.
+5. Vor jedem Commit: `sudo scripts/nixos-rebuild-safe.sh` (dry-build) muss
+   grün sein. Kein Flag gesetzt → kein Commit.
 
 ## Git-Historie, falls relevant
 

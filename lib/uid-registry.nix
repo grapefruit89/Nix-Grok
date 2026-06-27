@@ -12,20 +12,21 @@
 let
   defaultUsers = {
     # *arr + Usenet — explizit statisch (Split-Tunnel + nftables skuid)
-    prowlarr = 969;
-    sabnzbd = 984;
-    sonarr = 989;
-    radarr = 978;
-    readarr = 987;
+    # Schema: UID = Port = Ordner-Präfix (50xx = 50-media)
+    sonarr   = 5003;  # war 989
+    radarr   = 5004;  # war 978
+    readarr  = 5005;  # war 987
+    prowlarr = 5006;  # war 969
+    sabnzbd  = 5007;  # war 984
   };
 
   defaultGroups = {
-    media = 169;
-    sabnzbd = 194;
-    prowlarr = 969;
-    sonarr = 989;
-    radarr = 978;
-    readarr = 987;
+    media    = 169;   # BEHALTEN — Filesystem-Kompatibilität (chown -R root:media)
+    sonarr   = 5003;
+    radarr   = 5004;
+    readarr  = 5005;
+    prowlarr = 5006;
+    sabnzbd  = 5007;
   };
 
 in

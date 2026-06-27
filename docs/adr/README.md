@@ -26,12 +26,13 @@ meta:
 | [008](008-nftables-l4-hardening.md) | nftables L4-Härtung (KB-Synthese) | accepted | 2026-06-17 | 15-firewall, uid-registry, fail2ban |
 | [009](009-vpn-leak-check.md) | VPN-NetNS-Leak-Check (Timer) | accepted | 2026-06-17 | 10-vpn-confinement, sabnzbd, prowlarr |
 | [010](010-production-ssh-impermanence.md) | Production SSH-Port, PermitTTY, Impermanence | accepted | 2026-06-17 | rollout.nix, 20-security, 30-storage |
+| [011](011-unified-port-uid-schema.md) | Unified Port=UID=FolderPrefix Schema (4-stellig) | accepted | 2026-06-27 | uid-registry, unix-sockets, server-map |
 
 ## Wann neues ADR?
 
 - Architektur-Entscheidung ist **schwer rückgängig** oder **sicherheitsrelevant**
 - Mehrere Module/`profile.nix` betroffen
-- KI soll nicht „raten“, sondern die **Begründung** lesen
+- KI soll nicht „raten", sondern die **Begründung** lesen
 
 ## Dateiname
 
@@ -57,3 +58,4 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-06-17 | ADR-Index angelegt |
 | 2026-06-17 | ADR 007–008 (Dendritic, nftables KB) |
 | 2026-06-17 | ADR 009–010 (nix-hermes Audit: VPN leak, Production-Modus) |
+| 2026-06-27 | ADR 011 (Unified Port=UID=FolderPrefix, Server-Map) |

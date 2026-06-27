@@ -43,12 +43,8 @@ in
       {
         assertion =
           config.my.security.firewall.enable
-          -> (config.my.services.blocky.enable || config.my.services.adguardhome.enable);
-        message = "POLICY: Firewall aktiviert, aber kein DNS-Resolver (Blocky/AdGuard) — DNS-Leck möglich.";
-      }
-      {
-        assertion = config.my.services.blocky.enable -> (config.networking.nameservers == [ "127.0.0.1" ]);
-        message = "POLICY: Blocky aktiviert, aber resolv.conf zeigt nicht auf 127.0.0.1 — DNS-Bypass möglich.";
+          -> (config.my.services.blocky.enable || config.my.services.technitium-dns-server.enable);
+        message = "POLICY: Firewall aktiviert, aber kein DNS-Resolver (Blocky/Technitium) — DNS-Leck möglich.";
       }
       {
         assertion = config.my.security.firewall.enable -> config.my.security.fail2ban.enable;

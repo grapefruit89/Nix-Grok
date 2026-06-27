@@ -13,9 +13,13 @@
 #     - loki
 #     - grafana
 #     - vector
+#     - victoriametrics
+#     - prometheus-node-exporter
 #     - crowdsec
 #   tags:
 #     - observability
+#     - victoriametrics
+#     - metrics
 # ---
 {
   config,
@@ -30,6 +34,7 @@ let
   cfgGatus = config.my.services.gatus;
   cfgObs = config.my.observability;
   cfgCrowdsec = config.my.security.crowdsec;
+  cfgVM = config.my.observability.victoriametrics;
   domain = config.my.configs.identity.domain;
   yaml = pkgs.formats.yaml { };
   gatusLib = import ../lib/gatus-endpoints.nix { inherit lib config; };
@@ -65,6 +70,14 @@ in
         type = lib.types.port;
         default = config.my.ports.grafana;
         description = "Port for the Grafana web dashboard.";
+      };
+      victoriametrics = {
+        enable = lib.mkEnableOption "VictoriaMetrics TSDB (Prometheus-kompatibel)";
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = config.my.ports.victoriametrics;
+          description = "VictoriaMetrics listen port.";
+        };
       };
     };
 
@@ -226,16 +239,6 @@ in
           fi
           echo "ERROR: Valkey socket not responding"
           exit 1
-        '')
-        (pkgs.writeShellScriptBin "check-forgejo-uds" ''
-          set -euo pipefail
-          if ${pkgs.curl}/bin/curl -fsS --unix-socket ${sockets.forgejo} http://localhost/api/v1/version >/dev/null; then
-            echo "OK: Forgejo socket is responding"
-            exit 0
-          else
-            echo "ERROR: Forgejo socket not responding"
-            exit 1
-          fi
         '')
         (pkgs.writeShellScriptBin "check-grafana-uds" ''
           set -euo pipefail
@@ -578,11 +581,13 @@ in
             }
           ];
           settings = {
-            general.api.server = {
+            general.api = {
+              client.credentials_path = lib.mkForce crowdsecCredFile;
+              server = {
               enable = true;
               listen_uri = "127.0.0.1:${toString config.my.ports.crowdsec}";
+              };
             };
-            lapi.credentialsFile = "/var/lib/crowdsec/local_api_credentials.yaml";
           };
         };
 
@@ -636,5 +641,50 @@ in
         };
       }
     ))
+    # ── VICTORIAMETRICS + NODE EXPORTER ──────────────────────────────────────────
+    (lib.mkIf cfgVM.enable {
+      services.victoriametrics = {
+        enable = true;
+        listenAddress = "127.0.0.1:${toString cfgVM.port}";
+        retentionPeriod = "6";
+        prometheusConfig = {
+          scrape_configs = [
+            {
+              job_name = "node";
+              static_configs = [ { targets = [ "127.0.0.1:9100" ]; } ];
+              scrape_interval = "15s";
+            }
+            {
+              job_name = "victoriametrics";
+              static_configs = [ { targets = [ "127.0.0.1:${toString cfgVM.port}" ]; } ];
+              scrape_interval = "15s";
+            }
+          ];
+        };
+      };
+
+      services.prometheus.exporters.node = {
+        enable = true;
+        listenAddress = "127.0.0.1";
+        port = 9100;
+        enabledCollectors = [
+          "cpu" "diskstats" "filesystem" "loadavg" "meminfo"
+          "netdev" "stat" "time" "uname" "vmstat" "systemd"
+        ];
+      };
+
+      systemd.services.victoriametrics.after = [ "prometheus-node-exporter.service" ];
+
+      services.grafana.provision.datasources.settings.datasources = lib.mkAfter [
+        {
+          name = "VictoriaMetrics";
+          type = "prometheus";
+          url = "http://127.0.0.1:${toString cfgVM.port}";
+          access = "proxy";
+          isDefault = false;
+        }
+      ];
+    })
+
   ];
 }
