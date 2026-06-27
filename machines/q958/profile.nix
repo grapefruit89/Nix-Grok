@@ -18,19 +18,16 @@
 # ---
 let
   localPath =
-    if builtins.pathExists ./profile.local.nix then
-      ./profile.local.nix
-    else if builtins.pathExists /etc/nixos/machines/q958/profile.local.nix then
-      /etc/nixos/machines/q958/profile.local.nix
-    else
-      null;
+    if builtins.pathExists ./profile.local.nix
+    then ./profile.local.nix
+    else if builtins.pathExists /etc/nixos/machines/q958/profile.local.nix
+    then /etc/nixos/machines/q958/profile.local.nix
+    else null;
   local =
-    if localPath != null then
-      import localPath
-    else
-      throw "profile.local.nix fehlt — cp machines/q958/profile.local.nix.example machines/q958/profile.local.nix";
-in
-{
+    if localPath != null
+    then import localPath
+    else throw "profile.local.nix fehlt — cp machines/q958/profile.local.nix.example machines/q958/profile.local.nix";
+in {
   meta = {
     machine = "q958";
     model = "Fujitsu Esprimo Q958";
@@ -51,7 +48,7 @@ in
       85
       86
     ];
-    kernelParams = [ "i915.enable_guc=2" ];
+    kernelParams = ["i915.enable_guc=2"];
   };
 
   network = {
@@ -60,7 +57,7 @@ in
       prefixLength = 24;
       interface = "eno1";
       gateway = "192.168.2.1";
-      dns = [ "127.0.0.1" ];
+      dns = ["127.0.0.1"];
       systemdNetworkName = "10-lan";
     };
     tailscaleIP = "100.64.0.1";
@@ -94,13 +91,13 @@ in
     };
     # IPv6 Homelab: ad acta — nur v4 auf LAN-PHY (eno1). Ausnahme: tailscale0 (Mesh).
     ipv6 = {
-      disableOnInterfaces = [ "eno1" ];
+      disableOnInterfaces = ["eno1"];
       firewall = false;
     };
     ddns = {
       zone = "m7c5.de";
       record = "nix";
-      enable = ((local.secrets.cloudflare or { }).apiToken or "") != "";
+      enable = ((local.secrets.cloudflare or {}).apiToken or "") != "";
     };
   };
 
@@ -156,11 +153,11 @@ in
       };
       b = {
         medium = "ssd";
-        bus = [ "ata" ];
+        bus = ["ata"];
       };
       c = {
         medium = "hdd";
-        bus = [ "ata" ];
+        bus = ["ata"];
       };
     };
 
@@ -193,7 +190,7 @@ in
     tierB = {
       label = "NIXDATA";
       bus = "sata";
-      legacyPrefixes = [ "TIER_B_" ];
+      legacyPrefixes = ["TIER_B_"];
       mountPoint = "/mnt/fast_pool";
       enabled = false;
     };
@@ -309,54 +306,51 @@ in
 
   restic = {
     healthcheckUrl = local.restic.healthcheckUrl or "";
-    offsiteEnable =
-      let
-        repo = (local.secrets.restic or { }).repository or "";
-      in
+    offsiteEnable = let
+      repo = (local.secrets.restic or {}).repository or "";
+    in
       repo != "";
   };
 
-  kernel =
-    let
-      moduleRoles = {
-        e1000e = "Intel I219-LM Onboard-NIC (eno1)";
-        i915 = "Intel UHD 630 — Jellyfin VA-API";
-        ahci = "SATA-Controller — Tier-A SSD /dev/sda";
-        sd_mod = "SCSI-Disk-Treiber — Systemplatte";
-        libata = "ATA-Library — SATA";
-        scsi_mod = "SCSI-Core";
-        xhci_pci = "USB 3.0 — Tastatur, Install-Stick";
-        usb_storage = "USB-Mass-Storage";
-        usbhid = "USB-HID";
-        hid = "HID-Core";
-        kvm = "KVM-Virtualisierung";
-        kvm_intel = "KVM Intel (i3-9100)";
-        zram = "ZRAM-Swap";
-        mei_me = "Intel ME Interface — Q370 PCH";
-        intel_pch_thermal = "Intel PCH-Thermal — Q370";
-      };
-    in
-    {
-      # Zwiebelschale: lib/kernel/* = Schicht A+B, hier nur Schicht C (Host)
-      policy = {
-        mode = "homelab-strict";
-        homelabProfile = "headless-server";
-      };
-
-      inherit moduleRoles;
-      requiredModules = builtins.attrNames moduleRoles;
-
-      requiredInitrdModules = [
-        "xhci_pci"
-        "ahci"
-        "usb_storage"
-        "sd_mod"
-      ];
-
-      # Module außerhalb der Homelab-Whitelist, die dieser Host trotzdem braucht
-      whitelistExtra = [ ];
-
-      # Schicht C — Host-Blacklist (zusätzlich zu A+B)
-      blacklist = { };
+  kernel = let
+    moduleRoles = {
+      e1000e = "Intel I219-LM Onboard-NIC (eno1)";
+      i915 = "Intel UHD 630 — Jellyfin VA-API";
+      ahci = "SATA-Controller — Tier-A SSD /dev/sda";
+      sd_mod = "SCSI-Disk-Treiber — Systemplatte";
+      libata = "ATA-Library — SATA";
+      scsi_mod = "SCSI-Core";
+      xhci_pci = "USB 3.0 — Tastatur, Install-Stick";
+      usb_storage = "USB-Mass-Storage";
+      usbhid = "USB-HID";
+      hid = "HID-Core";
+      kvm = "KVM-Virtualisierung";
+      kvm_intel = "KVM Intel (i3-9100)";
+      zram = "ZRAM-Swap";
+      mei_me = "Intel ME Interface — Q370 PCH";
+      intel_pch_thermal = "Intel PCH-Thermal — Q370";
     };
+  in {
+    # Zwiebelschale: lib/kernel/* = Schicht A+B, hier nur Schicht C (Host)
+    policy = {
+      mode = "homelab-strict";
+      homelabProfile = "headless-server";
+    };
+
+    inherit moduleRoles;
+    requiredModules = builtins.attrNames moduleRoles;
+
+    requiredInitrdModules = [
+      "xhci_pci"
+      "ahci"
+      "usb_storage"
+      "sd_mod"
+    ];
+
+    # Module außerhalb der Homelab-Whitelist, die dieser Host trotzdem braucht
+    whitelistExtra = [];
+
+    # Schicht C — Host-Blacklist (zusätzlich zu A+B)
+    blacklist = {};
+  };
 }

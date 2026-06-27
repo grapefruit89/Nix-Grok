@@ -17,15 +17,13 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfgUnlock = config.my.security.sovereign-unlock;
   cfgSsh = config.my.security.ssh-zerotrust;
 
   user = config.my.configs.identity.user;
   sshPort = config.my.ports.ssh;
-  hasAuthorizedKeys = (config.users.users.${user}.openssh.authorizedKeys.keys or [ ]) != [ ];
+  hasAuthorizedKeys = (config.users.users.${user}.openssh.authorizedKeys.keys or []) != [];
 
   # Emergency QR-Code Script
   qrFallbackScript = pkgs.writeShellScript "nms-qr-fallback" ''
@@ -52,9 +50,7 @@ let
     echo "  SSH: $SSH_CMD"
     echo "  Dann: systemd-tty-ask-password-agent"
   '';
-
-in
-{
+in {
   # ============================================================================
   # OPTIONS
   # ============================================================================
@@ -80,7 +76,7 @@ in
       };
       authorizedKeys = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ ];
+        default = [];
       };
       hostKey = lib.mkOption {
         type = lib.types.str;
@@ -249,11 +245,11 @@ in
 
           network = {
             enable = true;
-            ssh = lib.mkIf (cfgUnlock.authorizedKeys != [ ]) {
+            ssh = lib.mkIf (cfgUnlock.authorizedKeys != []) {
               enable = true;
               port = cfgUnlock.sshPort;
               inherit (cfgUnlock) authorizedKeys;
-              hostKeys = [ cfgUnlock.hostKey ];
+              hostKeys = [cfgUnlock.hostKey];
               shell = "${pkgs.writeShellScript "initrd-unlock-shell" ''
                 echo "NMS v4.2 - Remote initrd Unlock Shell"
                 echo "Unlock command: systemd-tty-ask-password-agent"
@@ -264,7 +260,7 @@ in
 
           systemd.services.nms-qr-fallback = {
             description = "NMS Emergency TTY QR-Code Fallback";
-            wantedBy = [ "initrd.target" ];
+            wantedBy = ["initrd.target"];
             serviceConfig = {
               Type = "oneshot";
               ExecStart = qrFallbackScript;
@@ -298,7 +294,7 @@ in
 
       assertions = [
         {
-          assertion = cfgUnlock.authorizedKeys != [ ] || cfgUnlock.tangServer != "";
+          assertion = cfgUnlock.authorizedKeys != [] || cfgUnlock.tangServer != "";
           message = "Sovereign Unlock: Entweder initrd SSH-Keys oder ein Tang-Server müssen konfiguriert sein.";
         }
       ];
@@ -308,7 +304,7 @@ in
     (lib.mkIf (config.my.mode == "development") {
       services.openssh = {
         enable = true;
-        ports = lib.mkForce [ 22 ];
+        ports = lib.mkForce [22];
         settings = {
           # Root nur ueber die physische TTY-Konsole (autologin), nie ueber SSH.
           PermitRootLogin = lib.mkForce "no";
@@ -319,7 +315,7 @@ in
 
       # Copy admin public keys to root user for easy passwordless access
       users.users.root.openssh.authorizedKeys.keys =
-        config.users.users.${user}.openssh.authorizedKeys.keys or [ ];
+        config.users.users.${user}.openssh.authorizedKeys.keys or [];
     })
 
     # ── ZERO-TRUST HARDENED SSHD ──────────────────────────────────────────────
@@ -327,7 +323,7 @@ in
       services.openssh = {
         enable = true;
         openFirewall = false;
-        ports = lib.mkForce [ sshPort ];
+        ports = lib.mkForce [sshPort];
 
         settings = {
           PermitRootLogin = lib.mkForce "no";
@@ -391,74 +387,75 @@ in
       let
         cfg = config.my.security.fail2ban;
       in
-      lib.mkIf cfg.enable {
-        services.fail2ban = {
-          enable = true;
-          banaction =
-            if config.my.security.firewall.enable then lib.mkForce "nftables-f2b-set" else cfg.banaction;
-          inherit (cfg) bantime;
-          inherit (cfg) maxretry;
-          bantime-increment = {
-            enable = cfg.banIncrementEnable;
-            multipliers = cfg.banIncrementMultipliers;
-            maxtime = cfg.banIncrementMaxtime;
+        lib.mkIf cfg.enable {
+          services.fail2ban = {
+            enable = true;
+            banaction =
+              if config.my.security.firewall.enable
+              then lib.mkForce "nftables-f2b-set"
+              else cfg.banaction;
+            inherit (cfg) bantime;
+            inherit (cfg) maxretry;
+            bantime-increment = {
+              enable = cfg.banIncrementEnable;
+              multipliers = cfg.banIncrementMultipliers;
+              maxtime = cfg.banIncrementMaxtime;
+            };
+            jails = {
+              sshd = lib.mkIf cfg.sshJail.enable {
+                settings = {
+                  enabled = true;
+                  mode = cfg.sshJail.mode;
+                  filter = "sshd[mode=${cfg.sshJail.mode}]";
+                  inherit (cfg) findtime;
+                  inherit (cfg) maxretry;
+                };
+              };
+
+              caddy-http-auth = lib.mkIf cfg.webJails.caddy.enable {
+                settings = {
+                  enabled = true;
+                  filter = "caddy-json";
+                  action = cfg.banaction;
+                  maxretry = cfg.webJails.caddy.maxretry;
+                  inherit (cfg) findtime;
+                  backend = "systemd";
+                };
+              };
+
+              vaultwarden = lib.mkIf cfg.appJails.vaultwarden.enable {
+                settings = {
+                  enabled = true;
+                  inherit (cfg) findtime;
+                  inherit (cfg) maxretry;
+                };
+              };
+
+              paperless = lib.mkIf cfg.appJails.paperless.enable {
+                settings = {
+                  enabled = true;
+                  inherit (cfg) findtime;
+                  inherit (cfg) maxretry;
+                };
+              };
+
+              recidive = lib.mkIf cfg.recidive.enable {
+                settings = {
+                  enabled = true;
+                  logpath = "/var/log/fail2ban.log";
+                  inherit (cfg.recidive) bantime findtime maxretry;
+                };
+              };
+            };
           };
-          jails = {
-            sshd = lib.mkIf cfg.sshJail.enable {
-              settings = {
-                enabled = true;
-                mode = cfg.sshJail.mode;
-                filter = "sshd[mode=${cfg.sshJail.mode}]";
-                inherit (cfg) findtime;
-                inherit (cfg) maxretry;
-              };
-            };
 
-            caddy-http-auth = lib.mkIf cfg.webJails.caddy.enable {
-              settings = {
-                enabled = true;
-                filter = "caddy-json";
-                action = cfg.banaction;
-                maxretry = cfg.webJails.caddy.maxretry;
-                inherit (cfg) findtime;
-                backend = "systemd";
-              };
-            };
+          environment.etc."fail2ban/filter.d/caddy-json.conf".text = ''
+            [Definition]
+            failregex = ^.*"remote_ip":"<ADDR>".*"status":(401|403).*$
+            journalmatch = _SYSTEMD_UNIT=caddy.service
+          '';
 
-            vaultwarden = lib.mkIf cfg.appJails.vaultwarden.enable {
-              settings = {
-                enabled = true;
-                inherit (cfg) findtime;
-                inherit (cfg) maxretry;
-              };
-            };
-
-            paperless = lib.mkIf cfg.appJails.paperless.enable {
-              settings = {
-                enabled = true;
-                inherit (cfg) findtime;
-                inherit (cfg) maxretry;
-              };
-            };
-
-            recidive = lib.mkIf cfg.recidive.enable {
-              settings = {
-                enabled = true;
-                logpath = "/var/log/fail2ban.log";
-                inherit (cfg.recidive) bantime findtime maxretry;
-              };
-            };
-          };
-        };
-
-        environment.etc."fail2ban/filter.d/caddy-json.conf".text = ''
-          [Definition]
-          failregex = ^.*"remote_ip":"<ADDR>".*"status":(401|403).*$
-          journalmatch = _SYSTEMD_UNIT=caddy.service
-        '';
-
-        environment.etc."fail2ban/action.d/nftables-f2b-set.conf".text =
-          lib.mkIf config.my.security.firewall.enable ''
+          environment.etc."fail2ban/action.d/nftables-f2b-set.conf".text = lib.mkIf config.my.security.firewall.enable ''
             [Definition]
             type = firewall
             actionstart = nft add set inet filter f2b_blocked_ipv4 { type ipv4_addr \; flags timeout \; timeout 1h \; } 2>/dev/null || true
@@ -467,7 +464,7 @@ in
             actionban = nft add element inet filter f2b_blocked_ipv4 { <ip> }
             actionunban = nft delete element inet filter f2b_blocked_ipv4 { <ip> }
           '';
-      }
+        }
     )
 
     # ── DROPBEAR STAGE-2 RESCUE DAEMON ────────────────────────────────────────
@@ -475,38 +472,38 @@ in
       let
         cfgRescue = config.my.security.dropbear-rescue;
       in
-      lib.mkIf cfgRescue.enable {
-        systemd.services.dropbear-rescue = {
-          description = "Dropbear emergency rescue SSH server";
-          wantedBy = [ "multi-user.target" ];
-          after = [ "network.target" ];
+        lib.mkIf cfgRescue.enable {
+          systemd.services.dropbear-rescue = {
+            description = "Dropbear emergency rescue SSH server";
+            wantedBy = ["multi-user.target"];
+            after = ["network.target"];
 
-          serviceConfig = {
-            Type = "simple";
-            ExecStartPre = pkgs.writeShellScript "dropbear-rescue-prepare" ''
-              USER="${user}"
-              mkdir -p "/home/$USER/.ssh" /root/.ssh
-              chmod 700 "/home/$USER/.ssh" /root/.ssh
+            serviceConfig = {
+              Type = "simple";
+              ExecStartPre = pkgs.writeShellScript "dropbear-rescue-prepare" ''
+                USER="${user}"
+                mkdir -p "/home/$USER/.ssh" /root/.ssh
+                chmod 700 "/home/$USER/.ssh" /root/.ssh
 
-              if [ -f "/etc/ssh/authorized_keys.d/$USER" ]; then
-                cp "/etc/ssh/authorized_keys.d/$USER" "/home/$USER/.ssh/authorized_keys"
-                chmod 600 "/home/$USER/.ssh/authorized_keys"
-                chown "$USER:users" "/home/$USER/.ssh/authorized_keys"
-              fi
+                if [ -f "/etc/ssh/authorized_keys.d/$USER" ]; then
+                  cp "/etc/ssh/authorized_keys.d/$USER" "/home/$USER/.ssh/authorized_keys"
+                  chmod 600 "/home/$USER/.ssh/authorized_keys"
+                  chown "$USER:users" "/home/$USER/.ssh/authorized_keys"
+                fi
 
-              if [ -f "/etc/ssh/authorized_keys.d/$USER" ]; then
-                cp "/etc/ssh/authorized_keys.d/$USER" /root/.ssh/authorized_keys
-                chmod 600 /root/.ssh/authorized_keys
-                chown root:root /root/.ssh/authorized_keys
-              fi
-            '';
-            ExecStart = "${pkgs.dropbear}/bin/dropbear -F -E -s -p ${toString cfgRescue.port} -r /var/lib/dropbear/dropbear_ed25519_host_key -R";
-            Restart = "always";
-            RestartSec = "10s";
-            StateDirectory = "dropbear";
+                if [ -f "/etc/ssh/authorized_keys.d/$USER" ]; then
+                  cp "/etc/ssh/authorized_keys.d/$USER" /root/.ssh/authorized_keys
+                  chmod 600 /root/.ssh/authorized_keys
+                  chown root:root /root/.ssh/authorized_keys
+                fi
+              '';
+              ExecStart = "${pkgs.dropbear}/bin/dropbear -F -E -s -p ${toString cfgRescue.port} -r /var/lib/dropbear/dropbear_ed25519_host_key -R";
+              Restart = "always";
+              RestartSec = "10s";
+              StateDirectory = "dropbear";
+            };
           };
-        };
-      }
+        }
     )
   ];
 }

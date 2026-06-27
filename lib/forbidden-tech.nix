@@ -8,10 +8,8 @@
 #     - policy
 #     - security
 # ---
-_:
-
-let
-  must = assertion: message: { inherit assertion message; };
+_: let
+  must = assertion: message: {inherit assertion message;};
 
   reasons = {
     docker = "Docker widerspricht NixOS-native systemd — mkService nutzen.";
@@ -21,8 +19,7 @@ let
     lanzaboote = "Lanzaboote nicht im Einsatz — systemd-boot.";
     passwords = "SSH-Passwort-Auth nur in Dev (Stufe < 9) — Production key-only.";
   };
-in
-{
+in {
   inherit must reasons;
 
   # Immer aktiv (unabhängig von Firewall/Mode)

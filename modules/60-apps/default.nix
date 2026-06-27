@@ -12,17 +12,17 @@
 #     - apps
 #     - caddy
 # ---
-{ config, lib, ... }:
-
-let
+{
+  config,
+  lib,
+  ...
+}: let
   criticalSystemd = import ../../lib/critical-systemd.nix {
     inherit lib;
     oomScore = -900;
   };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
-
-in
-{
+  memory = import ../../lib/memory-policy.nix {inherit lib;};
+in {
   imports = [
     ./grok.nix
     ./61-core.nix
@@ -135,7 +135,6 @@ in
         description = "Ollama endpoint URL.";
       };
     };
-
   };
 
   # Caddy .enable nur in machines/<host>/rollout.nix — hier nur Hardening
@@ -145,17 +144,19 @@ in
       after = lib.mkAfter (
         lib.optional config.my.services.blocky.enable "blocky.service"
         ++ lib.optional config.my.services.pocket-id.enable "postgresql.service"
-        ++ [ "network-online.target" ]
+        ++ ["network-online.target"]
       );
-      wants = lib.optional config.my.services.blocky.enable "blocky.service" ++ [
-        "network-online.target"
-      ];
-      wantedBy = [ "multi-user.target" ];
+      wants =
+        lib.optional config.my.services.blocky.enable "blocky.service"
+        ++ [
+          "network-online.target"
+        ];
+      wantedBy = ["multi-user.target"];
     };
 
     systemd.services.caddy.serviceConfig = lib.mkMerge [
       criticalSystemd
-      (memory.caddy { })
+      (memory.caddy {})
       {
         ProtectSystem = lib.mkForce "strict";
         ProtectHome = lib.mkForce true;
@@ -165,7 +166,7 @@ in
         # nixpkgs setzt 14400s/10 — für kritischen Ingress aushebeln
         StartLimitIntervalSec = lib.mkForce 0;
         StartLimitBurst = lib.mkForce 0;
-        RestartPreventExitStatus = lib.mkForce [ ];
+        RestartPreventExitStatus = lib.mkForce [];
       }
     ];
   };

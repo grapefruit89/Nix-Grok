@@ -9,12 +9,13 @@
 #   tags:
 #     - policy
 # ---
-{ config, lib, ... }:
-
-let
-  policy = import ../../lib/forbidden-tech.nix { inherit lib; };
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  policy = import ../../lib/forbidden-tech.nix {inherit lib;};
+in {
   options.my.policy.forbidden-tech = {
     enable = lib.mkEnableOption "Forbidden-technology assertions (Docker, Cron, …)";
   };

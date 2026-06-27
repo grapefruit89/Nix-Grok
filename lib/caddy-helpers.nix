@@ -7,32 +7,27 @@
 #     - caddy
 #     - ingress
 # ---
-{ lib }:
-
-let
+{lib}: let
   upstream = host: port: "${host}:${toString port}";
 
-  mkProxy =
-    {
-      port,
-      host ? "127.0.0.1",
-      imports ? [ ],
-    }:
+  mkProxy = {
+    port,
+    host ? "127.0.0.1",
+    imports ? [],
+  }:
     lib.concatStringsSep "\n" (
-      map (snippet: "import ${snippet}") imports ++ [ "reverse_proxy ${upstream host port}" ]
+      map (snippet: "import ${snippet}") imports ++ ["reverse_proxy ${upstream host port}"]
     );
 
-  mkProxyUnix =
-    {
-      socketPath,
-      imports ? [ ],
-    }:
-    let
-      sockets = import ./unix-sockets.nix { inherit lib; };
-    in
+  mkProxyUnix = {
+    socketPath,
+    imports ? [],
+  }: let
+    sockets = import ./unix-sockets.nix {inherit lib;};
+  in
     lib.concatStringsSep "\n" (
       map (snippet: "import ${snippet}") imports
-      ++ [ "reverse_proxy ${sockets.toCaddyUpstream socketPath}" ]
+      ++ ["reverse_proxy ${sockets.toCaddyUpstream socketPath}"]
     );
 
   streamingBackend = port: ''
@@ -44,22 +39,19 @@ let
       }
     }
   '';
-in
-{
+in {
   inherit mkProxy streamingBackend;
 
-  proxySso =
-    port:
+  proxySso = port:
     mkProxy {
       inherit port;
-      imports = [ "sso_auth" ];
+      imports = ["sso_auth"];
     };
 
-  proxyTailscaleSso =
-    {
-      port,
-      host ? "127.0.0.1",
-    }:
+  proxyTailscaleSso = {
+    port,
+    host ? "127.0.0.1",
+  }:
     mkProxy {
       inherit port host;
       imports = [
@@ -68,24 +60,21 @@ in
       ];
     };
 
-  proxySecurity =
-    port:
+  proxySecurity = port:
     mkProxy {
       inherit port;
-      imports = [ "security_headers" ];
+      imports = ["security_headers"];
     };
 
-  proxyDirect = port: mkProxy { inherit port; };
+  proxyDirect = port: mkProxy {inherit port;};
 
-  proxyUnixSso =
-    socketPath:
+  proxyUnixSso = socketPath:
     mkProxyUnix {
       inherit socketPath;
-      imports = [ "sso_auth" ];
+      imports = ["sso_auth"];
     };
 
-  proxyUnixTailscaleSso =
-    socketPath:
+  proxyUnixTailscaleSso = socketPath:
     mkProxyUnix {
       inherit socketPath;
       imports = [
@@ -94,17 +83,15 @@ in
       ];
     };
 
-  proxyUnixSecurity =
-    socketPath:
+  proxyUnixSecurity = socketPath:
     mkProxyUnix {
       inherit socketPath;
-      imports = [ "security_headers" ];
+      imports = ["security_headers"];
     };
 
-  proxyUnixDirect =
-    socketPath:
+  proxyUnixDirect = socketPath:
     mkProxyUnix {
       inherit socketPath;
-      imports = [ ];
+      imports = [];
     };
 }

@@ -10,9 +10,7 @@
 # state_dir: null
 # tags: ["core", "imports"]
 # ---
-{ ... }:
-
-{
+{...}: {
   imports = [
     ./01-core.nix
     ./02-nixmeta-ban.nix

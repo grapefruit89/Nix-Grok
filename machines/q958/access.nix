@@ -15,20 +15,17 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   p = import ./profile.nix;
   lan = p.network.lan;
-  dnsPolicy = import ../../lib/dns-policy.nix { inherit lib; };
+  dnsPolicy = import ../../lib/dns-policy.nix {inherit lib;};
   emergency = p.access.emergency;
 
-  lanNetwork = config.systemd.network.networks.${lan.systemdNetworkName} or { };
+  lanNetwork = config.systemd.network.networks.${lan.systemdNetworkName} or {};
   lanAddress = lanNetwork.networkConfig.Address or "";
-  opensshSettings = config.services.openssh.settings or { };
-  firewallPorts = config.networking.firewall.allowedTCPPorts or [ ];
-in
-{
+  opensshSettings = config.services.openssh.settings or {};
+  firewallPorts = config.networking.firewall.allowedTCPPorts or [];
+in {
   users.users.${emergency.name} = {
     isNormalUser = lib.mkForce true;
     description = lib.mkForce emergency.description;
@@ -50,18 +47,19 @@ in
   systemd.network.enable = lib.mkForce true;
   systemd.network.networks.${lan.systemdNetworkName} = lib.mkForce {
     matchConfig.Name = lan.interface;
-    networkConfig = {
-      Address = "${lan.ip}/${toString lan.prefixLength}";
-      Gateway = lan.gateway;
-      DNS = lan.dns;
-    }
-    // lib.optionalAttrs (lib.elem lan.interface p.network.ipv6.disableOnInterfaces) {
-      IPv6AcceptRA = "no";
-    };
+    networkConfig =
+      {
+        Address = "${lan.ip}/${toString lan.prefixLength}";
+        Gateway = lan.gateway;
+        DNS = lan.dns;
+      }
+      // lib.optionalAttrs (lib.elem lan.interface p.network.ipv6.disableOnInterfaces) {
+        IPv6AcceptRA = "no";
+      };
   };
 
   networking.firewall.allowedTCPPorts = lib.mkIf (!config.my.security.firewall.enable) (
-    lib.mkForce [ p.network.sshPort ]
+    lib.mkForce [p.network.sshPort]
   );
 
   # Git-Repo liegt unter /home/nixos → Deploy-Key für grapefruit89/NixmitGROK
@@ -70,7 +68,7 @@ in
     pkgs.openssh
   ];
   programs.ssh.knownHosts.github = {
-    hostNames = [ "github.com" ];
+    hostNames = ["github.com"];
     publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6fj0Xq7y9eGOs90HzDPW3uTilh/Ar";
   };
   programs.ssh.extraConfig = ''
@@ -93,7 +91,7 @@ in
       message = "ACCESS: User '${emergency.name}' muss isNormalUser = true sein.";
     }
     {
-      assertion = lib.elem "wheel" (config.users.users.${emergency.name}.extraGroups or [ ]);
+      assertion = lib.elem "wheel" (config.users.users.${emergency.name}.extraGroups or []);
       message = "ACCESS: User '${emergency.name}' braucht Gruppe 'wheel' (sudo).";
     }
     {
@@ -117,7 +115,7 @@ in
       message = "ACCESS: OpenSSH muss aktiviert sein.";
     }
     {
-      assertion = lib.elem p.network.sshPort (config.services.openssh.ports or [ ]);
+      assertion = lib.elem p.network.sshPort (config.services.openssh.ports or []);
       message = "ACCESS: SSH muss auf Port ${toString p.network.sshPort} lauschen.";
     }
     {
@@ -132,7 +130,8 @@ in
       assertion =
         !(config.my.services.blocky.enable or false)
         || (
-          lan.dns == [ "127.0.0.1" ]
+          lan.dns
+          == ["127.0.0.1"]
           && dnsPolicy.allEncrypted p.network.blocky.upstream
           && dnsPolicy.allEncrypted p.network.dns.bootstrap
         );

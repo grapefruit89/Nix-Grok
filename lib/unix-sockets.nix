@@ -7,11 +7,9 @@
 #     - unix-socket
 #     - caddy
 # ---
-{ lib, ... }:
-
-{
+{lib, ...}: {
   # ── bereits aktiv ──────────────────────────────────────────────────────────
-  valkey  = "/run/redis-valkey/valkey.sock";
+  valkey = "/run/redis-valkey/valkey.sock";
   grafana = "/run/grafana/grafana.sock";
 
   # ── 10-network ─────────────────────────────────────────────────────────────
@@ -25,10 +23,10 @@
 
   # ── 60-apps ────────────────────────────────────────────────────────────────
   vaultwarden = "/run/vaultwarden/vaultwarden.sock";
-  paperless   = "/run/paperless/paperless.sock";
-  linkwarden  = "/run/linkwarden/linkwarden.sock";
-  open-webui  = "/run/open-webui/open-webui.sock";
-  homepage    = "/run/homepage/homepage.sock";
+  paperless = "/run/paperless/paperless.sock";
+  linkwarden = "/run/linkwarden/linkwarden.sock";
+  open-webui = "/run/open-webui/open-webui.sock";
+  homepage = "/run/homepage/homepage.sock";
 
   # ── 70-forge ───────────────────────────────────────────────────────────────
 

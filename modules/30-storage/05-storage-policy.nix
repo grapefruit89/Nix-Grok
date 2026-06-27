@@ -13,12 +13,14 @@
 #     - storage
 #     - tier-c
 # ---
-{ config, lib, ... }:
-
-let
-  policy = import ../../lib/storage-policy.nix { inherit lib; };
+{
+  config,
+  lib,
+  ...
+}: let
+  policy = import ../../lib/storage-policy.nix {inherit lib;};
   storage = config.my.configs.storage;
-  tierC = storage.tierC;
+  inherit (storage) tierC;
 
   defaultExemptions = [
     # Mover & Automount
@@ -40,13 +42,12 @@ let
   ];
 
   markers = policy.defaultTierCMarkers {
-    mountPoint = tierC.mountPoint;
-    automountParent = tierC.automountParent;
-    labels = tierC.labels;
-    legacyPrefixes = tierC.legacyPrefixes;
+    inherit (tierC) mountPoint;
+    inherit (tierC) automountParent;
+    inherit (tierC) labels;
+    inherit (tierC) legacyPrefixes;
   };
-in
-{
+in {
   options.my.configs.storage = {
     tierB.mountPoint = lib.mkOption {
       type = lib.types.str;
@@ -73,7 +74,7 @@ in
       };
       legacyPrefixes = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "TIER_C_" ];
+        default = ["TIER_C_"];
         description = "Legacy path prefixes that imply Tier C.";
       };
     };
@@ -88,16 +89,17 @@ in
     };
   };
 
-  config = {
-    my.storage-policy.enable = lib.mkDefault true;
-  }
-  // lib.mkIf config.my.storage-policy.enable {
-    assertions = [
-      (policy.mkTierCAssertion {
-        exemptions = config.my.storage-policy.tierCExemptions;
-        inherit markers;
-        systemdServices = config.systemd.services;
-      })
-    ];
-  };
+  config =
+    {
+      my.storage-policy.enable = lib.mkDefault true;
+    }
+    // lib.mkIf config.my.storage-policy.enable {
+      assertions = [
+        (policy.mkTierCAssertion {
+          exemptions = config.my.storage-policy.tierCExemptions;
+          inherit markers;
+          systemdServices = config.systemd.services;
+        })
+      ];
+    };
 }

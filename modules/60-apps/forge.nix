@@ -16,15 +16,11 @@
   lib,
   pkgs,
   ...
-}:
-
-let
-  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
+}: let
+  caddy = import ../../lib/caddy-helpers.nix {inherit lib;};
   cfgCockpit = config.my.services.cockpit;
   domain = config.my.configs.identity.domain;
-
-in
-{
+in {
   # ============================================================================
   # OPTIONS
   # ============================================================================
@@ -77,7 +73,7 @@ in
             extraConfig = caddy.mkProxy {
               port = cfgCockpit.amtPort;
               host = cfgCockpit.amtHost;
-              imports = [ "sso_auth" ];
+              imports = ["sso_auth"];
             };
           };
         };

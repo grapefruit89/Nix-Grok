@@ -12,21 +12,18 @@
   lib,
   modulesPath,
   ...
-}:
-
-let
+}: let
   p = import ./profile.nix;
   boot = p.storage.tierA.boot;
   persist = p.storage.tierA.persist;
-in
-{
-  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+in {
+  imports = [(modulesPath + "/installer/scan/not-detected.nix")];
 
   boot = {
     initrd.availableKernelModules = p.hardware.initrdModules;
-    initrd.kernelModules = [ ];
-    kernelModules = [ p.hardware.kvmModule ];
-    extraModulePackages = [ ];
+    initrd.kernelModules = [];
+    kernelModules = [p.hardware.kvmModule];
+    extraModulePackages = [];
   };
 
   fileSystems."/boot" = {
@@ -43,7 +40,7 @@ in
     inherit (persist) fsType;
   };
 
-  swapDevices = [ ];
+  swapDevices = [];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

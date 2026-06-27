@@ -7,8 +7,7 @@
 #     - iot
 #     - home-automation
 # ---
-{ ... }:
-{
+{...}: {
   imports = [
     ./home-assistant.nix
     ./zigbee-stack.nix

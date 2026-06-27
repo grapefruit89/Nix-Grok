@@ -7,14 +7,15 @@
 #     - wiring
 #     - q958
 # ---
-{ lib, pkgs, ... }:
-
-let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   p = import ./profile.nix;
   moritz = import ../../users/moritz/profile.nix;
   zigbeeSocket = "socket://${p.iot.zigbeeCoordinator.host}:${toString p.iot.zigbeeCoordinator.port}";
-in
-{
+in {
   imports = [
     ./hardware.nix
     ../../modules/00-core
@@ -75,7 +76,7 @@ in
     configs = {
       identity = {
         user = moritz.name;
-        domain = moritz.domain;
+        inherit (moritz) domain;
       };
       hardware = {
         ramGB = p.hardware.ramGB;
@@ -189,7 +190,7 @@ in
     settings.model = {
       base_url = "https://openrouter.ai/api/v1";
       # === FREIE MODELLE (kein Verbrauch) ===
-      default = "qwen/qwen3-coder:free";       # Code-optimiert, 1M ctx
+      default = "qwen/qwen3-coder:free"; # Code-optimiert, 1M ctx
       # default = "nvidia/nemotron-3-ultra-550b-a55b:free"; # 550B, 1M ctx
       # default = "nvidia/nemotron-3-super-120b-a12b:free"; # 120B, 1M ctx
       # default = "qwen/qwen3-next-80b-a3b-instruct:free";  # allgemein, 262k ctx
@@ -199,10 +200,10 @@ in
       # default = "deepseek/deepseek-chat-v3-0324";        # $0.20/M, 163k ctx
       # default = "qwen/qwen3-235b-a22b-2507";             # $0.09/M, 262k ctx
     };
-    environmentFiles = [ "/var/lib/secrets/hermes.env" ];
+    environmentFiles = ["/var/lib/secrets/hermes.env"];
     mcpServers.nixos-docs = {
       command = "${pkgs.python3}/bin/python3";
-      args = [ "/var/lib/hermes/nixos-docs-mcp.py" ];
+      args = ["/var/lib/hermes/nixos-docs-mcp.py"];
     };
     mcpServers.exa = {
       url = "https://mcp.exa.ai/mcp";

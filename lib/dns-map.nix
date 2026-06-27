@@ -11,9 +11,7 @@
 #     - caddy
 #     - ssot
 # ---
-{ domain }:
-
-let
+{domain}: let
   fqdn = sub: "${sub}.${domain}";
 
   # Schlüssel = Service-/Modul-Name; Wert = live FQDN (kann vom Schlüssel abweichen)
@@ -45,9 +43,11 @@ let
     "zigbee-stack" = fqdn "zigbee";
     ddns-updater = fqdn "ddns";
   };
-in
-{
+in {
   inherit domain mapping;
 
-  host = key: if builtins.hasAttr key mapping then mapping.${key} else fqdn key;
+  host = key:
+    if builtins.hasAttr key mapping
+    then mapping.${key}
+    else fqdn key;
 }

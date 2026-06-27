@@ -7,14 +7,15 @@
 #     - storage
 #     - tier-policy
 # ---
-{ lib, pkgs, ... }:
-
-let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   p = import ./profile.nix;
   s = p.storage;
   tp = s.tierPolicy;
-in
-{
+in {
   assertions = [
     {
       assertion = !(s.singleDisk && s.mergerfsEnable);
@@ -51,15 +52,15 @@ in
   ];
 
   my.services.storage-automount = {
-    singleDisk = s.singleDisk;
+    inherit (s) singleDisk;
     tierADevice = s.tierA.device;
-    systemLabels = s.systemLabels;
+    inherit (s) systemLabels;
     tierBLabel = s.tierB.label;
     tierCLabels = s.tierC.labels;
   };
 
   # Einmal-Migration: BOOT/NIXHOME_PERSIST → NIXBOOT/NIXPERSIST
-  system.activationScripts.relabelTierALabels = lib.stringAfter [ "specialfs" ] ''
+  system.activationScripts.relabelTierALabels = lib.stringAfter ["specialfs"] ''
     boot_dev="${s.tierA.device}1"
     persist_dev="${s.tierA.device}2"
     if [ -b "$boot_dev" ]; then

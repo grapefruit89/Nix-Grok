@@ -3,9 +3,7 @@
   pkgs,
   lib,
   ...
-}:
-
-{
+}: {
   options.services.aider = {
     enable = lib.mkEnableOption "Aider AI coding assistant";
   };

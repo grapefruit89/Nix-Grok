@@ -12,71 +12,62 @@
 #     - tier-c
 #     - policy
 # ---
-{ lib }:
-
-let
-  pathStringsFromService =
-    svc:
+{lib}: let
+  pathStringsFromService = svc:
     lib.flatten [
-      (svc.serviceConfig.ReadWritePaths or [ ])
-      (svc.serviceConfig.BindPaths or [ ])
-      (svc.serviceConfig.BindReadOnlyPaths or [ ])
+      (svc.serviceConfig.ReadWritePaths or [])
+      (svc.serviceConfig.BindPaths or [])
+      (svc.serviceConfig.BindReadOnlyPaths or [])
       (lib.optional (svc.serviceConfig.ExecStart or null != null) (toString svc.serviceConfig.ExecStart))
-      (map toString (svc.serviceConfig.ExecStartPre or [ ]))
-      (map toString (svc.serviceConfig.ExecStartPost or [ ]))
-      (map toString (svc.serviceConfig.EnvironmentFile or [ ]))
+      (map toString (svc.serviceConfig.ExecStartPre or []))
+      (map toString (svc.serviceConfig.ExecStartPost or []))
+      (map toString (svc.serviceConfig.EnvironmentFile or []))
     ];
 
-  usesTierC =
-    markers: pathList:
+  usesTierC = markers: pathList:
     lib.any (
-      path:
-      let
+      path: let
         s = toString path;
       in
-      lib.any (m: lib.strings.hasInfix m s) markers
-    ) pathList;
+        lib.any (m: lib.strings.hasInfix m s) markers
+    )
+    pathList;
 
-  unauthorizedTierCServices =
-    {
-      exemptions,
-      markers,
-      systemdServices,
-    }:
+  unauthorizedTierCServices = {
+    exemptions,
+    markers,
+    systemdServices,
+  }:
     lib.filterAttrs (
-      name: svc:
-      let
+      name: svc: let
         paths = pathStringsFromService svc;
       in
-      !(lib.elem name exemptions) && usesTierC markers paths
-    ) systemdServices;
+        !(lib.elem name exemptions) && usesTierC markers paths
+    )
+    systemdServices;
 
-  mkTierCAssertion =
-    {
-      exemptions,
-      markers,
-      systemdServices,
-    }:
-    let
-      offenders = unauthorizedTierCServices {
-        inherit exemptions markers systemdServices;
-      };
-      names = lib.attrNames offenders;
-    in
-    {
-      assertion = offenders == { };
-      message =
-        "[TIER-C] Unautorisierte HDD-Zugriffe (Tier C): ${lib.concatStringsSep ", " names}. "
-        + "Nur Exemptions dürfen ${lib.concatStringsSep ", " markers} berühren — App-State gehört auf Tier A/B.";
+  mkTierCAssertion = {
+    exemptions,
+    markers,
+    systemdServices,
+  }: let
+    offenders = unauthorizedTierCServices {
+      inherit exemptions markers systemdServices;
     };
+    names = lib.attrNames offenders;
+  in {
+    assertion = offenders == {};
+    message =
+      "[TIER-C] Unautorisierte HDD-Zugriffe (Tier C): ${lib.concatStringsSep ", " names}. "
+      + "Nur Exemptions dürfen ${lib.concatStringsSep ", " markers} berühren — App-State gehört auf Tier A/B.";
+  };
 
-  defaultTierCMarkers =
-    {
-      mountPoint,
-      automountParent ? "/mnt/tier-c",
-      labels ? [ ],
-      legacyPrefixes ? [ ],
-    }:
+  defaultTierCMarkers = {
+    mountPoint,
+    automountParent ? "/mnt/tier-c",
+    labels ? [],
+    legacyPrefixes ? [],
+  }:
     [
       mountPoint
       automountParent
@@ -84,9 +75,7 @@ let
     ++ (map (l: "/mnt/tier-c/${l}") labels)
     ++ (map (l: "by-label/${l}") labels)
     ++ legacyPrefixes;
-
-in
-{
+in {
   inherit
     usesTierC
     unauthorizedTierCServices

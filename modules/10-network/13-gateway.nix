@@ -20,16 +20,13 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfgDdns = config.my.services.ddns-updater;
   cfgGuard = config.my.services.dns-guard;
-  factory = import ../../lib/service-factory.nix { inherit lib; };
+  factory = import ../../lib/service-factory.nix {inherit lib;};
   portDdns = config.my.ports.ddns-updater;
   ddnsCfg = config.my.configs.ddns;
-in
-{
+in {
   options.my = {
     configs.ddns = {
       zone = lib.mkOption {
@@ -70,11 +67,11 @@ in
       };
 
       systemd.services.ddns-updater = {
-        after = [ "q958-secrets-provision.service" ];
-        requires = [ "q958-secrets-provision.service" ];
+        after = ["q958-secrets-provision.service"];
+        requires = ["q958-secrets-provision.service"];
         serviceConfig = lib.mkMerge [
           (factory.systemdHardening {
-            readWritePaths = [ "/var/lib/ddns-updater" ];
+            readWritePaths = ["/var/lib/ddns-updater"];
           })
           {
             DynamicUser = lib.mkForce false;
@@ -90,9 +87,9 @@ in
         group = "ddns-updater";
         home = "/var/lib/ddns-updater";
       };
-      users.groups.ddns-updater = { };
+      users.groups.ddns-updater = {};
 
-      my.impermanence.extraPaths = [ "/var/lib/ddns-updater" ];
+      my.impermanence.extraPaths = ["/var/lib/ddns-updater"];
     })
 
     (lib.mkIf (cfgGuard.enable && cfgDdns.enable) {
@@ -102,7 +99,7 @@ in
           "network-online.target"
           "q958-secrets-provision.service"
         ];
-        wants = [ "network-online.target" ];
+        wants = ["network-online.target"];
         serviceConfig = {
           Type = "oneshot";
           StateDirectory = "dns-guard";
@@ -141,7 +138,7 @@ in
       };
 
       systemd.timers.dns-guard = {
-        wantedBy = [ "timers.target" ];
+        wantedBy = ["timers.target"];
         timerConfig = {
           OnBootSec = "2min";
           OnUnitActiveSec = "30min";

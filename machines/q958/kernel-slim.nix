@@ -13,28 +13,25 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   p = import ./profile.nix;
   k = p.kernel;
   cfg = config.my.core.kernel-slim;
-  policy = import ../../lib/kernel/policy.nix { inherit lib; };
+  policy = import ../../lib/kernel/policy.nix {inherit lib;};
 
   policyInput = {
     mode = k.policy.mode;
     homelabProfile = k.policy.homelabProfile;
-    requiredModules = k.requiredModules;
-    requiredInitrdModules = k.requiredInitrdModules;
+    inherit (k) requiredModules;
+    inherit (k) requiredInitrdModules;
     hostBlacklist = lib.flatten (lib.attrValues k.blacklist);
-    whitelistExtra = k.whitelistExtra;
-    moduleRoles = k.moduleRoles;
+    inherit (k) whitelistExtra;
+    inherit (k) moduleRoles;
     hostLabel = "q958";
   };
 
   resolved = policy.compute policyInput;
-in
-{
+in {
   config = {
     my.core.kernel-slim = {
       mode = lib.mkDefault k.policy.mode;
@@ -47,7 +44,7 @@ in
     boot.initrd.availableKernelModules = lib.mkIf cfg.enable (lib.mkAfter k.requiredInitrdModules);
 
     hardware.enableRedistributableFirmware = lib.mkIf cfg.enable (lib.mkForce false);
-    hardware.firmware = lib.mkIf cfg.enable (lib.mkForce [ pkgs.linux-firmware ]);
+    hardware.firmware = lib.mkIf cfg.enable (lib.mkForce [pkgs.linux-firmware]);
 
     assertions = lib.mkIf cfg.enable resolved.assertions;
   };

@@ -26,21 +26,17 @@
   lib,
   pkgs,
   ...
-}:
-
-let
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
-  sockets = import ../../lib/unix-sockets.nix { inherit lib; };
+}: let
+  memory = import ../../lib/memory-policy.nix {inherit lib;};
+  sockets = import ../../lib/unix-sockets.nix {inherit lib;};
   cfgGatus = config.my.services.gatus;
   cfgObs = config.my.observability;
   cfgCrowdsec = config.my.security.crowdsec;
   cfgVM = config.my.observability.victoriametrics;
   domain = config.my.configs.identity.domain;
-  yaml = pkgs.formats.yaml { };
-  gatusLib = import ../../lib/gatus-endpoints.nix { inherit lib config; };
-
-in
-{
+  yaml = pkgs.formats.yaml {};
+  gatusLib = import ../../lib/gatus-endpoints.nix {inherit lib config;};
+in {
   # ============================================================================
   # OPTIONS
   # ============================================================================
@@ -98,7 +94,7 @@ in
       users.users.monitoring = {
         isSystemUser = true;
         group = "media";
-        extraGroups = lib.mkIf (config.my.services.valkey.enable or false) [ "redis-valkey" ];
+        extraGroups = lib.mkIf (config.my.services.valkey.enable or false) ["redis-valkey"];
         home = "/var/lib/monitoring";
         createHome = true;
         shell = pkgs.bash;
@@ -291,7 +287,6 @@ in
             web.port = cfgGatus.port;
           };
         };
-
       };
 
       systemd.services.gatus = {
@@ -314,11 +309,11 @@ in
           NoNewPrivileges = true;
           MemoryDenyWriteExecute = true;
           DevicePolicy = "closed";
-          CapabilityBoundingSet = [ "CAP_NET_RAW" ];
-          AmbientCapabilities = [ "CAP_NET_RAW" ];
+          CapabilityBoundingSet = ["CAP_NET_RAW"];
+          AmbientCapabilities = ["CAP_NET_RAW"];
           StateDirectory = "gatus";
         };
-        after = [ "network.target" ];
+        after = ["network.target"];
       };
     })
 
@@ -374,13 +369,13 @@ in
             sources = {
               journald_source = {
                 type = "journald";
-                exclude_units = [ "vector.service" ];
+                exclude_units = ["vector.service"];
               };
             };
             transforms = {
               caddy_parse = {
                 type = "remap";
-                inputs = [ "journald_source" ];
+                inputs = ["journald_source"];
                 source = ''
                   if .SYSLOG_IDENTIFIER == "caddy" {
                     parsed, err = parse_json(.message)
@@ -406,7 +401,7 @@ in
             sinks = {
               loki_sink = {
                 type = "loki";
-                inputs = [ "caddy_parse" ];
+                inputs = ["caddy_parse"];
                 endpoint = "http://127.0.0.1:${toString cfgObs.lokiPort}";
                 encoding.codec = "json";
                 labels = {
@@ -445,12 +440,11 @@ in
             ];
           };
         };
-
       };
 
       systemd.services = {
         loki.serviceConfig = lib.mkMerge [
-          (memory.loki { })
+          (memory.loki {})
           {
             ProtectSystem = lib.mkForce "strict";
             ProtectHome = true;
@@ -463,13 +457,13 @@ in
             MemoryDenyWriteExecute = true;
             DevicePolicy = "closed";
             CapabilityBoundingSet = "";
-            ReadWritePaths = [ "/var/lib/loki" ];
+            ReadWritePaths = ["/var/lib/loki"];
           }
         ];
 
         vector = {
           serviceConfig = lib.mkMerge [
-            (memory.vector { })
+            (memory.vector {})
             {
               StateDirectory = "vector";
               StateDirectoryMode = "0750";
@@ -484,7 +478,7 @@ in
               MemoryDenyWriteExecute = true;
               DevicePolicy = "closed";
               CapabilityBoundingSet = "";
-              ReadWritePaths = [ "/var/lib/vector" ];
+              ReadWritePaths = ["/var/lib/vector"];
             }
           ];
         };
@@ -496,7 +490,7 @@ in
             fi
           '';
           serviceConfig = lib.mkMerge [
-            (memory.grafana { })
+            (memory.grafana {})
             {
               ProtectSystem = lib.mkForce "strict";
               ProtectHome = true;
@@ -509,7 +503,7 @@ in
               MemoryDenyWriteExecute = true;
               DevicePolicy = "closed";
               CapabilityBoundingSet = "";
-              ReadWritePaths = [ "/var/lib/grafana" ];
+              ReadWritePaths = ["/var/lib/grafana"];
               EnvironmentFile = "-/var/lib/secrets/grafana.env";
             }
           ];
@@ -550,8 +544,7 @@ in
           done
           ${pkgs.coreutils}/bin/rm -rf /var/lib/crowdsec-firewall-bouncer-register 2>/dev/null || true
         '';
-      in
-      {
+      in {
         systemd.tmpfiles.rules = [
           "d /etc/crowdsec 0755 root root -"
           "L+ /etc/crowdsec/config.yaml - - - - ${crowdsecEtcConfig}"
@@ -571,12 +564,12 @@ in
           localConfig.acquisitions = [
             {
               source = "journalctl";
-              journalctl_filter = [ "_SYSTEMD_UNIT=sshd.service" ];
+              journalctl_filter = ["_SYSTEMD_UNIT=sshd.service"];
               labels.type = "sshd";
             }
             {
               source = "journalctl";
-              journalctl_filter = [ "_SYSTEMD_UNIT=caddy.service" ];
+              journalctl_filter = ["_SYSTEMD_UNIT=caddy.service"];
               labels.type = "caddy";
             }
           ];
@@ -584,8 +577,8 @@ in
             general.api = {
               client.credentials_path = lib.mkForce crowdsecCredFile;
               server = {
-              enable = true;
-              listen_uri = "127.0.0.1:${toString config.my.ports.crowdsec}";
+                enable = true;
+                listen_uri = "127.0.0.1:${toString config.my.ports.crowdsec}";
               };
             };
           };
@@ -607,7 +600,7 @@ in
           ProtectKernelModules = true;
           ProtectControlGroups = true;
           NoNewPrivileges = true;
-          ReadWritePaths = [ "/var/lib/crowdsec" ];
+          ReadWritePaths = ["/var/lib/crowdsec"];
         };
 
         services.crowdsec-firewall-bouncer = {
@@ -616,15 +609,16 @@ in
           settings = {
             api_url = "http://127.0.0.1:${toString config.my.ports.crowdsec}/";
             mode = "nftables";
-            nftables = {
-              ipv4_set_name = "crowdsec_blocked_ipv4";
-              table = "inet filter";
-              chain = "input";
-              ipv6.enabled = config.my.security.firewall.ipv6;
-            }
-            // lib.optionalAttrs config.my.security.firewall.ipv6 {
-              ipv6_set_name = "crowdsec_blocked_ipv6";
-            };
+            nftables =
+              {
+                ipv4_set_name = "crowdsec_blocked_ipv4";
+                table = "inet filter";
+                chain = "input";
+                ipv6.enabled = config.my.security.firewall.ipv6;
+              }
+              // lib.optionalAttrs config.my.security.firewall.ipv6 {
+                ipv6_set_name = "crowdsec_blocked_ipv6";
+              };
           };
         };
 
@@ -637,7 +631,7 @@ in
           ProtectKernelModules = true;
           ProtectControlGroups = true;
           NoNewPrivileges = true;
-          CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
+          CapabilityBoundingSet = ["CAP_NET_ADMIN"];
         };
       }
     ))
@@ -651,12 +645,12 @@ in
           scrape_configs = [
             {
               job_name = "node";
-              static_configs = [ { targets = [ "127.0.0.1:9100" ]; } ];
+              static_configs = [{targets = ["127.0.0.1:9100"];}];
               scrape_interval = "15s";
             }
             {
               job_name = "victoriametrics";
-              static_configs = [ { targets = [ "127.0.0.1:${toString cfgVM.port}" ]; } ];
+              static_configs = [{targets = ["127.0.0.1:${toString cfgVM.port}"];}];
               scrape_interval = "15s";
             }
           ];
@@ -668,12 +662,21 @@ in
         listenAddress = "127.0.0.1";
         port = 9100;
         enabledCollectors = [
-          "cpu" "diskstats" "filesystem" "loadavg" "meminfo"
-          "netdev" "stat" "time" "uname" "vmstat" "systemd"
+          "cpu"
+          "diskstats"
+          "filesystem"
+          "loadavg"
+          "meminfo"
+          "netdev"
+          "stat"
+          "time"
+          "uname"
+          "vmstat"
+          "systemd"
         ];
       };
 
-      systemd.services.victoriametrics.after = [ "prometheus-node-exporter.service" ];
+      systemd.services.victoriametrics.after = ["prometheus-node-exporter.service"];
 
       services.grafana.provision.datasources.settings.datasources = lib.mkAfter [
         {
@@ -685,6 +688,5 @@ in
         }
       ];
     })
-
   ];
 }

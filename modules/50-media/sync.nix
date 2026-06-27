@@ -14,17 +14,15 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfgSonarr = config.my.services.sonarr;
   cfgRadarr = config.my.services.radarr;
   cfgProwlarr = config.my.services.prowlarr;
   cfgSabnzbd = config.my.services.sabnzbd;
   cfgJellyfin = config.my.services.jellyfin;
   vpnCfg = config.my.services.vpn-confinement;
-  vpnConn = import ../../lib/vpn-connection.nix { inherit lib; };
-  waitFor = import ../../lib/wait-for-api.nix { inherit lib pkgs; };
+  vpnConn = import ../../lib/vpn-connection.nix {inherit lib;};
+  waitFor = import ../../lib/wait-for-api.nix {inherit lib pkgs;};
   ports = config.my.ports;
 
   anyEnabled =
@@ -37,13 +35,12 @@ let
   vpnNsAddress = vpnConn.connectionAddress vpnCfg "prowlarr";
   hostBridgeAddress = vpnConn.hostBridgeAddress vpnCfg "prowlarr";
 
-  mkWait =
-    {
-      enable,
-      name,
-      host,
-      port,
-    }:
+  mkWait = {
+    enable,
+    name,
+    host,
+    port,
+  }:
     lib.optional enable (
       waitFor.mkScript {
         inherit name;
@@ -54,33 +51,31 @@ let
 
   waitScripts = lib.concatStringsSep " && " (
     mkWait {
-      enable = cfgProwlarr.enable;
+      inherit (cfgProwlarr) enable;
       name = "prowlarr";
       host = vpnNsAddress;
       port = ports.prowlarr;
     }
     ++ mkWait {
-      enable = cfgSonarr.enable;
+      inherit (cfgSonarr) enable;
       name = "sonarr";
       host = "127.0.0.1";
       port = ports.sonarr;
     }
     ++ mkWait {
-      enable = cfgRadarr.enable;
+      inherit (cfgRadarr) enable;
       name = "radarr";
       host = "127.0.0.1";
       port = ports.radarr;
     }
     ++ mkWait {
-      enable = cfgSabnzbd.enable;
+      inherit (cfgSabnzbd) enable;
       name = "sabnzbd";
       host = vpnConn.connectionAddress vpnCfg "sabnzbd";
       port = ports.sabnzbd;
     }
   );
-
-in
-{
+in {
   config = lib.mkIf anyEnabled {
     systemd.services.media-stack-config-sync = {
       description = "Declarative Media Stack Locale and Application Sync Orchestrator";
@@ -98,7 +93,7 @@ in
         "sabnzbd.service"
         "jellyfin.service"
       ];
-      wantedBy = [ "multi-user.target" ];
+      wantedBy = ["multi-user.target"];
       path = with pkgs; [
         curl
         jq
@@ -127,23 +122,22 @@ in
 
       script =
         (
-          if waitScripts != "" then
-            ''
-              if systemctl is-active --quiet privado-vpn.service; then
-                if ${waitScripts}; then
-                  PROWLARR_REACHABLE=true
-                else
-                  echo "Prowlarr nicht erreichbar nach Wartezeit — Prowlarr-API-Sync wird übersprungen."
-                  PROWLARR_REACHABLE=false
-                fi
+          if waitScripts != ""
+          then ''
+            if systemctl is-active --quiet privado-vpn.service; then
+              if ${waitScripts}; then
+                PROWLARR_REACHABLE=true
               else
-                echo "privado-vpn.service nicht aktiv — Prowlarr-VPN-Sync wird übersprungen."
+                echo "Prowlarr nicht erreichbar nach Wartezeit — Prowlarr-API-Sync wird übersprungen."
                 PROWLARR_REACHABLE=false
               fi
-              export PROWLARR_REACHABLE
-            ''
-          else
-            ""
+            else
+              echo "privado-vpn.service nicht aktiv — Prowlarr-VPN-Sync wird übersprungen."
+              PROWLARR_REACHABLE=false
+            fi
+            export PROWLARR_REACHABLE
+          ''
+          else ""
         )
         + builtins.readFile ./sync-script.sh;
     };

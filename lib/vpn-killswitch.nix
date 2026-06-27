@@ -7,11 +7,13 @@
 #     - vpn
 #     - privado
 # ---
-{ lib, privadoEnabled }:
-
+{
+  lib,
+  privadoEnabled,
+}:
 lib.optionalAttrs privadoEnabled {
-  bindsTo = [ "sys-subsystem-net-devices-privado.device" ];
-  after = [ "sys-subsystem-net-devices-privado.device" ];
+  bindsTo = ["sys-subsystem-net-devices-privado.device"];
+  after = ["sys-subsystem-net-devices-privado.device"];
   serviceConfig.RestrictNetworkInterfaces = [
     "lo"
     "privado"

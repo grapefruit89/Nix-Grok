@@ -14,14 +14,11 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfg = config.my.services.storage-automount;
   mediaGroup = "media";
   tierCLabelMatch = lib.concatMapStringsSep " || " (l: "[ \"\$LABEL\" = \"${l}\" ]") cfg.tierCLabels;
-in
-{
+in {
   options.my.services.storage-automount = {
     enable = lib.mkEnableOption "Automated storage auto-mounting and pooling with Tier A/B/C";
 
@@ -66,7 +63,7 @@ in
     };
 
     defaultTierForInternalHDD = lib.mkOption {
-      type = lib.types.enum [ "C" ];
+      type = lib.types.enum ["C"];
       default = "C";
       description = "Tier für interne HDDs ohne Label — immer C (cold storage).";
     };
@@ -92,13 +89,13 @@ in
         psmisc
       ];
 
-      bindsTo = [ "dev-%i.device" ];
+      bindsTo = ["dev-%i.device"];
       after = [
         "dev-%i.device"
         "local-fs.target"
       ];
-      requires = [ "dev-%i.device" ];
-      partOf = [ "dev-%i.device" ];
+      requires = ["dev-%i.device"];
+      partOf = ["dev-%i.device"];
 
       unitConfig = {
         StopWhenUnneeded = true;
@@ -118,7 +115,7 @@ in
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateNetwork = true;
-        ReadWritePaths = [ "/mnt" ];
+        ReadWritePaths = ["/mnt"];
 
         ExecStart = pkgs.writeShellScript "tiered-automount" ''
           DEV="/dev/%I"
@@ -151,7 +148,11 @@ in
             DISK_NAME=$(echo "$DISK_NAME" | sed 's/[0-9]*$//')
           fi
 
-          if ${if cfg.singleDisk then "true" else "false"} && [ -n "${cfg.tierADevice}" ]; then
+          if ${
+            if cfg.singleDisk
+            then "true"
+            else "false"
+          } && [ -n "${cfg.tierADevice}" ]; then
             TIER_A_BASE=$(basename "${cfg.tierADevice}")
             if [ "$DISK_NAME" = "$TIER_A_BASE" ]; then
               echo "Tier-A system disk ($TIER_A_BASE) — skip automount."
@@ -224,7 +225,11 @@ in
               MOUNT_DIR="/mnt/tier-b/$LABEL"
               USE_POOL="fast_pool"
             elif [[ "$LABEL" =~ ^TIER_C_ ]] || [[ "$LABEL" =~ ^DISK_STORAGE_ ]] \
-              || ${if tierCLabelMatch != "" then tierCLabelMatch else "false"}; then
+              || ${
+            if tierCLabelMatch != ""
+            then tierCLabelMatch
+            else "false"
+          }; then
               TIER="INT_C"
               MOUNT_DIR="/mnt/tier-c/$LABEL"
               USE_POOL="media_pool"

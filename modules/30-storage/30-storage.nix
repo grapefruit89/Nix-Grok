@@ -14,9 +14,7 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   user = config.my.configs.identity.user;
   cfgImp = config.my.impermanence;
   cfgStorage = config.my.services.storage;
@@ -24,19 +22,20 @@ let
 
   # Tier A (NVMe/SSD Cache): Persistent high-priority states
   tierAStatic = {
-    paths = [
-      "/var/lib/secrets"
-      "/var/lib/nixos"
-      "/etc/nixos"
-      "/var/lib/tailscale"
-      "/var/lib/postgresql"
-      "/var/lib/caddy"
-      "/var/lib/loki"
-      "/var/lib/grafana"
-      "/var/lib/gatus"
-      "/var/lib/crowdsec"
-    ]
-    ++ lib.optional (user != "") "/home/${user}/.grok";
+    paths =
+      [
+        "/var/lib/secrets"
+        "/var/lib/nixos"
+        "/etc/nixos"
+        "/var/lib/tailscale"
+        "/var/lib/postgresql"
+        "/var/lib/caddy"
+        "/var/lib/loki"
+        "/var/lib/grafana"
+        "/var/lib/gatus"
+        "/var/lib/crowdsec"
+      ]
+      ++ lib.optional (user != "") "/home/${user}/.grok";
     files = [
       "/etc/machine-id"
       "/etc/ssh/ssh_host_ed25519_key"
@@ -55,11 +54,8 @@ let
       "/var/cache"
     ];
   };
-
   # Boot partition path for monitoring
-
-in
-{
+in {
   # ============================================================================
   # OPTIONS
   # ============================================================================
@@ -82,7 +78,7 @@ in
       };
       extraPaths = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ ];
+        default = [];
         description = "Zusätzliche Tier-A-Pfade aus mkService persistDirs.";
       };
     };
@@ -148,53 +144,55 @@ in
     # ── SOVEREIGN IMPERMANENCE (TMPFS /) ──────────────────────────────────────
     (lib.mkIf cfgImp.enable {
       # Stateless root on RAM (tmpfs) & persistent storage partition & declarative bind mounts
-      fileSystems = {
-        "/" = lib.mkForce {
-          device = "none";
-          fsType = "tmpfs";
-          options = [
-            "defaults"
-            "size=16G"
-            "mode=755"
-          ];
-        };
+      fileSystems =
+        {
+          "/" = lib.mkForce {
+            device = "none";
+            fsType = "tmpfs";
+            options = [
+              "defaults"
+              "size=16G"
+              "mode=755"
+            ];
+          };
 
-        "${cfgImp.persistMountPoint}" = {
-          device = cfgImp.persistentDisk;
-          fsType = "ext4";
-          neededForBoot = true;
-        };
-      }
-      // lib.listToAttrs (
-        map (path: {
-          name = path;
-          value = {
-            device = "${cfgImp.persistMountPoint}${path}";
-            fsType = "none";
-            options = [ "bind" ];
-            depends = [ cfgImp.persistMountPoint ];
+          "${cfgImp.persistMountPoint}" = {
+            device = cfgImp.persistentDisk;
+            fsType = "ext4";
+            neededForBoot = true;
           };
-        }) (tierAStatic.paths ++ config.my.impermanence.extraPaths)
-      )
-      // lib.listToAttrs (
-        map (file: {
-          name = file;
-          value = {
-            device = "${cfgImp.persistMountPoint}${file}";
+        }
+        // lib.listToAttrs (
+          map (path: {
+            name = path;
+            value = {
+              device = "${cfgImp.persistMountPoint}${path}";
+              fsType = "none";
+              options = ["bind"];
+              depends = [cfgImp.persistMountPoint];
+            };
+          }) (tierAStatic.paths ++ config.my.impermanence.extraPaths)
+        )
+        // lib.listToAttrs (
+          map (file: {
+            name = file;
+            value = {
+              device = "${cfgImp.persistMountPoint}${file}";
+              fsType = "none";
+              options = ["bind"];
+              depends = [cfgImp.persistMountPoint];
+            };
+          })
+          tierAStatic.files
+        )
+        // {
+          "${journaldPath}" = {
+            device = "${cfgImp.persistMountPoint}${journaldPath}";
             fsType = "none";
-            options = [ "bind" ];
-            depends = [ cfgImp.persistMountPoint ];
+            options = ["bind"];
+            depends = [cfgImp.persistMountPoint];
           };
-        }) tierAStatic.files
-      )
-      // {
-        "${journaldPath}" = {
-          device = "${cfgImp.persistMountPoint}${journaldPath}";
-          fsType = "none";
-          options = [ "bind" ];
-          depends = [ cfgImp.persistMountPoint ];
         };
-      };
 
       # Journald persistent storage for forensics
       services.journald = {
@@ -211,12 +209,12 @@ in
           tierAStatic.paths ++ config.my.impermanence.extraPaths
         ))
         ++ (map (p: "d ${p} 0755 root root -") tierB.paths)
-        ++ [ "d ${cfgImp.persistMountPoint}${journaldPath} 0755 root root -" ];
+        ++ ["d ${cfgImp.persistMountPoint}${journaldPath} 0755 root root -"];
     })
 
     # ── MERGERFS HYBRID POOLING ───────────────────────────────────────────────
     (lib.mkIf cfgStorage.enable {
-      boot.supportedFilesystems = [ "ext4" ];
+      boot.supportedFilesystems = ["ext4"];
 
       # Pooling mounts
       fileSystems = {
@@ -277,7 +275,7 @@ in
         # ── PENDING DISKS WATCHER ───────────────────────────────────────────────
         services.nixhome-pending-watcher = {
           description = "Scans for new unlabelled legacy drives";
-          wantedBy = [ "multi-user.target" ];
+          wantedBy = ["multi-user.target"];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = pkgs.writeShellScript "pending-watcher" ''
@@ -300,13 +298,13 @@ in
             ProtectSystem = "strict";
             ProtectHome = true;
             PrivateNetwork = true;
-            ReadWritePaths = [ "/run/nixhome-pending-disks" ];
-            CapabilityBoundingSet = [ "CAP_SYS_ADMIN" ];
+            ReadWritePaths = ["/run/nixhome-pending-disks"];
+            CapabilityBoundingSet = ["CAP_SYS_ADMIN"];
           };
         };
 
         timers.nixhome-pending-watcher = {
-          wantedBy = [ "timers.target" ];
+          wantedBy = ["timers.target"];
           timerConfig = {
             OnBootSec = "1min";
             OnUnitActiveSec = "5min";
@@ -364,7 +362,6 @@ in
           systemctl start postgresql mosquitto || true
           systemctl start paperless-web paperless-scheduler paperless-task-queue n8n home-assistant linkwarden vaultwarden zigbee2mqtt || true
         '';
-
       };
 
       systemd.services.restic-backups-tier-a-sovereign = {
@@ -384,90 +381,90 @@ in
       let
         cfgMover = config.my.services.storage-mover;
       in
-      lib.mkIf cfgMover.enable {
-        systemd.services.nixhome-storage-mover = {
-          description = "Precision Storage Cache Mover (rclone local engine)";
-          after = [
-            "local-fs.target"
-            "network.target"
-          ];
+        lib.mkIf cfgMover.enable {
+          systemd.services.nixhome-storage-mover = {
+            description = "Precision Storage Cache Mover (rclone local engine)";
+            after = [
+              "local-fs.target"
+              "network.target"
+            ];
 
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = pkgs.writeShellScript "storage-mover" ''
-              set -euo pipefail
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = pkgs.writeShellScript "storage-mover" ''
+                set -euo pipefail
 
-              # Check current SSD cache capacity
-              CACHE_USAGE=$(df -h "${cfgMover.sourceDir}" | awk 'NR==2 {print $5}' | sed 's/%//')
+                # Check current SSD cache capacity
+                CACHE_USAGE=$(df -h "${cfgMover.sourceDir}" | awk 'NR==2 {print $5}' | sed 's/%//')
 
-              # Helper to check if any of our storage disks are already spinning
-              disks_spinning=false
-              for dev in /dev/disk/by-label/DISK_STORAGE_* /dev/disk/by-label/TIER_C_*; do
-                if [ -e "$dev" ]; then
-                  # hdparm -C returns 0 if active/idle, non-zero if standby/spun down
-                  if ${pkgs.hdparm}/bin/hdparm -C "$dev" 2>/dev/null | grep -q "active/idle"; then
-                    disks_spinning=true
-                    break
+                # Helper to check if any of our storage disks are already spinning
+                disks_spinning=false
+                for dev in /dev/disk/by-label/DISK_STORAGE_* /dev/disk/by-label/TIER_C_*; do
+                  if [ -e "$dev" ]; then
+                    # hdparm -C returns 0 if active/idle, non-zero if standby/spun down
+                    if ${pkgs.hdparm}/bin/hdparm -C "$dev" 2>/dev/null | grep -q "active/idle"; then
+                      disks_spinning=true
+                      break
+                    fi
                   fi
+                done
+
+                # Hysteresis controller decision logic
+                if [ "$CACHE_USAGE" -ge "${toString cfgMover.capacityThreshold}" ]; then
+                  echo "SSD Cache usage critical ($CACHE_USAGE%). Forcing migration to HDDs..."
+                elif [ "$disks_spinning" = true ]; then
+                  echo "HDDs are already spinning ($CACHE_USAGE% SSD usage). Performing opportunistic migration..."
+                else
+                  echo "HDDs are spun down and SSD usage ($CACHE_USAGE%) is under threshold (${toString cfgMover.capacityThreshold}%). Sleeping to conserve power."
+                  exit 0
                 fi
-              done
 
-              # Hysteresis controller decision logic
-              if [ "$CACHE_USAGE" -ge "${toString cfgMover.capacityThreshold}" ]; then
-                echo "SSD Cache usage critical ($CACHE_USAGE%). Forcing migration to HDDs..."
-              elif [ "$disks_spinning" = true ]; then
-                echo "HDDs are already spinning ($CACHE_USAGE% SSD usage). Performing opportunistic migration..."
-              else
-                echo "HDDs are spun down and SSD usage ($CACHE_USAGE%) is under threshold (${toString cfgMover.capacityThreshold}%). Sleeping to conserve power."
-                exit 0
-              fi
+                # Perform the atomic, verified local-to-local move via rclone
+                echo "Starting local file migration from ${cfgMover.sourceDir} to ${cfgMover.targetDir}..."
+                ${pkgs.rclone}/bin/rclone move "${cfgMover.sourceDir}" "${cfgMover.targetDir}" \
+                  --min-age "${cfgMover.minAge}" \
+                  --delete-empty-src-dirs \
+                  --transfers=4 \
+                  --checkers=8 \
+                  --exclude "**/incomplete/**" \
+                  --exclude "**/.staging/**" \
+                  -v \
+                  --log-file=/var/log/rclone-mover.log
 
-              # Perform the atomic, verified local-to-local move via rclone
-              echo "Starting local file migration from ${cfgMover.sourceDir} to ${cfgMover.targetDir}..."
-              ${pkgs.rclone}/bin/rclone move "${cfgMover.sourceDir}" "${cfgMover.targetDir}" \
-                --min-age "${cfgMover.minAge}" \
-                --delete-empty-src-dirs \
-                --transfers=4 \
-                --checkers=8 \
-                --exclude "**/incomplete/**" \
-                --exclude "**/.staging/**" \
-                -v \
-                --log-file=/var/log/rclone-mover.log
+                # Apply GID 169 Setgid inheritance on target directories to avoid permission drift
+                echo "Applying media group permissions to target directories..."
+                find "${cfgMover.targetDir}" -type d -exec chmod g+s {} + || true
+                chown -R root:media "${cfgMover.targetDir}" || true
+                chmod -R 775 "${cfgMover.targetDir}" || true
+              '';
 
-              # Apply GID 169 Setgid inheritance on target directories to avoid permission drift
-              echo "Applying media group permissions to target directories..."
-              find "${cfgMover.targetDir}" -type d -exec chmod g+s {} + || true
-              chown -R root:media "${cfgMover.targetDir}" || true
-              chmod -R 775 "${cfgMover.targetDir}" || true
-            '';
-
-            # Härtung & Sandboxing
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            PrivateNetwork = true;
-            CapabilityBoundingSet = [
-              "CAP_CHOWN"
-              "CAP_FOWNER"
-              "CAP_DAC_OVERRIDE"
-            ];
-            ReadWritePaths = [
-              cfgMover.sourceDir
-              cfgMover.targetDir
-              "/var/log"
-            ];
+              # Härtung & Sandboxing
+              ProtectSystem = "strict";
+              ProtectHome = true;
+              PrivateTmp = true;
+              PrivateNetwork = true;
+              CapabilityBoundingSet = [
+                "CAP_CHOWN"
+                "CAP_FOWNER"
+                "CAP_DAC_OVERRIDE"
+              ];
+              ReadWritePaths = [
+                cfgMover.sourceDir
+                cfgMover.targetDir
+                "/var/log"
+              ];
+            };
           };
-        };
 
-        systemd.timers.nixhome-storage-mover = {
-          description = "Precision Storage Cache Mover Timer";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = cfgMover.onCalendar;
-            Persistent = true;
+          systemd.timers.nixhome-storage-mover = {
+            description = "Precision Storage Cache Mover Timer";
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnCalendar = cfgMover.onCalendar;
+              Persistent = true;
+            };
           };
-        };
-      }
+        }
     )
   ];
 }

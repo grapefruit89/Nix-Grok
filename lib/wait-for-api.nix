@@ -7,17 +7,17 @@
 #     - media
 #     - api
 # ---
-{ lib, pkgs }:
-
 {
-  mkScript =
-    {
-      name,
-      url,
-      maxAttempts ? 30,
-      sleepSeconds ? 2,
-      requireFail ? false,
-    }:
+  lib,
+  pkgs,
+}: {
+  mkScript = {
+    name,
+    url,
+    maxAttempts ? 30,
+    sleepSeconds ? 2,
+    requireFail ? false,
+  }:
     pkgs.writeShellScript "wait-for-${name}" ''
       set -euo pipefail
       echo "Waiting for ${name} at '${url}'..."

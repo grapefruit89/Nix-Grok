@@ -13,9 +13,7 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfgBoot = config.my.core.boot-safeguard;
   cfgNix = config.my.core.nix-tuning;
   cfgZram = config.my.core.zram-swap;
@@ -23,10 +21,7 @@ let
   ramGB = config.my.configs.hardware.ramGB;
   isLowRam = ramGB <= 4;
   isMidRam = ramGB > 4 && ramGB <= 8;
-
-in
-
-{
+in {
   # ============================================================================
   # OPTIONS
   # ============================================================================
@@ -119,7 +114,7 @@ in
         ipv6 = {
           disableOnInterfaces = lib.mkOption {
             type = lib.types.listOf lib.types.str;
-            default = [ ];
+            default = [];
             description = "Physische Interfaces ohne IPv6 (sysctl + systemd-networkd). Tailscale/WG nicht listen.";
           };
           firewall = lib.mkOption {
@@ -333,23 +328,21 @@ in
           narinfo-cache-negative-ttl = 0;
 
           max-jobs =
-            if cfgNix.maxJobs != null then
-              lib.mkForce cfgNix.maxJobs
-            else if isLowRam then
-              lib.mkForce 1
-            else if isMidRam then
-              lib.mkForce 2
-            else
-              lib.mkDefault 4;
+            if cfgNix.maxJobs != null
+            then lib.mkForce cfgNix.maxJobs
+            else if isLowRam
+            then lib.mkForce 1
+            else if isMidRam
+            then lib.mkForce 2
+            else lib.mkDefault 4;
           cores =
-            if cfgNix.cores != null then
-              lib.mkForce cfgNix.cores
-            else if isLowRam then
-              lib.mkForce 1
-            else if isMidRam then
-              lib.mkForce 2
-            else
-              lib.mkDefault 0;
+            if cfgNix.cores != null
+            then lib.mkForce cfgNix.cores
+            else if isLowRam
+            then lib.mkForce 1
+            else if isMidRam
+            then lib.mkForce 2
+            else lib.mkDefault 0;
 
           # Build-Timeout gegen hängende Prozesse
           timeout = 3600;
@@ -368,8 +361,14 @@ in
           ];
         };
 
-        daemonCPUSchedPolicy = if cfgNix.daemonLowPriority then "idle" else "batch";
-        daemonIOSchedClass = if cfgNix.daemonLowPriority then "idle" else "best-effort";
+        daemonCPUSchedPolicy =
+          if cfgNix.daemonLowPriority
+          then "idle"
+          else "batch";
+        daemonIOSchedClass =
+          if cfgNix.daemonLowPriority
+          then "idle"
+          else "best-effort";
         daemonIOSchedPriority = lib.mkIf cfgNix.daemonLowPriority 7;
 
         # Wöchentlicher automatischer GC
@@ -402,12 +401,11 @@ in
         enable = true;
         algorithm = "zstd";
         memoryPercent =
-          if ramGB <= 4 then
-            75
-          else if ramGB <= 8 then
-            50
-          else
-            25;
+          if ramGB <= 4
+          then 75
+          else if ramGB <= 8
+          then 50
+          else 25;
       };
 
       # Kernel-Parameter für aggressives und effizientes ZRAM-Paging

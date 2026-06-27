@@ -14,21 +14,18 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfg = config.my.services.hermes;
   identityUser = config.my.configs.identity.user;
-in
-{
+in {
   config = lib.mkIf cfg.enable {
-    my.impermanence.extraPaths = [ "/var/lib/hermes" ];
+    my.impermanence.extraPaths = ["/var/lib/hermes"];
 
     # Hermes-Agent-Flake: eigener System-User, State unter /var/lib/hermes
     services.hermes-agent = {
       enable = true;
       addToSystemPackages = true;
-      environmentFiles = [ "/var/lib/hermes/env" ];
+      environmentFiles = ["/var/lib/hermes/env"];
 
       settings = {
         model.default = "deepseek-ai/deepseek-v4-flash";
@@ -63,7 +60,7 @@ in
     };
     services.hermes-agent.container.enable = lib.mkIf cfg.containerMode true;
     services.hermes-agent.container.backend = lib.mkIf cfg.containerMode "podman";
-    services.hermes-agent.container.hostUsers = lib.mkIf cfg.containerMode [ identityUser ];
+    services.hermes-agent.container.hostUsers = lib.mkIf cfg.containerMode [identityUser];
 
     virtualisation.podman.enable = lib.mkIf cfg.containerMode true;
 
@@ -89,11 +86,11 @@ in
           fi
         '';
       };
-      wantedBy = [ "multi-user.target" ];
-      before = [ "hermes-agent.service" ];
+      wantedBy = ["multi-user.target"];
+      before = ["hermes-agent.service"];
     };
 
     # Kein root-WebUI — Gateway läuft als User hermes mit upstream-Härtung
-    networking.firewall.allowedTCPPorts = lib.mkIf cfg.exposeGatewayPort [ cfg.port ];
+    networking.firewall.allowedTCPPorts = lib.mkIf cfg.exposeGatewayPort [cfg.port];
   };
 }

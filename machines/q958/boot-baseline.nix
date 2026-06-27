@@ -7,16 +7,17 @@
 #     - boot
 #     - baseline
 # ---
-{ lib, pkgs, ... }:
-
-let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   p = import ./profile.nix;
   machineId = "e62778ec1b5b4a23850bb783b7b61a12";
   linuxEfi = "/EFI/nixos/k3c378ybgwrx5k5216z6s3ki12kav2xv-linux-7.0.10-bzImage.efi";
   initrdEfi = "/EFI/nixos/krc3yn0vkfaxbysaddpwpn8h6z7q4ygv-initrd-linux-7.0.10-initrd.efi";
   kernelParams = lib.concatStringsSep " " p.boot.kernelParams;
-in
-{
+in {
   boot.loader.systemd-boot.extraEntries = {
     "q958-baseline-gen85.conf" = ''
       title Baseline (Gen 85)
@@ -40,8 +41,8 @@ in
 
   systemd.services.q958-pin-baseline-boot = {
     description = "Baseline-Boot-Einträge schreibgeschützt (nach systemd-boot-update)";
-    after = [ "systemd-boot-update.service" ];
-    wantedBy = [ "multi-user.target" ];
+    after = ["systemd-boot-update.service"];
+    wantedBy = ["multi-user.target"];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;

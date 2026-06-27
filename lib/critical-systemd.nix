@@ -12,9 +12,7 @@
 {
   lib,
   oomScore ? -900,
-}:
-
-{
+}: {
   Restart = lib.mkForce "always";
   RestartSec = lib.mkForce "5s";
   # Kein Start-Rate-Limit — Dienst soll nach Crash immer wieder hochkommen

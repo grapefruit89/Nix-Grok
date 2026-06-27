@@ -14,11 +14,13 @@
 #     - media
 #     - usenet
 # ---
-{ config, lib, ... }:
-
-let
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
-  vpnConn = import ../../lib/vpn-connection.nix { inherit lib; };
+{
+  config,
+  lib,
+  ...
+}: let
+  memory = import ../../lib/memory-policy.nix {inherit lib;};
+  vpnConn = import ../../lib/vpn-connection.nix {inherit lib;};
   cfgSabnzbd = config.my.services.sabnzbd;
   vpnCfg = config.my.services.vpn-confinement;
   portSabnzbd = config.my.ports.sabnzbd;
@@ -29,11 +31,9 @@ let
     inherit lib;
     privadoEnabled = config.my.services.privado-vpn.enable or false;
   };
-
-in
-{
+in {
   config = lib.mkIf cfgSabnzbd.enable {
-    my.impermanence.extraPaths = [ "/var/lib/sabnzbd" ];
+    my.impermanence.extraPaths = ["/var/lib/sabnzbd"];
 
     services.sabnzbd = {
       enable = true;
@@ -43,7 +43,10 @@ in
       settings = {
         misc = {
           port = portSabnzbd;
-          host = if sabInVpn then "0.0.0.0" else "127.0.0.1";
+          host =
+            if sabInVpn
+            then "0.0.0.0"
+            else "127.0.0.1";
         };
       };
     };
@@ -51,12 +54,12 @@ in
     # GID/UID und Gruppen-Anpassung
     users = {
       groups = {
-        media = { };
+        media = {};
         sabnzbd.gid = lib.mkDefault gids.sabnzbd;
       };
       users.sabnzbd = {
         uid = lib.mkDefault uids.sabnzbd;
-        extraGroups = [ "media" ];
+        extraGroups = ["media"];
       };
     };
 
@@ -64,7 +67,7 @@ in
       (lib.mkIf (!(config.my.services.vpn-confinement.enable or false)) vpnKillSwitch)
       {
         serviceConfig = lib.mkMerge [
-          (memory.sabnzbd { })
+          (memory.sabnzbd {})
           {
             ProtectSystem = lib.mkForce "strict";
             ProtectHome = lib.mkForce true;
@@ -83,6 +86,5 @@ in
         ];
       }
     ];
-
   };
 }

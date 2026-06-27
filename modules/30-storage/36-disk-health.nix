@@ -15,36 +15,10 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfg = config.my.disk-health;
   scrutinyPort = config.my.ports.scrutiny;
-  yaml = pkgs.formats.yaml { };
-
-  scrutinyConfig = {
-    version = 1;
-    web = {
-      listen = {
-        port = scrutinyPort;
-        host = "127.0.0.1";
-        basepath = "";
-      };
-      database.location = "/var/lib/scrutiny/scrutiny.db";
-      # Explizit 127.0.0.1 — global disable_ipv6 bricht [::1]:8086
-      influxdb = {
-        host = "127.0.0.1";
-        port = 8089;
-      };
-    };
-    log = {
-      file = "";
-      level = "INFO";
-    };
-  };
-
-in
-{
+in {
   options.my.disk-health = {
     enable = lib.mkEnableOption "SMART monitoring via smartd and Scrutiny WebUI";
     spinDownMinutes = lib.mkOption {
@@ -58,17 +32,28 @@ in
     my.storage-policy.tierCExemptions = lib.mkAfter [
       "smartd"
       "scrutiny"
+      "influxdb2"
     ];
 
-    my.impermanence.extraPaths = [ "/var/lib/scrutiny" ];
-
-    systemd.tmpfiles.rules = [
-      "d /var/lib/scrutiny 0750 root root -"
-      "d /etc/scrutiny 0755 root root -"
+    my.impermanence.extraPaths = [
+      "/var/lib/scrutiny"
+      "/var/lib/influxdb2"
     ];
 
-    environment.etc."scrutiny/scrutiny.yaml".source =
-      (yaml.generate "scrutiny.yaml" scrutinyConfig).outPath;
+    services.scrutiny = {
+      enable = true;
+      influxdb.enable = true;
+      collector.enable = true;
+      settings = {
+        web.listen = {
+          port = scrutinyPort;
+          host = "127.0.0.1";
+        };
+        # Explizit 127.0.0.1 — global disable_ipv6 bricht [::1]:8086
+        web.influxdb.host = "127.0.0.1";
+        log.level = "INFO";
+      };
+    };
 
     services.smartd = {
       enable = true;
@@ -81,29 +66,6 @@ in
           options = "-a -o on -S on -n standby,${toString cfg.spinDownMinutes},q";
         }
       ];
-    };
-
-    systemd.services.scrutiny = {
-      description = "Scrutiny SMART disk health dashboard";
-      after = [
-        "smartd.service"
-        "network.target"
-      ];
-      wants = [ "smartd.service" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "simple";
-        User = "root";
-        ExecStart = "${pkgs.scrutiny}/bin/scrutiny start --config /etc/scrutiny/scrutiny.yaml";
-        Restart = "on-failure";
-        RestartSec = "10s";
-        StateDirectory = "scrutiny";
-        ReadWritePaths = [ "/var/lib/scrutiny" ];
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        NoNewPrivileges = true;
-      };
     };
 
     environment.systemPackages = [

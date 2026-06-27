@@ -10,9 +10,11 @@
 #     - sops
 #     - secrets
 # ---
-{ config, lib, ... }:
-
-let
+{
+  config,
+  lib,
+  ...
+}: let
   cfg = config.my.sops;
 
   defaultCategories = {
@@ -38,8 +40,7 @@ let
   };
 
   defaultAllKeys = defaultCategories.infra ++ defaultCategories.media;
-in
-{
+in {
   options.my.sops = {
     enable = lib.mkEnableOption "SOPS secrets (ersetzt secrets-provision ab Stufe 9)";
     secretsDir = lib.mkOption {
@@ -60,7 +61,7 @@ in
           };
         };
       };
-      default = { };
+      default = {};
       description = "Secret-Keys pro SOPS-Datei (Blast-Radius minimieren).";
     };
     schema = lib.mkOption {
@@ -80,20 +81,18 @@ in
 
         sopsEntries = lib.genAttrs allKeys (name: {
           sopsFile =
-            if lib.elem name infraKeys then cfg.secretsDir + "/infra.yaml" else cfg.secretsDir + "/media.yaml";
+            if lib.elem name infraKeys
+            then cfg.secretsDir + "/infra.yaml"
+            else cfg.secretsDir + "/media.yaml";
           neededForUsers = lib.hasSuffix "_password" name;
         });
 
-        unknownKeys =
-          let
-            defined = lib.attrNames (config.sops.secrets or { });
-          in
+        unknownKeys = let
+          defined = lib.attrNames (config.sops.secrets or {});
+        in
           lib.filter (k: !lib.elem k allKeys) defined;
-      in
-      {
-        warnings = lib.optional (unknownKeys != [ ]) (
-          "[SOPS-SCHEMA] Unbekannte Keys in sops.secrets: ${lib.concatStringsSep ", " unknownKeys}. In my.sops.categories registrieren."
-        );
+      in {
+        warnings = lib.optional (unknownKeys != []) "[SOPS-SCHEMA] Unbekannte Keys in sops.secrets: ${lib.concatStringsSep ", " unknownKeys}. In my.sops.categories registrieren.";
 
         assertions = [
           {
@@ -112,7 +111,7 @@ in
 
         sops = {
           defaultSopsFile = cfg.secretsDir + "/secrets.yaml";
-          age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+          age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
           secrets = sopsEntries;
         };
 
@@ -131,7 +130,7 @@ in
         };
 
         systemd.timers.sops-recovery-validation = {
-          wantedBy = [ "timers.target" ];
+          wantedBy = ["timers.target"];
           timerConfig = {
             OnCalendar = "weekly";
             Persistent = true;

@@ -22,17 +22,14 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfg = config.my.services.audiobookshelf;
-  factory = import ../../lib/service-factory.nix { inherit lib; };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  factory = import ../../lib/service-factory.nix {inherit lib;};
+  memory = import ../../lib/memory-policy.nix {inherit lib;};
   port = config.my.ports.audiobookshelf;
   mediaRoot = config.my.services.storage.poolMountPoint;
   storageReady = config.my.services.storage.enable or false;
-in
-{
+in {
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
@@ -64,28 +61,30 @@ in
         inherit port;
         mode = "streaming";
         hardeningProfile = "node";
-        persistDirs = [ "/var/lib/audiobookshelf" ];
+        persistDirs = ["/var/lib/audiobookshelf"];
         privateDevices = !cfg.enableQuickSync;
-        readWritePaths = [
-          "/var/lib/audiobookshelf"
-        ]
-        ++ lib.optionals storageReady [
-          "${mediaRoot}/books"
-          "${mediaRoot}/audiobooks"
-          "${mediaRoot}/podcasts"
-        ];
-        memoryPolicy = memory.audiobookshelf { };
-        extraSystemd = {
-          Restart = lib.mkForce "on-failure";
-        }
-        // lib.optionalAttrs cfg.enableQuickSync {
-          PrivateDevices = lib.mkForce false;
-          DeviceAllow = [
-            "/dev/dri rw"
-            "/dev/dri/card0 rw"
-            "/dev/dri/renderD128 rw"
+        readWritePaths =
+          [
+            "/var/lib/audiobookshelf"
+          ]
+          ++ lib.optionals storageReady [
+            "${mediaRoot}/books"
+            "${mediaRoot}/audiobooks"
+            "${mediaRoot}/podcasts"
           ];
-        };
+        memoryPolicy = memory.audiobookshelf {};
+        extraSystemd =
+          {
+            Restart = lib.mkForce "on-failure";
+          }
+          // lib.optionalAttrs cfg.enableQuickSync {
+            PrivateDevices = lib.mkForce false;
+            DeviceAllow = [
+              "/dev/dri rw"
+              "/dev/dri/card0 rw"
+              "/dev/dri/renderD128 rw"
+            ];
+          };
       })
 
       (lib.mkIf cfg.enableQuickSync {

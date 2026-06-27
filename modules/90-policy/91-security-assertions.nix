@@ -10,15 +10,16 @@
 #     - security
 #     - assertions
 # ---
-{ config, lib, ... }:
-
-let
-  must = assertion: message: { inherit assertion message; };
-  sshSettings = config.services.openssh.settings or { };
+{
+  config,
+  lib,
+  ...
+}: let
+  must = assertion: message: {inherit assertion message;};
+  sshSettings = config.services.openssh.settings or {};
   hardened = config.my.security.firewall.enable;
   production = config.my.mode == "production";
-in
-{
+in {
   config.assertions =
     (lib.optionals hardened [
       (must (config.networking.nftables.enable == true) "[SEC-NET-002] NFTables aktiv.")

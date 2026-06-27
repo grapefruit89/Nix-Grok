@@ -1,6 +1,4 @@
-{ lib, ... }:
-
-let
+{lib, ...}: let
   # ../ von modules/00-core/ aus → modules/
   modulesDir = ../.;
 
@@ -24,20 +22,20 @@ let
 
   # Verzeichnisse, die nicht in allowedDirs stehen
   actualDirs = lib.filterAttrs (_: t: t == "directory") contents;
-  unauthorizedDirs = lib.filter
+  unauthorizedDirs =
+    lib.filter
     (name: !(lib.elem name allowedDirs))
     (lib.attrNames actualDirs);
 
   # Vorhandene erlaubte Verzeichnisse ohne default.nix
-  dirsWithoutDefault = lib.filter
+  dirsWithoutDefault =
+    lib.filter
     (name: !(builtins.pathExists "${modulesDir}/${name}/default.nix"))
     (lib.attrNames actualDirs);
-
-in
-{
+in {
   assertions = [
     {
-      assertion = nonDirEntries == { };
+      assertion = nonDirEntries == {};
       message = ''
         modules/ enthält Dateien direkt auf der obersten Ebene — das ist nicht erlaubt.
         Alle .nix-Dateien müssen in einem der nummerierten Unterordner liegen.
@@ -47,7 +45,7 @@ in
       '';
     }
     {
-      assertion = unauthorizedDirs == [ ];
+      assertion = unauthorizedDirs == [];
       message = ''
         modules/ enthält nicht erlaubte Unterordner.
 
@@ -61,7 +59,7 @@ in
       '';
     }
     {
-      assertion = dirsWithoutDefault == [ ];
+      assertion = dirsWithoutDefault == [];
       message = ''
         Folgende Ordner haben keine default.nix — Nix kann sie nicht importieren:
 

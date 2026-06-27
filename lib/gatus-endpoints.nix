@@ -7,77 +7,73 @@
 #     - gatus
 #     - observability
 # ---
-{ lib, config }:
-
-let
+{
+  lib,
+  config,
+}: let
   ports = config.my.ports;
   sshPort = ports.ssh or 22;
   svc = config.my.services;
-  vpnConn = import ./vpn-connection.nix { inherit lib; };
+  vpnConn = import ./vpn-connection.nix {inherit lib;};
   vpnCfg = config.my.services.vpn-confinement;
   gatusPort = config.my.services.gatus.port or ports.gatus;
 
   local = "127.0.0.1";
 
-  mediaHost =
-    name: if vpnConn.isVpnConfined vpnCfg name then vpnConn.connectionAddress vpnCfg name else local;
+  mediaHost = name:
+    if vpnConn.isVpnConfined vpnCfg name
+    then vpnConn.connectionAddress vpnCfg name
+    else local;
 
-  mkHttp =
-    {
-      name,
-      group,
-      host,
-      port,
-      path ? "/",
-      interval ? "1m",
-      status ? 200,
-    }:
-    {
-      inherit name group interval;
-      url = "http://${host}:${toString port}${path}";
-      conditions = [ "[STATUS] == ${toString status}" ];
+  mkHttp = {
+    name,
+    group,
+    host,
+    port,
+    path ? "/",
+    interval ? "1m",
+    status ? 200,
+  }: {
+    inherit name group interval;
+    url = "http://${host}:${toString port}${path}";
+    conditions = ["[STATUS] == ${toString status}"];
+  };
+
+  mkTcp = {
+    name,
+    group,
+    host ? local,
+    port,
+    interval ? "1m",
+  }: {
+    inherit name group interval;
+    url = "tcp://${host}:${toString port}";
+    conditions = ["[CONNECTED] == true"];
+  };
+
+  mkDns = {
+    name,
+    group,
+    queryName,
+    interval ? "1m",
+  }: {
+    inherit name group interval;
+    url = "dns://cloudflare.com";
+    dns = {
+      resolver = "${local}:53";
+      query-name = queryName;
+      query-type = "A";
     };
+    conditions = ["[DNS_RC] == NOERROR"];
+  };
 
-  mkTcp =
-    {
-      name,
-      group,
-      host ? local,
-      port,
-      interval ? "1m",
-    }:
-    {
-      inherit name group interval;
-      url = "tcp://${host}:${toString port}";
-      conditions = [ "[CONNECTED] == true" ];
-    };
-
-  mkDns =
-    {
-      name,
-      group,
-      queryName,
-      interval ? "1m",
-    }:
-    {
-      inherit name group interval;
-      url = "dns://cloudflare.com";
-      dns = {
-        resolver = "${local}:53";
-        query-name = queryName;
-        query-type = "A";
-      };
-      conditions = [ "[DNS_RC] == NOERROR" ];
-    };
-
-  mkSsh =
-    {
-      name,
-      group,
-      command,
-      interval ? "1m",
-      timeout ? null,
-    }:
+  mkSsh = {
+    name,
+    group,
+    command,
+    interval ? "1m",
+    timeout ? null,
+  }:
     lib.recursiveUpdate {
       inherit name group interval;
       url = "ssh://${local}:${toString sshPort}";
@@ -91,7 +87,7 @@ let
         private-key = "/var/lib/gatus/ssh_key";
         body.command = command;
       };
-    } (lib.optionalAttrs (timeout != null) { client.timeout = timeout; });
+    } (lib.optionalAttrs (timeout != null) {client.timeout = timeout;});
 
   core = [
     {
@@ -99,7 +95,7 @@ let
       group = "network";
       url = "icmp://1.1.1.1";
       interval = "30s";
-      conditions = [ "[CONNECTED] == true" ];
+      conditions = ["[CONNECTED] == true"];
     }
     (mkTcp {
       name = "caddy-ingress";
@@ -370,8 +366,7 @@ let
     ];
 
   endpoints = core ++ storage ++ dataServices ++ observability ++ media ++ apps ++ forge;
-in
-{
+in {
   web = {
     address = local;
     port = gatusPort;

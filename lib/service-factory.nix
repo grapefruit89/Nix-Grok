@@ -15,20 +15,17 @@
 #     - caddy
 #     - systemd
 # ---
-{ lib }:
+{lib}: let
+  caddy = import ./caddy-helpers.nix {inherit lib;};
 
-let
-  caddy = import ./caddy-helpers.nix { inherit lib; };
-
-  systemdHardening =
-    {
-      readWritePaths ? [ ],
-      privateDevices ? true,
-      profile ? "full", # full | dotnet | node | streamer
-      extra ? { },
-    }:
-    let
-      base = {
+  systemdHardening = {
+    readWritePaths ? [],
+    privateDevices ? true,
+    profile ? "full", # full | dotnet | node | streamer
+    extra ? {},
+  }: let
+    base =
+      {
         ProtectSystem = lib.mkForce "strict";
         ProtectHome = lib.mkForce true;
         PrivateTmp = lib.mkForce true;
@@ -65,104 +62,101 @@ let
       // lib.optionalAttrs (profile == "streamer") {
         UMask = lib.mkForce "0002";
       };
-    in
+  in
     lib.mkMerge [
       base
       extra
     ];
 
-  mkCaddyExtra =
-    {
-      mode ? "sso",
-      port ? null,
-      socketPath ? null,
-      extra ? "",
-    }:
-    let
-      proxy =
-        if socketPath != null then
-          {
-            sso = caddy.proxyUnixSso socketPath;
-            "tailscale-sso" = caddy.proxyUnixTailscaleSso socketPath;
-            security = caddy.proxyUnixSecurity socketPath;
-            direct = caddy.proxyUnixDirect socketPath;
-          }
-        else if port != null then
-          {
-            sso = caddy.proxySso port;
-            "tailscale-sso" = caddy.proxyTailscaleSso { inherit port; };
-            security = caddy.proxySecurity port;
-            direct = caddy.proxyDirect port;
-            streaming = ''
-              import streamer_headers
-              import security_headers
-              import sso_auth
-              ${caddy.streamingBackend port}
-            '';
-          }
-        else
-          throw "mkCaddyExtra: port oder socketPath erforderlich";
-    in
+  mkCaddyExtra = {
+    mode ? "sso",
+    port ? null,
+    socketPath ? null,
+    extra ? "",
+  }: let
+    proxy =
+      if socketPath != null
+      then {
+        sso = caddy.proxyUnixSso socketPath;
+        "tailscale-sso" = caddy.proxyUnixTailscaleSso socketPath;
+        security = caddy.proxyUnixSecurity socketPath;
+        direct = caddy.proxyUnixDirect socketPath;
+      }
+      else if port != null
+      then {
+        sso = caddy.proxySso port;
+        "tailscale-sso" = caddy.proxyTailscaleSso {inherit port;};
+        security = caddy.proxySecurity port;
+        direct = caddy.proxyDirect port;
+        streaming = ''
+          import streamer_headers
+          import security_headers
+          import sso_auth
+          ${caddy.streamingBackend port}
+        '';
+      }
+      else throw "mkCaddyExtra: port oder socketPath erforderlich";
+  in
     (
-      if builtins.hasAttr mode proxy then
-        proxy.${mode}
-      else
-        throw "mkCaddyExtra: unbekannter mode '${mode}'"
+      if builtins.hasAttr mode proxy
+      then proxy.${mode}
+      else throw "mkCaddyExtra: unbekannter mode '${mode}'"
     )
     + lib.optionalString (extra != "") "\n${extra}";
 
-  defaultPersistDirs =
-    name: persistDirs: cacheDir:
-    if persistDirs != [ ] then
-      persistDirs
+  defaultPersistDirs = name: persistDirs: cacheDir:
+    if persistDirs != []
+    then persistDirs
     else
       lib.filter (p: p != null) [
         "/var/lib/${name}"
         cacheDir
       ];
-
-in
-rec {
+in rec {
   inherit systemdHardening mkCaddyExtra;
 
-  mkService =
-    {
-      config,
-      name,
-      port ? null,
-      socketPath ? null,
-      host ? null,
-      mode ? "sso",
-      upstreamHost ? "127.0.0.1",
-      readWritePaths ? [ ],
-      readOnlyPaths ? [ ],
-      privateDevices ? true,
-      hardeningProfile ? "full",
-      memoryPolicy ? null,
-      extraSystemd ? { },
-      extraCaddy ? "",
-      caddyOnly ? false,
-      persist ? true,
-      persistDirs ? [ ],
-      cacheDir ? "/var/cache/${name}",
-      manageIngress ? null,
-    }:
-    let
-      domain = config.my.configs.identity.domain;
-      dnsMap = import ./dns-map.nix { inherit domain; };
-      vhost = if host != null then host else dnsMap.host name;
-      caddyExtra = mkCaddyExtra {
-        inherit
-          mode
-          port
-          socketPath
-          upstreamHost
-          ;
-        extra = extraCaddy;
-      };
-      doIngress = if manageIngress != null then manageIngress else false;
-      paths = lib.unique (defaultPersistDirs name persistDirs cacheDir);
-    in
+  mkService = {
+    config,
+    name,
+    port ? null,
+    socketPath ? null,
+    host ? null,
+    mode ? "sso",
+    upstreamHost ? "127.0.0.1",
+    readWritePaths ? [],
+    readOnlyPaths ? [],
+    privateDevices ? true,
+    hardeningProfile ? "full",
+    memoryPolicy ? null,
+    extraSystemd ? {},
+    extraCaddy ? "",
+    caddyOnly ? false,
+    persist ? true,
+    persistDirs ? [],
+    cacheDir ? "/var/cache/${name}",
+    manageIngress ? null,
+  }: let
+    domain = config.my.configs.identity.domain;
+    dnsMap = import ./dns-map.nix {inherit domain;};
+    vhost =
+      if host != null
+      then host
+      else dnsMap.host name;
+    caddyExtra = mkCaddyExtra {
+      inherit
+        mode
+        port
+        socketPath
+        upstreamHost
+        ;
+      extra = extraCaddy;
+    };
+    doIngress =
+      if manageIngress != null
+      then manageIngress
+      else false;
+    paths = lib.unique (defaultPersistDirs name persistDirs cacheDir);
+  in
     lib.mkMerge [
       (lib.mkIf (!caddyOnly) {
         systemd.services.${name}.serviceConfig = lib.mkMerge (
@@ -172,14 +166,14 @@ rec {
               profile = hardeningProfile;
             })
           ]
-          ++ lib.optional (readOnlyPaths != [ ]) {
+          ++ lib.optional (readOnlyPaths != []) {
             ReadOnlyPaths = readOnlyPaths;
           }
           ++ lib.optional (memoryPolicy != null) memoryPolicy
-          ++ [ extraSystemd ]
+          ++ [extraSystemd]
         );
       })
-      (lib.mkIf (persist && paths != [ ]) {
+      (lib.mkIf (persist && paths != []) {
         my.impermanence.extraPaths = paths;
       })
       (lib.mkIf (doIngress && !caddyOnly) {
@@ -189,37 +183,34 @@ rec {
       })
     ];
 
-  mkStreamer =
-    {
-      config,
-      name,
-      port,
-      readWritePaths ? [ ],
-      readOnlyPaths ? [ ],
-      useGPU ? false,
-      memoryPolicy ? null,
-      extraSystemd ? { },
-      persistDirs ? [
-        "/var/lib/${name}"
-        "/var/cache/${name}"
-      ],
-      manageIngress ? false,
-      mode ? "sso",
-    }:
-    let
-      gpuExtra =
-        if useGPU then
-          {
-            PrivateDevices = lib.mkForce false;
-            DeviceAllow = [
-              "/dev/dri rw"
-              "/dev/dri/card0 rw"
-              "/dev/dri/renderD128 rw"
-            ];
-          }
-        else
-          { };
-    in
+  mkStreamer = {
+    config,
+    name,
+    port,
+    readWritePaths ? [],
+    readOnlyPaths ? [],
+    useGPU ? false,
+    memoryPolicy ? null,
+    extraSystemd ? {},
+    persistDirs ? [
+      "/var/lib/${name}"
+      "/var/cache/${name}"
+    ],
+    manageIngress ? false,
+    mode ? "sso",
+  }: let
+    gpuExtra =
+      if useGPU
+      then {
+        PrivateDevices = lib.mkForce false;
+        DeviceAllow = [
+          "/dev/dri rw"
+          "/dev/dri/card0 rw"
+          "/dev/dri/renderD128 rw"
+        ];
+      }
+      else {};
+  in
     mkService {
       inherit
         config
@@ -232,7 +223,7 @@ rec {
         ;
       hardeningProfile = "streamer";
       privateDevices = !useGPU;
-      readWritePaths = readWritePaths;
+      inherit readWritePaths;
       extraSystemd = lib.mkMerge [
         {
           Restart = lib.mkForce "always";

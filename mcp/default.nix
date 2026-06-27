@@ -8,14 +8,17 @@
 #   tags:
 #     - mcp
 # ---
-{ pkgs, mcpConfigFile, ... }:
 {
+  pkgs,
+  mcpConfigFile,
+  ...
+}: {
   # Schreibt die ueber natsukium/mcp-servers-nix generierte Konfiguration
   # nach /etc/nixos/.mcp.json -- Claude Code laedt dieses Projekt-Scope-File
   # automatisch, wenn "claude" aus /etc/nixos gestartet wird.
   systemd.services.mcp-config-provision = {
     description = "Provision .mcp.json for Claude Code (project scope)";
-    wantedBy = [ "multi-user.target" ];
+    wantedBy = ["multi-user.target"];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;

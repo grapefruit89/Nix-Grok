@@ -6,9 +6,7 @@
 #   tags:
 #     - locale
 # ---
-_:
-
-{
+_: {
   my.configs.locale = {
     default = "de_DE.UTF-8";
     language = "de";

@@ -14,16 +14,14 @@
   pkgs,
   lib,
   ...
-}:
-
-let
+}: let
   cfg = osConfig.my.services.grok;
   stateDir = cfg.stateDirectory;
   context7KeyFile = "${config.home.homeDirectory}/.config/context7/api_key";
   context7Dir = "${config.home.homeDirectory}/.config/context7";
   nixosDocsDbDir = "${config.home.homeDirectory}/.local/share/nix-grok";
   nixosDocsDbFile = "${nixosDocsDbDir}/nixos_docs.db";
-  nixosDocsMcp = pkgs.callPackage ../../packages/nixos-docs-mcp { };
+  nixosDocsMcp = pkgs.callPackage ../../packages/nixos-docs-mcp {};
   nixConfigDirs = [
     "/etc/nixos"
     "/home/nixos"
@@ -137,14 +135,12 @@ let
     echo "=== Grok MCP Doctor ==="
     "$GROK" mcp doctor
   '';
-in
-{
+in {
   home = {
     username = "moritz";
     homeDirectory = "/home/moritz";
 
-    packages =
-      with pkgs;
+    packages = with pkgs;
       [
         htop
         git
@@ -249,7 +245,7 @@ in
     '';
   };
 
-  home.activation.generateGrokCompletions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.generateGrokCompletions = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if [ -w "${stateDir}" ] && [ -x "${stateDir}/bin/grok" ]; then
       mkdir -p "${stateDir}/completions/bash" "${stateDir}/completions/zsh"
       "${stateDir}/bin/grok" completions bash > "${stateDir}/completions/bash/grok.bash" 2>/dev/null || true
@@ -258,7 +254,6 @@ in
   '';
 
   # MCP-Server: siehe modules/mcp-server/default.nix
-
 
   programs.git = {
     enable = true;

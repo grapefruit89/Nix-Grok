@@ -7,30 +7,26 @@
 #     - uid
 #     - security
 # ---
-{ lib }:
-
-let
+{lib}: let
   defaultUsers = {
     # *arr + Usenet — explizit statisch (Split-Tunnel + nftables skuid)
     # Schema: UID = Port = Ordner-Präfix (50xx = 50-media)
-    sonarr   = 5003;  # war 989
-    radarr   = 5004;  # war 978
-    readarr  = 5005;  # war 987
-    prowlarr = 5006;  # war 969
-    sabnzbd  = 5007;  # war 984
+    sonarr = 5003; # war 989
+    radarr = 5004; # war 978
+    readarr = 5005; # war 987
+    prowlarr = 5006; # war 969
+    sabnzbd = 5007; # war 984
   };
 
   defaultGroups = {
-    media    = 169;   # BEHALTEN — Filesystem-Kompatibilität (chown -R root:media)
-    sonarr   = 5003;
-    radarr   = 5004;
-    readarr  = 5005;
+    media = 169; # BEHALTEN — Filesystem-Kompatibilität (chown -R root:media)
+    sonarr = 5003;
+    radarr = 5004;
+    readarr = 5005;
     prowlarr = 5006;
-    sabnzbd  = 5007;
+    sabnzbd = 5007;
   };
-
-in
-{
+in {
   inherit defaultUsers defaultGroups;
 
   getUser = registry: name: registry.${name} or (throw "uid-registry: unbekannter User '${name}'");

@@ -14,9 +14,7 @@
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfg = config.my.alerting;
   hasNotify = cfg.webhookUrl != "" || cfg.ntfyTopic != "";
 
@@ -37,9 +35,7 @@ let
         "${cfg.webhookUrl}" || true
     fi
   '';
-
-in
-{
+in {
   options.my.alerting = {
     enable = lib.mkEnableOption "SRE webhook/ntfy alerts for VPN and backup failures";
 
@@ -74,15 +70,15 @@ in
 
       usenet.serviceConfig.OnFailure =
         lib.mkIf (config.my.services.vpn-confinement.enable or false)
-          (lib.mkDefault [ "alerting-onfailure.service" ]);
+        (lib.mkDefault ["alerting-onfailure.service"]);
 
       restic-backups-tier-a-sovereign.serviceConfig.OnFailure =
         lib.mkIf (config.my.services.restic-backup.enable or false)
-          (lib.mkDefault [ "alerting-onfailure.service" ]);
+        (lib.mkDefault ["alerting-onfailure.service"]);
 
       boot-watchdog.serviceConfig.OnFailure =
         lib.mkIf (config.my.boot-watchdog.enable or false)
-          (lib.mkDefault [ "alerting-onfailure.service" ]);
+        (lib.mkDefault ["alerting-onfailure.service"]);
     };
   };
 }
