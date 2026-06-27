@@ -348,14 +348,7 @@ let
     ];
 
   forge =
-    lib.optionals (config.my.services.forgejo.enable or false) [
-      (mkSsh {
-        name = "forgejo";
-        group = "forge";
-        command = "/run/current-system/sw/bin/check-forgejo-uds";
-      })
-    ]
-    ++ lib.optionals (config.my.services.cockpit.enable or false) [
+    lib.optionals (config.my.services.cockpit.enable or false) [
       (mkTcp {
         name = "cockpit";
         group = "forge";
