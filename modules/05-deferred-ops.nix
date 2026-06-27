@@ -133,6 +133,7 @@ in
 
       systemd.services.process-delete-queue = {
         description = "Process deferred Tier-C deletion queue";
+        unitConfig.ConditionPathIsMountPoint = tierCMount;
         serviceConfig = {
           Type = "oneshot";
           ExecStart = processScript;

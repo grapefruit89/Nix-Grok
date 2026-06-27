@@ -101,7 +101,7 @@ in
     networking.nftables = {
       enable = true;
       checkRuleset = true;
-      ruleset = ruleset;
+      inherit ruleset;
     };
 
     # Sicherheits-Assertions für Firewall-Konfiguration

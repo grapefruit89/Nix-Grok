@@ -120,6 +120,7 @@ in
       "net.core.bpf_jit_harden" = 2;
       "net.core.rmem_max" = 212992;
       "net.core.wmem_max" = 212992;
+      "net.ipv4.ip_unprivileged_port_start" = 1001; # pocket-id + other services with id >= 1001 bind directly
 
       # Memory / introspection
       "kernel.dmesg_restrict" = 1;

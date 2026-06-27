@@ -470,7 +470,7 @@ in
         (factory.mkService {
           inherit config;
           name = "linkwarden";
-          port = cfgLinkwarden.port;
+          inherit (cfgLinkwarden) port;
           mode = "sso";
           caddyOnly = true;
           persistDirs = [ "/var/lib/linkwarden" ];

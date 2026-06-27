@@ -20,7 +20,7 @@ let
     inherit lib caddy;
     vpnConn = {
       cfg = config.my.services.vpn-confinement;
-      connectionAddress = vpnConnLib.connectionAddress;
+      inherit (vpnConnLib) connectionAddress;
     };
   };
   enableMap = import ../../lib/service-enable.nix { inherit lib; };
