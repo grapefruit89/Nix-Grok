@@ -20,24 +20,27 @@
   config,
   lib,
   ...
-}: let
-  factory = import ../../lib/service-factory.nix {inherit lib;};
-  memory = import ../../lib/memory-policy.nix {inherit lib;};
+}:
+let
+  factory = import ../../lib/service-factory.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix { inherit lib; };
   vpnKillSwitchAttrs = import ../../lib/vpn-killswitch.nix {
     inherit lib;
     privadoEnabled = config.my.services.privado-vpn.enable or false;
   };
-in {
-  mkArrService = {
-    name,
-    port,
-    dataDir,
-    uid,
-    gid,
-    useVpnKillSwitch ? false,
-    metadataDir ? null,
-    upstreamHost ? "127.0.0.1",
-  }:
+in
+{
+  mkArrService =
+    {
+      name,
+      port,
+      dataDir,
+      uid,
+      gid,
+      useVpnKillSwitch ? false,
+      metadataDir ? null,
+      upstreamHost ? "127.0.0.1",
+    }:
     lib.mkMerge [
       {
         services.${name} = {
@@ -53,7 +56,7 @@ in {
           uid = lib.mkDefault uid;
           group = name;
           isSystemUser = true;
-          extraGroups = ["media"];
+          extraGroups = [ "media" ];
         };
       }
 
@@ -62,13 +65,13 @@ in {
         inherit name port upstreamHost;
         mode = "sso";
         hardeningProfile = "dotnet";
-        persistDirs = [dataDir];
+        persistDirs = [ dataDir ];
         readWritePaths = [
           dataDir
           "/data/downloads"
         ];
-        readOnlyPaths = ["/data/media"];
-        memoryPolicy = memory.arr {};
+        readOnlyPaths = [ "/data/media" ];
+        memoryPolicy = memory.arr { };
         extraSystemd = {
           UMask = lib.mkForce "0002";
           BindPaths = lib.mkIf (metadataDir != null) [

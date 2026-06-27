@@ -11,31 +11,29 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   p = import ./profile.nix;
-  local =
-    if builtins.pathExists ./profile.local.nix
-    then import ./profile.local.nix
-    else {};
+  local = if builtins.pathExists ./profile.local.nix then import ./profile.local.nix else { };
   secretsDir = p.secrets.dir;
   dk = p.secrets.devKeys;
   privadoKey = local.secrets.privado.privateKey or "";
-  resticS3 = local.secrets.restic or {};
+  resticS3 = local.secrets.restic or { };
   ampPassword =
-    (dk.amp or {}).adminPassword
+    (dk.amp or { }).adminPassword
       or (throw "secrets.devKeys.amp.adminPassword in profile.local.nix setzen");
-  ampUser = (dk.amp or {}).adminUser or "admin";
+  ampUser = (dk.amp or { }).adminUser or "admin";
   resticRepository = resticS3.repository or "";
   resticAwsKey = resticS3.awsAccessKeyId or "";
   resticAwsSecret = resticS3.awsSecretAccessKey or "";
   hassMqttPassword =
-    (dk.homeassistant or {}).mqttPassword
+    (dk.homeassistant or { }).mqttPassword
       or (throw "secrets.devKeys.homeassistant.mqttPassword in profile.local.nix setzen");
   zigbeeMqttPassword =
-    (dk.zigbee or {}).mqttPassword
+    (dk.zigbee or { }).mqttPassword
       or (throw "secrets.devKeys.zigbee.mqttPassword in profile.local.nix setzen");
   moritz = (import ../../users/moritz/profile.nix).name;
-  cfToken = (local.secrets.cloudflare or {}).apiToken or "";
+  cfToken = (local.secrets.cloudflare or { }).apiToken or "";
   ddnsZone = p.network.ddns.zone;
   ddnsRecord = p.network.ddns.record;
   ddnsFqdn = "${ddnsRecord}.${ddnsZone}";
@@ -194,7 +192,8 @@
           unset _ctx7
         fi
   '';
-in {
+in
+{
   systemd.tmpfiles.rules = [
     "d ${secretsDir} 0700 root root -"
   ];
@@ -208,7 +207,7 @@ in {
       RemainAfterExit = true;
       ExecStart = provisionScript;
     };
-    wantedBy = ["multi-user.target"];
+    wantedBy = [ "multi-user.target" ];
     before = [
       "sshd.service"
       "gatus.service"

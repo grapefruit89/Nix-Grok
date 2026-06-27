@@ -15,10 +15,12 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.my.disk-health;
   scrutinyPort = config.my.ports.scrutiny;
-in {
+in
+{
   options.my.disk-health = {
     enable = lib.mkEnableOption "SMART monitoring via smartd and Scrutiny WebUI";
     spinDownMinutes = lib.mkOption {

@@ -1,13 +1,22 @@
 repos:
   - repo: local
     hooks:
+      - id: nixfmt
+        name: nixfmt (RFC-Style)
+        language: system
+        entry: nixfmt --check
+        files: \.nix$
+        exclude: ^stage-nixos/
+        pass_filenames: true
+
       - id: statix
-        name: statix (informational)
+        name: statix (informational — repeated_keys ist NixOS-Modul-Pattern)
         language: system
         entry: bash -c 'statix check -c /etc/nixos/statix.toml; true'
         files: \.nix$
         exclude: ^stage-nixos/
         pass_filenames: false
+
       - id: deadnix
         name: deadnix
         language: system
@@ -15,10 +24,3 @@ repos:
         files: \.nix$
         exclude: ^stage-nixos/
         pass_filenames: false
-      - id: alejandra
-        name: alejandra
-        language: system
-        entry: alejandra --check
-        files: \.nix$
-        exclude: ^stage-nixos/
-        pass_filenames: true

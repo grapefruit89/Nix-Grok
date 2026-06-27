@@ -10,7 +10,8 @@
 # state_dir: null
 # tags: ["network", "imports"]
 # ---
-{...}: {
+{ ... }:
+{
   imports = [
     ./11-network.nix
     ./12-vpn-confinement.nix

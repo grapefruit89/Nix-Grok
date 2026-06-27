@@ -12,7 +12,8 @@
 #     - ports
 #     - zoning
 # ---
-{lib}: let
+{ lib }:
+let
   zones = [
     "loopback"
     "admin-hangar"
@@ -50,18 +51,18 @@
   # Ports die in der Spec-Matrix vorkommen — nur TCP, keine Sockets
   collectSpecPorts = spec: lib.filter (p: p != null) (map (s: s.port or null) (lib.attrValues spec));
 
-  findDuplicatePorts = ports: let
-    counted =
-      lib.foldl' (
+  findDuplicatePorts =
+    ports:
+    let
+      counted = lib.foldl' (
         acc: port:
-          acc
-          // {
-            ${toString port} = (acc.${toString port} or 0) + 1;
-          }
-      ) {}
-      ports;
-    dups = lib.filter (p: counted.${toString p} > 1) (lib.unique ports);
-  in
+        acc
+        // {
+          ${toString port} = (acc.${toString port} or 0) + 1;
+        }
+      ) { } ports;
+      dups = lib.filter (p: counted.${toString p} > 1) (lib.unique ports);
+    in
     dups;
 
   mkDefaultSpec = ports: {
@@ -241,7 +242,8 @@
       description = "Game Server Panel";
     };
   };
-in {
+in
+{
   inherit
     zones
     specEntryType
@@ -250,19 +252,25 @@ in {
     findDuplicatePorts
     ;
 
-  portRegistryAssertion = ports: let
-    values = lib.attrValues ports;
-    dups = findDuplicatePorts values;
-  in {
-    assertion = dups == [];
-    message = "[PORT-REGISTRY] Doppelte Einträge in my.ports: ${lib.concatStringsSep ", " (map toString dups)}";
-  };
+  portRegistryAssertion =
+    ports:
+    let
+      values = lib.attrValues ports;
+      dups = findDuplicatePorts values;
+    in
+    {
+      assertion = dups == [ ];
+      message = "[PORT-REGISTRY] Doppelte Einträge in my.ports: ${lib.concatStringsSep ", " (map toString dups)}";
+    };
 
-  specPortAssertion = spec: let
-    ports = collectSpecPorts spec;
-    dups = findDuplicatePorts ports;
-  in {
-    assertion = dups == [];
-    message = "[SERVICES-SPEC] Doppelte Ports in my.services.spec: ${lib.concatStringsSep ", " (map toString dups)}";
-  };
+  specPortAssertion =
+    spec:
+    let
+      ports = collectSpecPorts spec;
+      dups = findDuplicatePorts ports;
+    in
+    {
+      assertion = dups == [ ];
+      message = "[SERVICES-SPEC] Doppelte Ports in my.services.spec: ${lib.concatStringsSep ", " (map toString dups)}";
+    };
 }

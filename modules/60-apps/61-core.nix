@@ -16,8 +16,9 @@
   config,
   lib,
   ...
-}: let
-  factory = import ../../lib/service-factory.nix {inherit lib;};
+}:
+let
+  factory = import ../../lib/service-factory.nix { inherit lib; };
   cfgVaultwarden = config.my.services.vaultwarden;
   cfgHomepage = config.my.services.homepage;
   cfgFilebrowser = config.my.services.filebrowser;
@@ -25,12 +26,13 @@
   cfgOpenWebui = config.my.services.open-webui;
 
   domain = config.my.configs.identity.domain;
-  dnsMap = import ../../lib/dns-map.nix {inherit domain;};
+  dnsMap = import ../../lib/dns-map.nix { inherit domain; };
   portVaultwarden = config.my.ports.vaultwarden;
   portHomepage = config.my.ports.homepage;
   vaultHost = dnsMap.host "vaultwarden";
   linksHost = dnsMap.host "linkwarden";
-in {
+in
+{
   config = lib.mkMerge [
     (lib.mkIf cfgVaultwarden.enable {
       services.vaultwarden = {
@@ -427,7 +429,7 @@ in {
         "d /var/lib/filebrowser 0750 filebrowser filebrowser -"
       ];
 
-      my.impermanence.extraPaths = ["/var/lib/filebrowser"];
+      my.impermanence.extraPaths = [ "/var/lib/filebrowser" ];
 
       systemd.services.filebrowser.serviceConfig = {
         ProtectSystem = "strict";
@@ -471,7 +473,7 @@ in {
           inherit (cfgLinkwarden) port;
           mode = "sso";
           caddyOnly = true;
-          persistDirs = ["/var/lib/linkwarden"];
+          persistDirs = [ "/var/lib/linkwarden" ];
         })
 
         {
@@ -497,7 +499,7 @@ in {
         };
       };
 
-      my.impermanence.extraPaths = ["/var/lib/open-webui"];
+      my.impermanence.extraPaths = [ "/var/lib/open-webui" ];
 
       systemd.services.open-webui.serviceConfig = {
         DynamicUser = true;

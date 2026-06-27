@@ -15,133 +15,132 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.my.services.vpn-confinement;
   ports = config.my.ports;
   nsNames = lib.attrNames cfg.namespaces;
-  primaryNs =
-    if nsNames != []
-    then lib.head nsNames
-    else "";
+  primaryNs = if nsNames != [ ] then lib.head nsNames else "";
 
   servicePorts = {
     inherit (ports) sabnzbd;
     inherit (ports) prowlarr;
   };
 
-  mkNetnsUnit = name: nsCfg: let
-    wgIf = "wg-${name}";
-    vethHost = "veth-${name}-br";
-    vethNs = "veth-${name}";
-    bridge = "${name}-br";
-    openPorts = lib.filter (p: p != null) (map (s: servicePorts.${s} or null) nsCfg.services);
-    openPortRules =
-      lib.concatMapStrings (port: ''
+  mkNetnsUnit =
+    name: nsCfg:
+    let
+      wgIf = "wg-${name}";
+      vethHost = "veth-${name}-br";
+      vethNs = "veth-${name}";
+      bridge = "${name}-br";
+      openPorts = lib.filter (p: p != null) (map (s: servicePorts.${s} or null) nsCfg.services);
+      openPortRules = lib.concatMapStrings (port: ''
         ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" tcp dport ${toString port} accept
         ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" udp dport ${toString port} accept
-      '')
-      openPorts;
-    dnsLines = lib.concatMapStrings (dns: "nameserver ${dns}\n") nsCfg.dns;
-  in {
-    description = "VPN network namespace ${name}";
-    before = ["network.target"];
-    wantedBy = ["multi-user.target"];
-    path = with pkgs; [
-      iproute2
-      wireguard-tools
-      nftables
-      curl
-      bind.dnsutils
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = ''
-      set -euo pipefail
+      '') openPorts;
+      dnsLines = lib.concatMapStrings (dns: "nameserver ${dns}\n") nsCfg.dns;
+    in
+    {
+      description = "VPN network namespace ${name}";
+      before = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      path = with pkgs; [
+        iproute2
+        wireguard-tools
+        nftables
+        curl
+        bind.dnsutils
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        set -euo pipefail
 
-      ${pkgs.iproute2}/bin/ip netns add ${name} 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip link set lo up
+        ${pkgs.iproute2}/bin/ip netns add ${name} 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip link set lo up
 
-      ${pkgs.iproute2}/bin/ip link del ${wgIf} 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip link add ${wgIf} type wireguard
-      ${pkgs.iproute2}/bin/ip link set ${wgIf} netns ${name}
-      ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.wireguard-tools}/bin/wg setconf ${wgIf} ${nsCfg.wgConf}
-      ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip link set ${wgIf} up
-      ${lib.optionalString (nsCfg.address != "") ''
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip addr add ${nsCfg.address} dev ${wgIf}
-      ''}
-      ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip route add default dev ${wgIf}
+        ${pkgs.iproute2}/bin/ip link del ${wgIf} 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip link add ${wgIf} type wireguard
+        ${pkgs.iproute2}/bin/ip link set ${wgIf} netns ${name}
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.wireguard-tools}/bin/wg setconf ${wgIf} ${nsCfg.wgConf}
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip link set ${wgIf} up
+        ${lib.optionalString (nsCfg.address != "") ''
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip addr add ${nsCfg.address} dev ${wgIf}
+        ''}
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip route add default dev ${wgIf}
 
-      ${lib.optionalString (dnsLines != "") ''
-          mkdir -p /etc/netns/${name}
-          cat > /etc/netns/${name}/resolv.conf <<'EOF'
-        ${dnsLines}EOF
-      ''}
+        ${lib.optionalString (dnsLines != "") ''
+            mkdir -p /etc/netns/${name}
+            cat > /etc/netns/${name}/resolv.conf <<'EOF'
+          ${dnsLines}EOF
+        ''}
 
-      ${lib.optionalString nsCfg.killSwitch ''
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add table inet killswitch
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add chain inet killswitch input \
-          '{ type filter hook input priority 0; policy drop; }'
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add chain inet killswitch output \
-          '{ type filter hook output priority 0; policy drop; }'
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname lo accept
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" accept
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input ct state established,related accept
-        ${openPortRules}
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch output oifname { "${wgIf}", "lo", "${vethNs}" } accept
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch output ct state established,related accept
-      ''}
+        ${lib.optionalString nsCfg.killSwitch ''
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add table inet killswitch
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add chain inet killswitch input \
+            '{ type filter hook input priority 0; policy drop; }'
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add chain inet killswitch output \
+            '{ type filter hook output priority 0; policy drop; }'
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname lo accept
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" accept
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input ct state established,related accept
+          ${openPortRules}
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch output oifname { "${wgIf}", "lo", "${vethNs}" } accept
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch output ct state established,related accept
+        ''}
 
-      ${pkgs.iproute2}/bin/ip link add ${bridge} type bridge 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip addr flush dev ${bridge} 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip addr add ${nsCfg.bridgeAddress}/24 dev ${bridge}
-      ${pkgs.iproute2}/bin/ip link set dev ${bridge} up
+        ${pkgs.iproute2}/bin/ip link add ${bridge} type bridge 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip addr flush dev ${bridge} 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip addr add ${nsCfg.bridgeAddress}/24 dev ${bridge}
+        ${pkgs.iproute2}/bin/ip link set dev ${bridge} up
 
-      ${pkgs.iproute2}/bin/ip link del ${vethHost} 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip link add ${vethHost} type veth peer name ${vethNs} netns ${name}
-      ${pkgs.iproute2}/bin/ip link set ${vethHost} master ${bridge}
-      ${pkgs.iproute2}/bin/ip link set dev ${vethHost} up
-      ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip addr add ${nsCfg.namespaceAddress}/24 dev ${vethNs}
-      ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip link set dev ${vethNs} up
+        ${pkgs.iproute2}/bin/ip link del ${vethHost} 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip link add ${vethHost} type veth peer name ${vethNs} netns ${name}
+        ${pkgs.iproute2}/bin/ip link set ${vethHost} master ${bridge}
+        ${pkgs.iproute2}/bin/ip link set dev ${vethHost} up
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip addr add ${nsCfg.namespaceAddress}/24 dev ${vethNs}
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip link set dev ${vethNs} up
 
-      ${lib.concatMapStrings (cidr: ''
+        ${lib.concatMapStrings (cidr: ''
           ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ip route add ${cidr} via ${nsCfg.bridgeAddress} dev ${vethNs} 2>/dev/null || true
-        '')
-        nsCfg.accessibleFrom}
+        '') nsCfg.accessibleFrom}
 
-      ${lib.optionalString nsCfg.healthcheck.enable ''
-        if [ -n "${nsCfg.healthcheck.endpoint}" ]; then
-          echo "Checking WireGuard endpoint reachability..."
-          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ping -c 1 -W 5 "${nsCfg.healthcheck.endpoint}" >/dev/null
-        fi
-        echo "Checking VPN egress..."
-        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.curl}/bin/curl -fsS --max-time 15 https://ipinfo.io/ip >/dev/null
-      ''}
-    '';
-    preStop = ''
-      ${pkgs.iproute2}/bin/ip link del ${vethHost} 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip link del ${bridge} 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip netns del ${name} 2>/dev/null || true
-      ${pkgs.iproute2}/bin/ip link del ${wgIf} 2>/dev/null || true
-      rm -rf /etc/netns/${name} 2>/dev/null || true
-    '';
-  };
+        ${lib.optionalString nsCfg.healthcheck.enable ''
+          if [ -n "${nsCfg.healthcheck.endpoint}" ]; then
+            echo "Checking WireGuard endpoint reachability..."
+            ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ping -c 1 -W 5 "${nsCfg.healthcheck.endpoint}" >/dev/null
+          fi
+          echo "Checking VPN egress..."
+          ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.curl}/bin/curl -fsS --max-time 15 https://ipinfo.io/ip >/dev/null
+        ''}
+      '';
+      preStop = ''
+        ${pkgs.iproute2}/bin/ip link del ${vethHost} 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip link del ${bridge} 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip netns del ${name} 2>/dev/null || true
+        ${pkgs.iproute2}/bin/ip link del ${wgIf} 2>/dev/null || true
+        rm -rf /etc/netns/${name} 2>/dev/null || true
+      '';
+    };
 
   netnsServices = lib.mapAttrs mkNetnsUnit cfg.namespaces;
 
   confinedAttrs = name: {
-    bindsTo = ["${name}.service"];
-    after = ["${name}.service"];
+    bindsTo = [ "${name}.service" ];
+    after = [ "${name}.service" ];
     serviceConfig.NetworkNamespacePath = "/var/run/netns/${name}";
   };
 
   serviceBinds = lib.foldl' (
-    acc: nsName: let
+    acc: nsName:
+    let
       ns = cfg.namespaces.${nsName};
     in
-      acc // lib.genAttrs ns.services (_: confinedAttrs nsName)
-  ) {} (lib.attrNames cfg.namespaces);
+    acc // lib.genAttrs ns.services (_: confinedAttrs nsName)
+  ) { } (lib.attrNames cfg.namespaces);
 
   leakCheckScript = pkgs.writeShellScript "vpn-leak-check" ''
     set -euo pipefail
@@ -190,7 +189,8 @@
       echo "VPN netns test OK"
     '';
   };
-in {
+in
+{
   options.my.services.vpn-confinement = {
     enable = lib.mkEnableOption "VPN network namespaces (stärker als RestrictNetworkInterfaces)";
 
@@ -222,7 +222,7 @@ in {
             };
             dns = lib.mkOption {
               type = lib.types.listOf lib.types.str;
-              default = [];
+              default = [ ];
               description = "DNS resolver(s) inside the namespace (/etc/netns/<name>/resolv.conf).";
             };
             namespaceAddress = lib.mkOption {
@@ -260,13 +260,13 @@ in {
             };
             services = lib.mkOption {
               type = lib.types.listOf lib.types.str;
-              default = [];
+              default = [ ];
               description = "systemd unit names die in diesem NS laufen.";
             };
           };
         }
       );
-      default = {};
+      default = { };
     };
   };
 
@@ -301,7 +301,7 @@ in {
     systemd.timers = lib.mkIf (cfg.leakCheck.enable && primaryNs != "") {
       vpn-leak-check = {
         description = "Periodic VPN leak check";
-        wantedBy = ["timers.target"];
+        wantedBy = [ "timers.target" ];
         timerConfig = {
           OnCalendar = cfg.leakCheck.interval;
           RandomizedDelaySec = "2m";

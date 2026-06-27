@@ -14,7 +14,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.my.services.home-assistant;
   domain = config.my.configs.identity.domain;
   mqttPort = config.my.ports.mqtt;
@@ -84,7 +85,8 @@
     os.chmod(STORAGE, 0o600)
     os.chown(STORAGE.parent, uid, gid)
   '';
-in {
+in
+{
   options.my.services.home-assistant = {
     enable = lib.mkEnableOption "Home Assistant (IoT)";
     user = lib.mkOption {
@@ -134,7 +136,7 @@ in {
     };
     extraComponents = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [];
+      default = [ ];
       description = "Extra components to load.";
     };
     trustedProxies = lib.mkOption {
@@ -152,21 +154,20 @@ in {
       isSystemUser = true;
       inherit (cfg) group;
       home = cfg.stateDir;
-      extraGroups =
-        [
-          "dialout"
-          "video"
-          "media"
-        ]
-        ++ (lib.optional cfg.bluetooth "bluetooth");
+      extraGroups = [
+        "dialout"
+        "video"
+        "media"
+      ]
+      ++ (lib.optional cfg.bluetooth "bluetooth");
     };
-    users.groups.${cfg.group} = {};
+    users.groups.${cfg.group} = { };
 
     services.home-assistant = {
       enable = true;
       configDir = cfg.stateDir;
       # MQTT via .storage — component must still be in the package (paho-mqtt)
-      extraComponents = ["mqtt"] ++ cfg.extraComponents;
+      extraComponents = [ "mqtt" ] ++ cfg.extraComponents;
       config = {
         homeassistant = {
           name = "NixHome";
@@ -189,33 +190,29 @@ in {
         RemainAfterExit = true;
         ExecStart = hassMqttProvision;
       };
-      after = ["q958-secrets-provision.service"];
-      wants = ["q958-secrets-provision.service"];
-      before = ["home-assistant.service"];
-      wantedBy = ["multi-user.target"];
+      after = [ "q958-secrets-provision.service" ];
+      wants = [ "q958-secrets-provision.service" ];
+      before = [ "home-assistant.service" ];
+      wantedBy = [ "multi-user.target" ];
     };
 
     systemd.services.home-assistant = {
       description = lib.mkForce "Home Assistant Core (hardened)";
       environment.PYTHONPYCACHEPREFIX = "${cfg.cacheDir}/pycache";
       serviceConfig = {
-        LoadCredential = lib.optional (
-          cfg.secretFile != null
-        ) "HA_SECRET:${toString cfg.secretFile}";
+        LoadCredential = lib.optional (cfg.secretFile != null) "HA_SECRET:${toString cfg.secretFile}";
         MemoryMax = "2G";
         CPUWeight = 70;
         OOMScoreAdjust = 300;
         # numpy/Pillow native extensions need executable mappings — nixpkgs default breaks HA
         MemoryDenyWriteExecute = lib.mkForce false;
-        ReadWritePaths = lib.mkAfter [cfg.cacheDir];
+        ReadWritePaths = lib.mkAfter [ cfg.cacheDir ];
         PrivateDevices =
-          if (lib.hasPrefix "/dev/" cfg.zigbeeDevice) || cfg.bluetooth
-          then lib.mkForce false
-          else true;
+          if (lib.hasPrefix "/dev/" cfg.zigbeeDevice) || cfg.bluetooth then lib.mkForce false else true;
         DeviceAllow =
           (lib.optional (lib.hasPrefix "/dev/" cfg.zigbeeDevice) "${cfg.zigbeeDevice} rw")
           ++ (lib.optional cfg.bluetooth "/dev/rfkill rw")
-          ++ ["/dev/dri/renderD128 rw"];
+          ++ [ "/dev/dri/renderD128 rw" ];
       };
       after = lib.mkAfter [
         "q958-secrets-provision.service"

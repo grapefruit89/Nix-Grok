@@ -11,7 +11,8 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   p = import ./profile.nix;
   devLib = import ../../lib/dev-secrets.nix {
     inherit lib;
@@ -19,7 +20,8 @@
     devKeys = p.secrets.devKeys;
     files = p.secrets.files;
   };
-in {
+in
+{
   warnings = [
     (devLib.mkWarning {
       rolloutStufe = p.rollout.stufe;

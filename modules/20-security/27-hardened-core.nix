@@ -14,9 +14,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.my.security.hardened;
-in {
+in
+{
   options.my.security.hardened = {
     enable = lib.mkEnableOption "Headless hardened core — disable desktop services, hide process info";
 
@@ -31,7 +33,7 @@ in {
     security.hideProcessInformation = true;
     security.lockKernelModules = cfg.lockKernelModules;
 
-    boot.kernelParams = lib.mkIf cfg.lockKernelModules ["lockdown=confidentiality"];
+    boot.kernelParams = lib.mkIf cfg.lockKernelModules [ "lockdown=confidentiality" ];
 
     # YubiKey / FIDO2 für LUKS-Unlock
     services.pcscd.enable = lib.mkForce true;

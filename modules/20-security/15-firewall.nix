@@ -19,11 +19,13 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.my.security.firewall;
   blockedCountryList = lib.concatStringsSep " " cfg.blockedCountries;
-  ruleset = import ../../lib/nftables-rules.nix {inherit lib config;};
-in {
+  ruleset = import ../../lib/nftables-rules.nix { inherit lib config; };
+in
+{
   options.my.security.firewall = {
     enable = lib.mkEnableOption "nftables L4 firewall (ersetzt networking.firewall)";
 
@@ -103,11 +105,11 @@ in {
     # Sicherheits-Assertions für Firewall-Konfiguration
     assertions = [
       {
-        assertion = cfg.lanCidrs != [];
+        assertion = cfg.lanCidrs != [ ];
         message = "FIREWALL: lanCidrs darf nicht leer sein — mindestens ein vertrauenswürdiges Netz definieren.";
       }
       {
-        assertion = cfg.blockedCountries != [];
+        assertion = cfg.blockedCountries != [ ];
         message = "FIREWALL: blockedCountries sollte nicht leer sein — Geo-Blocking aktivieren.";
       }
       {
@@ -126,7 +128,7 @@ in {
         "network-online.target"
         "nftables.service"
       ];
-      wants = ["network-online.target"];
+      wants = [ "network-online.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = pkgs.writeShellScript "update-geoip" ''
@@ -159,13 +161,13 @@ in {
         ProtectHome = true;
         PrivateTmp = true;
         PrivateDevices = true;
-        CapabilityBoundingSet = ["CAP_NET_ADMIN"];
+        CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
       };
     };
 
     systemd.timers.nftables-geoip-update = {
       description = "Weekly Geo-IP refresh";
-      wantedBy = ["timers.target"];
+      wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "5min";
         OnUnitActiveSec = "7d";

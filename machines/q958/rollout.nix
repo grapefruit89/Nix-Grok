@@ -11,27 +11,22 @@
 #     - rollout
 #     - enable
 # ---
-{lib, ...}: let
+{ lib, ... }:
+let
   p = import ./profile.nix;
   stufe = p.rollout.stufe;
-  rollout = import ../../lib/rollout.nix {inherit lib stufe;};
+  rollout = import ../../lib/rollout.nix { inherit lib stufe; };
   inherit (rollout) erstAb;
-in {
+in
+{
   system.nixos.distroName =
-    if stufe >= 9
-    then lib.mkForce "Production (Impermanence)"
-    else lib.mkForce p.boot.menuName;
+    if stufe >= 9 then lib.mkForce "Production (Impermanence)" else lib.mkForce p.boot.menuName;
   boot.loader.systemd-boot.configurationLimit = lib.mkForce p.boot.generationLimit;
   boot.loader.systemd-boot.sortKey =
-    if stufe >= 9
-    then lib.mkForce "9_production"
-    else lib.mkForce p.boot.sortKey;
+    if stufe >= 9 then lib.mkForce "9_production" else lib.mkForce p.boot.sortKey;
   system.stateVersion = lib.mkForce p.system.stateVersion;
 
-  my.mode =
-    if stufe >= 9
-    then lib.mkForce "production"
-    else lib.mkForce "development";
+  my.mode = if stufe >= 9 then lib.mkForce "production" else lib.mkForce "development";
 
   my.core = {
     boot-safeguard.enable = erstAb 1;
@@ -41,10 +36,7 @@ in {
   };
 
   my.security = {
-    sovereign-unlock.enable =
-      if p.storage.luks.device == ""
-      then lib.mkForce false
-      else erstAb 8;
+    sovereign-unlock.enable = if p.storage.luks.device == "" then lib.mkForce false else erstAb 8;
     firewall = {
       enable = erstAb 8;
       skuidSegmentation.enable = erstAb 8;
@@ -73,17 +65,11 @@ in {
     pocket-id.enable = erstAb 2; # /var/lib/secrets/pocket-id.env (secrets-provision)
     privado-vpn.enable = erstAb 6; # Usenet: SABnzbd + Prowlarr — Key in profile.local.nix
 
-    storage.enable =
-      if p.storage.mergerfsEnable
-      then erstAb 3
-      else lib.mkForce false;
+    storage.enable = if p.storage.mergerfsEnable then erstAb 3 else lib.mkForce false;
     storage-automount.enable = erstAb 3;
 
     gatus.enable = erstAb 4;
-    restic-backup.enable =
-      if p.restic.offsiteEnable
-      then erstAb 6
-      else lib.mkForce false;
+    restic-backup.enable = if p.restic.offsiteEnable then erstAb 6 else lib.mkForce false;
 
     jellyfin.enable = erstAb 6;
     jellyseerr.enable = erstAb 6;
@@ -122,22 +108,14 @@ in {
   };
 
   my.ports.ssh =
-    if stufe >= 9
-    then lib.mkForce p.network.productionSshPort
-    else lib.mkForce p.network.sshPort;
+    if stufe >= 9 then lib.mkForce p.network.productionSshPort else lib.mkForce p.network.sshPort;
 
   my.sops.enable = erstAb 9;
 
-  my.services.ddns-updater.enable =
-    if p.network.ddns.enable
-    then erstAb 5
-    else lib.mkForce false;
-  my.services.dns-guard.enable =
-    if p.network.ddns.enable
-    then erstAb 5
-    else lib.mkForce false;
+  my.services.ddns-updater.enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;
+  my.services.dns-guard.enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;
 
-  networking.firewall.allowedTCPPorts = lib.mkIf (stufe < 8) (lib.mkForce [p.network.sshPort]);
+  networking.firewall.allowedTCPPorts = lib.mkIf (stufe < 8) (lib.mkForce [ p.network.sshPort ]);
 
   assertions = [
     {

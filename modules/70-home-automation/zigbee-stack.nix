@@ -14,9 +14,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.my.services.zigbee-stack;
-in {
+in
+{
   options.my.services.zigbee-stack = {
     enable = lib.mkEnableOption "Zigbee Stack (Mosquitto + Zigbee2MQTT)";
     mqttPort = lib.mkOption {
@@ -59,7 +61,7 @@ in {
           {
             port = cfg.mqttPort;
             address = "127.0.0.1";
-            acl = ["pattern readwrite #"];
+            acl = [ "pattern readwrite #" ];
             settings.allow_anonymous = false;
             users = {
               "zigbee2mqtt" = {
@@ -110,31 +112,27 @@ in {
     systemd = {
       services = {
         mosquitto = {
-          after = ["q958-secrets-provision.service"];
-          wants = ["q958-secrets-provision.service"];
+          after = [ "q958-secrets-provision.service" ];
+          wants = [ "q958-secrets-provision.service" ];
           serviceConfig = {
             ProtectSystem = "strict";
             ProtectHome = true;
             PrivateTmp = true;
             NoNewPrivileges = true;
-            ReadWritePaths = ["/var/lib/mosquitto"];
+            ReadWritePaths = [ "/var/lib/mosquitto" ];
             OOMScoreAdjust = -100;
           };
         };
 
         zigbee2mqtt = {
-          after = ["mosquitto.service"];
-          wants = ["mosquitto.service"];
+          after = [ "mosquitto.service" ];
+          wants = [ "mosquitto.service" ];
           serviceConfig = {
             ProtectSystem = "strict";
             ProtectHome = true;
             PrivateTmp = true;
             NoNewPrivileges = true;
-            PrivateDevices = lib.mkForce (
-              if (lib.hasPrefix "/dev/" cfg.zigbeeDevice)
-              then false
-              else true
-            );
+            PrivateDevices = lib.mkForce (if (lib.hasPrefix "/dev/" cfg.zigbeeDevice) then false else true);
             DeviceAllow = lib.optional (lib.hasPrefix "/dev/" cfg.zigbeeDevice) "${cfg.zigbeeDevice} rw";
             RestrictAddressFamilies = [
               "AF_INET"
@@ -156,6 +154,6 @@ in {
       "mqtt"
       "dialout"
     ];
-    users.users.mosquitto.extraGroups = ["mqtt"];
+    users.users.mosquitto.extraGroups = [ "mqtt" ];
   };
 }

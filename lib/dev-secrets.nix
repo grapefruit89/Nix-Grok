@@ -12,7 +12,8 @@
   secretsDir,
   devKeys,
   files,
-}: let
+}:
+let
   # Nur Keys mit festem Dev-Wert in profile.nix — kein Zufall, kein openssl rand
   provisioned = [
     {
@@ -70,17 +71,18 @@
 
   isUnset = value: value == "" || lib.hasPrefix "CHANGE-ME" value;
 
-  warningBullet = e: let
-    status =
-      if isUnset e.value
-      then "MANUELL SETZEN"
-      else "DEV-PLATZHALTER — vor Production ersetzen";
-  in "  • ${e.label}: ${e.path} (${status})";
+  warningBullet =
+    e:
+    let
+      status = if isUnset e.value then "MANUELL SETZEN" else "DEV-PLATZHALTER — vor Production ersetzen";
+    in
+    "  • ${e.label}: ${e.path} (${status})";
 
-  mkWarning = {
-    rolloutStufe,
-    mode,
-  }:
+  mkWarning =
+    {
+      rolloutStufe,
+      mode,
+    }:
     lib.optionalString (mode == "development") ''
       ══ q958 DEVELOPMENT MODE (rollout.stufe = ${toString rolloutStufe}) ══
       Platzhalter-Secrets aktiv — vor SOPS/Production durch echte Werte ersetzen:
@@ -94,7 +96,8 @@
       Dev-Keys zentral: machines/q958/profile.local.nix → secrets.devKeys (gitignored)
       ══════════════════════════════════════════════════════════════════════
     '';
-in {
+in
+{
   inherit
     provisioned
     isUnset

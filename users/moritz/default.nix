@@ -7,10 +7,12 @@
 #     - user
 #     - moritz
 # ---
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   u = import ./profile.nix;
-in {
-  imports = [./preferences.nix];
+in
+{
+  imports = [ ./preferences.nix ];
 
   users.users.${u.name} = {
     isNormalUser = true;

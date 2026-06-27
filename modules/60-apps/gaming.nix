@@ -14,7 +14,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.my.services.amp;
 
   ampBin = "${cfg.dataDir}/opt/cubecoders/amp/ampinstmgr";
@@ -22,8 +23,8 @@
   # FHS Sandbox Environment for running unpatched game servers inside AMP
   amp-fhs = pkgs.buildFHSEnv {
     name = "amp-fhs";
-    targetPkgs = pkgs:
-      with pkgs; [
+    targetPkgs =
+      pkgs: with pkgs; [
         dotnet-sdk_8
         glibc
         glibc.dev
@@ -52,8 +53,8 @@
         zlib
         krb5
       ];
-    multiPkgs = pkgs:
-      with pkgs; [
+    multiPkgs =
+      pkgs: with pkgs; [
         pkgsi686Linux.glibc
       ];
     runScript = "bash";
@@ -165,7 +166,8 @@
           exit 1
         fi
   '';
-in {
+in
+{
   # ============================================================================
   # OPTIONS
   # ============================================================================
@@ -188,7 +190,7 @@ in {
   # ============================================================================
   config = lib.mkIf cfg.enable {
     # ── 1. SYSTEM PACKAGES ───────────────────────────────────────────────────
-    environment.systemPackages = [amp-fhs];
+    environment.systemPackages = [ amp-fhs ];
 
     # ── 2. BOOTSTRAP + SYSTEMD ───────────────────────────────────────────────
     systemd.services.amp-bootstrap = {
@@ -201,7 +203,7 @@ in {
         "network-online.target"
         "q958-secrets-provision.service"
       ];
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -215,9 +217,9 @@ in {
         "amp-bootstrap.service"
         "network-online.target"
       ];
-      wants = ["network-online.target"];
-      requires = ["amp-bootstrap.service"];
-      wantedBy = ["multi-user.target"];
+      wants = [ "network-online.target" ];
+      requires = [ "amp-bootstrap.service" ];
+      wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
         Type = "oneshot";
@@ -238,7 +240,7 @@ in {
         PrivateTmp = true;
         NoNewPrivileges = true;
 
-        ReadWritePaths = [cfg.dataDir];
+        ReadWritePaths = [ cfg.dataDir ];
         PrivateNetwork = false;
         PrivateUsers = false;
         PrivateDevices = false;
@@ -253,13 +255,13 @@ in {
       createHome = true;
       shell = "${amp-fhs}/bin/amp-fhs";
     };
-    users.groups.amp = {};
+    users.groups.amp = { };
 
     # ── 4. DIRECTORY CREATION ─────────────────────────────────────────────────
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0750 amp amp -"
     ];
 
-    my.impermanence.extraPaths = [cfg.dataDir];
+    my.impermanence.extraPaths = [ cfg.dataDir ];
   };
 }

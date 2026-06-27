@@ -7,7 +7,8 @@
 #     - unix-socket
 #     - caddy
 # ---
-{lib, ...}: {
+{ lib, ... }:
+{
   # ── bereits aktiv ──────────────────────────────────────────────────────────
   valkey = "/run/redis-valkey/valkey.sock";
   grafana = "/run/grafana/grafana.sock";

@@ -11,11 +11,13 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   p = import ./profile.nix;
   moritz = import ../../users/moritz/profile.nix;
   zigbeeSocket = "socket://${p.iot.zigbeeCoordinator.host}:${toString p.iot.zigbeeCoordinator.port}";
-in {
+in
+{
   imports = [
     ./hardware.nix
     ../../modules/00-core
@@ -200,10 +202,10 @@ in {
       # default = "deepseek/deepseek-chat-v3-0324";        # $0.20/M, 163k ctx
       # default = "qwen/qwen3-235b-a22b-2507";             # $0.09/M, 262k ctx
     };
-    environmentFiles = ["/var/lib/secrets/hermes.env"];
+    environmentFiles = [ "/var/lib/secrets/hermes.env" ];
     mcpServers.nixos-docs = {
       command = "${pkgs.python3}/bin/python3";
-      args = ["/var/lib/hermes/nixos-docs-mcp.py"];
+      args = [ "/var/lib/hermes/nixos-docs-mcp.py" ];
     };
     mcpServers.exa = {
       url = "https://mcp.exa.ai/mcp";

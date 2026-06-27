@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./05-storage-policy.nix
     ./05-deferred-ops.nix

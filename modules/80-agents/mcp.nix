@@ -20,7 +20,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   user = config.my.configs.identity.user;
   userHome = "/home/${user}";
   context7Key = "${userHome}/.config/context7/api_key";
@@ -41,8 +42,12 @@
 
   # JSON fuer ~/.claude/settings.json — store-pfade, immer verfuegbar
   claudeCodeMcpJson = builtins.toJSON {
-    context7 = {command = "${context7McpWrapper}";};
-    nixos = {command = nixosMcpBin;};
+    context7 = {
+      command = "${context7McpWrapper}";
+    };
+    nixos = {
+      command = nixosMcpBin;
+    };
   };
 
   # Shell-String fuer HM-Activation (aussen berechnet, kein lib-Konflikt im HM-Scope)
@@ -57,15 +62,19 @@
       ${pkgs.jq}/bin/jq -n --argjson mcp "$MCP" '{ mcpServers: $mcp }' > "$SETTINGS"
     fi
   '';
-in {
+in
+{
   config = lib.mkMerge [
     # ── Claude Code: global ~/.claude/settings.json ──────────────────────────
     # HM-Activation als Funktion — lib-Argument ist HM-lib (hat lib.hm.dag)
     (lib.mkIf config.services.claude-code.enable {
-      home-manager.users.${user} = {lib, ...}: {
-        home.activation.claudeCodeMcpServers =
-          lib.hm.dag.entryAfter ["writeBoundary"] claudeCodeActivation;
-      };
+      home-manager.users.${user} =
+        { lib, ... }:
+        {
+          home.activation.claudeCodeMcpServers = lib.hm.dag.entryAfter [
+            "writeBoundary"
+          ] claudeCodeActivation;
+        };
     })
 
     # ── Hermes Agent: mcp_servers in settings ────────────────────────────────
@@ -73,8 +82,12 @@ in {
     #   /var/lib/hermes/env <- hermes-env-provision <- /var/lib/secrets/context7.env
     (lib.mkIf config.services.hermes-agent.enable {
       services.hermes-agent.settings.mcp_servers = {
-        context7 = {command = "${pkgs.context7-mcp}/bin/context7-mcp";};
-        nixos = {command = nixosMcpBin;};
+        context7 = {
+          command = "${pkgs.context7-mcp}/bin/context7-mcp";
+        };
+        nixos = {
+          command = nixosMcpBin;
+        };
       };
     })
   ];

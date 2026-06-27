@@ -9,9 +9,11 @@
 #     - kernel
 #     - options
 # ---
-{lib, ...}: let
-  policy = import ../../lib/kernel/policy.nix {inherit lib;};
-in {
+{ lib, ... }:
+let
+  policy = import ../../lib/kernel/policy.nix { inherit lib; };
+in
+{
   options.my.core.kernel-slim = {
     enable = lib.mkEnableOption "Kernel module blacklist slimming (saves RAM, reduces Angriffsfläche)";
 

@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./15-firewall.nix
     ./20-security.nix

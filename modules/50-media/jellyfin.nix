@@ -19,22 +19,23 @@
   lib,
   pkgs,
   ...
-}: let
-  factory = import ../../lib/service-factory.nix {inherit lib;};
-  memory = import ../../lib/memory-policy.nix {inherit lib;};
+}:
+let
+  factory = import ../../lib/service-factory.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix { inherit lib; };
   cfgJellyfin = config.my.services.jellyfin;
   cfgJellyseerr = config.my.services.jellyseerr;
   domain = config.my.configs.identity.domain;
-  dnsMap = import ../../lib/dns-map.nix {inherit domain;};
+  dnsMap = import ../../lib/dns-map.nix { inherit domain; };
   portJellyfin = config.my.ports.jellyfin;
   portJellyseerr = config.my.ports.jellyseerr;
   locale = config.my.configs.locale;
   localeLang = locale.language or "de";
-  localeUi = lib.replaceStrings ["_"] ["-"] (locale.default or "de_DE.UTF-8");
+  localeUi = lib.replaceStrings [ "_" ] [ "-" ] (locale.default or "de_DE.UTF-8");
   localeCc = lib.toUpper (lib.substring 3 2 localeUi);
   jellyfinUrl = "https://${dnsMap.host "jellyfin"}";
 
-  jellyfinConfigSeeds = pkgs.runCommand "jellyfin-config-seeds" {} ''
+  jellyfinConfigSeeds = pkgs.runCommand "jellyfin-config-seeds" { } ''
     mkdir -p $out
     ${pkgs.gnused}/bin/sed \
       -e 's|@LOCALE_LANG@|${localeLang}|g' \
@@ -45,7 +46,8 @@
       -e 's|@JELLYFIN_URL@|${jellyfinUrl}|g' \
       ${./data/jellyfin-network.xml} > $out/network.xml
   '';
-in {
+in
+{
   config = lib.mkMerge [
     (lib.mkIf cfgJellyfin.enable (
       lib.mkMerge [
@@ -98,7 +100,7 @@ in {
           port = portJellyfin;
           useGPU = true;
           manageIngress = false;
-          memoryPolicy = memory.jellyfin {};
+          memoryPolicy = memory.jellyfin { };
           persistDirs = [
             "/var/lib/jellyfin"
             "/var/cache/jellyfin"
@@ -144,8 +146,8 @@ in {
           name = "seerr";
           port = portJellyseerr;
           mode = "sso";
-          persistDirs = ["/var/lib/seerr"];
-          readWritePaths = ["/var/lib/seerr"];
+          persistDirs = [ "/var/lib/seerr" ];
+          readWritePaths = [ "/var/lib/seerr" ];
         })
       ]
     ))

@@ -14,12 +14,14 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   # --------------------------------------------------------------------------
   # MODULE CONFIG REF
   # --------------------------------------------------------------------------
   cfg = config.my.policy.jailed-agents;
-in {
+in
+{
   # ============================================================================
   # OPTIONS
   # ============================================================================
@@ -62,8 +64,8 @@ in {
     # --------------------------------------------------------------------------
     systemd.services.jailed-agents = {
       description = "Zero-Trust LLM Coding Agent Jail Daemon";
-      wantedBy = ["multi-user.target"];
-      after = ["network.target"];
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
 
       serviceConfig = {
         User = "jailed-agent";
@@ -87,9 +89,9 @@ in {
       isSystemUser = true;
       group = "jailed-agent";
     };
-    users.groups.jailed-agent = {};
+    users.groups.jailed-agent = { };
 
     # We install bubblewrap to implement sandboxing policies
-    environment.systemPackages = [pkgs.bubblewrap];
+    environment.systemPackages = [ pkgs.bubblewrap ];
   };
 }

@@ -14,9 +14,11 @@
   config,
   lib,
   ...
-}: let
-  reg = import ../../lib/uid-registry.nix {inherit lib;};
-in {
+}:
+let
+  reg = import ../../lib/uid-registry.nix { inherit lib; };
+in
+{
   options.my = {
     users.registry = lib.mkOption {
       type = lib.types.attrsOf lib.types.int;

@@ -7,7 +7,8 @@
 #     - media
 #     - imports
 # ---
-{lib, ...}: {
+{ lib, ... }:
+{
   imports = [
     ./jellyfin.nix
     ./audiobookshelf.nix

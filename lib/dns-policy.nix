@@ -10,7 +10,8 @@
 #     - dns
 #     - dot
 # ---
-{lib, ...}: let
+{ lib, ... }:
+let
   encryptedPrefixes = [
     "tcp-tls:"
     "https://"
@@ -20,11 +21,11 @@
 
   isEncryptedUpstream = entry: lib.any (prefix: lib.hasPrefix prefix entry) encryptedPrefixes;
 
-  isPlaintextUpstream = entry:
+  isPlaintextUpstream =
+    entry:
     !isEncryptedUpstream entry
     && (
-      builtins.match "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(:[0-9]+)?$" entry
-      != null
+      builtins.match "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(:[0-9]+)?$" entry != null
       || lib.hasPrefix "tcp+udp:" entry
       || lib.hasPrefix "udp:" entry
       || (lib.hasPrefix "tcp:" entry && !lib.hasPrefix "tcp-tls:" entry)
@@ -33,7 +34,8 @@
   allEncrypted = entries: lib.all isEncryptedUpstream entries;
 
   nonePlaintext = entries: lib.all (e: !isPlaintextUpstream e) entries;
-in {
+in
+{
   inherit
     isEncryptedUpstream
     isPlaintextUpstream

@@ -14,15 +14,16 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfgSonarr = config.my.services.sonarr;
   cfgRadarr = config.my.services.radarr;
   cfgProwlarr = config.my.services.prowlarr;
   cfgSabnzbd = config.my.services.sabnzbd;
   cfgJellyfin = config.my.services.jellyfin;
   vpnCfg = config.my.services.vpn-confinement;
-  vpnConn = import ../../lib/vpn-connection.nix {inherit lib;};
-  waitFor = import ../../lib/wait-for-api.nix {inherit lib pkgs;};
+  vpnConn = import ../../lib/vpn-connection.nix { inherit lib; };
+  waitFor = import ../../lib/wait-for-api.nix { inherit lib pkgs; };
   ports = config.my.ports;
 
   anyEnabled =
@@ -35,12 +36,13 @@
   vpnNsAddress = vpnConn.connectionAddress vpnCfg "prowlarr";
   hostBridgeAddress = vpnConn.hostBridgeAddress vpnCfg "prowlarr";
 
-  mkWait = {
-    enable,
-    name,
-    host,
-    port,
-  }:
+  mkWait =
+    {
+      enable,
+      name,
+      host,
+      port,
+    }:
     lib.optional enable (
       waitFor.mkScript {
         inherit name;
@@ -75,7 +77,8 @@
       port = ports.sabnzbd;
     }
   );
-in {
+in
+{
   config = lib.mkIf anyEnabled {
     systemd.services.media-stack-config-sync = {
       description = "Declarative Media Stack Locale and Application Sync Orchestrator";
@@ -93,7 +96,7 @@ in {
         "sabnzbd.service"
         "jellyfin.service"
       ];
-      wantedBy = ["multi-user.target"];
+      wantedBy = [ "multi-user.target" ];
       path = with pkgs; [
         curl
         jq
@@ -122,22 +125,23 @@ in {
 
       script =
         (
-          if waitScripts != ""
-          then ''
-            if systemctl is-active --quiet privado-vpn.service; then
-              if ${waitScripts}; then
-                PROWLARR_REACHABLE=true
+          if waitScripts != "" then
+            ''
+              if systemctl is-active --quiet privado-vpn.service; then
+                if ${waitScripts}; then
+                  PROWLARR_REACHABLE=true
+                else
+                  echo "Prowlarr nicht erreichbar nach Wartezeit — Prowlarr-API-Sync wird übersprungen."
+                  PROWLARR_REACHABLE=false
+                fi
               else
-                echo "Prowlarr nicht erreichbar nach Wartezeit — Prowlarr-API-Sync wird übersprungen."
+                echo "privado-vpn.service nicht aktiv — Prowlarr-VPN-Sync wird übersprungen."
                 PROWLARR_REACHABLE=false
               fi
-            else
-              echo "privado-vpn.service nicht aktiv — Prowlarr-VPN-Sync wird übersprungen."
-              PROWLARR_REACHABLE=false
-            fi
-            export PROWLARR_REACHABLE
-          ''
-          else ""
+              export PROWLARR_REACHABLE
+            ''
+          else
+            ""
         )
         + builtins.readFile ./sync-script.sh;
     };

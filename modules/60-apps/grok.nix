@@ -15,22 +15,20 @@
   pkgs,
   grok-cli ? null,
   ...
-}: let
+}:
+let
   cfg = config.my.services.grok;
   package =
-    if cfg.package != null
-    then cfg.package
+    if cfg.package != null then
+      cfg.package
     else
-      (
-        if grok-cli != null
-        then grok-cli
-        else pkgs.callPackage ../../packages/grok-cli {}
-      );
+      (if grok-cli != null then grok-cli else pkgs.callPackage ../../packages/grok-cli { });
   inherit (cfg) user;
   group = config.users.users.${user}.group or "users";
   stateDir = cfg.stateDirectory;
   binDir = "${stateDir}/bin";
-in {
+in
+{
   options.my.services.grok = {
     enable = lib.mkEnableOption "Grok Build CLI (xAI) for headless SSH workflows";
 
@@ -86,6 +84,6 @@ in {
       chown -R ${user}:${group} ${stateDir}
     '';
 
-    environment.systemPackages = [package];
+    environment.systemPackages = [ package ];
   };
 }

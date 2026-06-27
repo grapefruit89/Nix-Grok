@@ -7,7 +7,8 @@
 #     - uid
 #     - security
 # ---
-{lib}: let
+{ lib }:
+let
   defaultUsers = {
     # *arr + Usenet — explizit statisch (Split-Tunnel + nftables skuid)
     # Schema: UID = Port = Ordner-Präfix (50xx = 50-media)
@@ -26,7 +27,8 @@
     prowlarr = 5006;
     sabnzbd = 5007;
   };
-in {
+in
+{
   inherit defaultUsers defaultGroups;
 
   getUser = registry: name: registry.${name} or (throw "uid-registry: unbekannter User '${name}'");

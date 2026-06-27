@@ -17,12 +17,14 @@
   config,
   lib,
   ...
-}: let
-  memory = import ../../lib/memory-policy.nix {inherit lib;};
+}:
+let
+  memory = import ../../lib/memory-policy.nix { inherit lib; };
   cfgPaperless = config.my.services.paperless;
   cfgN8n = config.my.services.n8n;
   domain = config.my.configs.identity.domain;
-in {
+in
+{
   config = lib.mkMerge [
     (lib.mkIf cfgPaperless.enable {
       services.paperless = {
@@ -95,7 +97,7 @@ in {
         ProtectHome = lib.mkForce true;
         NoNewPrivileges = lib.mkForce true;
         PrivateTmp = lib.mkForce true;
-        ReadWritePaths = lib.mkForce [cfgN8n.userFolder];
+        ReadWritePaths = lib.mkForce [ cfgN8n.userFolder ];
         LockPersonality = lib.mkForce true;
         CapabilityBoundingSet = lib.mkForce "";
         RestrictNamespaces = lib.mkForce true;
@@ -108,7 +110,7 @@ in {
         ];
       };
 
-      my.impermanence.extraPaths = [cfgN8n.userFolder];
+      my.impermanence.extraPaths = [ cfgN8n.userFolder ];
     })
   ];
 }

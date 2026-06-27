@@ -16,7 +16,8 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.my.boot-watchdog;
   serviceActive = name: ''
     if ! ${pkgs.systemd}/bin/systemctl is-active --quiet ${name}; then
@@ -29,7 +30,8 @@
       fi
     fi
   '';
-in {
+in
+{
   options.my.boot-watchdog = {
     enable = lib.mkEnableOption "Post-boot health check for critical infrastructure services";
     graceSec = lib.mkOption {
@@ -58,7 +60,7 @@ in {
         "multi-user.target"
         "network-online.target"
       ];
-      wants = ["network-online.target"];
+      wants = [ "network-online.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -74,14 +76,14 @@ in {
 
     systemd.timers.boot-watchdog = {
       description = "Run boot-watchdog once after boot";
-      wantedBy = ["timers.target"];
+      wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "${toString cfg.graceSec}s";
         AccuracySec = "30s";
       };
     };
 
-    systemd.services.boot-watchdog.path = [pkgs.systemd];
+    systemd.services.boot-watchdog.path = [ pkgs.systemd ];
 
     # PostgreSQL: Restart=always ohne OOM-Konflikt mit memory.postgres (-800)
     systemd.services.postgresql.serviceConfig = {
@@ -94,8 +96,8 @@ in {
 
     # Caddy hängt an PostgreSQL wenn Pocket-ID aktiv (forward_auth)
     systemd.services.caddy = lib.mkIf (config.my.services.pocket-id.enable or false) {
-      requires = ["postgresql.service"];
-      wants = ["postgresql.service"];
+      requires = [ "postgresql.service" ];
+      wants = [ "postgresql.service" ];
     };
   };
 }

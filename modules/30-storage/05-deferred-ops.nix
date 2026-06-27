@@ -15,10 +15,12 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   storage = config.my.configs.storage;
   tierCMount = storage.tierC.mountPoint;
-in {
+in
+{
   options.my.storage.deferred = {
     enable = lib.mkEnableOption "Deferred deletion queue (SSD staging, HDD-aware purge)";
 
@@ -124,8 +126,9 @@ in {
         echo "$TARGET" > "$QUEUE_DIR/''${STAMP}-''${BASENAME}.queue"
             echo "Queued for deferred delete: $TARGET"
       '';
-    in {
-      environment.systemPackages = [deferDeleteBin];
+    in
+    {
+      environment.systemPackages = [ deferDeleteBin ];
 
       systemd.services.process-delete-queue = {
         description = "Process deferred Tier-C deletion queue";
@@ -153,7 +156,7 @@ in {
 
       systemd.timers.process-delete-queue = {
         description = "Hourly deferred deletion queue processor";
-        wantedBy = ["timers.target"];
+        wantedBy = [ "timers.target" ];
         timerConfig = {
           OnCalendar = "hourly";
           Persistent = true;

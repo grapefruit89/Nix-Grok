@@ -14,24 +14,27 @@
   lib,
   caddy,
   vpnConn ? null,
-}: let
+}:
+let
   inherit (caddy) streamingBackend;
 
-  vpnUpstream = name: entry:
-    if vpnConn == null
-    then mkUpstream entry
+  vpnUpstream =
+    name: entry:
+    if vpnConn == null then
+      mkUpstream entry
     else if
       lib.elem name [
         "sabnzbd"
         "prowlarr"
       ]
-    then "${vpnConn.connectionAddress vpnConn.cfg name}:${toString entry.port}"
-    else mkUpstream entry;
+    then
+      "${vpnConn.connectionAddress vpnConn.cfg name}:${toString entry.port}"
+    else
+      mkUpstream entry;
 
-  mkUpstream = entry:
-    if entry.socket or null != null
-    then "unix/${entry.socket}"
-    else "127.0.0.1:${toString entry.port}";
+  mkUpstream =
+    entry:
+    if entry.socket or null != null then "unix/${entry.socket}" else "127.0.0.1:${toString entry.port}";
 
   mkFqdn = domain: entry: "${entry.subdomain}.${domain}";
 
@@ -87,68 +90,72 @@
     reverse_proxy ${upstream}
   '';
 
-  genZoneVhost = {
-    zone,
-    upstream,
-    subdomain,
-  }:
-    if zone == "admin-hangar"
-    then ''
-      import tailscale_admin
-      import security_headers
-      reverse_proxy ${upstream}
-    ''
-    else if zone == "public"
-    then ''
-      import security_headers
-      reverse_proxy ${upstream}
-    ''
-    else if zone == "family-pocketid" && lib.elem subdomain streamingSubdomains
-    then ''
-      import streamer_headers
-      import security_headers
-      import sso_auth
-      reverse_proxy ${upstream} {
-        flush_interval -1
-        transport http {
-          read_buffer 0
-          keepalive off
+  genZoneVhost =
+    {
+      zone,
+      upstream,
+      subdomain,
+    }:
+    if zone == "admin-hangar" then
+      ''
+        import tailscale_admin
+        import security_headers
+        reverse_proxy ${upstream}
+      ''
+    else if zone == "public" then
+      ''
+        import security_headers
+        reverse_proxy ${upstream}
+      ''
+    else if zone == "family-pocketid" && lib.elem subdomain streamingSubdomains then
+      ''
+        import streamer_headers
+        import security_headers
+        import sso_auth
+        reverse_proxy ${upstream} {
+          flush_interval -1
+          transport http {
+            read_buffer 0
+            keepalive off
+          }
         }
-      }
-    ''
-    else if zone == "family-pocketid"
-    then ''
-      import security_headers
-      import sso_auth
-      reverse_proxy ${upstream}
-    ''
-    else throw "caddy-ingress: zone '${zone}' hat keinen Ingress";
+      ''
+    else if zone == "family-pocketid" then
+      ''
+        import security_headers
+        import sso_auth
+        reverse_proxy ${upstream}
+      ''
+    else
+      throw "caddy-ingress: zone '${zone}' hat keinen Ingress";
 
   streamingSubdomains = [
     "audiobookshelf"
   ];
 
-  genHostExtra = {
-    name,
-    entry,
-    upstream,
-  }:
-    if name == "pocket-id"
-    then genAuthVhost upstream
-    else if name == "jellyfin"
-    then genJellyfinVhost entry.port
-    else if name == "vaultwarden"
-    then genVaultwardenVhost entry.port
-    else if name == "homepage"
-    then genSecurityOnlyVhost upstream
-    else if name == "amp"
-    then genSecurityOnlyVhost upstream
+  genHostExtra =
+    {
+      name,
+      entry,
+      upstream,
+    }:
+    if name == "pocket-id" then
+      genAuthVhost upstream
+    else if name == "jellyfin" then
+      genJellyfinVhost entry.port
+    else if name == "vaultwarden" then
+      genVaultwardenVhost entry.port
+    else if name == "homepage" then
+      genSecurityOnlyVhost upstream
+    else if name == "amp" then
+      genSecurityOnlyVhost upstream
     else if
       lib.elem name [
         "home-assistant"
         "zigbee-stack"
       ]
-    then genSecurityOnlyVhost upstream
+    then
+      genSecurityOnlyVhost upstream
     else
       genZoneVhost {
         inherit (entry) zone;
@@ -156,31 +163,32 @@
         inherit (entry) subdomain;
       };
 
-  genVirtualHosts = {
-    spec,
-    domain,
-    isEnabled,
-    blockyMetricsPort,
-  }: let
-    ingress =
-      lib.filterAttrs (
+  genVirtualHosts =
+    {
+      spec,
+      domain,
+      isEnabled,
+      blockyMetricsPort,
+    }:
+    let
+      ingress = lib.filterAttrs (
         name: entry: (entry.subdomain or null) != null && (entry.zone != "loopback") && isEnabled name
-      )
-      spec;
+      ) spec;
 
-    mkHost = name: entry: let
-      upstream =
-        if name == "blocky"
-        then "127.0.0.1:${toString blockyMetricsPort}"
-        else vpnUpstream name entry;
-      fqdn = mkFqdn domain entry;
-      extraConfig = genHostExtra {
-        inherit name entry upstream;
-      };
+      mkHost =
+        name: entry:
+        let
+          upstream =
+            if name == "blocky" then "127.0.0.1:${toString blockyMetricsPort}" else vpnUpstream name entry;
+          fqdn = mkFqdn domain entry;
+          extraConfig = genHostExtra {
+            inherit name entry upstream;
+          };
+        in
+        lib.nameValuePair fqdn { inherit extraConfig; };
     in
-      lib.nameValuePair fqdn {inherit extraConfig;};
-  in
     lib.listToAttrs (lib.mapAttrsToList mkHost ingress);
-in {
+in
+{
   inherit genVirtualHosts streamingSubdomains;
 }

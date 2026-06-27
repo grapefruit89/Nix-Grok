@@ -17,8 +17,9 @@
   config,
   lib,
   ...
-}: let
-  policy = import ../../lib/storage-policy.nix {inherit lib;};
+}:
+let
+  policy = import ../../lib/storage-policy.nix { inherit lib; };
   storage = config.my.configs.storage;
   inherit (storage) tierC;
 
@@ -47,7 +48,8 @@
     inherit (tierC) labels;
     inherit (tierC) legacyPrefixes;
   };
-in {
+in
+{
   options.my.configs.storage = {
     tierB.mountPoint = lib.mkOption {
       type = lib.types.str;
@@ -74,7 +76,7 @@ in {
       };
       legacyPrefixes = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = ["TIER_C_"];
+        default = [ "TIER_C_" ];
         description = "Legacy path prefixes that imply Tier C.";
       };
     };
@@ -89,17 +91,16 @@ in {
     };
   };
 
-  config =
-    {
-      my.storage-policy.enable = lib.mkDefault true;
-    }
-    // lib.mkIf config.my.storage-policy.enable {
-      assertions = [
-        (policy.mkTierCAssertion {
-          exemptions = config.my.storage-policy.tierCExemptions;
-          inherit markers;
-          systemdServices = config.systemd.services;
-        })
-      ];
-    };
+  config = {
+    my.storage-policy.enable = lib.mkDefault true;
+  }
+  // lib.mkIf config.my.storage-policy.enable {
+    assertions = [
+      (policy.mkTierCAssertion {
+        exemptions = config.my.storage-policy.tierCExemptions;
+        inherit markers;
+        systemdServices = config.systemd.services;
+      })
+    ];
+  };
 }

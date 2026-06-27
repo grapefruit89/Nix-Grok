@@ -11,11 +11,13 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   p = import ./profile.nix;
   s = p.storage;
   tp = s.tierPolicy;
-in {
+in
+{
   assertions = [
     {
       assertion = !(s.singleDisk && s.mergerfsEnable);
@@ -60,7 +62,7 @@ in {
   };
 
   # Einmal-Migration: BOOT/NIXHOME_PERSIST → NIXBOOT/NIXPERSIST
-  system.activationScripts.relabelTierALabels = lib.stringAfter ["specialfs"] ''
+  system.activationScripts.relabelTierALabels = lib.stringAfter [ "specialfs" ] ''
     boot_dev="${s.tierA.device}1"
     persist_dev="${s.tierA.device}2"
     if [ -b "$boot_dev" ]; then
