@@ -159,6 +159,27 @@ Nutze `mcp__claude_ai_Context7__resolve-library-id` + `query-docs` für:
 Ablauf: erst `resolve-library-id` mit dem Library-Namen, dann `query-docs` mit
 der Library-ID und der spezifischen Frage.
 
+## Moderne CLI-Tools — Pflicht im interaktiven Betrieb
+
+Folgende moderne Tools sind systemweit installiert und **müssen bevorzugt werden**:
+
+| Deprecated    | Modernes Äquivalent               | Hinweis |
+|---------------|-----------------------------------|---------|
+| `cat`         | `bat --paging=never`              | Alias gesetzt |
+| `ls`          | `eza --icons --git`               | Alias gesetzt; `ll` = mit `-la` |
+| `find`        | `fd`                              | Alias gesetzt |
+| `grep`        | `rg` (ripgrep)                    | Alias gesetzt |
+| `du`          | `dust`                            | Alias gesetzt |
+| `df`          | `duf`                             | Alias gesetzt |
+| `top`         | `btop`                            | Alias gesetzt |
+| `nixos-rebuild switch` | `nh os switch --flake /etc/nixos#q958` | Nur für menschliche Rebuilds; **Dry-Build-Gate bleibt `sudo scripts/nixos-rebuild-safe.sh`** |
+
+**Für Claude Code:** Das Claude-Code-System-Prompt verbietet `cat`/`head`/`tail`/`sed`/`awk`
+bereits — stattdessen `Read`/`Edit`/`Write`-Tools nutzen. Die Shell-Aliases greifen nur für
+interaktive Bash-Sitzungen, nicht für Bash-Tools-Aufrufe durch Claude Code.
+
+**Nach einem `nixos-rebuild switch`** immer `nvd` ausführen, um den Diff anzuzeigen.
+
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 
 1. **`nixos-rebuild switch` führt nur der Mensch aus** — niemals automatisch,

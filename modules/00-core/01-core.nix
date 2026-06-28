@@ -391,7 +391,31 @@ in
         statix
         deadnix
         pre-commit
+
+        # ── Moderne CLI-Tools (ersetzt klassische POSIX-Befehle) ──────────────
+        nh # nixos-rebuild UX-Wrapper (menschliche Rebuilds; Dry-Build-Gate bleibt scripts/nixos-rebuild-safe.sh)
+        nvd # Diff-Ausgabe nach nixos-rebuild switch
+        bat # cat-Ersatz mit Syntax-Highlighting
+        eza # ls-Ersatz mit Git-Status + Icons
+        fd # find-Ersatz (schneller, intuitivere Syntax)
+        ripgrep # grep-Ersatz (schneller, .gitignore-aware)
+        btop # top-Ersatz (moderne UI)
+        dust # du-Ersatz (Baumansicht)
+        duf # df-Ersatz (schöner Output)
       ];
+
+      # Moderne Shell-Aliases: NUR für interaktive Shells (nicht für Skripte/Aktivierungen)
+      programs.bash.shellAliases = {
+        cat = "bat --paging=never";
+        ls = "eza --icons --git";
+        ll = "eza --icons --git -la";
+        tree = "eza --tree --icons --git";
+        find = "fd";
+        grep = "rg";
+        du = "dust";
+        df = "duf";
+        top = "btop";
+      };
 
       # Pre-commit-Hooks nach jedem Rebuild automatisch einrichten,
       # damit kein Commit ohne nixfmt/statix/deadnix möglich ist.
