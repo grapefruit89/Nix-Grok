@@ -182,13 +182,6 @@ in
       "x25"
       "netrom"
       "rose"
-      # Ungenutzte Dateisysteme — Angriffsfläche ohne Nutzen
-      "cramfs"
-      "hfs"
-      "hfsplus"
-      "jffs2"
-      "reiserfs"
-      "udf"
       # Debugging
       "kgdb"
       "floppy"
