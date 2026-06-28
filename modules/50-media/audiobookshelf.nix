@@ -52,7 +52,7 @@ in
           enable = lib.mkDefault true;
           extraPackages = with pkgs; [
             intel-media-driver
-            intel-compute-runtime
+            intel-compute-runtime-legacy1 # Gen 9 Coffee Lake braucht legacy1
           ];
         };
       }

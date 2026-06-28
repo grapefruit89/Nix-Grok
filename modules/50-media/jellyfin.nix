@@ -241,8 +241,9 @@ in
             enable = true;
             extraPackages = with pkgs; [
               intel-media-driver
-              intel-compute-runtime
-              ocl-icd
+              # Gen 9 (Coffee Lake UHD 630) braucht legacy1 — der default targeting Gen 12+
+              intel-compute-runtime-legacy1
+              vpl-gpu-rt # OneVPL runtime für encode pipeline
             ];
           };
 
@@ -256,7 +257,7 @@ in
             LIBVA_DRIVER_NAME = "iHD";
             LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
             VDPAU_DRIVER = "va_gl";
-            OCL_ICD_VENDORS = "${pkgs.intel-compute-runtime}/etc/OpenCL/vendors";
+            OCL_ICD_VENDORS = "${pkgs.intel-compute-runtime-legacy1}/etc/OpenCL/vendors";
           };
 
           environment.systemPackages = with pkgs; [
@@ -286,7 +287,7 @@ in
           readOnlyPaths = [
             "/data/media"
             "${pkgs.intel-media-driver}/lib"
-            "${pkgs.intel-compute-runtime}/lib"
+            "${pkgs.intel-compute-runtime-legacy1}/lib"
             "/run/opengl-driver"
           ];
           extraSystemd = {

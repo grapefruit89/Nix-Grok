@@ -23,7 +23,8 @@ in
 
   boot = {
     initrd.availableKernelModules = p.hardware.initrdModules;
-    initrd.kernelModules = [ ];
+    # i915 früh laden → KMS bereits in Stage 1, schnellerer Framebuffer
+    initrd.kernelModules = [ "i915" ];
     kernelModules = [ p.hardware.kvmModule ];
     extraModulePackages = [ ];
   };

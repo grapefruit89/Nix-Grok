@@ -114,6 +114,7 @@ in
       "net.ipv4.conf.default.log_martians" = 1;
       "net.ipv4.conf.all.rp_filter" = 1;
       "net.ipv4.conf.default.rp_filter" = 1;
+      "net.ipv4.icmp_ignore_bogus_error_responses" = 1; # Drop RFC-verletzte ICMP-Fehler
       "net.ipv4.tcp_timestamps" = 0;
       "net.ipv4.tcp_syn_retries" = 3;
       "net.ipv4.tcp_max_syn_backlog" = 4096;
@@ -137,6 +138,8 @@ in
       # Filesystem
       "fs.protected_hardlinks" = 1;
       "fs.protected_symlinks" = 1;
+      "fs.protected_regular" = 2; # Verhindert O_CREAT in sticky dirs für andere User
+      "fs.protected_fifos" = 2; # Verhindert FIFO-Writes in World-Writable Dirs
 
       # Core dumps discarded
       "kernel.core_pattern" = "|/bin/false";
@@ -152,15 +155,43 @@ in
       "init_on_free=1"
       "mitigations=auto"
       "io_delay=type0x80"
+      # nix-mineral inspiriert: Speicher-Randomisierung + IOMMU (ADR-013)
+      "page_alloc.shuffle=1" # Zufällige Reihenfolge der Free-Page-Liste
+      "randomize_kstack_offset=on" # Stack-Offset per Syscall randomisieren (seit 5.13)
+      "vsyscall=none" # Legacy-vsyscall deaktivieren (ROP-Gadget-Quelle)
+      "kfence.sample_interval=100" # KFENCE: 1% Sampling für UAF/OOB-Detection
+      "intel_iommu=on" # DMA-Angriffe via IOMMU blockieren (i3-9100 supported)
     ]
     ++ lib.optionals cfg.enableSlubHardening [ "slub_debug=P" ]
-    ++ lib.optionals (config.my.mode == "production") [ "page_poison=1" ];
+    ++ lib.optionals (config.my.mode == "production") [
+      "page_poison=1"
+      "debugfs=off" # debugfs in Production deaktivieren
+    ];
 
     boot.blacklistedKernelModules = [
+      # Thunderbolt / FireWire — kein DMA-fähiges Device am Server
       "thunderbolt"
       "firewire-core"
       "ohci1394"
+      # Exotische Netzwerkprotokolle — Angriffsfläche ohne Nutzen
+      "dccp"
+      "sctp"
+      "rds"
+      "tipc"
+      "ax25"
+      "x25"
+      "netrom"
+      "rose"
+      # Ungenutzte Dateisysteme — Angriffsfläche ohne Nutzen
+      "cramfs"
+      "hfs"
+      "hfsplus"
+      "jffs2"
+      "reiserfs"
+      "udf"
+      # Debugging
       "kgdb"
+      "floppy"
     ];
 
     security.pam.loginLimits = [
