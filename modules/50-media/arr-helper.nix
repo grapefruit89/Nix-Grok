@@ -77,6 +77,8 @@ in
         memoryPolicy = memory.arr { };
         extraSystemd = {
           UMask = lib.mkForce "0002";
+          # APPNAME__AUTH__APIKEY etc. — via media-secrets.nix provisioned
+          EnvironmentFile = [ "/var/lib/secrets/${name}.env" ];
           BindPaths = lib.mkIf (metadataDir != null) [
             "${metadataDir}:/var/lib/${name}/MediaCover"
           ];

@@ -48,6 +48,22 @@ let
     chmod 600 ${secretsDir}/prowlarr_api_key ${secretsDir}/sonarr_api_key \
               ${secretsDir}/radarr_api_key   ${secretsDir}/sabnzbd_api_key
 
+    # ── *arr EnvironmentFiles (APPNAME__AUTH__APIKEY) ────────────────────────
+    # arr-helper.nix lädt diese via EnvironmentFile= direkt in systemd;
+    # ersetzt config.xml-Injection in sync-script.sh
+    printf 'PROWLARR__AUTH__APIKEY=%s\n' '${arrKeys.prowlarr}' > ${secretsDir}/prowlarr.env
+    printf 'SONARR__AUTH__APIKEY=%s\n'   '${arrKeys.sonarr}'   > ${secretsDir}/sonarr.env
+    printf 'RADARR__AUTH__APIKEY=%s\n'   '${arrKeys.radarr}'   > ${secretsDir}/radarr.env
+    chmod 600 ${secretsDir}/prowlarr.env ${secretsDir}/sonarr.env ${secretsDir}/radarr.env
+    ${lib.optionalString (arrKeys.lidarr != "") ''
+      printf 'LIDARR__AUTH__APIKEY=%s\n' '${arrKeys.lidarr}' > ${secretsDir}/lidarr.env
+      chmod 600 ${secretsDir}/lidarr.env
+    ''}
+    ${lib.optionalString (arrKeys.readarr != "") ''
+      printf 'READARR__AUTH__APIKEY=%s\n' '${arrKeys.readarr}' > ${secretsDir}/readarr.env
+      chmod 600 ${secretsDir}/readarr.env
+    ''}
+
     # ── Indexer ───────────────────────────────────────────────────────────────
     printf '%s' '${sceneNzbsKey}' > ${secretsDir}/scenenzbs_api_key
     chmod 600 ${secretsDir}/scenenzbs_api_key

@@ -37,49 +37,9 @@ if [ -f "/var/lib/secrets/usenet.env" ]; then
   USENET_PASS=$(grep '^USENET_PASSWORD=' /var/lib/secrets/usenet.env 2>/dev/null | cut -d= -f2- || echo "")
 fi
 
-# 2. Inject Declarative API Keys and Restart Services if Drift Detected
-
-# Prowlarr
-mkdir -p /var/lib/prowlarr
-if [ ! -f "/var/lib/prowlarr/config.xml" ] || ! grep -q "<ApiKey>$PROWLARR_KEY</ApiKey>" /var/lib/prowlarr/config.xml; then
-  echo "Injecting declarative Prowlarr API key..."
-  cat <<EOF > /var/lib/prowlarr/config.xml
-<Config>
-  <ApiKey>$PROWLARR_KEY</ApiKey>
-</Config>
-EOF
-  chown -R prowlarr:prowlarr /var/lib/prowlarr || true
-  echo "Restarting prowlarr service..."
-  systemctl restart prowlarr.service || true
-fi
-
-# Sonarr
-mkdir -p /var/lib/sonarr
-if [ ! -f "/var/lib/sonarr/config.xml" ] || ! grep -q "<ApiKey>$SONARR_KEY</ApiKey>" /var/lib/sonarr/config.xml; then
-  echo "Injecting declarative Sonarr API key..."
-  cat <<EOF > /var/lib/sonarr/config.xml
-<Config>
-  <ApiKey>$SONARR_KEY</ApiKey>
-</Config>
-EOF
-  chown -R sonarr:sonarr /var/lib/sonarr || true
-  echo "Restarting sonarr service..."
-  systemctl restart sonarr.service || true
-fi
-
-# Radarr
-mkdir -p /var/lib/radarr
-if [ ! -f "/var/lib/radarr/config.xml" ] || ! grep -q "<ApiKey>$RADARR_KEY</ApiKey>" /var/lib/radarr/config.xml; then
-  echo "Injecting declarative Radarr API key..."
-  cat <<EOF > /var/lib/radarr/config.xml
-<Config>
-  <ApiKey>$RADARR_KEY</ApiKey>
-</Config>
-EOF
-  chown -R radarr:radarr /var/lib/radarr || true
-  echo "Restarting radarr service..."
-  systemctl restart radarr.service || true
-fi
+# 2. [API Key Injection via systemd EnvironmentFile — kein config.xml mehr]
+# arr-Dienste lesen APPNAME__AUTH__APIKEY direkt via systemd EnvironmentFile=
+# (media-secrets.nix → /var/lib/secrets/{name}.env, arr-helper.nix)
 
 # Jellyfin Config Sync
 JELLYFIN_XML="/var/lib/jellyfin/config/system.xml"
