@@ -27,8 +27,9 @@ Tages-aktuelle Briefing-Ergänzung dazu, kein Ersatz.
 
 ## Schreibzugriff auf /etc/nixos
 
-`/etc/nixos` gehört dem User `nixos`. Claude Codes native Edit/Write-Tools
-haben kein sudo — direkte Schreibversuche enden mit "Permission denied".
+`/etc/nixos` gehört nach dem Benutzer-Refactor (2026-06-28) **root**.
+Claude Codes native Edit/Write-Tools haben kein sudo — direkte Schreibversuche
+enden mit "Permission denied".
 
 **Das richtige Muster für jede Dateiänderung:**
 
@@ -41,7 +42,7 @@ sudo ls -la /etc/nixos/pfad/zur/datei
 #    /tmp/claude-<uid>/-home-moritz/<session-id>/scratchpad/
 
 # 3. Mit sudo install an den Zielpfad kopieren:
-sudo install -o nixos -g users -m <original-mode> <scratchpad-datei> /etc/nixos/pfad/zur/datei
+sudo install -o root -g root -m <original-mode> <scratchpad-datei> /etc/nixos/pfad/zur/datei
 ```
 
 **⚠ Warnung: `-m <mode>` immer explizit angeben!**
@@ -70,29 +71,28 @@ tmux entkoppelt den Build-Prozess vom SSH-Terminal.
 Das Script `scripts/nixos-rebuild-safe.sh check` prüft, ob für den
 aktuellen HEAD ein Dry-Build-Flag gesetzt ist — nützlich als Voraussetzung.
 
-## Was JETZT Stand ist (Stand: 2026-06-27, nach Unified-Port-UID-Migration)
+## Was JETZT Stand ist (Stand: 2026-06-28, nach Benutzer-Refactor)
 
-- `/etc/nixos` **existiert**, ist ein Git-Repo (`origin` = `github.com/grapefruit89/Nix-Grok`),
-  Owner ist der User `nixos` (nicht `moritz`, nicht `root`) — Zugriff auf
-  Dateien dort nur via `sudo`.
-- **Aktiv und laufend:** Jellyfin, Sonarr/Radarr/Readarr/Prowlarr (über
+- `/etc/nixos` **existiert**, ist ein Git-Repo (`origin` = `github.com/grapefruit89/Nix-Grok`).
+  Owner ist nach dem Post-Switch-Migration-Schritt **root** (vorher: `nixos`-User).
+  Zugriff auf Dateien dort nur via `sudo install -o root -g root ...`.
+- **SSH-User ist `admin`** (nach nixos-rebuild switch + manuellem `usermod`).
+  Konfiguriert in `users/admin/profile.nix` → nur dort `name` ändern für Umbenennung.
+  Kein Emergency-User (`nixos`) mehr — Konsolen-Fallback ist root-Autologin auf tty1.
+- **GitHub Deploy-Key** nach Migration: `/root/.ssh/id_ed25519_github` (war: `/home/nixos/.ssh/`).
+- **Aktiv und laufend:** Jellyfin, Sonarr/Radarr/Readarr/Prowlarr/Lidarr (über
   `modules/50-media/arr.nix`, eine gemeinsame Fabrik), SABnzbd, Vaultwarden,
   PostgreSQL, Grafana/Loki/Gatus, Caddy, CrowdSec, Hermes-Agent (nativ,
   NVIDIA-Provider), Claude Code CLI (Paket installiert), Home Assistant,
   Zigbee2MQTT, n8n, Forgejo, Semaphore, AMP — die meisten über
   `rollout.stufe`-Gating (`erstAb N`).
 - **Bewusst deaktiviert:** Grok (CLI + Module), Gemini-Reste — beide
-  archiviert unter `/home/moritz/.archive-2026-06-25/`, nicht gelöscht.
+  archiviert unter `/home/admin/.archive-2026-06-25/` (nach usermod-Migration).
 - `rollout.stufe = 8` (Development-Rail). **Bleibt vorerst so** — Impermanence,
   SOPS und Production-Hardening sind bewusst nach hinten verschoben, bis die
   Config fertig und fehlerfrei ist (explizite Entscheidung vom Menschen).
 - Root: nur via physische TTY-Konsole, Autologin, kein Passwort.
-  SSH: nur `moritz`, nur SSH-Key, **kein Passwort, nirgendwo, niemals**
-  (auch nicht im Dev-Rail — das wurde heute bewusst von der alten
-  "Rail 1 Never-Lockout"-Philosophie abgewichen).
-- Der `nixos`-Emergency-User hat kein Passwort mehr, existiert aber noch
-  als Account (Löschen steht noch aus — braucht erst einen Ownership-Umzug
-  von `/etc/nixos`, weg vom `nixos`-User).
+  SSH: nur `admin`, nur SSH-Key, **kein Passwort, nirgendwo, niemals**.
 - **Unified Port=UID=FolderPrefix Schema** implementiert (ADR-011):
   ID = Port = UID = Ordner-Präfix (4-stellig). Quellen: `lib/uid-registry.nix`,
   `lib/server-map.nix`, `modules/00-core/01-core.nix`.

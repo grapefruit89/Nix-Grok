@@ -16,6 +16,7 @@
   ...
 }:
 let
+  u = import ./profile.nix;
   cfg = osConfig.my.services.grok;
   stateDir = cfg.stateDirectory;
   context7KeyFile = "${config.home.homeDirectory}/.config/context7/api_key";
@@ -25,7 +26,6 @@ let
   nixosDocsMcp = pkgs.callPackage ../../packages/nixos-docs-mcp { };
   nixConfigDirs = [
     "/etc/nixos"
-    "/home/nixos"
   ];
 
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
@@ -66,7 +66,7 @@ let
 
     echo "Gespeichert: $KEY_FILE (chmod 600)"
 
-    # Optional: systemweit für Hermes (Stufe 7) — moritz hat kein Passwort, sudo schlägt fehl → OK
+    # Optional: systemweit für Hermes (Stufe 7) — admin hat kein Passwort, sudo schlägt fehl → OK
     if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
       echo "CONTEXT7_API_KEY=$(cat "$KEY_FILE")" | sudo tee "$SECRETS_FILE" >/dev/null
       sudo chmod 600 "$SECRETS_FILE"
@@ -101,8 +101,6 @@ let
       SRC="''${1}"
     elif [ -r /mnt/usbinspect/NixOS/nixos_docs.db ]; then
       SRC=/mnt/usbinspect/NixOS/nixos_docs.db
-    elif [ -r /home/nixos/data/nixos_docs.db ]; then
-      SRC=/home/nixos/data/nixos_docs.db
     else
       echo "Keine Quelle gefunden. Nutzung: sync-nixos-docs-db [pfad/zur/nixos_docs.db]" >&2
       exit 1
@@ -114,7 +112,7 @@ let
       sudo install -o "$(id -un)" -g "$(id -gn)" -m 0644 "$SRC" "$DEST"
     else
       echo "Quelle nicht lesbar: $SRC" >&2
-      echo "Tipp: sudo install -o moritz -g users -m 0644 <quelle> $DEST" >&2
+      echo "Tipp: sudo install -o $(id -un) -g users -m 0644 <quelle> $DEST" >&2
       exit 1
     fi
     echo "nixos_docs.db → $DEST ($(du -h "$DEST" | cut -f1))"
@@ -139,8 +137,8 @@ let
 in
 {
   home = {
-    username = "moritz";
-    homeDirectory = "/home/moritz";
+    username = osConfig.my.configs.identity.user;
+    homeDirectory = "/home/${osConfig.my.configs.identity.user}";
 
     packages =
       with pkgs;
@@ -262,8 +260,8 @@ in
     enable = true;
     settings = {
       user = {
-        name = "moritz";
-        email = "moritzbaumeister@gmail.com";
+        name = u.git.name;
+        email = u.git.email;
       };
     };
   };

@@ -32,7 +32,7 @@ let
   zigbeeMqttPassword =
     (dk.zigbee or { }).mqttPassword
       or (throw "secrets.devKeys.zigbee.mqttPassword in profile.local.nix setzen");
-  moritz = (import ../../users/moritz/profile.nix).name;
+  adminUser = (import ../../users/admin/profile.nix).name;
   cfToken = (local.secrets.cloudflare or { }).apiToken or "";
   ddnsZone = p.network.ddns.zone;
   oidcJellyfin = local.secrets.oidc.jellyfin or { };
@@ -138,14 +138,14 @@ let
         if [ -n "${dk.context7.apiKey}" ]; then
           echo "CONTEXT7_API_KEY=${dk.context7.apiKey}" > ${secretsDir}/${p.secrets.files.context7}
           chmod 600 ${secretsDir}/${p.secrets.files.context7}
-          install -d -m 700 -o ${moritz} -g users /home/${moritz}/.config/context7
-          printf '%s' "${dk.context7.apiKey}" > /home/${moritz}/.config/context7/api_key
-          chown ${moritz}:users /home/${moritz}/.config/context7/api_key
-          chmod 600 /home/${moritz}/.config/context7/api_key
+          install -d -m 700 -o ${adminUser} -g users /home/${adminUser}/.config/context7
+          printf '%s' "${dk.context7.apiKey}" > /home/${adminUser}/.config/context7/api_key
+          chown ${adminUser}:users /home/${adminUser}/.config/context7/api_key
+          chmod 600 /home/${adminUser}/.config/context7/api_key
         elif [ ! -f ${secretsDir}/${p.secrets.files.context7} ]; then
           cat > ${secretsDir}/${p.secrets.files.context7} <<'CTX7EOF'
     # Context7 API-Key — einer der Wege:
-    #   1) Als moritz: set-context7-api-key   (empfohlen, Key nicht im Terminal-Log)
+    #   1) Als admin: set-context7-api-key   (empfohlen, Key nicht im Terminal-Log)
     #   2) In profile.nix: secrets.devKeys.context7.apiKey = "…"; dann rebuild
     CTX7EOF
           chmod 600 ${secretsDir}/${p.secrets.files.context7}
@@ -211,10 +211,10 @@ let
         if [ -f ${secretsDir}/${p.secrets.files.context7} ] && \
            grep -q '^CONTEXT7_API_KEY=.\+' ${secretsDir}/${p.secrets.files.context7} 2>/dev/null; then
           _ctx7=$(grep '^CONTEXT7_API_KEY=' ${secretsDir}/${p.secrets.files.context7} | cut -d= -f2-)
-          install -d -m 700 -o ${moritz} -g users /home/${moritz}/.config/context7
-          printf '%s' "$_ctx7" > /home/${moritz}/.config/context7/api_key
-          chown ${moritz}:users /home/${moritz}/.config/context7/api_key
-          chmod 600 /home/${moritz}/.config/context7/api_key
+          install -d -m 700 -o ${adminUser} -g users /home/${adminUser}/.config/context7
+          printf '%s' "$_ctx7" > /home/${adminUser}/.config/context7/api_key
+          chown ${adminUser}:users /home/${adminUser}/.config/context7/api_key
+          chmod 600 /home/${adminUser}/.config/context7/api_key
           unset _ctx7
         fi
   '';
@@ -239,7 +239,7 @@ in
       "gatus.service"
       "grafana.service"
       "pocket-id.service"
-      "home-manager-${moritz}.service"
+      "home-manager-${adminUser}.service"
       "mosquitto.service"
       "home-assistant-mqtt-provision.service"
       "home-assistant.service"

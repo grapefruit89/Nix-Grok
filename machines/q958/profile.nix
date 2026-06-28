@@ -94,21 +94,6 @@ in
     };
   };
 
-  # Maschinen-Zugang (Notfall) — kein users/-Eintrag, nur bis Homelab steht
-  access = {
-    emergency = {
-      name = "nixos";
-      description = "Admin-Zugang (Notfall-Login)";
-      passwordHash =
-        local.access.emergency.passwordHash
-          or (throw "access.emergency.passwordHash in machines/q958/profile.local.nix setzen");
-      extraGroups = [
-        "wheel"
-        "networkmanager"
-      ];
-    };
-  };
-
   hardware = {
     ramGB = 32;
     cpu = {

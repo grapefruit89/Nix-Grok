@@ -2,7 +2,7 @@
 # meta:
 #   layer: 2
 #   role: machine
-#   purpose: Stufe 0+ Zugang — Notfall-User, LAN, DNS/IPv6-Assertions
+#   purpose: Stufe 0+ Zugang — LAN, DNS/IPv6-Assertions, SSH-Gate
 #   docs:
 #     - docs/adr/001-dns-dot-fail-closed.md
 #     - docs/adr/002-ipv6-homelab-v4-only.md
@@ -19,7 +19,6 @@
 let
   p = import ./profile.nix;
   lan = p.network.lan;
-  emergency = p.access.emergency;
 
   lanNetwork = config.systemd.network.networks.${lan.systemdNetworkName} or { };
   lanAddress = lanNetwork.networkConfig.Address or "";
@@ -27,16 +26,6 @@ let
   firewallPorts = config.networking.firewall.allowedTCPPorts or [ ];
 in
 {
-  users.users.${emergency.name} = {
-    isNormalUser = lib.mkForce true;
-    description = lib.mkForce emergency.description;
-    extraGroups = lib.mkForce emergency.extraGroups;
-    # Kein Passwort fuer den Notfall-User -- Wiedereinstieg laeuft ueber
-    # physische TTY-Root-Autologin-Konsole + moritz' SSH-Keys, nicht ueber
-    # ein zu merkendes Passwort (Entscheidung 2026-06-25).
-    hashedPassword = lib.mkForce null;
-  };
-
   my.configs.server.lanIP = lib.mkForce lan.ip;
 
   # Physische Konsole: root-Autologin auf tty1 -- kein Passwort, keine Huerde,
@@ -62,7 +51,7 @@ in
     lib.mkForce [ p.network.sshPort ]
   );
 
-  # Git-Repo liegt unter /home/nixos → Deploy-Key für grapefruit89/NixmitGROK
+  # Git-Repo /etc/nixos: Deploy-Key liegt unter /root/.ssh/ (nach Migration von /home/nixos)
   environment.systemPackages = [
     pkgs.git
     pkgs.openssh
@@ -73,31 +62,15 @@ in
   };
   programs.ssh.extraConfig = ''
     Host github.com
-      IdentityFile /home/nixos/.ssh/id_ed25519_github
+      IdentityFile /root/.ssh/id_ed25519_github
       IdentitiesOnly yes
       User git
   '';
 
-  # Headless-Dev / Hardware-Sandbox: wheel ohne Passwort (Grok-Agent, moritz, Notfall-User)
+  # Headless-Dev / Hardware-Sandbox: wheel ohne Passwort (Grok-Agent, admin)
   security.sudo.wheelNeedsPassword = lib.mkForce false;
 
   assertions = [
-    {
-      assertion = lib.hasAttr emergency.name config.users.users;
-      message = "ACCESS: User '${emergency.name}' muss existieren.";
-    }
-    {
-      assertion = config.users.users.${emergency.name}.isNormalUser or false;
-      message = "ACCESS: User '${emergency.name}' muss isNormalUser = true sein.";
-    }
-    {
-      assertion = lib.elem "wheel" (config.users.users.${emergency.name}.extraGroups or [ ]);
-      message = "ACCESS: User '${emergency.name}' braucht Gruppe 'wheel' (sudo).";
-    }
-    {
-      assertion = (config.users.users.${emergency.name}.hashedPassword or null) == null;
-      message = "ACCESS: '${emergency.name}' darf kein Passwort haben -- Wiedereinstieg nur via TTY-Autologin/SSH-Keys.";
-    }
     {
       assertion = config.my.configs.server.lanIP == lan.ip;
       message = "ACCESS: LAN-IP muss ${lan.ip} sein.";
