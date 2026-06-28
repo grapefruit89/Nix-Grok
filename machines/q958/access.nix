@@ -104,5 +104,13 @@ in
         !(config.my.services.technitium-dns-server.enable or false) || lan.dns == [ "127.0.0.1" ];
       message = "ACCESS: Technitium aktiv → LAN-DNS muss 127.0.0.1 sein.";
     }
+    {
+      assertion = (config.services.getty.autologinUser or "") == "root";
+      message = "ACCESS: tty1 muss root-Autologin haben — physischer Konsolen-Zugang ist der einzige Notfall-Weg ohne SSH.";
+    }
+    {
+      assertion = !config.security.sudo.wheelNeedsPassword;
+      message = "ACCESS: wheel muss passwortlos sudo haben — kein Passwort gesetzt, SSH-Key-Only-Policy erfordert wheelNeedsPassword = false.";
+    }
   ];
 }

@@ -89,13 +89,7 @@ let
         echo "${dk.restic.password}" > ${secretsDir}/restic_password
         chmod 600 ${secretsDir}/restic_password
 
-        echo "${dk.media.prowlarr.apiKey}" > ${secretsDir}/prowlarr_api_key
-        echo "${dk.media.sonarr.apiKey}" > ${secretsDir}/sonarr_api_key
-        echo "${dk.media.radarr.apiKey}" > ${secretsDir}/radarr_api_key
-        echo "${dk.media.sabnzbd.apiKey}" > ${secretsDir}/sabnzbd_api_key
-        echo "${dk.media.scenenzbs.apiKey}" > ${secretsDir}/scenenzbs_api_key
-        chmod 600 ${secretsDir}/prowlarr_api_key ${secretsDir}/sonarr_api_key \
-          ${secretsDir}/radarr_api_key ${secretsDir}/sabnzbd_api_key ${secretsDir}/scenenzbs_api_key
+        # Media-API-Keys: siehe machines/q958/media-secrets.nix
 
         echo "ADMIN_TOKEN=${dk.vaultwarden.adminToken}" > ${secretsDir}/vaultwarden.env
         chmod 600 ${secretsDir}/vaultwarden.env

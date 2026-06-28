@@ -36,6 +36,7 @@ in
     ./network.nix
     ./storage.nix
     ./secrets.nix
+    ./media-secrets.nix
     ./dev-mode.nix
     ./rollout.nix
     ./boot-baseline.nix
