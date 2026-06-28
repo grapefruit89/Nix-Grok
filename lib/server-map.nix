@@ -136,6 +136,13 @@ _: {
       module = "50-media";
       sso = true;
     };
+    lidarr = {
+      id = 5010;
+      uid = 5010;
+      transport = "tcp:5010";
+      module = "50-media";
+      sso = true;
+    };
 
     # ── 60-apps ────────────────────────────────────────────────────────────────
     vaultwarden = {

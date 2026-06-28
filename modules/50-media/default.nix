@@ -36,5 +36,6 @@
       };
     };
     navidrome.enable = lib.mkEnableOption "Navidrome Music Server mit Pocket-ID OIDC";
+    lidarr.enable = lib.mkEnableOption "Lidarr Music Download Manager";
   };
 }

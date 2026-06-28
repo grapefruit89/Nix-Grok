@@ -5,6 +5,7 @@
 #   purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy + Pocket-ID SSO-Plugin
 #   docs:
 #     - docs/memory_oom.md
+#     - docs/adr/001-dns-dot-fail-closed.md
 #   lib:
 #     - lib/memory-policy.nix
 #   services:
@@ -25,6 +26,11 @@
 #   4. In Jellyfin → Dashboard → Plugins → SSO-Auth: Provider "PocketID" sollte aktiv sein
 #
 # Jellyseerr nutzt Jellyfin-Auth → benötigt kein eigenes OIDC.
+#
+# Transcode-Strategie (ADR-001 Anhang):
+#   - /run/jellyfin-transcode ist ein dediziertes tmpfs (8 GB Limit, RAM-backed)
+#   - Segmente leben nie auf Disk → kein I/O-Wear, kein voll laufender ZFS-Pool
+#   - Cleanup-Timer löscht Segmente älter als 60 min (verhindert stale session accumulation)
 #
 {
   config,
@@ -97,6 +103,8 @@ let
     ${pkgs.gnused}/bin/sed \
       -e 's|@JELLYFIN_URL@|${jellyfinUrl}|g' \
       ${./data/jellyfin-network.xml} > $out/network.xml
+    # encoding.xml: VAAPI-Konfiguration für Intel iHD (i3-9100, Gen 9)
+    cp ${./data/jellyfin-encoding.xml} $out/encoding.xml
   '';
 in
 {
@@ -109,15 +117,29 @@ in
             openFirewall = false;
           };
 
+          # Dediziertes tmpfs für Transcode-Segmente (8 GB, RAM-backed, kein Disk-I/O)
+          fileSystems."/run/jellyfin-transcode" = {
+            device = "tmpfs";
+            fsType = "tmpfs";
+            options = [
+              "size=8g"
+              "mode=0750"
+              "nosuid"
+              "nodev"
+            ];
+          };
+
           systemd.services.jellyfin.preStart = lib.mkBefore (
             ''
               install -d -m 0750 -o jellyfin -g jellyfin /var/lib/jellyfin/config
-              for seed in system.xml network.xml; do
+              for seed in system.xml network.xml encoding.xml; do
                 if [ ! -f "/var/lib/jellyfin/config/$seed" ]; then
                   install -m 0640 -o jellyfin -g jellyfin \
                     ${jellyfinConfigSeeds}/$seed /var/lib/jellyfin/config/$seed
                 fi
               done
+              # Transcode-Dir Eigentümer setzen (tmpfs wird als root gemountet)
+              chown jellyfin:jellyfin /run/jellyfin-transcode
             ''
             +
               # SSO-Plugin installieren (idempotent via Versionspfad)
@@ -149,6 +171,36 @@ in
                 fi
               ''
           );
+
+          # Cleanup-Timer: Segmente älter als 60 min löschen (verhindert volle tmpfs)
+          systemd.timers.jellyfin-transcode-cleanup = {
+            description = "Jellyfin: Stale Transcode-Segmente bereinigen";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "15min";
+              OnUnitActiveSec = "30min";
+              Unit = "jellyfin-transcode-cleanup.service";
+            };
+          };
+
+          systemd.services.jellyfin-transcode-cleanup = {
+            description = "Jellyfin: Stale Transcode-Segmente löschen (>60min)";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = pkgs.writeShellScript "jellyfin-transcode-cleanup" ''
+                set -euo pipefail
+                DIR="/run/jellyfin-transcode"
+                [ -d "$DIR" ] || exit 0
+                COUNT=$(find "$DIR" -type f -mmin +60 | wc -l)
+                if [ "$COUNT" -gt 0 ]; then
+                  find "$DIR" -type f -mmin +60 -delete
+                  find "$DIR" -mindepth 1 -type d -empty -delete
+                  echo "jellyfin-transcode-cleanup: $COUNT Dateien gelöscht"
+                fi
+              '';
+              User = "root";
+            };
+          };
 
           hardware.graphics = {
             enable = true;

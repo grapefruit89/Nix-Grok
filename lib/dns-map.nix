@@ -26,6 +26,7 @@ let
     sabnzbd = fqdn "sabnzbd";
     audiobookshelf = fqdn "audiobookshelf";
     navidrome = fqdn "music";
+    lidarr = fqdn "lidarr";
 
     vaultwarden = fqdn "vault";
     homepage = fqdn "dashboard";

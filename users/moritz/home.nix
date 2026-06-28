@@ -263,7 +263,7 @@ in
     settings = {
       user = {
         name = "moritz";
-        email = "moritz@example.com";
+        email = "moritzbaumeister@gmail.com";
       };
     };
   };

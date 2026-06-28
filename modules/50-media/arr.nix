@@ -2,7 +2,7 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Sonarr + Radarr + Readarr + Prowlarr — eine Datei, eine Fabrik (arr-helper.mkArrService)
+#   purpose: Sonarr + Radarr + Readarr + Prowlarr + Lidarr — eine Datei, eine Fabrik (arr-helper.mkArrService)
 #   docs:
 #     - docs/adr/007-dendritic-one-file-per-service.md
 #   services:
@@ -10,6 +10,7 @@
 #     - radarr
 #     - readarr
 #     - prowlarr
+#     - lidarr
 #   tags:
 #     - media
 #     - arr
@@ -56,6 +57,12 @@ let
       metadataDir = "/mnt/fast_pool/metadata/prowlarr";
       useVpnKillSwitch = true;
       upstreamHost = prowlarrUpstream;
+    };
+    lidarr = {
+      port = ports.lidarr;
+      uid = uids.lidarr;
+      gid = gids.lidarr;
+      metadataDir = "/mnt/fast_pool/metadata/lidarr";
     };
   };
 

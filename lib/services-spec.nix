@@ -187,6 +187,12 @@ let
       subdomain = "music";
       description = "Music Server (API bypass für SubSonic-Clients)";
     };
+    lidarr = {
+      port = ports.lidarr;
+      zone = "family-pocketid";
+      subdomain = "lidarr";
+      description = "Music Downloader (Companion zu Navidrome)";
+    };
     vaultwarden = {
       port = ports.vaultwarden;
       zone = "family-pocketid";

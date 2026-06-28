@@ -190,6 +190,11 @@ in
         default = 5009;
         description = "Navidrome Music Server port.";
       };
+      lidarr = lib.mkOption {
+        type = lib.types.port;
+        default = 5010;
+        description = "Lidarr Music Downloader port.";
+      };
       ddns-updater = lib.mkOption {
         type = lib.types.port;
         default = 1003;

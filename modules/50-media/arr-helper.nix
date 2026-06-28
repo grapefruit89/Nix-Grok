@@ -12,6 +12,7 @@
 #     - radarr
 #     - readarr
 #     - prowlarr
+#     - lidarr
 #   tags:
 #     - media
 #     - arr
@@ -47,6 +48,8 @@ in
           enable = true;
           openFirewall = false;
           inherit dataDir;
+          # Port explizit setzen — Override des NixOS-Defaults via APPNAME__SERVER__PORT env-var
+          settings.server.port = port;
         };
 
         users.groups.${name} = {

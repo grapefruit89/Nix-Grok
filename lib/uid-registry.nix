@@ -17,6 +17,7 @@ let
     readarr = 5005; # war 987
     prowlarr = 5006; # war 969
     sabnzbd = 5007; # war 984
+    lidarr = 5010;
   };
 
   defaultGroups = {
@@ -26,6 +27,7 @@ let
     readarr = 5005;
     prowlarr = 5006;
     sabnzbd = 5007;
+    lidarr = 5010;
   };
 in
 {
