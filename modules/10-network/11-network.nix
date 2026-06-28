@@ -157,6 +157,57 @@ in
         before = lib.mkIf config.services.caddy.enable [ "caddy.service" ];
       };
 
+      # ADR-001: DoT-only Upstream erzwingen — einmalig via API (idempotent per Marker-Datei)
+      systemd.services.technitium-dns-configure =
+        let
+          webPort = config.my.ports."technitium-dns";
+          # Technitium-API-Format: "1.1.1.1:853" (ohne "tcp-tls:" Präfix)
+          dotServers = lib.concatStringsSep "," (
+            map (s: lib.removePrefix "tcp-tls:" s) config.my.configs.network.dnsBootstrap
+          );
+          configScript = pkgs.writeShellScript "technitium-dns-configure" ''
+            set -euo pipefail
+            MARKER="/var/lib/technitium-dns-server/.dot-configured"
+            API="http://localhost:${toString webPort}"
+
+            if [ -f "$MARKER" ]; then
+              echo "technitium-dns-configure: DoT already set (marker exists), skipping."
+              exit 0
+            fi
+
+            for i in $(seq 1 30); do
+              TOKEN=$(${pkgs.curl}/bin/curl -sf \
+                "$API/api/user/login?user=admin&pass=admin" 2>/dev/null | \
+                ${pkgs.jq}/bin/jq -r '.response.token // empty' 2>/dev/null || true)
+              [ -n "$TOKEN" ] && break
+              [ "$i" -eq 30 ] && {
+                echo "technitium-dns-configure: API not reachable or wrong password." >&2
+                echo "  → DoT forwarders NOT configured. Set manually at $API" >&2
+                echo "  → Forwarders to set: ${dotServers}" >&2
+                exit 0
+              }
+              sleep 2
+            done
+
+            ${pkgs.curl}/bin/curl -sf -X POST "$API/api/settings/set" \
+              -d "token=$TOKEN&forwarders=${dotServers}&forwarderProtocol=Tls" \
+              -o /dev/null
+            touch "$MARKER"
+            echo "technitium-dns-configure: DoT forwarders set → ${dotServers}"
+          '';
+        in
+        {
+          description = "Technitium DNS: DoT-only Forwarder konfigurieren (ADR-001)";
+          after = [ "technitium-dns-server.service" ];
+          wants = [ "technitium-dns-server.service" ];
+          wantedBy = [ "technitium-dns-server.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = configScript;
+          };
+        };
+
       assertions = [
         {
           assertion = config.networking.nameservers == [ "127.0.0.1" ];

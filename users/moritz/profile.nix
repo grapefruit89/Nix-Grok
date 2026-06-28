@@ -7,9 +7,16 @@
 #     - profile
 #     - moritz
 # ---
+let
+  baseDomain = "m7c5.de";
+  # Nix-Subdomain-Präfix — leer lassen ("") um Services direkt unter m7c5.de zu schalten.
+  # Solange Unraid nix.m7c5.de nicht belegt: "nix" → services unter service.nix.m7c5.de
+  nixSubdomain = "nix";
+in
 {
   name = "moritz";
-  domain = "nix.m7c5.de";
+  inherit baseDomain nixSubdomain;
+  domain = if nixSubdomain != "" then "${nixSubdomain}.${baseDomain}" else baseDomain;
   description = "moritz";
   shell = "bash";
   extraGroups = [
