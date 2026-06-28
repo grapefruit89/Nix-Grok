@@ -142,11 +142,33 @@ Nutze `mcp__nixos__nix` für:
 - NixOS-Optionen durchsuchen: `{"action":"search","query":"<option>","type":"options"}`
 - Home-Manager-Optionen: `{"action":"search","source":"home-manager","query":"<option>"}`
 - Binary-Cache-Check: `{"action":"cache","query":"<pkg>"}`
+- **Noogle** (Nix builtins + lib.\*): `{"action":"search","source":"noogle","query":"lib.mapAttrs"}`
+- **nix.dev Docs**: `{"action":"search","source":"nix-dev","query":"flake inputs"}`
 
 Wann: **Immer**, wenn du ein NixOS-Modul, ein `services.*`-Attribut oder einen
 Paket-Namen nennst, den du nicht in den letzten 5 Minuten live verifiziert hast.
 "Ich weiß das aus Training" reicht nicht — `fetchurl`-Hashes, Plugin-Versionen,
 Moduloptionen ändern sich ständig.
+
+### Noogle — PFLICHT bei lib.\*-Funktionen und Nix-Builtins
+Noogle indexiert alle Nix-Standardbibliotheksfunktionen mit Signaturen, Beschreibungen
+und Beispielen. **Immer verwenden** bevor du eine `lib.*`-Funktion aus dem Gedächtnis
+anwendest oder über `builtins.*` spekulierst:
+
+```
+# Funktion suchen
+mcp__nixos__nix  {"action":"search","source":"noogle","query":"lib.mapAttrs"}
+mcp__nixos__nix  {"action":"search","source":"noogle","query":"lib.strings.concatMapStrings"}
+mcp__nixos__nix  {"action":"search","source":"noogle","query":"builtins.readFile"}
+
+# Namespace durchstöbern
+mcp__nixos__nix  {"action":"browse","source":"noogle","query":"lib.attrsets"}
+```
+
+**Human-CLI**: `noogle-search` (interaktiv mit fzf) oder Alias `noogle`.
+**Wann**: Jedes Mal wenn du eine `lib.*`-Funktion schreibst, die du nicht gerade
+live verifiziert hast — Argumente-Reihenfolge, Lazy vs. Strict, Edge-Cases ändern
+sich zwischen nixpkgs-Generationen.
 
 ### Context7-MCP (Bibliotheks-Dokumentation)
 Nutze `mcp__claude_ai_Context7__resolve-library-id` + `query-docs` für:
@@ -171,6 +193,10 @@ Folgende moderne Tools sind systemweit installiert und **müssen bevorzugt werde
 | `grep`        | `rg` (ripgrep)                    | Alias gesetzt |
 | `du`          | `dust`                            | Alias gesetzt |
 | `df`          | `duf`                             | Alias gesetzt |
+| `nix build` (Output) | `nom` (nix-output-monitor)  | `nom build .#q958` |
+| Dep-Graph manuell | `nix-tree /nix/store/<drv>` | Visualisiert Abhängigkeiten |
+| Store-Vergleich | `nix-diff old new`            | Diff zweier Store-Paths |
+| Nix-Funktion googeln | `noogle` / `noogle-search` | Interaktive fzf-Suche |
 | `top`         | `btop`                            | Alias gesetzt |
 | `nixos-rebuild switch` | `nh os switch --flake /etc/nixos#q958` | Nur für menschliche Rebuilds; **Dry-Build-Gate bleibt `sudo scripts/nixos-rebuild-safe.sh`** |
 

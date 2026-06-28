@@ -386,10 +386,13 @@ in
 
       environment.systemPackages = with pkgs; [
         cachix
-        nix-tree
-        nix-diff
-        nix-output-monitor
-        nix-du
+        # ── Nix-Entwicklungs-Werkzeuge ────────────────────────────────────────
+        nix-tree # Abhängigkeitsgraph visualisieren: nix-tree /nix/store/<drv>
+        nix-diff # Store-Path-Diff: nix-diff /nix/store/old /nix/store/new
+        nix-output-monitor # Schönerer nix-Build-Output (intern von nh genutzt)
+        nix-du # Disk-Usage im Nix-Store: nix-du -s
+        noogle-search # Interaktive fzf-Suche über Nix builtins + lib.*-Funktionen
+        fzf # Fuzzy-Finder (Basis für noogle-search + shell history)
         # Pflicht-Trio (POL-FMT-010..012): nixfmt + statix + deadnix
         # alejandra und nixpkgs-fmt sind per Assertion verboten (lib/forbidden-tech.nix)
         nixfmt
@@ -420,6 +423,13 @@ in
         du = "dust";
         df = "duf";
         top = "btop";
+        noogle = "noogle-search"; # Nix lib.*-Funktionen + builtins interaktiv suchen
+      };
+
+      # fzf Shell-Integration: Ctrl+R History-Suche + Ctrl+T Datei-Picker
+      programs.fzf = {
+        fuzzyCompletion = true;
+        keybindings = true;
       };
 
       # Pre-commit-Hooks nach jedem Rebuild automatisch einrichten,
