@@ -26,13 +26,15 @@ RADARR_KEY=$(cat /var/lib/secrets/radarr_api_key 2>/dev/null || echo "radarr_pla
 SAB_KEY=$(cat /var/lib/secrets/sabnzbd_api_key 2>/dev/null || echo "sabnzbd_placeholder_key")
 SCENENZBS_KEY=$(cat /var/lib/secrets/scenenzbs_api_key 2>/dev/null || echo "scenenzbs_placeholder_key")
 
-USENET_USER="placeholder_user"
-USENET_PASS="placeholder_pass"
-if [ -f "/var/lib/secrets/sabnzbd_usenet_user" ]; then
-  USENET_USER=$(cat /var/lib/secrets/sabnzbd_usenet_user)
-fi
-if [ -f "/var/lib/secrets/sabnzbd_usenet_password" ]; then
-  USENET_PASS=$(cat /var/lib/secrets/sabnzbd_usenet_password)
+USENET_HOST=""
+USENET_PORT="563"
+USENET_USER=""
+USENET_PASS=""
+if [ -f "/var/lib/secrets/usenet.env" ]; then
+  USENET_HOST=$(grep '^USENET_HOST=' /var/lib/secrets/usenet.env 2>/dev/null | cut -d= -f2- || echo "")
+  USENET_PORT=$(grep '^USENET_PORT=' /var/lib/secrets/usenet.env 2>/dev/null | cut -d= -f2- || echo "563")
+  USENET_USER=$(grep '^USENET_USER=' /var/lib/secrets/usenet.env 2>/dev/null | cut -d= -f2- || echo "")
+  USENET_PASS=$(grep '^USENET_PASSWORD=' /var/lib/secrets/usenet.env 2>/dev/null | cut -d= -f2- || echo "")
 fi
 
 # 2. Inject Declarative API Keys and Restart Services if Drift Detected
@@ -137,17 +139,17 @@ if [ -f "$SAB_INI" ]; then
     sed -i '1s/^/nzb_key = '"$SAB_KEY"'\n/' "$SAB_INI"
   fi
 
-  # Check and inject Usenet server configurations
-  if ! grep -q "news.newshosting.com" "$SAB_INI"; then
-    echo "Injecting declarative Usenet news server (newshosting)..."
+  # Check and inject Usenet server configurations (nur wenn konfiguriert)
+  if [ -n "$USENET_HOST" ] && ! grep -q "host = $USENET_HOST" "$SAB_INI"; then
+    echo "Injecting declarative Usenet news server ($USENET_HOST)..."
     cat <<EOF >> "$SAB_INI"
 
 [servers]
-[[news.newshosting.com]]
-name = news.newshosting.com
-displayname = news.newshosting.com
-host = news.newshosting.com
-port = 563
+[[$USENET_HOST]]
+name = $USENET_HOST
+displayname = $USENET_HOST
+host = $USENET_HOST
+port = $USENET_PORT
 timeout = 60
 username = $USENET_USER
 password = $USENET_PASS
@@ -208,18 +210,6 @@ language = $TARGET_LANG
 api_key = $SAB_KEY
 nzb_key = $SAB_KEY
 
-[servers]
-[[news.newshosting.com]]
-name = news.newshosting.com
-displayname = news.newshosting.com
-host = news.newshosting.com
-port = 563
-timeout = 60
-username = $USENET_USER
-password = $USENET_PASS
-connections = 100
-ssl = 1
-
 [categories]
 [[scenecart]]
 name = scenecart
@@ -261,6 +251,26 @@ EOF
   chown -R sabnzbd:sabnzbd /var/lib/sabnzbd || true
   echo "Restarting sabnzbd service to apply config..."
   systemctl restart sabnzbd.service || true
+  # Usenet-Server nach dem Restart nachinjizieren (USENET_HOST aus usenet.env)
+  if [ -n "$USENET_HOST" ]; then
+    SAB_INI_NEW="/var/lib/sabnzbd/sabnzbd.ini"
+    if [ -f "$SAB_INI_NEW" ] && ! grep -q "host = $USENET_HOST" "$SAB_INI_NEW"; then
+      cat <<EOF >> "$SAB_INI_NEW"
+
+[servers]
+[[$USENET_HOST]]
+name = $USENET_HOST
+displayname = $USENET_HOST
+host = $USENET_HOST
+port = $USENET_PORT
+timeout = 60
+username = $USENET_USER
+password = $USENET_PASS
+connections = 100
+ssl = 1
+EOF
+    fi
+  fi
 fi
 
 # 3. APIs werden von sync.nix (wait-for-api) abgewartet
@@ -458,40 +468,7 @@ EOF
   fi
 fi
 
-# 9. Sync Quality/Language Profile Assignments in Sonarr and Radarr (Unraid Migration)
-if [ -n "$SONARR_KEY" ] && [ "$TARGET_LANG" = "de" ]; then
-  echo "Enforcing Deutsch quality profile (ID 1) in Sonarr..."
-  SERIES_LIST=$(curl -s -H "X-Api-Key: $SONARR_KEY" "http://127.0.0.1:${SONARR_PORT}/api/v3/series")
-  echo "$SERIES_LIST" | jq -c '.[] | select(.qualityProfileId == 4)' 2>/dev/null | while read -r series; do
-    SERIES_ID=$(echo "$series" | jq '.id')
-    TITLE=$(echo "$series" | jq -r '.title')
-    echo "Migrating series '$TITLE' (ID: $SERIES_ID) to Deutsch profile (ID 1)..."
-    UPDATED_PAYLOAD=$(echo "$series" | jq '.qualityProfileId = 1')
-    curl -s -X PUT \
-      -H "X-Api-Key: $SONARR_KEY" \
-      -H "Content-Type: application/json" \
-      -d "$UPDATED_PAYLOAD" \
-      "http://127.0.0.1:${SONARR_PORT}/api/v3/series/$SERIES_ID"
-  done
-fi
-
-if [ -n "$RADARR_KEY" ] && [ "$TARGET_LANG" = "de" ]; then
-  echo "Enforcing Fernseher quality profile (ID 4) in Radarr..."
-  MOVIE_LIST=$(curl -s -H "X-Api-Key: $RADARR_KEY" "http://127.0.0.1:${RADARR_PORT}/api/v3/movie")
-  echo "$MOVIE_LIST" | jq -c '.[] | select(.qualityProfileId == 11)' 2>/dev/null | while read -r movie; do
-    MOVIE_ID=$(echo "$movie" | jq '.id')
-    TITLE=$(echo "$movie" | jq -r '.title')
-    echo "Migrating movie '$TITLE' (ID: $MOVIE_ID) to Fernseher profile (ID 4)..."
-    UPDATED_PAYLOAD=$(echo "$movie" | jq '.qualityProfileId = 4')
-    curl -s -X PUT \
-      -H "X-Api-Key: $RADARR_KEY" \
-      -H "Content-Type: application/json" \
-      -d "$UPDATED_PAYLOAD" \
-      "http://127.0.0.1:${RADARR_PORT}/api/v3/movie/$MOVIE_ID"
-  done
-fi
-
-# 10. Trigger Application Sync
+# 9. Trigger Application Sync
 echo "Triggering immediate Application Sync in Prowlarr..."
 curl -s -X POST \
   -H "X-Api-Key: $PROWLARR_KEY" \
