@@ -28,9 +28,16 @@
 # Jellyseerr nutzt Jellyfin-Auth → benötigt kein eigenes OIDC.
 #
 # Transcode-Strategie (ADR-001 Anhang):
-#   - /run/jellyfin-transcode ist ein dediziertes tmpfs (8 GB Limit, RAM-backed)
+#   - /run/jellyfin-transcode ist ein dediziertes tmpfs (6 GB Limit, RAM-backed)
 #   - Segmente leben nie auf Disk → kein I/O-Wear, kein voll laufender ZFS-Pool
-#   - Cleanup-Timer löscht Segmente älter als 60 min (verhindert stale session accumulation)
+#   - Cleanup-Timer läuft alle 5 min mit RAM-Druck-Adaption:
+#       RAM < 65 % voll  → Segmente > 90 min löschen  (Normal)
+#       RAM 65–80 % voll → Segmente > 15 min löschen  (Druck)
+#       RAM > 80 % voll  → ALLES löschen sofort        (Notfall)
+#
+# Intro-Detection (Jellyfin 10.9+, built-in):
+#   Kein Plugin nötig — Dashboard → Scheduled Tasks → "Detect Episode Introductions" aktivieren.
+#   Erster Scan läuft nach der Library-Analyse automatisch.
 #
 {
   config,
@@ -105,6 +112,10 @@ let
       ${./data/jellyfin-network.xml} > $out/network.xml
     # encoding.xml: VAAPI-Konfiguration für Intel iHD (i3-9100, Gen 9)
     cp ${./data/jellyfin-encoding.xml} $out/encoding.xml
+    # dlna.xml: DLNA-Server deaktiviert (kein Discovery nötig hinter Caddy)
+    cp ${./data/jellyfin-dlna.xml} $out/dlna.xml
+    # branding.xml: kein Splashscreen, Login-Disclaimer
+    cp ${./data/jellyfin-branding.xml} $out/branding.xml
   '';
 in
 {
@@ -117,12 +128,13 @@ in
             openFirewall = false;
           };
 
-          # Dediziertes tmpfs für Transcode-Segmente (8 GB, RAM-backed, kein Disk-I/O)
+          # Dediziertes tmpfs für Transcode-Segmente (6 GB, RAM-backed, kein Disk-I/O)
+          # Bei 16 GB Gesamt-RAM: 6 GB Limit verhindert OOM, reicht für 3–4 parallele Streams
           fileSystems."/run/jellyfin-transcode" = {
             device = "tmpfs";
             fsType = "tmpfs";
             options = [
-              "size=8g"
+              "size=6g"
               "mode=0750"
               "nosuid"
               "nodev"
@@ -132,7 +144,8 @@ in
           systemd.services.jellyfin.preStart = lib.mkBefore (
             ''
               install -d -m 0750 -o jellyfin -g jellyfin /var/lib/jellyfin/config
-              for seed in system.xml network.xml encoding.xml; do
+              install -d -m 0750 -o jellyfin -g jellyfin /mnt/fast_pool/metadata/jellyfin
+              for seed in system.xml network.xml encoding.xml dlna.xml branding.xml; do
                 if [ ! -f "/var/lib/jellyfin/config/$seed" ]; then
                   install -m 0640 -o jellyfin -g jellyfin \
                     ${jellyfinConfigSeeds}/$seed /var/lib/jellyfin/config/$seed
@@ -172,31 +185,53 @@ in
               ''
           );
 
-          # Cleanup-Timer: Segmente älter als 60 min löschen (verhindert volle tmpfs)
+          # Cleanup-Timer: alle 5 min, adaptiv nach RAM-Auslastung
+          # Normal (<65%): >90 min  |  Druck (65–80%): >15 min  |  Notfall (>80%): alles
           systemd.timers.jellyfin-transcode-cleanup = {
-            description = "Jellyfin: Stale Transcode-Segmente bereinigen";
+            description = "Jellyfin: Transcode-Cleanup (RAM-adaptiv)";
             wantedBy = [ "timers.target" ];
             timerConfig = {
-              OnBootSec = "15min";
-              OnUnitActiveSec = "30min";
+              OnBootSec = "10min";
+              OnUnitActiveSec = "5min";
               Unit = "jellyfin-transcode-cleanup.service";
             };
           };
 
           systemd.services.jellyfin-transcode-cleanup = {
-            description = "Jellyfin: Stale Transcode-Segmente löschen (>60min)";
+            description = "Jellyfin: Transcode-Segmente RAM-adaptiv bereinigen";
             serviceConfig = {
               Type = "oneshot";
               ExecStart = pkgs.writeShellScript "jellyfin-transcode-cleanup" ''
                 set -euo pipefail
-                DIR="/run/jellyfin-transcode"
+                DIR=/run/jellyfin-transcode
                 [ -d "$DIR" ] || exit 0
-                COUNT=$(find "$DIR" -type f -mmin +60 | wc -l)
-                if [ "$COUNT" -gt 0 ]; then
-                  find "$DIR" -type f -mmin +60 -delete
-                  find "$DIR" -mindepth 1 -type d -empty -delete
-                  echo "jellyfin-transcode-cleanup: $COUNT Dateien gelöscht"
+
+                MEM_TOTAL=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+                MEM_AVAIL=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
+                MEM_PCT=$(( (MEM_TOTAL - MEM_AVAIL) * 100 / MEM_TOTAL ))
+
+                if [ "$MEM_PCT" -ge 80 ]; then
+                  AGE=0
+                  REASON="RAM $MEM_PCT%% Notfall"
+                elif [ "$MEM_PCT" -ge 65 ]; then
+                  AGE=15
+                  REASON="RAM $MEM_PCT%% Druck"
+                else
+                  AGE=90
+                  REASON="RAM $MEM_PCT%% Normal"
                 fi
+
+                if [ "$AGE" -eq 0 ]; then
+                  COUNT=$(find "$DIR" -type f | wc -l)
+                  find "$DIR" -type f -delete
+                else
+                  COUNT=$(find "$DIR" -type f -mmin +$AGE | wc -l)
+                  find "$DIR" -type f -mmin +$AGE -delete
+                fi
+                find "$DIR" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+
+                [ "$COUNT" -gt 0 ] && echo "jellyfin-transcode-cleanup: $COUNT Dateien ($REASON)"
+                exit 0
               '';
               User = "root";
             };

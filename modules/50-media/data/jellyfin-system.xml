@@ -8,18 +8,27 @@
   <QuickConnectAvailable>true</QuickConnectAvailable>
   <EnableCaseSensitiveItemIds>true</EnableCaseSensitiveItemIds>
   <DisableLiveTvChannelUserDataName>true</DisableLiveTvChannelUserDataName>
-  <MetadataPath />
+  <!-- Metadaten auf fast_pool — nicht in /var/lib/jellyfin (langsamer Datenpool) -->
+  <MetadataPath>/mnt/fast_pool/metadata/jellyfin</MetadataPath>
   <PreferredMetadataLanguage>@LOCALE_LANG@</PreferredMetadataLanguage>
   <MetadataCountryCode>@LOCALE_CC@</MetadataCountryCode>
   <MinResumePct>5</MinResumePct>
-  <MaxResumePct>90</MaxResumePct>
+  <MaxResumePct>92</MaxResumePct>
   <MinResumeDurationSeconds>300</MinResumeDurationSeconds>
-  <CacheSize>400</CacheSize>
+  <MinAudiobookResume>5</MinAudiobookResume>
+  <MaxAudiobookResume>92</MaxAudiobookResume>
+  <LibraryMonitorDelay>60</LibraryMonitorDelay>
+  <EnableDashboardResponseCaching>true</EnableDashboardResponseCaching>
+  <!-- 800 MB RAM-Cache für häufig genutzte Metadaten -->
+  <CacheSize>800</CacheSize>
   <UICulture>@LOCALE_UI@</UICulture>
   <SaveMetadataHidden>false</SaveMetadataHidden>
-  <EnableExternalContentInSuggestions>true</EnableExternalContentInSuggestions>
+  <EnableExternalContentInSuggestions>false</EnableExternalContentInSuggestions>
   <EnableSlowResponseWarning>true</EnableSlowResponseWarning>
   <SlowResponseThresholdMs>500</SlowResponseThresholdMs>
-  <ActivityLogRetentionDays>30</ActivityLogRetentionDays>
+  <ActivityLogRetentionDays>14</ActivityLogRetentionDays>
   <EnableLegacyAuthorization>true</EnableLegacyAuthorization>
+  <!-- Kapitelextraktion für Intro-Detection (Jellyfin 10.9+, built-in) -->
+  <ChapterImageResolution>MatchSource</ChapterImageResolution>
+  <ParallelImageEncodingLimit>0</ParallelImageEncodingLimit>
 </ServerConfiguration>
