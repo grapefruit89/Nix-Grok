@@ -16,7 +16,7 @@ meta:
 
 | ID | Titel | Status | Datum | Betrifft |
 |----|-------|--------|-------|----------|
-| [001](001-dns-dot-fail-closed.md) | DNS-over-TLS, Blocky-only, fail-closed | accepted | 2026-06-17 | Blocky, resolv.conf, LAN |
+| [001](001-dns-dot-fail-closed.md) | DNS-over-TLS, fail-closed (Blocky→Technitium) | accepted | 2026-06-17 | Technitium, resolv.conf, LAN |
 | [002](002-ipv6-homelab-v4-only.md) | IPv6 Homelab ad acta (v4-only LAN) | accepted | 2026-06-17 | eno1, nftables, Blocky, CrowdSec |
 | [003](003-oom-cgroup-isolation.md) | RAM-Isolation per systemd cgroup | accepted | 2026-06-17 | memory-policy.nix, alle Caps |
 | [004](004-unix-socket-upstreams.md) | Unix-Socket-Upstreams für Caddy | accepted | 2026-06-17 | unix-sockets.nix, caddy-helpers |
@@ -27,6 +27,7 @@ meta:
 | [009](009-vpn-leak-check.md) | VPN-NetNS-Leak-Check (Timer) | accepted | 2026-06-17 | 10-vpn-confinement, sabnzbd, prowlarr |
 | [010](010-production-ssh-impermanence.md) | Production SSH-Port, PermitTTY, Impermanence | accepted | 2026-06-17 | rollout.nix, 20-security, 30-storage |
 | [011](011-unified-port-uid-schema.md) | Unified Port=UID=FolderPrefix Schema (4-stellig) | accepted | 2026-06-27 | uid-registry, unix-sockets, server-map |
+| [012](012-modern-cli-tools.md) | Moderne CLI-Tools systemweit (bat, eza, fd, rg, nh) | accepted | 2026-06-28 | 00-core, shell-aliases, CLAUDE.md |
 
 ## Wann neues ADR?
 
@@ -59,3 +60,4 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-06-17 | ADR 007–008 (Dendritic, nftables KB) |
 | 2026-06-17 | ADR 009–010 (nix-hermes Audit: VPN leak, Production-Modus) |
 | 2026-06-27 | ADR 011 (Unified Port=UID=FolderPrefix, Server-Map) |
+| 2026-06-28 | ADR 001 aktualisiert (Blocky→Technitium+API-DoT-Configure); ADR 012 (Moderne CLI-Tools) |
