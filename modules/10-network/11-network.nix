@@ -141,21 +141,15 @@ in
       # Primary: 127.0.0.1 (Technitium), Fallback: DoT-Server (automatisch wenn Technitium down)
       services.resolved = {
         enable = lib.mkForce true;
-        dnssec = "opportunistic";
-        llmnr = "false";
-        # FallbackDNS: bekannte DoT-Server mit TLS-Hostname für SNI-Verifikation
-        fallbackDns = lib.mkForce [
-          "1.1.1.1#cloudflare-dns.com"
-          "1.0.0.1#cloudflare-dns.com"
-          "9.9.9.9#dns.quad9.net"
-          "149.112.112.112#dns.quad9.net"
-        ];
-        # Primär-DNS und DoT via settings (kein extraConfig — deprecated)
         settings.Resolve = {
           DNS = "127.0.0.1";
           DNSOverTLS = "opportunistic";
+          DNSSEC = "opportunistic";
+          LLMNR = "no";
           MulticastDNS = "no";
           Cache = "yes";
+          # FallbackDNS: DoT-Server mit TLS-Hostname für SNI-Verifikation
+          FallbackDNS = lib.mkForce "1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net";
         };
       };
       # resolved verwaltet /etc/resolv.conf selbst (→ 127.0.0.53 stub)
