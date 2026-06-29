@@ -28,6 +28,7 @@ meta:
 | [010](010-production-ssh-impermanence.md) | Production SSH-Port, PermitTTY, Impermanence | accepted | 2026-06-17 | rollout.nix, 20-security, 30-storage |
 | [011](011-unified-port-uid-schema.md) | Unified Port=UID=FolderPrefix Schema (4-stellig) | accepted | 2026-06-27 | uid-registry, unix-sockets, server-map |
 | [012](012-modern-cli-tools.md) | Moderne CLI-Tools systemweit (bat, eza, fd, rg, nh) | accepted | 2026-06-28 | 00-core, shell-aliases, CLAUDE.md |
+| [013](013-flake-portability.md) | Flake-Portabilität — Reproduzierbarkeit ohne Experimente | accepted | 2026-06-29 | flake.lock, 00-core, experimental-features |
 
 ## Wann neues ADR?
 
