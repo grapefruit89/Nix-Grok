@@ -165,6 +165,8 @@ in
         wants = [ "network-online.target" ];
         wantedBy = [ "multi-user.target" ];
         before = lib.mkIf config.services.caddy.enable [ "caddy.service" ];
+        # LogsDirectory fehlt im nixpkgs-Modul → ProtectSystem=strict blockiert /var/log-Zugriff
+        serviceConfig.LogsDirectory = "technitium";
       };
 
       # ADR-001: DoT-only Upstream erzwingen — einmalig via API (idempotent per Marker-Datei)
