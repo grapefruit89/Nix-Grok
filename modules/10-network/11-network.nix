@@ -137,14 +137,30 @@ in
     (lib.mkIf cfgTechnitium.enable {
       services.technitium-dns-server.enable = true;
 
-      services.resolved.enable = lib.mkForce false;
-      networking.nameservers = lib.mkForce [ "127.0.0.1" ];
+      # systemd-resolved als DNS-Proxy:
+      # Primary: 127.0.0.1 (Technitium), Fallback: DoT-Server (automatisch wenn Technitium down)
+      services.resolved = {
+        enable = lib.mkForce true;
+        dnssec = "opportunistic";
+        llmnr = "false";
+        # FallbackDNS: bekannte DoT-Server mit TLS-Hostname für SNI-Verifikation
+        fallbackDns = lib.mkForce [
+          "1.1.1.1#cloudflare-dns.com"
+          "1.0.0.1#cloudflare-dns.com"
+          "9.9.9.9#dns.quad9.net"
+          "149.112.112.112#dns.quad9.net"
+        ];
+        # Primär-DNS und DoT via settings (kein extraConfig — deprecated)
+        settings.Resolve = {
+          DNS = "127.0.0.1";
+          DNSOverTLS = "opportunistic";
+          MulticastDNS = "no";
+          Cache = "yes";
+        };
+      };
+      # resolved verwaltet /etc/resolv.conf selbst (→ 127.0.0.53 stub)
       networking.resolvconf.enable = lib.mkForce false;
-
-      environment.etc."resolv.conf".text = ''
-        # NixOS/Technitium — lokaler Resolver auf Port 53
-        nameserver 127.0.0.1
-      '';
+      networking.nameservers = lib.mkForce [ ];
 
       networking.enableIPv6 = lib.mkDefault false;
 
@@ -210,8 +226,8 @@ in
 
       assertions = [
         {
-          assertion = config.networking.nameservers == [ "127.0.0.1" ];
-          message = "DNS: resolv.conf darf nur 127.0.0.1 (Technitium) — kein 1.1.1.1-Bypass.";
+          assertion = config.services.resolved.enable or false;
+          message = "DNS: systemd-resolved muss aktiv sein (DoT-Failsafe über Technitium).";
         }
         {
           assertion = config.my.configs.network.ipv6.firewall == false;

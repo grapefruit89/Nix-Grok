@@ -17,10 +17,17 @@ let
   stufe = p.rollout.stufe;
   rollout = import ../../lib/rollout.nix { inherit lib stufe; };
   inherit (rollout) erstAb;
+  # Boot-Label aus .boot-label Datei (gesetzt von nixos-switch.sh) — benötigt --impure
+  labelFile = ./. + "/.boot-label";
+  bootLabel =
+    if builtins.pathExists labelFile then
+      lib.trimString (builtins.readFile labelFile)
+    else
+      p.boot.menuName;
 in
 {
   system.nixos.distroName =
-    if stufe >= 9 then lib.mkForce "Production (Impermanence)" else lib.mkForce p.boot.menuName;
+    if stufe >= 9 then lib.mkForce "Production (Impermanence)" else lib.mkForce bootLabel;
   boot.loader.systemd-boot.configurationLimit = lib.mkForce p.boot.generationLimit;
   boot.loader.systemd-boot.sortKey =
     if stufe >= 9 then lib.mkForce "9_production" else lib.mkForce p.boot.sortKey;

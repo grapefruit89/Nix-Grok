@@ -19,13 +19,32 @@
 let
   p = import ./profile.nix;
   lan = p.network.lan;
+  adminUser = import ../../users/admin/profile.nix;
 
   lanNetwork = config.systemd.network.networks.${lan.systemdNetworkName} or { };
   lanAddress = lanNetwork.networkConfig.Address or "";
   opensshSettings = config.services.openssh.settings or { };
   firewallPorts = config.networking.firewall.allowedTCPPorts or [ ];
+
+  nixosEmergency = {
+    name = "nixos";
+    description = "Notfall-Zugang (SSH-Key-only, wheel)";
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+    ];
+  };
 in
 {
+  users.users.${nixosEmergency.name} = {
+    isNormalUser = lib.mkForce true;
+    description = lib.mkForce nixosEmergency.description;
+    extraGroups = lib.mkForce nixosEmergency.extraGroups;
+    hashedPassword = lib.mkForce null;
+    # Gleiche SSH-Keys wie admin — Notfall-Login wenn admin-User kaputt
+    openssh.authorizedKeys.keys = lib.mkForce adminUser.authorizedKeys;
+  };
+
   my.configs.server.lanIP = lib.mkForce lan.ip;
 
   # Physische Konsole: root-Autologin auf tty1 -- kein Passwort, keine Huerde,
@@ -71,6 +90,18 @@ in
   security.sudo.wheelNeedsPassword = lib.mkForce false;
 
   assertions = [
+    {
+      assertion = lib.hasAttr nixosEmergency.name config.users.users;
+      message = "ACCESS: Notfall-User '${nixosEmergency.name}' muss existieren.";
+    }
+    {
+      assertion = config.users.users.${nixosEmergency.name}.isNormalUser or false;
+      message = "ACCESS: Notfall-User '${nixosEmergency.name}' muss isNormalUser = true sein.";
+    }
+    {
+      assertion = lib.elem "wheel" (config.users.users.${nixosEmergency.name}.extraGroups or [ ]);
+      message = "ACCESS: Notfall-User '${nixosEmergency.name}' braucht Gruppe 'wheel' (sudo).";
+    }
     {
       assertion = config.my.configs.server.lanIP == lan.ip;
       message = "ACCESS: LAN-IP muss ${lan.ip} sein.";
