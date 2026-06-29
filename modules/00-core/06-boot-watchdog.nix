@@ -86,12 +86,14 @@ in
     systemd.services.boot-watchdog.path = [ pkgs.systemd ];
 
     # PostgreSQL: Restart=always ohne OOM-Konflikt mit memory.postgres (-800)
-    systemd.services.postgresql.serviceConfig = {
-      Restart = lib.mkForce "always";
-      RestartSec = lib.mkForce "5s";
-      StartLimitIntervalSec = lib.mkForce 0;
-      StartLimitBurst = lib.mkForce 0;
-      TimeoutStopSec = lib.mkForce "30s";
+    systemd.services.postgresql = lib.mkIf (config.services.postgresql.enable or false) {
+      serviceConfig = {
+        Restart = lib.mkForce "always";
+        RestartSec = lib.mkForce "5s";
+        StartLimitIntervalSec = lib.mkForce 0;
+        StartLimitBurst = lib.mkForce 0;
+        TimeoutStopSec = lib.mkForce "30s";
+      };
     };
 
     # Caddy hängt an PostgreSQL wenn Pocket-ID aktiv (forward_auth)
