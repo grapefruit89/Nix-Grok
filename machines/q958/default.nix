@@ -14,7 +14,6 @@
 }:
 let
   p = import ./profile.nix;
-  adminUser = import ../../users/admin/profile.nix;
   moritzUser = import ../../users/moritz/profile.nix;
   zigbeeSocket = "socket://${p.iot.zigbeeCoordinator.host}:${toString p.iot.zigbeeCoordinator.port}";
 in
@@ -31,7 +30,6 @@ in
     ../../modules/50-media
     ../../modules/60-apps
     ../../modules/70-home-automation
-    ../../users/admin/default.nix
     ../../users/moritz/default.nix
     ./kernel-slim.nix
     ./access.nix
@@ -51,7 +49,6 @@ in
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    users.${adminUser.name} = import ../../users/admin/home.nix;
     users.${moritzUser.name} = import ../../users/moritz/home.nix;
   };
 
@@ -81,8 +78,8 @@ in
 
     configs = {
       identity = {
-        user = adminUser.name;
-        inherit (adminUser) domain;
+        user = moritzUser.name;
+        inherit (moritzUser) domain;
       };
       hardware = {
         ramGB = p.hardware.ramGB;
