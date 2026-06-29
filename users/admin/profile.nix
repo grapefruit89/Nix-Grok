@@ -30,7 +30,7 @@ in
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJRDbyFjT4SEL8yxNwZuEBPORD82qlJJhdr2r4qz1vCX"
   ];
   git = {
-    name = "moritz";
+    name = "grapefruit89";
     email = "moritzbaumeister@gmail.com";
   };
 }
