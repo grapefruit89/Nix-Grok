@@ -47,7 +47,7 @@ in
         description = "true = nix-daemon idle (schont Dienste). false = volle Build-Power.";
       };
       zram-swap.enable = lib.mkEnableOption "Aggressive komprimierter ZRAM RAM-swap";
-      # kernel-slim Option lebt jetzt nur noch in modules/25-kernel-policy.nix (Duplikat entfernt)
+      # kernel-slim Option lebt jetzt nur noch in modules/20-security/25-kernel-policy.nix (Duplikat entfernt)
     };
 
     mode = lib.mkOption {
@@ -361,8 +361,6 @@ in
           experimental-features = [
             "nix-command"
             "flakes"
-            "auto-allocate-uids"
-            "cgroups"
           ];
           sandbox = true;
           trusted-users = [

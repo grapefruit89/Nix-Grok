@@ -434,15 +434,12 @@ in
     # ── POCKETID IDENTITY PROVIDER ────────────────────────────────────────────
     (lib.mkIf config.my.services.pocket-id.enable {
       systemd.services.pocket-id = {
-        after = [
-          "postgresql.service"
-          "network-online.target"
-        ];
-        wants = [
-          "postgresql.service"
-          "network-online.target"
-        ];
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
       };
+
+      # Pocket-ID nutzt Port 1001 (< 1024) ohne Root — Kernel-Schwelle absenken
+      boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = lib.mkDefault 1000;
 
       services.pocket-id = {
         enable = true;

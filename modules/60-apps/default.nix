@@ -128,10 +128,10 @@ in
   # Caddy .enable nur in machines/<host>/rollout.nix — hier nur Hardening
   config = lib.mkIf config.services.caddy.enable {
     systemd.services.caddy = {
-      # Technitium → PostgreSQL → Caddy (ACME + forward_auth ohne Deadlock)
+      # Technitium → Caddy (ACME-DNS). PostgreSQL → Caddy via boot-watchdog (Linkwarden)
       after = lib.mkAfter (
         lib.optional config.my.services.technitium-dns-server.enable "technitium-dns-server.service"
-        ++ lib.optional config.my.services.pocket-id.enable "postgresql.service"
+        ++ lib.optional (config.my.services.linkwarden.enable or false) "postgresql.service"
         ++ [ "network-online.target" ]
       );
       wants =

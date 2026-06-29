@@ -96,10 +96,10 @@ in
       };
     };
 
-    # Caddy hängt an PostgreSQL wenn Pocket-ID aktiv (forward_auth)
-    systemd.services.caddy = lib.mkIf (config.my.services.pocket-id.enable or false) {
+    # Caddy hängt an PostgreSQL wenn Linkwarden aktiv (einziger echter PostgreSQL-Nutzer)
+    systemd.services.caddy = lib.mkIf (config.my.services.linkwarden.enable or false) {
       requires = [ "postgresql.service" ];
-      wants = [ "postgresql.service" ];
+      after = [ "postgresql.service" ];
     };
   };
 }
