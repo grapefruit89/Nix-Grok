@@ -143,5 +143,18 @@ in
       assertion = !config.security.sudo.wheelNeedsPassword;
       message = "ACCESS: wheel muss passwortlos sudo haben — kein Passwort gesetzt, SSH-Key-Only-Policy erfordert wheelNeedsPassword = false.";
     }
-  ];
+  ]
+  ++
+    # POLICY: Jeder SSH-User muss wheel haben — niemals ein normaler User ohne sudo
+    (
+      let
+        normalUsers = lib.filterAttrs (
+          _n: u: (u.isNormalUser or false) && (u.openssh.authorizedKeys.keys or [ ]) != [ ]
+        ) config.users.users;
+      in
+      lib.mapAttrsToList (name: _u: {
+        assertion = lib.elem "wheel" (config.users.users.${name}.extraGroups or [ ]);
+        message = "ACCESS: SSH-User '${name}' hat authorized_keys aber KEIN wheel — sudo-loser SSH-User verboten!";
+      }) normalUsers
+    );
 }
