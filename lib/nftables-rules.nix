@@ -46,6 +46,14 @@ let
     else
       "";
 
+  cleartextDnsBlock =
+    if cfg.blockCleartextDns then
+      ''
+        ip daddr != 127.0.0.0/8 meta l4proto { tcp, udp } th dport 53 reject comment "no-cleartext-dns-outbound"
+      ''
+    else
+      "";
+
   skuidUsenetGuard =
     if cfg.skuidSegmentation.enable then
       ''
@@ -213,6 +221,7 @@ lib.concatStringsSep "\n" [
 
       chain output {
         type filter hook output priority filter; policy accept;
+        ${cleartextDnsBlock}
         ${skuidUsenetGuard}
       }
     }

@@ -67,7 +67,13 @@ in
     allowLanDns = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "UDP/TCP 53 von LAN an Blocky erlauben (DHCP DNS → q958).";
+      description = "UDP/TCP 53 von LAN an lokalen DNS-Server erlauben.";
+    };
+
+    blockCleartextDns = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Port 53 (unverschlüsseltes DNS) outbound sperren — nur DoT via systemd-resolved erlaubt. Loopback (127.0.0.0/8) bleibt offen für Technitium.";
     };
 
     webRateLimit = lib.mkOption {

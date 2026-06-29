@@ -224,6 +224,14 @@ in
           message = "DNS: systemd-resolved muss aktiv sein (DoT-Failsafe über Technitium).";
         }
         {
+          assertion = (config.services.resolved.settings.Resolve.DNSOverTLS or "no") != "no";
+          message = "DNS-POLICY: services.resolved.settings.Resolve.DNSOverTLS muss 'opportunistic' oder 'yes' sein — Port 53 outbound ist nftables-gesperrt, unverschlüsseltes DNS ist verboten!";
+        }
+        {
+          assertion = config.networking.nameservers == [ ];
+          message = "DNS-POLICY: networking.nameservers muss leer sein — externe Einträge würden /etc/resolv.conf überschreiben und DoT umgehen!";
+        }
+        {
           assertion = config.my.configs.network.ipv6.firewall == false;
           message = "IPv6: Homelab-v4-only — my.configs.network.ipv6.firewall muss false sein.";
         }
