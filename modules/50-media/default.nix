@@ -10,13 +10,12 @@
 { lib, ... }:
 {
   imports = [
-    ./jellyfin.nix
-    ./audiobookshelf.nix
-    ./navidrome.nix
-    ./arr.nix
-    ./sabnzbd.nix
-    ./arr-sync
-    # sync.nix + sync-script.sh → abgelöst durch arr-sync/ (fokussierte Einzelservices)
+    ./51-jellyfin.nix
+    ./52-arr.nix
+    ./53-sabnzbd.nix
+    ./54-audiobookshelf.nix
+    ./55-navidrome.nix
+    ./56-arr-sync
   ];
 
   # Centralized options declaration for domain 50
