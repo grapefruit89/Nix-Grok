@@ -307,6 +307,14 @@ in
               "100.64.0.0/10"
             ];
             IPAddressDeny = lib.mkForce "any";
+            # .NET NetworkChange listener braucht AF_NETLINK für Netzwerk-Änderungsevents.
+            # Ohne AF_NETLINK: EAFNOSUPPORT (97) beim Start → FTL crash.
+            RestrictAddressFamilies = lib.mkForce [
+              "AF_INET"
+              "AF_INET6"
+              "AF_UNIX"
+              "AF_NETLINK"
+            ];
           };
         })
       ]

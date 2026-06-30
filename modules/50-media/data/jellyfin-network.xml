@@ -11,7 +11,7 @@
     <string>100.64.0.0/10</string>
   </KnownProxies>
   <PublishedServerUriBySubnet>
-    <string>@JELLYFIN_URL@</string>
+    <string>0.0.0.0/0|@JELLYFIN_URL@</string>
   </PublishedServerUriBySubnet>
   <AutoDiscovery>false</AutoDiscovery>
 </NetworkConfiguration>

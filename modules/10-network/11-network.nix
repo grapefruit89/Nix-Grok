@@ -352,10 +352,15 @@ in
           enableNginx = false;
           domain = cfgNetbird.domain;
           turnDomain = cfgNetbird.domain;
-          oidcConfigEndpoint = "https://auth.${domain}/.well-known/openid-configuration";
+          # Lokal: pocket-id Port 1001 direkt — hairpin NAT über externe IP nicht möglich
+          oidcConfigEndpoint = "http://127.0.0.1:1001/.well-known/openid-configuration";
           metricsPort = 6061;
         };
-        signal.enableNginx = false;
+        signal = {
+          enableNginx = false;
+          # pprof-Port des management-Binary ist hardcoded 6060 — signal auf 6062 verschieben
+          metricsPort = 6062;
+        };
         dashboard.settings = {
           AUTH_AUTHORITY = "https://auth.${domain}";
         };
