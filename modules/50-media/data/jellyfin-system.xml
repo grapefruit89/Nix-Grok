@@ -31,4 +31,14 @@
   <!-- Kapitelextraktion für Intro-Detection (Jellyfin 10.9+, built-in) -->
   <ChapterImageResolution>MatchSource</ChapterImageResolution>
   <ParallelImageEncodingLimit>0</ParallelImageEncodingLimit>
+  <EnableGroupingShowsIntoCollections>true</EnableGroupingShowsIntoCollections>
+  <DisplaySpecialsWithinSeasons>true</DisplaySpecialsWithinSeasons>
+  <!-- Trickplay: Vorschaubilder beim Scrubben via QuickSync (NonBlocking, kein Transcode-Impact) -->
+  <TrickplayOptions>
+    <EnableHwAcceleration>true</EnableHwAcceleration>
+    <ScanBehavior>NonBlocking</ScanBehavior>
+    <ProcessPriority>BelowNormal</ProcessPriority>
+    <Interval>10000</Interval>
+    <ProcessThreads>1</ProcessThreads>
+  </TrickplayOptions>
 </ServerConfiguration>

@@ -6,6 +6,8 @@
 #   docs:
 #     - docs/adr/001-dns-dot-fail-closed.md
 #     - docs/adr/002-ipv6-homelab-v4-only.md
+#     - docs/adr/014-caddy-security-headers-trusted-proxies.md
+#     - docs/adr/018-caddy-dual-log-dsgvo.md
 #   lib:
 #     - lib/memory-policy.nix
 #     - lib/critical-systemd.nix
@@ -281,6 +283,8 @@ in
         CapabilityBoundingSet = "";
         RestrictAddressFamilies = [ "AF_UNIX" ];
         ReadWritePaths = [ "/var/lib/redis-valkey" ];
+        ProtectProc = "invisible";
+        ProtectKernelLogs = true;
       };
     })
 
@@ -332,6 +336,8 @@ in
           RestrictSUIDSGID = true;
           RestrictAddressFamilies = [ "AF_UNIX" ];
           ReadWritePaths = [ "/var/lib/postgresql" ];
+          ProtectProc = "invisible";
+          ProtectKernelLogs = true;
         }
       ];
     })
@@ -487,7 +493,44 @@ in
     })
 
     # ── CADDY GLOBAL CONFIG & SNIPPETS ────────────────────────────────────────
+    # ADR 018: Dual-Log — default-Logger (stdout→journald→CrowdSec) bleibt unverändert.
+    # dsgvo_access-Logger abonniert http.log.access (alle vHosts) und schreibt
+    # IP-maskierte Logs auf /24 (IPv4) / /48 (IPv6) nach /var/log/caddy/dsgvo.json.
     {
+      services.caddy.globalConfig = lib.mkIf config.services.caddy.enable ''
+        servers {
+          trusted_proxies static private_ranges
+          timeouts {
+            read_body   30s
+            read_header 10s
+            idle        5m
+          }
+        }
+
+        log dsgvo_access {
+          include http.log.access
+          output file /var/log/caddy/dsgvo.json {
+            roll_size 100mb
+            roll_keep 14
+            roll_keep_for 720h
+          }
+          format filter {
+            wrap json
+            fields {
+              request>remote_ip ip_mask {
+                ipv4 24
+                ipv6 48
+              }
+              request>client_ip ip_mask {
+                ipv4 24
+                ipv6 48
+              }
+            }
+          }
+          level INFO
+        }
+      '';
+
       services.caddy.logFormat = lib.mkIf config.services.caddy.enable (
         lib.mkForce ''
           level INFO
@@ -498,6 +541,10 @@ in
       services.caddy.extraConfig = lib.mkIf config.services.caddy.enable (
         lib.mkBefore caddySnippets.extraConfig
       );
+
+      systemd.tmpfiles.rules = lib.mkIf config.services.caddy.enable [
+        "d /var/log/caddy 0750 caddy caddy -"
+      ];
     }
   ];
 }

@@ -3,6 +3,9 @@
 #   layer: 5
 #   role: lib
 #   purpose: Statische UID/GID-Registry für skuid und Reproduzierbarkeit
+#   docs:
+#     - docs/adr/011-unified-port-uid-schema.md
+#     - docs/guides/GUIDE-server-map.md
 #   tags:
 #     - uid
 #     - security

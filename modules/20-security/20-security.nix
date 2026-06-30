@@ -218,6 +218,10 @@ in
         };
       };
     };
+
+    auditd = {
+      enable = lib.mkEnableOption "Linux Audit daemon: execve-Syscalls loggen (Frühwarnung bei Kompromittierung)";
+    };
   };
 
   # ============================================================================
@@ -467,6 +471,18 @@ in
           '';
       }
     )
+
+    # ── AUDITD PROZESS-MONITORING ─────────────────────────────────────────────
+    (lib.mkIf config.my.security.auditd.enable {
+      security.auditd.enable = true;
+      security.audit.enable = true;
+      security.audit.rules = [
+        # execve-Syscalls loggen — alle Prozessstarts. Ergibt Einträge im Journal (auditd).
+        # Frühwarnsystem bei Kompromittierung. Performance-Overhead minimal bei Homelab-Last.
+        "-a always,exit -F arch=b64 -S execve -k process_exec"
+        "-a always,exit -F arch=b32 -S execve -k process_exec"
+      ];
+    })
 
     # ── DROPBEAR STAGE-2 RESCUE DAEMON ────────────────────────────────────────
     (

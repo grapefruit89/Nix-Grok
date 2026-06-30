@@ -53,6 +53,7 @@ in
     dropbear-rescue.enable = erstAb 8;
     kernel-hardening.enable = erstAb 8;
     hardened.enable = erstAb 9;
+    auditd.enable = erstAb 8;
   };
 
   my.storage.deferred.enable = erstAb 3;
@@ -108,6 +109,7 @@ in
   my.security.runtime-guard.enable = erstAb 8;
   my.boot-watchdog.enable = erstAb 5;
   my.disk-health.enable = erstAb 3;
+  my.disk-health.hdIdle.enable = erstAb 3;
 
   my.services.vpn-confinement = {
     enable = erstAb 6;

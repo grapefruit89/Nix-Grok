@@ -4,6 +4,8 @@
 #   role: lib
 #   purpose: Restart=always, StartLimit=0, OOM-Score für kritische Infrastruktur
 #   docs:
+#     - docs/adr/005-critical-systemd-restart.md
+#     - docs/adr/003-oom-cgroup-isolation.md
 #     - docs/AUDIT-blocky-caddy-ipv6.md
 #   tags:
 #     - systemd

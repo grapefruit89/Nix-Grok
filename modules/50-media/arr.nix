@@ -37,18 +37,27 @@ let
       uid = uids.sonarr;
       gid = gids.sonarr;
       metadataDir = "/mnt/fast_pool/metadata/sonarr";
+      extraEnv = {
+        SONARR__UPDATE__BRANCH = "main";
+      };
     };
     radarr = {
       port = ports.radarr;
       uid = uids.radarr;
       gid = gids.radarr;
       metadataDir = "/mnt/fast_pool/metadata/radarr";
+      extraEnv = {
+        RADARR__UPDATE__BRANCH = "master";
+      };
     };
     readarr = {
       port = ports.readarr;
       uid = uids.readarr;
       gid = gids.readarr;
       metadataDir = "/mnt/fast_pool/metadata/readarr";
+      extraEnv = {
+        READARR__UPDATE__BRANCH = "develop";
+      };
     };
     prowlarr = {
       port = ports.prowlarr;
@@ -57,12 +66,18 @@ let
       metadataDir = "/mnt/fast_pool/metadata/prowlarr";
       useVpnKillSwitch = true;
       upstreamHost = prowlarrUpstream;
+      extraEnv = {
+        PROWLARR__UPDATE__BRANCH = "master";
+      };
     };
     lidarr = {
       port = ports.lidarr;
       uid = uids.lidarr;
       gid = gids.lidarr;
       metadataDir = "/mnt/fast_pool/metadata/lidarr";
+      extraEnv = {
+        LIDARR__UPDATE__BRANCH = "master";
+      };
     };
   };
 

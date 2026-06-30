@@ -153,6 +153,8 @@ in
         StartLimitIntervalSec = lib.mkForce 0;
         StartLimitBurst = lib.mkForce 0;
         RestartPreventExitStatus = lib.mkForce [ ];
+        ProtectProc = lib.mkForce "invisible";
+        ProtectKernelLogs = lib.mkForce true;
       }
     ];
   };

@@ -1,11 +1,14 @@
 # ---
 # meta:
-#   id: NIXH-05-LIB-010
-#   layer: 5
-#   role: lib
-#   purpose: Caddy vHost-Generator aus my.services.spec (Zonen-Policy)
+#   id: NIXH-10-ING-001
+#   layer: 3
+#   role: module
+#   purpose: Spez-basierter Caddy-Ingress — einzige Quelle für vHosts
+#   lib:
+#     - lib/caddy-ingress.nix
+#     - lib/service-enable.nix
 #   docs:
-#     - docs/ROADMAP.md
+#     - docs/adr/017-caddy-health-checks-error-fallback.md
 #   tags:
 #     - caddy
 #     - ingress
@@ -40,6 +43,7 @@ let
 
   genAuthVhost = upstream: ''
     import security_headers
+    import upstream_errors
     handle /api/auth/* {
       reverse_proxy ${upstream}
     }
@@ -59,6 +63,7 @@ let
   genJellyfinVhost = port: ''
     import streamer_headers
     import security_headers
+    import upstream_errors
 
     @jellyfin_client header_regexp X-Emby-Authorization (?i)MediaBrowser
 
@@ -77,6 +82,7 @@ let
   genNavidromeVhost = port: ''
     import streamer_headers
     import security_headers
+    import upstream_errors
 
     @navidrome_api {
       path /rest/*
@@ -93,6 +99,7 @@ let
 
   genVaultwardenVhost = port: ''
     import security_headers
+    import upstream_errors
 
     @websocket {
       header Connection *Upgrade*
@@ -106,6 +113,7 @@ let
 
   genSecurityOnlyVhost = upstream: ''
     import security_headers
+    import upstream_errors
     reverse_proxy ${upstream}
   '';
 
@@ -119,11 +127,13 @@ let
       ''
         import private_admin
         import security_headers
+        import upstream_errors
         reverse_proxy ${upstream}
       ''
     else if zone == "public" then
       ''
         import security_headers
+        import upstream_errors
         reverse_proxy ${upstream}
       ''
     else if zone == "family-pocketid" && lib.elem subdomain streamingSubdomains then
@@ -131,6 +141,7 @@ let
         import streamer_headers
         import security_headers
         import sso_auth
+        import upstream_errors
         reverse_proxy ${upstream} {
           flush_interval -1
           transport http {
@@ -143,6 +154,7 @@ let
       ''
         import security_headers
         import sso_auth
+        import upstream_errors
         reverse_proxy ${upstream}
       ''
     else

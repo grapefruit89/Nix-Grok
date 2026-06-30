@@ -25,6 +25,18 @@ Architektur-Verfassung (6-Schichten-Modell, Nummerierungsschema,
 NIXMETA-Verbot, harte Regeln). Dieses Dokument hier ist die
 Tages-aktuelle Briefing-Ergänzung dazu, kein Ersatz.
 
+## Philosophie: Nix-Native Pragmatic Declarative
+
+Entscheidungsreihenfolge für jede Änderung am Stack:
+
+1. **Nix-Native first** — `services.*`, Optionen, Env-Vars, systemd nutzen bevor Code gebaut wird
+2. **Declarative Core** — gewünschter Zustand in Nix definiert, nicht nur dokumentiert
+3. **Surgical Glue** — eigener Code nur wo Nix nicht hinreicht (Sync-Service, Secrets-Provision)
+4. **Minimal Abstraction** — Factory stärken, nicht ersetzen; kein Over-Engineering
+5. **Transparent & Wartbar** — lesbar in 2 Jahren, keine magischen Module
+
+Kurzform: *„Declarative Core + Surgical Glue"*
+
 ## Schreibzugriff auf /etc/nixos
 
 `/etc/nixos` gehört nach dem Benutzer-Refactor (2026-06-28) **root**.
@@ -50,6 +62,10 @@ sudo install -o root -g root -m <original-mode> <scratchpad-datei> /etc/nixos/pf
 den Originalwert. Typischer Bug: ein Script mit Mode 755 (ausführbar) wird
 nach `install` ohne `-m` zu 644 und scheitert beim Ausführen. Vor jedem
 `install` erst `sudo ls -la <zielpfad>` ausführen und den Mode übernehmen.
+
+**Ausnahme:** Edit-Tool funktioniert direkt für Dateien in Unterordnern
+(z. B. `modules/50-media/`, `modules/20-security/`). Nur Dateien im
+Root von `/etc/nixos/` (wie `CLAUDE.md`, `flake.nix`) brauchen sudo install.
 
 ## Rebuild-Workflow — Dry-Run-Gate (Pflicht)
 
@@ -100,6 +116,49 @@ aktuellen HEAD ein Dry-Build-Flag gesetzt ist — nützlich als Voraussetzung.
   Hybrid-RRF-Suche auf `data/nixos_docs.sqlite`. Nach rebuild aktivieren
   und in `modules/mcp-server/default.nix` eintragen.
 
+## Dev-System-Philosophie — maximal progressiv
+
+q958 ist eine Dev-Maschine ohne echte Nutzerdaten. Keinerlei Rücksicht auf
+alte `/var/lib/*`-Daten nötig. Wenn ein Wipe schneller zum Ziel führt: sofort
+wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
+
+## Aktive TODOs — Stand 2026-06-30
+
+**UMGESETZT (diese Session):**
+- [x] arr-helper.nix: `readOnlyPaths=["/data/media"]` → ReadWritePaths verschoben
+- [x] arr-helper.nix + arr.nix: `AUTH__METHOD=External`, `LOG__LEVEL=info`, `UPDATE__BRANCH` per App
+- [x] sabnzbd.nix: `SABNZBD__MISC__TEMP_DIR=/run/sabnzbd-tmp`
+- [x] jellyfin-system.xml: TrickplayOptions, GroupingShows, DisplaySpecials
+- [x] Caddy crash-loop: `ip_mask /24` → `ip_mask 24` in 11-network.nix (**Switch ausstehend**)
+- [x] Jellyfin crash-loop: preStart CAP_CHOWN → systemd.tmpfiles.rules (**Switch ausstehend**)
+- [x] arr-helper.nix: tmpfiles.rules für metadataDir + MediaCover (fresh-install-safe)
+- [x] lidarr.env + readarr.env erstellt + /mnt/fast_pool/metadata/lidarr → lidarr läuft
+- [x] Home Assistant: komplett gewischt + frisch gestartet (v2026.5.4)
+
+**OFFEN — HOCH (Switch blockiert):**
+- [ ] **nixos-rebuild switch** — aktiviert Caddy-Fix + Jellyfin-Fix:
+  `tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; echo "Exit: $?"; read'`
+- [ ] *arr-UID-Migration: `scripts/migrate-arr-uids.sh` einmalig nach Switch
+
+**OFFEN — MONITORING (neue Feature-Gruppe, in dieser Reihenfolge abarbeiten):**
+- [ ] **1. vmalert + ntfy**: `services.vmalert.instances.q958` + `services.prometheus.alertmanager-ntfy`
+  in `44-metrics.nix` / `05-alerting.nix`. Regeln: service_failed, high_restarts.
+  User trägt in `profile.local.nix` ein: `my.alerting.ntfyTopic = "q958-alerts";`
+- [ ] **2. process_exporter**: `services.prometheus.exporters.process` (Port 9256),
+  Scrape in VictoriaMetrics, Gruppen nach systemd-Unit-Namen → CPU/RAM pro Service.
+- [ ] **3. Alert-Script mit AI**: Shell-Script: journalctl-Log → Groq API
+  (Modell: llama-3.1-8b-instant, kostenlos auf groq.com) → ntfy ans Handy.
+  Optional: Gemini als Fallback. Secret: `/var/lib/secrets/groq.env`.
+- [ ] **4. Runbook** (`docs/RUNBOOK.md`): Markdown mit `error_pattern`-Feld im
+  Frontmatter, `quick_fix`-Befehlen, Sektions-Ankern. Alert-Script matcht
+  Fehler via `grep error_pattern` und schickt Abschnitt an AI.
+
+**OFFEN — NIEDRIG:**
+- [ ] recyclarr: `services.recyclarr.*` NixOS-Modul (8.5.1 in nixpkgs)
+- [ ] NixOS-Docs MCP noch nicht in `modules/mcp-server/default.nix` verdrahtet
+- [ ] ADRs 014–018: Guide-Links im Frontmatter nachtragen
+- [ ] ADRs: `error_pattern`-Feld für maschinenlesbare Fehler-Erkennung
+
 ## Bekannte offene Baustellen (nicht überraschend, nicht von dir verursacht)
 
 - **scrutiny.service**: crash-loopt seit Wochen, braucht eine InfluxDB-Instanz
@@ -132,6 +191,14 @@ aktuellen HEAD ein Dry-Build-Flag gesetzt ist — nützlich als Voraussetzung.
   nach dem nächsten switch ausführen (chown auf `/persist/var/lib/{sonarr,...}`).
 
 ## MCP-Tools — PFLICHT bei Paket- und Optionsfragen
+
+> **PFLICHT-ERINNERUNG — Immer bevor du einen Namen nennst oder Code schreibst:**
+> - Paketnamen / `services.*`-Option / NixOS-Modul → **nixos-MCP** (nie aus Training annehmen!)
+> - `lib.*`-Funktion / `builtins.*` → **Noogle** (Argumente-Reihenfolge ändert sich zwischen Versionen!)
+> - Caddy, Jellyfin-API, systemd-Optionen, externe Bibliotheken → **Context7**
+>
+> Keine Ausnahmen. „Ich weiß das aus Training" ist kein gültiger Grund. Falsche
+> Annahmen aus Training kosten mehr Zeit als ein MCP-Call.
 
 Trainingsdaten sind bis zu 18 Monate alt. Für Live-Daten IMMER die MCP-Server nutzen
 **bevor** du eine Annahme über nixpkgs-Pakete, NixOS-Optionen, Caddy-Direktiven, etc. triffst.

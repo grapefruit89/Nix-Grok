@@ -335,6 +335,13 @@ in
       whitelistExtra = [ ];
 
       # Schicht C — Host-Blacklist (zusätzlich zu A+B)
-      blacklist = { };
+      blacklist = {
+        # Q370 hat Thunderbolt-Controller in Silicon — kein physischer Port am Q958.
+        # Blacklist verhindert PCIe-DMA-Angriffe via TB-Stack (Thunderspy/DMA-Attack).
+        thunderbolt = [
+          "thunderbolt"
+          "intel_wmi_thunderbolt"
+        ];
+      };
     };
 }

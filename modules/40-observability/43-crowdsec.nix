@@ -114,6 +114,13 @@ in
               journalctl_filter = [ "_SYSTEMD_UNIT=caddy.service" ];
               labels.type = "caddy";
             }
+            {
+              # nftables Drop-Logs: "nftables-dropped: " prefix landet im Kernel-Syslog.
+              # crowdsecurity/linux (bereits installiert) parsed diese Einträge.
+              source = "journalctl";
+              journalctl_filter = [ "SYSLOG_IDENTIFIER=kernel" ];
+              labels.type = "syslog";
+            }
           ];
           settings = {
             general.api = {

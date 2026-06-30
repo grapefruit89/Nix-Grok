@@ -83,6 +83,9 @@ in
             ];
           }
         ];
+        environment = {
+          SABNZBD__MISC__TEMP_DIR = "/run/sabnzbd-tmp";
+        };
       }
     ];
   };

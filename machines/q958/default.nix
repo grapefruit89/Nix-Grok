@@ -6,6 +6,8 @@
 #   tags:
 #     - wiring
 #     - q958
+#   docs:
+#     - docs/adr/015-cpu-power-profiles-daemon-thermald.md
 # ---
 {
   lib,
@@ -212,4 +214,7 @@ in
       url = "https://mcp.exa.ai/mcp";
     };
   };
+
+  services.power-profiles-daemon.enable = true;
+  services.thermald.enable = true;
 }

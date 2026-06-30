@@ -3,6 +3,10 @@
 #   layer: 5
 #   role: lib
 #   purpose: Standard-UDS-Pfade und Caddy-Upstream-Konvertierung
+#   docs:
+#     - docs/adr/004-unix-socket-upstreams.md
+#     - docs/adr/011-unified-port-uid-schema.md
+#     - docs/guides/GUIDE-server-map.md
 #   tags:
 #     - unix-socket
 #     - caddy

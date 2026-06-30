@@ -4,16 +4,18 @@ meta:
   purpose: Guide — nftables L4-Härtung für Homelab q958
   docs:
     - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/011-unified-port-uid-schema.md
   tags:
     - guide
     - nftables
 ---
 
-# Guide: nftables L4-Härtung
+# Guide: nftables L4-Härtung {#guide-nftables}
 
-> **Rollout:** Stufe 8+ · **Modul:** `modules/15-firewall.nix` · **Generator:** `lib/nftables-rules.nix`
+> **Rollout:** Stufe 8+ · **Modul:** `modules/15-firewall.nix` · **Generator:** `lib/nftables-rules.nix`  
+> **Architektur-Entscheidung:** [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md)
 
-## Rollen-Trennung
+## Rollen-Trennung {#rollen-trennung}
 
 | Schicht | Aufgabe | Modul |
 |---------|---------|-------|
@@ -21,9 +23,9 @@ meta:
 | DNS Adblock | StevenBlack, Easyprivacy | Blocky (`10-network.nix`) |
 | L7 Auth | SSO, Streaming | Caddy |
 
-**Kein Geo in Caddy** — eine Wahrheit in nftables.
+**Kein Geo in Caddy** — eine Wahrheit in nftables ([ADR-008 — Entscheidung](../adr/008-nftables-l4-hardening.md#entscheidung)).
 
-## Chain-Ablauf
+## Chain-Ablauf {#chain-ablauf}
 
 ```mermaid
 flowchart TD
@@ -34,7 +36,7 @@ flowchart TD
   wan --> log[limit log dropped]
 ```
 
-## Optionen (`my.security.firewall`)
+## Optionen (`my.security.firewall`) {#optionen}
 
 | Option | Default q958 | Beschreibung |
 |--------|--------------|--------------|
@@ -44,7 +46,7 @@ flowchart TD
 | `tailscaleNotrack` | `true` | raw NOTRACK für `tailscale0` |
 | `skuidSegmentation.enable` | Stufe 8 | UID-basierte Micro-Segmentation |
 
-## Fail2ban ↔ nftables
+## Fail2ban ↔ nftables {#fail2ban}
 
 Bei aktivem Firewall-Modul:
 
@@ -52,17 +54,21 @@ Bei aktivem Firewall-Modul:
 - Banaction: `nftables-f2b-set` (in `20-security.nix`)
 - Regel: `ip saddr @f2b_blocked_ipv4 drop` in `in_trusted` (vor HTTP)
 
-## skuid (UID-Registry)
+CrowdSec-Bouncer schreibt ebenfalls in nftables-Sets — beide Consumer laufen parallel (Stufe 8+).
+
+## skuid (UID-Registry) {#skuid}
 
 | UID | Dienst | Regel |
 |-----|--------|-------|
-| 969 | Prowlarr | output: nur VPN/LAN/Tailscale |
-| 984 | SABnzbd | output: nur VPN/LAN/Tailscale |
-| 989/978/987 | Sonarr/Radarr/Readarr | input: kein WAN, nur LAN+Tailscale |
+| 5006 | Prowlarr | output: nur VPN/LAN/Tailscale |
+| 5007 | SABnzbd | output: nur VPN/LAN/Tailscale |
+| 5003 | Sonarr | input: kein WAN, nur LAN+Tailscale |
+| 5004 | Radarr | input: kein WAN, nur LAN+Tailscale |
+| 5005 | Readarr | input: kein WAN, nur LAN+Tailscale |
 
-Registry: `lib/uid-registry.nix`.
+Registry: `lib/uid-registry.nix` — UIDs folgen dem [ADR-011 Port=UID=Präfix-Schema](../adr/011-unified-port-uid-schema.md#entscheidung).
 
-## Verifikation nach Rebuild
+## Verifikation nach Rebuild {#verifikation}
 
 ```bash
 sudo nft list ruleset | less
@@ -70,7 +76,14 @@ sudo nft list set inet filter f2b_blocked_ipv4
 systemctl status nftables fail2ban
 ```
 
-## Alerting (optional)
+## Alerting (optional) {#alerting}
 
 `modules/05-alerting.nix` — ntfy/Matrix-Webhook bei VPN-NetNS- oder Restic-Fehler.  
 URLs in `profile.local.nix` unter `alerting.ntfyTopic` / `alerting.webhookUrl`.
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md) — vollständige Architektur-Entscheidung mit Diagnose + Fix
+- [ADR-011 — Port=UID=Präfix-Schema](../adr/011-unified-port-uid-schema.md) — Basis für `skuid`-Regeln
+- [GUIDE-security-secrets.md](GUIDE-security-secrets.md) — Fail2ban-Kontext, SSH-Härtung, Kernel-Härtung
+- [RUNBOOK.md](../RUNBOOK.md) — Quick-Fix bei Firewall-Problemen

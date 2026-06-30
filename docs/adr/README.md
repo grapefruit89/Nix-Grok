@@ -29,6 +29,10 @@ meta:
 | [011](011-unified-port-uid-schema.md) | Unified Port=UID=FolderPrefix Schema (4-stellig) | accepted | 2026-06-27 | uid-registry, unix-sockets, server-map |
 | [012](012-modern-cli-tools.md) | Moderne CLI-Tools systemweit (bat, eza, fd, rg, nh) | accepted | 2026-06-28 | 00-core, shell-aliases, CLAUDE.md |
 | [013](013-flake-portability.md) | Flake-Portabilität — Reproduzierbarkeit ohne Experimente | accepted | 2026-06-29 | flake.lock, 00-core, experimental-features |
+| [014](014-caddy-security-headers-trusted-proxies.md) | Caddy Security-Härtung — Headers + trusted_proxies | accepted | 2026-06-29 | caddy-snippets.nix, 11-network.nix |
+| [015](015-cpu-power-profiles-daemon-thermald.md) | CPU-Energieverwaltung — power-profiles-daemon + thermald (Intel HWP/EPP) | accepted | 2026-06-29 | machines/q958/default.nix |
+| [016](016-caddy-security-headers-coop-scanners.md) | Caddy Security-Härtung II — Server-Header, COOP, Scanner-Blocking | accepted | 2026-06-29 | lib/caddy-snippets.nix |
+| [017](017-caddy-health-checks-error-fallback.md) | Caddy Health Checks — 503-Fallback für ausgefallene Dienste | accepted | 2026-06-29 | lib/caddy-snippets.nix, lib/caddy-ingress.nix |
 
 ## Wann neues ADR?
 
@@ -62,3 +66,4 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-06-17 | ADR 009–010 (nix-hermes Audit: VPN leak, Production-Modus) |
 | 2026-06-27 | ADR 011 (Unified Port=UID=FolderPrefix, Server-Map) |
 | 2026-06-28 | ADR 001 aktualisiert (Blocky→Technitium+API-DoT-Configure); ADR 012 (Moderne CLI-Tools) |
+| 2026-06-29 | ADR 013–017: Flake-Portabilität, Caddy Security-Härtung I+II, CPU power-profiles-daemon+thermald, Caddy Health Checks |

@@ -3,6 +3,9 @@
 #   layer: 5
 #   role: lib
 #   purpose: Server-Landkarte — einheitliche ID, Port/Socket, UID, Modul
+#   docs:
+#     - docs/adr/011-unified-port-uid-schema.md
+#     - docs/guides/GUIDE-server-map.md
 #   tags:
 #     - server-map
 #     - ports

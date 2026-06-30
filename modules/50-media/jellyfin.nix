@@ -141,18 +141,22 @@ in
             ];
           };
 
+          # tmpfiles läuft als root nach local-fs.target — setzt Ownership bevor jellyfin startet.
+          # Notwendig weil CapabilityBoundingSet="" kein CAP_CHOWN im preStart erlaubt.
+          systemd.tmpfiles.rules = [
+            "d /run/jellyfin-transcode 0750 jellyfin jellyfin -"
+            "d /mnt/fast_pool/metadata/jellyfin 0750 jellyfin media -"
+          ];
+
           systemd.services.jellyfin.preStart = lib.mkBefore (
             ''
-              install -d -m 0750 -o jellyfin -g jellyfin /var/lib/jellyfin/config
-              install -d -m 0750 -o jellyfin -g jellyfin /mnt/fast_pool/metadata/jellyfin
+              mkdir -p /var/lib/jellyfin/config
               for seed in system.xml network.xml encoding.xml dlna.xml branding.xml; do
                 if [ ! -f "/var/lib/jellyfin/config/$seed" ]; then
                   install -m 0640 -o jellyfin -g jellyfin \
                     ${jellyfinConfigSeeds}/$seed /var/lib/jellyfin/config/$seed
                 fi
               done
-              # Transcode-Dir Eigentümer setzen (tmpfs wird als root gemountet)
-              chown jellyfin:jellyfin /run/jellyfin-transcode
             ''
             +
               # SSO-Plugin installieren (idempotent via Versionspfad)

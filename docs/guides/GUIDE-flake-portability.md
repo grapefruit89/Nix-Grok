@@ -11,12 +11,12 @@ meta:
     - disaster-recovery
 ---
 
-# Guide: Flake-Portabilität & Reproduzierbarkeit
+# Guide: Flake-Portabilität & Reproduzierbarkeit {#guide-flake-portability}
 
 > **Kurzversion:** `git clone` + `nixos-rebuild switch` → identisches System.
 > Dieser Guide erklärt warum, und was zu tun ist wenn kein Internet vorhanden ist.
 
-## Warum das System in 2 Jahren noch funktioniert
+## Warum das System in 2 Jahren noch funktioniert {#warum}
 
 Das System ist ein NixOS-Flake. Das bedeutet: in `flake.lock` steht der **exakte
 Git-Commit-Hash** jeder externen Abhängigkeit (nixpkgs, home-manager, etc.).
@@ -28,7 +28,7 @@ flake.lock → "nixpkgs": { "rev": "abc123...", "url": "github:NixOS/nixpkgs" }
 Solange dieser Commit auf GitHub (oder einem Mirror) existiert, baut `nixos-rebuild`
 das **exakt gleiche System** — heute, in 2 Jahren, auf einem anderen Rechner.
 
-## Szenario A: Neuer Rechner mit Internet
+## Szenario A: Neuer Rechner mit Internet {#szenario-a}
 
 ```bash
 # 1. Minimal-NixOS booten (USB-Stick)
@@ -43,7 +43,7 @@ nixos-rebuild switch --flake /etc/nixos#q958 --impure
 
 Die `flake.lock` ist der Fingerabdruck. Nie löschen, immer committen.
 
-## Szenario B: Neuer Rechner, KEIN Internet (Tier-2-Archiv)
+## Szenario B: Neuer Rechner, KEIN Internet (Tier-2-Archiv) {#szenario-b}
 
 Einmal im Jahr auf dem laufenden System ausführen (5 Minuten):
 
@@ -77,7 +77,7 @@ gunzip -c /media/usb/nixos-inputs.nar.gz | nix-store --import
 nixos-rebuild switch --flake /etc/nixos#q958 --impure
 ```
 
-## Szenario C: Komplettes System-Snapshot (Tier 3)
+## Szenario C: Komplettes System-Snapshot (Tier 3) {#szenario-c}
 
 Für den Fall dass wirklich alles offline sein muss (kein nixpkgs-Download möglich):
 
@@ -100,7 +100,7 @@ gunzip -c /backup/nixos-full-closure.nar.gz | nix-store --import
 /nix/store/<system-drv>/bin/switch-to-configuration switch
 ```
 
-## Was nixpkgs-Commits über GitHub angeht
+## Was nixpkgs-Commits über GitHub angeht {#nixpkgs-commits}
 
 **Häufige Sorge:** "Was wenn GitHub verschwindet?"
 
@@ -112,7 +112,7 @@ gunzip -c /backup/nixos-full-closure.nar.gz | nix-store --import
 
 Für einen Homelab-Horizont von 2–5 Jahren ist das kein reales Risiko.
 
-## Was IST ein reales Risiko
+## Was IST ein reales Risiko {#reale-risiken}
 
 | Risiko | Wahrscheinlichkeit | Konsequenz |
 |---|---|---|
@@ -121,7 +121,7 @@ Für einen Homelab-Horizont von 2–5 Jahren ist das kein reales Risiko.
 | `flake.lock` nicht committed | hoch | Reproduzierbarkeit verloren |
 | Hardware-Ausfall ohne Backup | hoch | Datenverlust, Config bleibt |
 
-## Checkliste: Jahresroutine (5 Minuten)
+## Checkliste: Jahresroutine (5 Minuten) {#jahresroutine}
 
 ```bash
 # 1. Inputs einfrieren (lokal cachen)
@@ -137,7 +137,7 @@ nixos-rebuild list-generations | tail -5
 nix-collect-garbage --delete-older-than 30d
 ```
 
-## Experimental-Features: Was bleibt, was nicht
+## Experimental-Features: Was bleibt, was nicht {#experimental-features}
 
 ```nix
 # modules/00-core/01-core.nix
@@ -153,9 +153,9 @@ experimental-features = [
 einzige vernünftige Art NixOS zu betreiben. Sie werden nicht entfernt, nur irgendwann
 offiziell stabilisiert.
 
-## Weiterführend
+## Siehe auch {#siehe-auch}
 
-- [ADR-013: Flake-Portabilität](../adr/013-flake-portability.md) — Entscheidung und Begründung
+- [ADR-013 — Flake-Portabilität](../adr/013-flake-portability.md) — Entscheidung und Begründung
 - [flake.lock](../../flake.lock) — der Fingerabdruck aller Versionen
 - `nix flake metadata` — zeigt alle Inputs und ihre Commits
 - `nix flake update` — aktualisiert alle Inputs auf aktuelle Versionen

@@ -19,8 +19,10 @@
 #     3. Ein Flag-File als Nachweis des erfolgreichen dry-builds gesetzt wird
 #
 # Usage:
-#   sudo scripts/nixos-rebuild-safe.sh        → dry-build + Flag setzen
-#   sudo scripts/nixos-rebuild-safe.sh check  → prüft ob Flag für HEAD gesetzt ist
+#   sudo scripts/nixos-rebuild-safe.sh           → dry-build + Flag setzen
+#   sudo scripts/nixos-rebuild-safe.sh check     → prüft ob Flag für HEAD gesetzt ist
+#   sudo scripts/nixos-rebuild-safe.sh switch    → dry-build + switch in tmux (SSH-sicher)
+#   sudo scripts/nixos-rebuild-safe.sh test      → dry-build + nixos-rebuild test
 #
 set -euo pipefail
 
@@ -69,8 +71,31 @@ case "${1:-dry}" in
     fi
     ;;
 
+  switch|test)
+    ACTION="${1}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  nixos-rebuild dry-build  ($FLAKE)"
+    echo "  HEAD: $GIT_HASH"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    if nixos-rebuild dry-build --flake "$FLAKE" --impure 2>&1; then
+      touch "$FLAG_FILE"
+      echo ""
+      echo "✓ Dry-build erfolgreich — starte nixos-rebuild $ACTION …"
+      echo ""
+      if [ "$ACTION" = "switch" ]; then
+        tmux new-session "sudo nixos-rebuild switch --flake $FLAKE --impure 2>&1 | tee /tmp/nixos-switch.log; echo \"Exit: \$?\"; read"
+      else
+        nixos-rebuild test --flake "$FLAKE" --impure 2>&1 | tee /tmp/nixos-test.log
+      fi
+    else
+      echo "" >&2
+      echo "✗ Dry-build FEHLGESCHLAGEN — $ACTION nicht freigegeben" >&2
+      exit 1
+    fi
+    ;;
+
   *)
-    echo "Usage: $0 [dry|check]" >&2
+    echo "Usage: $0 [dry|check|switch|test]" >&2
     exit 1
     ;;
 esac

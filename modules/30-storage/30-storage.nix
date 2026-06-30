@@ -3,6 +3,9 @@
 #   layer: 3
 #   role: module
 #   purpose: Impermanence, MergerFS, Restic, Storage-Mover zwischen Tiers
+#   docs:
+#     - docs/guides/GUIDE-storage-tiers.md
+#     - docs/guides/GUIDE-data-management.md
 #   services:
 #     - restic-backup
 #   tags:

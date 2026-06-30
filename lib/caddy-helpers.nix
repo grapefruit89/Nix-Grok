@@ -18,7 +18,11 @@ let
       imports ? [ ],
     }:
     lib.concatStringsSep "\n" (
-      map (snippet: "import ${snippet}") imports ++ [ "reverse_proxy ${upstream host port}" ]
+      map (snippet: "import ${snippet}") imports
+      ++ [
+        "request_body { max_size 100MB }"
+        "reverse_proxy ${upstream host port}"
+      ]
     );
 
   mkProxyUnix =
@@ -31,7 +35,10 @@ let
     in
     lib.concatStringsSep "\n" (
       map (snippet: "import ${snippet}") imports
-      ++ [ "reverse_proxy ${sockets.toCaddyUpstream socketPath}" ]
+      ++ [
+        "request_body { max_size 100MB }"
+        "reverse_proxy ${sockets.toCaddyUpstream socketPath}"
+      ]
     );
 
   streamingBackend = port: ''

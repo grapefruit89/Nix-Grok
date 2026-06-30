@@ -17,12 +17,12 @@ meta:
     - unix-socket
 ---
 
-# Server-Landkarte (q958)
+# Server-Landkarte (q958) {#guide-server-map}
 
-> **Konvention:** ID = Port = UID = Ordner-Präfix (4-stellig) · Siehe [ADR-011](../adr/011-unified-port-uid-schema.md)  
+> **Konvention:** ID = Port = UID = Ordner-Präfix (4-stellig) · Siehe [ADR-011 — Unified Port=UID-Schema](../adr/011-unified-port-uid-schema.md)  
 > **Maschinenlesbar:** `lib/server-map.nix` · **Ports:** `modules/00-core/01-core.nix` · **UIDs:** `lib/uid-registry.nix`
 
-## 10-network
+## 10-network {#10-network}
 
 | Service | ID | Transport | SSO | Besonderheit |
 |---------|-----|-----------|-----|-------------|
@@ -33,7 +33,7 @@ meta:
 | blocky | — | ext:53 | nein | DNS-Standard, IANA |
 | mqtt | — | ext:1883 | nein | IANA-Standard, IoT |
 
-## 40-observability
+## 40-observability {#40-observability}
 
 | Service | ID | Transport | SSO | Besonderheit |
 |---------|-----|-----------|-----|-------------|
@@ -43,7 +43,7 @@ meta:
 | crowdsec | 4004 | TCP 4004 | nein | LAPI intern |
 | scrutiny | 4005 | TCP 4005 | ja | SMART-Dashboard |
 
-## 50-media
+## 50-media {#50-media}
 
 | Service | ID/UID | Transport | SSO | Besonderheit |
 |---------|--------|-----------|-----|-------------|
@@ -56,9 +56,9 @@ meta:
 | sabnzbd | 5007 | TCP 5007 | ja | UID=5007, VPN-NetNS |
 | audiobookshelf | 5008 | TCP 5008 | ja | |
 
-> *arr (Servarr/.NET) und Jellyfin unterstützen keine Unix Domain Sockets — bleiben TCP.
+> *arr (Servarr/.NET) und Jellyfin unterstützen keine Unix Domain Sockets — bleiben TCP ([ADR-004 Konsequenzen](../adr/004-unix-socket-upstreams.md#konsequenzen)).
 
-## 60-apps
+## 60-apps {#60-apps}
 
 | Service | ID | Transport | SSO | Besonderheit |
 |---------|-----|-----------|-----|-------------|
@@ -70,7 +70,7 @@ meta:
 | linkwarden | 6006 | UDS `/run/linkwarden/linkwarden.sock` | ja | |
 | open-webui | 6007 | UDS `/run/open-webui/open-webui.sock` | ja | |
 
-## 70-forge
+## 70-forge {#70-forge}
 
 | Service | ID | Transport | SSO | Besonderheit |
 |---------|-----|-----------|-----|-------------|
@@ -79,7 +79,7 @@ meta:
 | cockpit | 7003 | TCP 7003 | nein | System-Admin |
 | amp | 7004 | TCP 7004 | nein | AMP Panel |
 
-## Infrastruktur (kein Caddy)
+## Infrastruktur (kein Caddy) {#infrastruktur}
 
 | Service | Transport | Besonderheit |
 |---------|-----------|-------------|
@@ -88,7 +88,7 @@ meta:
 | tailscale | ext (VPN) | MagicDNS + Exit-Node |
 | ssh | ext:22 | IANA, Impermanence |
 
-## Neue Services einbinden
+## Neue Services einbinden {#neue-services}
 
 1. Ordner-Präfix bestimmen (z.B. `60-apps` → `60xx`)
 2. Nächste freie Nummer in `my.ports.*` belegen
@@ -96,7 +96,7 @@ meta:
 4. `lib/server-map.nix` aktualisieren
 5. ADR anlegen falls Architektur-Entscheidung nötig
 
-## Debugging
+## Debugging {#debugging}
 
 ```bash
 # TCP-Ports prüfen
@@ -111,3 +111,10 @@ curl --unix-socket /run/grafana/grafana.sock http://localhost/api/health
 # *arr UID prüfen
 id sonarr radarr readarr prowlarr sabnzbd
 ```
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-011 — Unified Port=UID-Schema](../adr/011-unified-port-uid-schema.md) — Warum ID = Port = UID = Ordner-Präfix
+- [ADR-004 — Unix-Socket-Upstreams](../adr/004-unix-socket-upstreams.md) — welche Services UDS vs. TCP nutzen
+- [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md) — `skuid`-Regeln die UIDs aus dieser Tabelle nutzen
+- [GUIDE-nftables-hardening.md#skuid](GUIDE-nftables-hardening.md#skuid) — skuid-Micro-Segmentierung pro Service

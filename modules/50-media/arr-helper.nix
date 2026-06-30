@@ -4,6 +4,10 @@
 #   role: module
 #   purpose: Fabrik für *arr-Apps — User, systemd, Caddy, RAM-Limits
 #   docs:
+#     - docs/adr/007-dendritic-one-file-per-service.md
+#     - docs/adr/003-oom-cgroup-isolation.md
+#     - docs/adr/011-unified-port-uid-schema.md
+#     - docs/guides/GUIDE-media-stack.md
 #     - docs/memory_oom.md
 #   lib:
 #     - lib/memory-policy.nix
@@ -41,7 +45,11 @@ in
       useVpnKillSwitch ? false,
       metadataDir ? null,
       upstreamHost ? "127.0.0.1",
+      extraEnv ? { },
     }:
+    let
+      nameUpper = lib.strings.toUpper name;
+    in
     lib.mkMerge [
       {
         services.${name} = {
@@ -63,6 +71,15 @@ in
         };
       }
 
+      {
+        systemd.services.${name}.environment = {
+          # Upstream setzt UPDATE__MECHANISM bereits korrekt auf "external"
+          "${nameUpper}__AUTH__METHOD" = lib.mkForce "External";
+          "${nameUpper}__LOG__LEVEL" = lib.mkDefault "info";
+        }
+        // extraEnv;
+      }
+
       (factory.mkService {
         inherit config;
         inherit name port upstreamHost;
@@ -72,8 +89,9 @@ in
         readWritePaths = [
           dataDir
           "/data/downloads"
+          "/data/media"
         ];
-        readOnlyPaths = [ "/data/media" ];
+        readOnlyPaths = [ ];
         memoryPolicy = memory.arr { };
         extraSystemd = {
           UMask = lib.mkForce "0002";
@@ -83,6 +101,13 @@ in
             "${metadataDir}:/var/lib/${name}/MediaCover"
           ];
         };
+      })
+
+      (lib.mkIf (metadataDir != null) {
+        systemd.tmpfiles.rules = [
+          "d ${metadataDir} 0775 ${name} media -"
+          "d /var/lib/${name}/MediaCover 0755 ${name} ${name} -"
+        ];
       })
 
       (lib.mkIf (useVpnKillSwitch && !(config.my.services.vpn-confinement.enable or false)) {

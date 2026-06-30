@@ -3,6 +3,9 @@
 #   layer: 3
 #   role: module
 #   purpose: Boot-Safeguard, Nix-Tuning, ZRAM-Swap, zentrale System-Optionen
+#   docs:
+#     - docs/adr/011-unified-port-uid-schema.md
+#     - docs/adr/013-flake-portability.md
 #   tags:
 #     - core
 #     - zram
@@ -323,10 +326,12 @@ in
             "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
           ];
 
-          # Automatische Store-Optimierung
+          # Automatische Store-Optimierung + Notfall-GC bei Platzmangel
           auto-optimise-store = true;
           builders-use-substitutes = true;
           fallback = true;
+          min-free = 5 * 1024 * 1024 * 1024; # 5 GB → GC auslösen
+          max-free = 10 * 1024 * 1024 * 1024; # 10 GB → GC-Ziel
 
           # GC-Roots für schnelles inkrementelles Rebuilding erhalten
           keep-outputs = true;
@@ -422,6 +427,11 @@ in
         df = "duf";
         top = "btop";
         noogle = "noogle-search"; # Nix lib.*-Funktionen + builtins interaktiv suchen
+        # NixOS Rebuild-Workflow (immer via Safe-Script — dry-build + tmux-Pflicht)
+        nsw = "sudo /etc/nixos/scripts/nixos-rebuild-safe.sh switch";
+        ntest = "sudo /etc/nixos/scripts/nixos-rebuild-safe.sh test";
+        nup = "cd /etc/nixos && nix flake update";
+        nclean = "sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +5 && sudo nix-store --gc";
       };
 
       # fzf Shell-Integration: Ctrl+R History-Suche + Ctrl+T Datei-Picker
