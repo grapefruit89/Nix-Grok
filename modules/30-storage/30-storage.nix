@@ -137,6 +137,11 @@ in
           default = "";
           description = "Dead Man's Switch heartbeat URL.";
         };
+        secondaryEnable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "MEGA-Sekundärbackup (rclone) — nur Vaultwarden + Secrets. Credentials: /var/lib/secrets/restic_mega_creds";
+        };
       };
     };
   };
@@ -417,6 +422,51 @@ in
           fi
         '';
       };
+    })
+
+    # ── MEGA-SEKUNDÄRBACKUP (Vaultwarden + Secrets) ───────────────────────────
+    # Zweites Ziel für die kritischsten Daten — client-side verschlüsselt via MEGA.
+    # Credentials: /var/lib/secrets/restic_mega_creds (RCLONE_CONFIG_MEGA_*)
+    # Frequenz: wöchentlich (Sonntag 04:00) um MEGA-Bandbreite zu schonen.
+    (lib.mkIf (cfgBackup.enable && cfgBackup.secondaryEnable) {
+      services.restic.backups.tier-a-mega = {
+        initialize = true;
+        repository = "rclone:mega:restic-backup";
+        passwordFile = "/var/lib/secrets/restic_password";
+        environmentFile = "/var/lib/secrets/restic_mega_creds";
+
+        paths = [
+          "${cfgImp.persistMountPoint}/var/lib/secrets"
+          "${cfgImp.persistMountPoint}/var/lib/vaultwarden"
+          "${cfgImp.persistMountPoint}/var/lib/pocket-id"
+        ];
+
+        exclude = [
+          "**/cache/**"
+          "**/*.log"
+        ];
+
+        pruneOpts = [
+          "--keep-daily 7"
+          "--keep-weekly 4"
+        ];
+
+        timerConfig = {
+          OnCalendar = "Sun *-*-* 04:00:00";
+          Persistent = true;
+        };
+
+        backupPrepareCommand = ''
+          systemctl stop vaultwarden pocket-id || true
+        '';
+
+        backupCleanupCommand = ''
+          systemctl start vaultwarden pocket-id || true
+        '';
+      };
+
+      # rclone muss im PATH des restic-Services liegen (MEGA-Backend)
+      systemd.services."restic-backups-tier-a-mega".path = [ pkgs.rclone ];
     })
 
     # ── PRECISION STORAGE CACHE MOVER ─────────────────────────────────────────

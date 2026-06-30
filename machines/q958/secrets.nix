@@ -26,6 +26,10 @@ let
   resticRepository = resticS3.repository or "";
   resticAwsKey = resticS3.awsAccessKeyId or "";
   resticAwsSecret = resticS3.awsSecretAccessKey or "";
+  resticMega = local.secrets.resticMega or { };
+  resticMegaEnable = resticMega.enable or false;
+  resticMegaUser = resticMega.user or "";
+  resticMegaPass = resticMega.obscuredPass or "";
   hassMqttPassword =
     (dk.homeassistant or { }).mqttPassword
       or (throw "secrets.devKeys.homeassistant.mqttPassword in profile.local.nix setzen");
@@ -118,7 +122,8 @@ let
     Z2MEOF
         chmod 600 ${secretsDir}/zigbee2mqtt.env
 
-        # Restic S3 — optional; leer = kein Offsite-Backup bis konfiguriert
+        # Restic S3 (Koofr) — Primär-Backup; leer = kein Offsite-Backup bis konfiguriert
+        # secrets.restic in profile.local.nix: repository = "s3:s3.koofr.net/<bucket>/restic"
         if [ -n "${resticRepository}" ]; then
           cat > ${secretsDir}/restic_s3_creds <<RESTICEOF
     RESTIC_REPOSITORY=${resticRepository}
@@ -126,6 +131,17 @@ let
     AWS_SECRET_ACCESS_KEY=${resticAwsSecret}
     RESTICEOF
           chmod 600 ${secretsDir}/restic_s3_creds
+        fi
+
+        # Restic MEGA — Sekundär-Backup via rclone (Vaultwarden + Secrets)
+        # secrets.resticMega in profile.local.nix: enable=true, user=email, obscuredPass=rclone-obscure-output
+        if ${if resticMegaEnable then "true" else "false"}; then
+          cat > ${secretsDir}/restic_mega_creds <<MEGAEOF
+    RCLONE_CONFIG_MEGA_TYPE=mega
+    RCLONE_CONFIG_MEGA_USER=${resticMegaUser}
+    RCLONE_CONFIG_MEGA_PASS=${resticMegaPass}
+    MEGAEOF
+          chmod 600 ${secretsDir}/restic_mega_creds
         fi
 
         # Context7: nur wenn in profile.nix gesetzt; sonst Datei mit Hinweis

@@ -292,6 +292,7 @@ in
         repo = (local.secrets.restic or { }).repository or "";
       in
       repo != "";
+    megaEnable = (local.secrets.resticMega or { }).enable or false;
   };
 
   kernel =

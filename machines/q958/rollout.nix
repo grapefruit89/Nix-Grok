@@ -77,6 +77,7 @@ in
 
     gatus.enable = erstAb 4;
     restic-backup.enable = if p.restic.offsiteEnable then erstAb 6 else lib.mkForce false;
+    restic-backup.secondaryEnable = if p.restic.megaEnable then erstAb 6 else lib.mkForce false;
 
     jellyfin.enable = erstAb 6;
     jellyseerr.enable = erstAb 6;

@@ -64,11 +64,24 @@
       # Zone.DNS.Edit für m7c5.de — DDNS-Updater + dns-guard; leer = kein DDNS-Config
       apiToken = "";
     };
+    # ── Restic Primär-Backup: Koofr 1 TB (S3-API) ───────────────────────────
+    # Koofr einrichten: koofr.net → Settings → S3 Access Keys → Key erzeugen
+    # Bucket vorher anlegen: koofr.net → Files → "restic-q958" erstellen
     restic = {
-      repository = "";
-      awsAccessKeyId = "";
-      awsSecretAccessKey = "";
+      repository = ""; # z.B. "s3:s3.koofr.net/restic-q958/restic"
+      awsAccessKeyId = ""; # Koofr S3 Key ID
+      awsSecretAccessKey = ""; # Koofr S3 Secret
     };
+
+    # ── Restic Sekundär-Backup: MEGA 50 GB (rclone, E2E) ────────────────────
+    # Nur Vaultwarden + Secrets — wöchentlich Sonntag 04:00
+    # Passwort obscuren: rclone obscure <dein-mega-passwort>  → Ausgabe als obscuredPass
+    resticMega = {
+      enable = false; # auf true setzen wenn eingerichtet
+      user = ""; # MEGA-Account-E-Mail
+      obscuredPass = ""; # Ausgabe von: rclone obscure <passwort>
+    };
+
     oidc = {
       # Pocket-ID → Applications → New → Callback-URL prüfen
       jellyfin  = { clientId = ""; clientSecret = ""; };
