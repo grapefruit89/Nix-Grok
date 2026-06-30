@@ -430,6 +430,9 @@ in
                 --checkers=8 \
                 --exclude "**/incomplete/**" \
                 --exclude "**/.staging/**" \
+                --exclude "**/*.wal" \
+                --exclude "**/*.shm" \
+                --exclude "**/*.journal" \
                 -v \
                 --log-file=/var/log/rclone-mover.log
 

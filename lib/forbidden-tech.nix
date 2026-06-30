@@ -9,6 +9,7 @@ let
     sftpgo = "SFTPGo verboten — Filebrowser oder OpenSSH.";
     lanzaboote = "Lanzaboote nicht im Einsatz — systemd-boot.";
     passwords = "SSH-Passwort-Auth nur in Dev (Stufe < 9) — Production key-only.";
+    gui = "X11/Wayland verboten auf Headless-Server — Desktop-Pakete fressen RAM + vergrößern Attack Surface (ADR-020).";
 
     # Formatter-Policy
     fmtBanned = "Verbotener Nix-Formatter — ausschließlich nixfmt (RFC-Style) + statix + deadnix.";
@@ -28,6 +29,13 @@ in
     (must (!(config.services.cron.enable or false)) "[POL-FT-002] Cron: ${reasons.cron}")
     (must (!(config.services.sftpgo.enable or false)) "[POL-FT-003] SFTPGo: ${reasons.sftpgo}")
     (must (!(config.boot.lanzaboote.enable or false)) "[POL-FT-004] Lanzaboote: ${reasons.lanzaboote}")
+    (must (!(config.services.xserver.enable or false)) "[POL-FT-006] X11: ${reasons.gui}")
+    (must (
+      !(config.services.desktopManager.gnome.enable or false)
+    ) "[POL-FT-007] GNOME: ${reasons.gui}")
+    (must (
+      !(config.services.desktopManager.plasma6.enable or false)
+    ) "[POL-FT-008] KDE Plasma: ${reasons.gui}")
   ];
 
   # Wenn nftables-Firewall-Stack aktiv

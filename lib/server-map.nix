@@ -21,7 +21,7 @@ _: {
     # ── 10-network ─────────────────────────────────────────────────────────────
     pocket-id = {
       id = 1001;
-      transport = "uds:/run/pocket-id/pocket-id.sock";
+      transport = "tcp:1001"; # NixOS-Modul ohne socket-Option
       module = "10-network";
       sso = true;
     };
@@ -66,7 +66,7 @@ _: {
     };
     gatus = {
       id = 4003;
-      transport = "uds:/run/gatus/gatus.sock";
+      transport = "tcp:4003"; # Gatus: web.address/port, kein UDS
       module = "40-observability";
       sso = true;
     };
@@ -156,13 +156,13 @@ _: {
     };
     homepage = {
       id = 6002;
-      transport = "uds:/run/homepage/homepage.sock";
+      transport = "tcp:6002"; # Node.js listenPort, kein UDS
       module = "60-apps";
       sso = true;
     };
     paperless = {
       id = 6003;
-      transport = "uds:/run/paperless/paperless.sock";
+      transport = "tcp:6003"; # Gunicorn — UDS möglich, noch nicht migriert
       module = "60-apps";
       sso = true;
     };
@@ -174,13 +174,13 @@ _: {
     };
     linkwarden = {
       id = 6006;
-      transport = "uds:/run/linkwarden/linkwarden.sock";
+      transport = "tcp:6006"; # Next.js, kein UDS
       module = "60-apps";
       sso = true;
     };
     open-webui = {
       id = 6007;
-      transport = "uds:/run/open-webui/open-webui.sock";
+      transport = "tcp:6007"; # FastAPI/uvicorn, kein UDS via NixOS-Modul
       module = "60-apps";
       sso = true;
     };
@@ -188,7 +188,7 @@ _: {
     # ── 70-forge ───────────────────────────────────────────────────────────────
     semaphore = {
       id = 7002;
-      transport = "uds:/run/semaphore/semaphore.sock";
+      transport = "tcp:7002"; # Go HTTP-Server, kein UDS
       module = "70-forge";
       sso = true;
     };

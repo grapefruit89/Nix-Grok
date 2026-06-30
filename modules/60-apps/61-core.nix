@@ -27,7 +27,6 @@ let
 
   domain = config.my.configs.identity.domain;
   dnsMap = import ../../lib/dns-map.nix { inherit domain; };
-  portVaultwarden = config.my.ports.vaultwarden;
   portHomepage = config.my.ports.homepage;
   vaultHost = dnsMap.host "vaultwarden";
   linksHost = dnsMap.host "linkwarden";
@@ -41,15 +40,15 @@ in
         environmentFile = "/var/lib/secrets/vaultwarden.env";
 
         config = {
-          ROCKET_ADDRESS = "127.0.0.1";
-          ROCKET_PORT = portVaultwarden;
+          # UDS: Rocket bindet auf Unix-Socket statt TCP — kein offener Port, nur Caddy erreicht den Socket
+          ROCKET_ADDRESS = "unix:/run/vaultwarden/vaultwarden.sock";
           DOMAIN = "https://${vaultHost}";
 
           # Security defaults
           SIGNUPS_ALLOWED = false;
           INVITATIONS_ALLOWED = true;
           SHOW_PASSWORD_HINT = false;
-          DISABLE_ADMIN_TOKEN = false; # Ermöglicht administrative Zugriffe
+          DISABLE_ADMIN_TOKEN = false;
 
           # Concurrency
           DATABASE_MAX_CONNS = 10; # WAL mode Concurrency
@@ -60,10 +59,8 @@ in
 
           REQUIRE_DEVICE_EMAIL = false;
 
-          # WebSockets für sofortiges Live-Sync auf Geräten
+          # WebSocket-Notifications über Haupt-Socket (ab Vaultwarden 1.29+, kein separater Port mehr)
           WEBSOCKET_ENABLED = true;
-          WEBSOCKET_ADDRESS = "127.0.0.1";
-          WEBSOCKET_PORT = portVaultwarden + 1; # Port 20003
 
           LOG_LEVEL = "warn";
           EXTENDED_LOGGING = true;
@@ -71,6 +68,9 @@ in
           DATA_FOLDER = "/var/lib/vaultwarden";
         };
       };
+
+      # Caddy benötigt Gruppe vaultwarden, um den Unix-Socket zu erreichen
+      users.users.caddy.extraGroups = [ "vaultwarden" ];
 
       systemd.tmpfiles.rules = [
         "d /var/lib/vaultwarden 0750 vaultwarden vaultwarden -"
@@ -91,6 +91,8 @@ in
         })
         {
           StateDirectory = "vaultwarden";
+          RuntimeDirectory = "vaultwarden";
+          RuntimeDirectoryMode = "0750"; # rwxr-x--- : vaultwarden-Gruppe (caddy) kann Socket erreichen
           MemoryDenyWriteExecute = lib.mkForce true;
           EnvironmentFile = "/var/lib/secrets/vaultwarden.env";
           Environment = "DATA_FOLDER=/var/lib/vaultwarden";

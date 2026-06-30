@@ -97,18 +97,12 @@ let
     }
   '';
 
-  genVaultwardenVhost = port: ''
+  # Vaultwarden ab v1.29+: WebSockets laufen über denselben Socket wie der Haupt-HTTP-Server.
+  # Kein separater WebSocket-Port mehr — upstream ist entweder unix/... oder 127.0.0.1:PORT.
+  genVaultwardenVhost = upstream: ''
     import security_headers
     import upstream_errors
-
-    @websocket {
-      header Connection *Upgrade*
-      header Upgrade websocket
-    }
-    handle @websocket {
-      reverse_proxy 127.0.0.1:${toString (port + 1)}
-    }
-    reverse_proxy 127.0.0.1:${toString port}
+    reverse_proxy ${upstream}
   '';
 
   genSecurityOnlyVhost = upstream: ''
@@ -177,7 +171,7 @@ let
     else if name == "navidrome" then
       genNavidromeVhost entry.port
     else if name == "vaultwarden" then
-      genVaultwardenVhost entry.port
+      genVaultwardenVhost upstream
     else if name == "homepage" then
       genSecurityOnlyVhost upstream
     else if name == "amp" then

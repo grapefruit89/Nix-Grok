@@ -115,29 +115,55 @@ in
 
         sops = {
           defaultSopsFile = cfg.secretsDir + "/secrets.yaml";
-          age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+          # Stufe-9-Race-Fix (ADR-016): Mit Impermanence muss age den SSH-Schlüssel
+          # direkt aus /persist lesen — Bind-Mount /etc/ssh/... existiert erst nach
+          # local-fs.target, aber age wird ggf. früher geladen.
+          age.sshKeyPaths = [
+            (
+              if config.my.impermanence.enable then
+                "${config.my.impermanence.persistMountPoint}/etc/ssh/ssh_host_ed25519_key"
+              else
+                "/etc/ssh/ssh_host_ed25519_key"
+            )
+          ];
           secrets = sopsEntries;
         };
 
-        systemd.services.sops-recovery-validation = {
-          description = "SOPS file presence check";
-          serviceConfig.Type = "oneshot";
-          script = ''
-            set -euo pipefail
-            for f in ${cfg.secretsDir}/infra.yaml ${cfg.secretsDir}/media.yaml; do
-              if [ ! -f "$f" ]; then
-                echo "[SOPS] missing: $f"
-                exit 1
-              fi
-            done
-          '';
-        };
+        systemd = {
+          # Explizite Reihenfolge: sops-install-secrets wartet auf persist.mount (Stufe 9+)
+          services.sops-install-secrets = lib.mkIf config.my.impermanence.enable {
+            after = [
+              "local-fs.target"
+              (
+                let
+                  mp = config.my.impermanence.persistMountPoint;
+                  escaped = builtins.replaceStrings [ "/" ] [ "-" ] (lib.removePrefix "/" mp);
+                in
+                "${escaped}.mount"
+              )
+            ];
+          };
 
-        systemd.timers.sops-recovery-validation = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "weekly";
-            Persistent = true;
+          services.sops-recovery-validation = {
+            description = "SOPS file presence check";
+            serviceConfig.Type = "oneshot";
+            script = ''
+              set -euo pipefail
+              for f in ${cfg.secretsDir}/infra.yaml ${cfg.secretsDir}/media.yaml; do
+                if [ ! -f "$f" ]; then
+                  echo "[SOPS] missing: $f"
+                  exit 1
+                fi
+              done
+            '';
+          };
+
+          timers.sops-recovery-validation = {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "weekly";
+              Persistent = true;
+            };
           };
         };
       }
