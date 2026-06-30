@@ -273,10 +273,12 @@ in
   config = lib.mkIf cfg.enable {
     boot.kernel.sysctl."net.ipv4.ip_forward" = lib.mkDefault 1;
 
-    systemd.services =
-      netnsServices
-      // serviceBinds
-      // lib.mkIf (cfg.leakCheck.enable && primaryNs != "") {
+    systemd.services = lib.mkMerge (
+      [
+        netnsServices
+        serviceBinds
+      ]
+      ++ lib.optional (cfg.leakCheck.enable && primaryNs != "") {
         vpn-leak-check = {
           description = "VPN namespace egress leak check";
           serviceConfig = {
@@ -285,7 +287,7 @@ in
           };
         };
       }
-      // lib.mkIf (cfg.vpnTest.enable && primaryNs != "") {
+      ++ lib.optional (cfg.vpnTest.enable && primaryNs != "") {
         vpn-netns-test = {
           description = "VPN namespace egress and DNS test";
           after = lib.map (n: "${n}.service") nsNames;
@@ -296,7 +298,8 @@ in
           };
           script = "${vpnTestScript}/bin/vpn-netns-test";
         };
-      };
+      }
+    );
 
     systemd.timers = lib.mkIf (cfg.leakCheck.enable && primaryNs != "") {
       vpn-leak-check = {
