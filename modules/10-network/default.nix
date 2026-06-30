@@ -17,5 +17,8 @@
     ./12-vpn-confinement.nix
     ./13-gateway.nix
     ./14-ingress.nix
+    ./15-databases.nix
+    ./16-vpn.nix
+    ./17-pocket-id.nix
   ];
 }
