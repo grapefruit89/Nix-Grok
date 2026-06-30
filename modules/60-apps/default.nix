@@ -28,6 +28,7 @@ in
   imports = [
     ./grok.nix
     ./61-core.nix
+    ./61-homepage.nix
     ./automation.nix
     ./hermes.nix
     ./forge.nix
