@@ -67,9 +67,9 @@ in
     sshPort = 22;
     productionSshPort = 53844;
     privado = {
-      endpoint = "91.148.245.70:51820";
+      endpoint = "91.148.236.83:51820";
       publicKey = "KgTUh3KLijVluDvNpzDCJJfrJ7EyLzYLmdHCksG4sRg=";
-      address = "100.64.8.117/32";
+      address = "100.64.99.85/32";
       dns = [
         "198.18.0.1"
         "198.18.0.2"
