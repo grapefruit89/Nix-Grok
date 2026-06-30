@@ -37,8 +37,8 @@ in
         environmentFile = "/var/lib/secrets/vaultwarden.env";
 
         config = {
-          # UDS: Rocket bindet auf Unix-Socket statt TCP — kein offener Port, nur Caddy erreicht den Socket
-          ROCKET_ADDRESS = "unix:/run/vaultwarden/vaultwarden.sock";
+          ROCKET_ADDRESS = "127.0.0.1";
+          ROCKET_PORT = config.my.ports.vaultwarden;
           DOMAIN = "https://${vaultHost}";
 
           # Security defaults
@@ -66,9 +66,6 @@ in
         };
       };
 
-      # Caddy benötigt Gruppe vaultwarden, um den Unix-Socket zu erreichen
-      users.users.caddy.extraGroups = [ "vaultwarden" ];
-
       systemd.tmpfiles.rules = [
         "d /var/lib/vaultwarden 0750 vaultwarden vaultwarden -"
         "d /var/log/vaultwarden 0750 vaultwarden vaultwarden -"
@@ -89,7 +86,7 @@ in
         {
           StateDirectory = "vaultwarden";
           RuntimeDirectory = "vaultwarden";
-          RuntimeDirectoryMode = "0750"; # rwxr-x--- : vaultwarden-Gruppe (caddy) kann Socket erreichen
+          RuntimeDirectoryMode = "0700";
           MemoryDenyWriteExecute = lib.mkForce true;
           EnvironmentFile = "/var/lib/secrets/vaultwarden.env";
           Environment = "DATA_FOLDER=/var/lib/vaultwarden";

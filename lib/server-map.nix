@@ -150,7 +150,7 @@ _: {
     # ── 60-apps ────────────────────────────────────────────────────────────────
     vaultwarden = {
       id = 6001;
-      transport = "uds:/run/vaultwarden/vaultwarden.sock";
+      transport = "tcp:6001";
       module = "60-apps";
       sso = true;
     };

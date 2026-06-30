@@ -17,7 +17,6 @@
   # ── aktiv & implementiert ──────────────────────────────────────────────────
   valkey = "/run/redis-valkey/valkey.sock";
   grafana = "/run/grafana/grafana.sock";
-  vaultwarden = "/run/vaultwarden/vaultwarden.sock";
 
   # ── PostgreSQL (Standard-Socket, immer aktiv) ──────────────────────────────
   postgresql = "/run/postgresql/.s.PGSQL.5432";

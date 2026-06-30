@@ -194,8 +194,8 @@ let
       description = "Music Downloader (Companion zu Navidrome)";
     };
     vaultwarden = {
-      # UDS: Rocket bindet auf Unix-Socket — kein TCP-Port, nur Caddy-Gruppe hat Zugriff
-      socket = "/run/vaultwarden/vaultwarden.sock";
+
+      port = ports.vaultwarden;
       zone = "family-pocketid";
       subdomain = "vault";
       description = "Passwords";
