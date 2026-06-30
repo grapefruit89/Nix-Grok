@@ -323,27 +323,61 @@ in
         passwordFile = "/var/lib/secrets/restic_password";
         environmentFile = "/var/lib/secrets/restic_s3_creds";
 
+        # Backup-Philosophie (ADR-023): nur unwiederbringliche Daten.
+        # Medien (Tier C), Thumbnails, Caches → kein Backup (re-downloadbar / re-generierbar).
+        # /etc/nixos → kein Backup (steht auf GitHub, redundant und S3-teuer).
         paths = [
+          # ── Kritische Secrets ─────────────────────────────────────────────
           "${cfgImp.persistMountPoint}/var/lib/secrets"
+
+          # ── Datenbanken (nicht re-generierbar) ───────────────────────────
           "${cfgImp.persistMountPoint}/var/lib/postgresql"
           "${cfgImp.persistMountPoint}/var/lib/vaultwarden"
           "${cfgImp.persistMountPoint}/var/lib/pocket-id"
+          "${cfgImp.persistMountPoint}/var/lib/linkwarden"
+
+          # ── Dokumente (Paperless-NGX — absolut unwiederbringlich) ────────
+          "${cfgImp.persistMountPoint}/var/lib/paperless"
+
+          # ── Smart-Home-State ──────────────────────────────────────────────
           "${cfgImp.persistMountPoint}/var/lib/hass"
           "${cfgImp.persistMountPoint}/var/lib/zigbee2mqtt"
-          "${cfgImp.persistMountPoint}/var/lib/paperless"
-          "${cfgImp.persistMountPoint}/var/lib/linkwarden"
-          "/home/${config.my.configs.identity.user}/.grok"
+
+          # ── Nutzerdaten (Fortschritt, Lesezeichen) ────────────────────────
+          "${cfgImp.persistMountPoint}/var/lib/audiobookshelf"
+
+          # ── Netzwerk-Konfiguration (nicht deklarativ in NixOS-Modul) ─────
+          "${cfgImp.persistMountPoint}/var/lib/technitium-dns-server"
+
+          # ── Observability-Dashboards ──────────────────────────────────────
           "${cfgImp.persistMountPoint}/var/lib/grafana"
-          "${cfgImp.persistMountPoint}/etc/nixos"
+
+          # ── Immich (Placeholder — Originale NICHT hier, nur DB via postgresql) ──
+          # Wenn Immich kommt: Fotos zu groß für Free-S3 → Originale auf ext. HDD
+          # Immich-DB läuft über postgresql (bereits oben), keine extra Pfade nötig.
         ];
 
         exclude = [
+          # ── Regenerierbare Medien-Metadaten ───────────────────────────────
           "**/MediaCover"
+          "**/thumbnails/**"
+          "**/Thumbnails/**"
+          # Paperless: Thumbnails und Preview-Bilder sind regenerierbar
+          "**/paperless/media/documents/thumbnails/**"
+          "**/paperless/media/documents/archive/**"
+
+          # ── Caches & temporäre Daten ──────────────────────────────────────
           "**/Backups"
           "**/cache/**"
+          "**/Cache/**"
           "**/logs/**"
+          "**/*.log"
           "/mnt/fast_pool/cache"
           "/var/cache/jellyfin"
+
+          # ── Regenerierbare Indizes (Paperless Volltext-Suche) ─────────────
+          "**/paperless/data/media/**"
+          "**/whoosh/**"
         ];
 
         pruneOpts = [
@@ -351,18 +385,25 @@ in
           "--keep-weekly 4"
         ];
 
-        # Stop active database and application services to prevent write drift during backup
+        # Services stoppen um Write-Drift während des Backups zu vermeiden.
+        # Reihenfolge: Apps zuerst, dann Datenbanken.
         backupPrepareCommand = ''
-          echo "Stopping active web applications and database services..."
-          systemctl stop paperless-web paperless-scheduler paperless-task-queue home-assistant linkwarden vaultwarden zigbee2mqtt || true
+          echo "Stopping services for consistent backup snapshot..."
+          systemctl stop \
+            paperless-web paperless-scheduler paperless-task-queue \
+            home-assistant linkwarden vaultwarden zigbee2mqtt \
+            audiobookshelf technitium-dns-server || true
           systemctl stop mosquitto postgresql || true
         '';
 
-        # Restart database and web applications after backup attempt finishes (even on failure)
+        # Services nach Backup wieder starten (auch bei Fehler).
         backupCleanupCommand = ''
-          echo "Restarting database and web applications..."
+          echo "Restarting services after backup..."
           systemctl start postgresql mosquitto || true
-          systemctl start paperless-web paperless-scheduler paperless-task-queue home-assistant linkwarden vaultwarden zigbee2mqtt || true
+          systemctl start \
+            paperless-web paperless-scheduler paperless-task-queue \
+            home-assistant linkwarden vaultwarden zigbee2mqtt \
+            audiobookshelf technitium-dns-server || true
         '';
       };
 
