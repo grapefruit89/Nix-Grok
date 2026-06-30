@@ -303,6 +303,12 @@ in
 
       # Enable nix-ld to run unpatched dynamic binaries
       programs.nix-ld.enable = true;
+
+      # Journal-Größe begrenzen (ohne Impermanence wächst /var/log/journal unbegrenzt)
+      services.journald.extraConfig = lib.mkDefault ''
+        SystemMaxUse=500M
+        MaxRetentionSec=90day
+      '';
     }
 
     # ── BOOT SAFEGUARD ────────────────────────────────────────────────────────
