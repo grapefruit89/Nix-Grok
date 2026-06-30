@@ -103,6 +103,56 @@ TOOLS = [
             },
             "required": ["embedding"]
         }
+    },
+    {
+        "name": "search_nix",
+        "description": (
+            "Volltextsuche (FTS5) in allen indizierten .nix Konfigurationsdateien aus /etc/nixos. "
+            "Findet Module, Lib-Funktionen, Service-Definitionen — z.B. 'DynamicUser', 'mkService', "
+            "'services.caddy', 'socket'. Gibt Pfad, Rolle, Layer und Kontext-Snippet zurück."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query":  {"type": "string", "description": "FTS5-Suchbegriff (Wörter, Phrasen in \"\", Prefix*)"},
+                "layer":  {"type": "integer", "description": "Optional: Filter auf Modul-Layer (1-9)"},
+                "role":   {"type": "string",  "description": "Optional: module | lib | machine | script | package"},
+                "limit":  {"type": "integer", "default": 10}
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "search_docs",
+        "description": (
+            "Volltextsuche (FTS5) in allen indizierten Dokumenten (.md) aus docs/ — "
+            "ADRs, Guides, ANTIPATTERNS, SOURCES, learnings. "
+            "Nutze search_nix für Konfigurationsdateien."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "FTS5-Suchbegriff"},
+                "role":  {"type": "string",  "description": "Optional: adr | guide | learning | doc"},
+                "limit": {"type": "integer", "default": 10}
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "search_all",
+        "description": (
+            "Kombinierte Volltextsuche über ALLE indizierten Dateien: .nix Konfiguration + .md Docs + .sh Scripts. "
+            "Ideal wenn unklar ob die Antwort in Code oder Doku liegt."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "FTS5-Suchbegriff"},
+                "limit": {"type": "integer", "default": 15}
+            },
+            "required": ["query"]
+        }
     }
 ]
 
@@ -250,12 +300,81 @@ def tool_vec_search(args):
         conn.close()
 
 
+def _sf_search(query: str, kind_filter: str | None, role_filter: str | None,
+               layer_filter: int | None, limit: int) -> list:
+    """Gemeinsame Implementierung für search_nix / search_docs / search_all."""
+    conn = get_db()
+    try:
+        where_parts = ["source_files_fts MATCH ?"]
+        params: list = [query]
+
+        if kind_filter:
+            where_parts.append("sf.kind = ?")
+            params.append(kind_filter)
+        if role_filter:
+            where_parts.append("sf.module_role = ?")
+            params.append(role_filter)
+        if layer_filter is not None:
+            where_parts.append("sf.layer = ?")
+            params.append(layer_filter)
+
+        params.append(limit)
+        sql = (
+            "SELECT sf.id, sf.path, sf.kind, sf.layer, sf.module_role, sf.purpose, "
+            "       snippet(source_files_fts, 4, '[', ']', '…', 20) AS snippet, "
+            "       bm25(source_files_fts) AS rank "
+            "FROM source_files_fts "
+            "JOIN source_files sf ON sf.id = source_files_fts.rowid "
+            f"WHERE {' AND '.join(where_parts)} "
+            "ORDER BY rank LIMIT ?"
+        )
+        rows = conn.execute(sql, params).fetchall()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
+def tool_search_nix(args):
+    return _sf_search(
+        query=args.get("query", ""),
+        kind_filter="nix",
+        role_filter=args.get("role"),
+        layer_filter=args.get("layer"),
+        limit=int(args.get("limit", 10)),
+    )
+
+
+def tool_search_docs(args):
+    return _sf_search(
+        query=args.get("query", ""),
+        kind_filter="md",
+        role_filter=args.get("role"),
+        layer_filter=None,
+        limit=int(args.get("limit", 10)),
+    )
+
+
+def tool_search_all(args):
+    return _sf_search(
+        query=args.get("query", ""),
+        kind_filter=None,
+        role_filter=None,
+        layer_filter=None,
+        limit=int(args.get("limit", 15)),
+    )
+
+
 TOOL_HANDLERS = {
     "fts_search":    tool_fts_search,
     "hybrid_search": tool_hybrid_search,
     "list_insights": tool_list_insights,
     "query":         tool_query,
     "vec_search":    tool_vec_search,
+    "search_nix":    tool_search_nix,
+    "search_docs":   tool_search_docs,
+    "search_all":    tool_search_all,
 }
 
 # ── MCP JSON-RPC 2.0 stdio Loop ───────────────────────────────────────────────

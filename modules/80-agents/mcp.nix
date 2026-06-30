@@ -90,5 +90,36 @@ in
         };
       };
     })
+
+    # ── nixos-docs Indexer: .nix + .md → source_files in nixos_docs.sqlite ──
+    # Läuft nach Boot + nach jedem Rebuild (OnActivation via Persistent=true)
+    {
+      systemd = {
+        services.nixos-docs-indexer = {
+          description = "Indexiert /etc/nixos (.nix + .md) in nixos_docs.sqlite";
+          after = [ "local-fs.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.python3}/bin/python3 /etc/nixos/scripts/index-nix-files.py";
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            PrivateTmp = true;
+            ReadOnlyPaths = [ "/etc/nixos" ];
+            ReadWritePaths = [ "/var/lib/nixos-docs-mcp" ];
+          };
+        };
+
+        timers.nixos-docs-indexer = {
+          description = "nixos-docs Indexer Timer";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "2min";
+            # Persistent=true: re-indexiert beim nächsten Boot wenn ein Rebuild
+            # während Downtime stattfand
+            Persistent = true;
+          };
+        };
+      };
+    }
   ];
 }
