@@ -36,8 +36,8 @@ let
       bridge = "${name}-br";
       openPorts = lib.filter (p: p != null) (map (s: servicePorts.${s} or null) nsCfg.services);
       openPortRules = lib.concatMapStrings (port: ''
-        ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" tcp dport ${toString port} accept
-        ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" udp dport ${toString port} accept
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" tcp dport ${toString port} accept
+        ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.nftables}/bin/nft add rule inet killswitch input iifname "${vethNs}" udp dport ${toString port} accept
       '') openPorts;
       dnsLines = lib.concatMapStrings (dns: "nameserver ${dns}\n") nsCfg.dns;
     in
