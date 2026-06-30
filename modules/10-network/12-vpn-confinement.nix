@@ -111,7 +111,7 @@ let
         ${lib.optionalString nsCfg.healthcheck.enable ''
           if [ -n "${nsCfg.healthcheck.endpoint}" ]; then
             echo "Checking WireGuard endpoint reachability..."
-            ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iproute2}/bin/ping -c 1 -W 5 "${nsCfg.healthcheck.endpoint}" >/dev/null
+            ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.iputils}/bin/ping -c 1 -W 5 "${nsCfg.healthcheck.endpoint}" >/dev/null
           fi
           echo "Checking VPN egress..."
           ${pkgs.iproute2}/bin/ip netns exec ${name} ${pkgs.curl}/bin/curl -fsS --max-time 15 https://ipinfo.io/ip >/dev/null

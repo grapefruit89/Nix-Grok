@@ -10,7 +10,6 @@
 #     - docs/adr/015-cpu-power-profiles-daemon-thermald.md
 # ---
 {
-  lib,
   pkgs,
   ...
 }:
@@ -112,7 +111,7 @@ in
         address = p.network.privado.address;
         dns = p.network.privado.dns;
         killSwitch = true;
-        healthcheck.endpoint = builtins.elemAt (lib.splitString ":" p.network.privado.endpoint) 0;
+        healthcheck.enable = false;
         accessibleFrom = [
           "192.168.15.0/24"
           "${p.network.lan.ip}/32"
