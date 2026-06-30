@@ -175,6 +175,8 @@ in
         gnused
       ];
 
+      startLimitIntervalSec = 300;
+
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -183,7 +185,7 @@ in
         Restart = "on-failure";
         RestartSec = "30s";
         StartLimitBurst = 3;
-        StartLimitIntervalSec = "300s";
+
       };
 
       environment = {

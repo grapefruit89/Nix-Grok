@@ -132,6 +132,8 @@ in
         coreutils
       ];
 
+      startLimitIntervalSec = 600;
+
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -140,7 +142,7 @@ in
         Restart = "on-failure";
         RestartSec = "30s";
         StartLimitBurst = 5;
-        StartLimitIntervalSec = "600s";
+
       };
 
       environment = {
