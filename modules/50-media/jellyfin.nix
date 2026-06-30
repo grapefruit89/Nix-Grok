@@ -203,6 +203,11 @@ in
 
           systemd.services.jellyfin-transcode-cleanup = {
             description = "Jellyfin: Transcode-Segmente RAM-adaptiv bereinigen";
+            path = with pkgs; [
+              gawk
+              findutils
+              coreutils
+            ];
             serviceConfig = {
               Type = "oneshot";
               ExecStart = pkgs.writeShellScript "jellyfin-transcode-cleanup" ''

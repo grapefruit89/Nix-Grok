@@ -353,6 +353,7 @@ in
           domain = cfgNetbird.domain;
           turnDomain = cfgNetbird.domain;
           oidcConfigEndpoint = "https://auth.${domain}/.well-known/openid-configuration";
+          metricsPort = 6061;
         };
         signal.enableNginx = false;
         dashboard.settings = {

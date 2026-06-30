@@ -21,7 +21,7 @@ let
   labelFile = ./. + "/.boot-label";
   bootLabel =
     if builtins.pathExists labelFile then
-      lib.trimString (builtins.readFile labelFile)
+      lib.removeSuffix "\n" (builtins.readFile labelFile)
     else
       p.boot.menuName;
 in
