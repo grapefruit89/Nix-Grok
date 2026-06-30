@@ -15,7 +15,8 @@
     ./navidrome.nix
     ./arr.nix
     ./sabnzbd.nix
-    ./sync.nix
+    ./arr-sync
+    # sync.nix + sync-script.sh → abgelöst durch arr-sync/ (fokussierte Einzelservices)
   ];
 
   # Centralized options declaration for domain 50

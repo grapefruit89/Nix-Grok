@@ -46,6 +46,8 @@ in
         misc = {
           port = portSabnzbd;
           host = if sabInVpn then "0.0.0.0" else "127.0.0.1";
+          # Sprache aus Nix SSoT — arr-sync-locale überschreibt ini bei Abweichung
+          language = config.my.configs.locale.language;
         };
       };
     };
