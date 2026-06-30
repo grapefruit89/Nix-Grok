@@ -117,6 +117,21 @@ in
     leakCheck.enable = erstAb 6;
   };
 
+  my.media.sync = {
+    locale.enable = erstAb 6;
+    downloadClients.enable = erstAb 6;
+    prowlarr = {
+      enable = erstAb 6;
+      indexers = lib.optionals (stufe >= 6) [
+        {
+          name = "SceneNZBs";
+          baseUrl = "https://scenenzbs.com";
+          apiKeyFile = "/var/lib/secrets/scenenzbs_api_key";
+        }
+      ];
+    };
+  };
+
   my.ports.ssh =
     if stufe >= 9 then lib.mkForce p.network.productionSshPort else lib.mkForce p.network.sshPort;
 
