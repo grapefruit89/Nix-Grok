@@ -98,6 +98,12 @@ let
     else
       "";
 
+  vpnBridgeAccepts = lib.optionalString config.my.services.vpn-confinement.enable (
+    lib.concatMapStrings (name: ''
+      iifname "${name}-br" accept comment "VPN namespace bridge → host"
+    '') (lib.attrNames config.my.services.vpn-confinement.namespaces)
+  );
+
   rawNotrack =
     if cfg.netbirdNotrack then
       ''
@@ -179,6 +185,7 @@ lib.concatStringsSep "\n" [
         ip saddr @f2b_blocked_ipv4 drop comment "Fail2ban"
         ${ipv6Crowdsec}
         ${ipv6LanDrop}
+        ${vpnBridgeAccepts}
         return
       }
 
