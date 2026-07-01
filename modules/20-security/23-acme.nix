@@ -42,6 +42,9 @@ in
         # CF_DNS_API_TOKEN=<token> — provisioniert durch machines/q958/secrets.nix
         environmentFile = "/var/lib/secrets/cloudflare_acme_env";
         group = "caddy";
+        # Outbound UDP 53 blockiert (cleartextDnsBlock) — lego kann authoritative NS
+        # nicht direkt pollen. LE validiert selbst; Cloudflare propagiert sofort.
+        dnsPropagationCheck = false;
       };
     };
   };
