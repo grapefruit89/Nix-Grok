@@ -63,12 +63,12 @@ in
 
     syncLevel = lib.mkOption {
       type = lib.types.enum [
-        "AddOnly"
-        "AddAndRemoveOnly"
-        "FullSync"
+        "addOnly"
+        "fullSync"
+        "disabled"
       ];
-      default = "AddAndRemoveOnly";
-      description = "Prowlarr-Sync-Level für Arr-Application-Registrierungen.";
+      default = "fullSync";
+      description = "Prowlarr-Sync-Level für Arr-Application-Registrierungen (fullSync, addOnly, disabled).";
     };
 
     indexers = lib.mkOption {
@@ -265,7 +265,7 @@ in
                 fields: [
                   { name: "prowlarrUrl", value: $prowlarrUrl },
                   { name: "baseUrl", value: $baseUrl },
-                  { name: "apikey", value: $apikey }
+                  { name: "apiKey", value: $apikey }
                 ]
               }')
 
