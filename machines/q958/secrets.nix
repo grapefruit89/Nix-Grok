@@ -14,7 +14,16 @@
 }:
 let
   p = import ./profile.nix;
-  local = if builtins.pathExists ./profile.local.nix then import ./profile.local.nix else { };
+  # Absolutpfad-Fallback wie profile.nix — nötig wenn ./profile.local.nix beim Flake-Build
+  # nicht im Store liegt (gitignored). Mit --impure ist der Absolutpfad immer erreichbar.
+  localPath =
+    if builtins.pathExists ./profile.local.nix then
+      ./profile.local.nix
+    else if builtins.pathExists /etc/nixos/machines/q958/profile.local.nix then
+      /etc/nixos/machines/q958/profile.local.nix
+    else
+      null;
+  local = if localPath != null then import localPath else { };
   secretsDir = p.secrets.dir;
   dk = p.secrets.devKeys;
   privadoKey = local.secrets.privado.privateKey or "";
