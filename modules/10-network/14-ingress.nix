@@ -41,10 +41,17 @@ in
     my.ingress.fromSpec.enable = lib.mkDefault config.services.caddy.enable;
   }
   // lib.mkIf (config.services.caddy.enable && config.my.ingress.fromSpec.enable) {
-    services.caddy.virtualHosts = ingressLib.genVirtualHosts {
-      spec = config.my.services.spec;
-      inherit domain;
-      isEnabled = enableMap.enabled config;
-    };
+    services.caddy.virtualHosts =
+      let
+        vHosts = ingressLib.genVirtualHosts {
+          spec = config.my.services.spec;
+          inherit domain;
+          isEnabled = enableMap.enabled config;
+        };
+      in
+      if config.my.security.acme.enable then
+        lib.mapAttrs (_: vhost: vhost // { useACMEHost = domain; }) vHosts
+      else
+        vHosts;
   };
 }

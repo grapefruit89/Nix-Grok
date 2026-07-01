@@ -54,6 +54,10 @@ in
     kernel-hardening.enable = erstAb 8;
     hardened.enable = erstAb 9;
     auditd.enable = erstAb 8;
+    acme = {
+      enable = erstAb 5;
+      email = "mail@m-baumeister.de";
+    };
   };
 
   my.storage.deferred.enable = erstAb 3;

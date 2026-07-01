@@ -162,9 +162,12 @@ let
         fi
 
         # Cloudflare DDNS — Token + qdm12/ddns-updater config.json (Zone-ID per API)
+        # + ACME environmentFile (CF_DNS_API_TOKEN=... für lego/security.acme)
         if [ -n "${cfToken}" ]; then
           printf '%s' "${cfToken}" > ${secretsDir}/cloudflare_api_token
           chmod 600 ${secretsDir}/cloudflare_api_token
+          printf 'CF_DNS_API_TOKEN=%s\n' "${cfToken}" > ${secretsDir}/cloudflare_acme_env
+          chmod 600 ${secretsDir}/cloudflare_acme_env
           ZONE_DATA=$(${pkgs.curl}/bin/curl -sf -X GET \
             "https://api.cloudflare.com/client/v4/zones?name=${ddnsZone}" \
             -H "Authorization: Bearer ${cfToken}" -H "Content-Type: application/json")
