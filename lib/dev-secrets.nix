@@ -58,9 +58,9 @@ let
       value = devKeys.media.sabnzbd.apiKey;
     }
     {
-      label = "SceneNZBs API key";
-      path = "${secretsDir}/scenenzbs_api_key";
-      value = devKeys.media.scenenzbs.apiKey;
+      label = "TreasureMaps API key";
+      path = "${secretsDir}/treasuremaps_api_key";
+      value = devKeys.media.treasuremaps.apiKey;
     }
     {
       label = "Vaultwarden admin token";

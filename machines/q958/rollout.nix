@@ -127,9 +127,9 @@ in
     prowlarr = {
       indexers = lib.optionals (stufe >= 6) [
         {
-          name = "SceneNZBs";
-          baseUrl = "https://scenenzbs.com";
-          apiKeyFile = "/var/lib/secrets/scenenzbs_api_key";
+          name = "TreasureMaps";
+          baseUrl = "https://treasure-maps.com";
+          apiKeyFile = "/var/lib/secrets/treasuremaps_api_key";
         }
       ];
     };

@@ -32,7 +32,7 @@ let
       "radarr_api_key"
       "readarr_api_key"
       "sabnzbd_api_key"
-      "scenenzbs_api_key"
+      "treasuremaps_api_key"
       "sabnzbd_usenet_user"
       "sabnzbd_usenet_password"
       "vaultwarden_admin_token"

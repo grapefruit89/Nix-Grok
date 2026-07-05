@@ -92,21 +92,21 @@ else
   skip "SABnzbd"
 fi
 
-# ── SceneNZBs ───────────────────────────────────────────────────────────────────
-SCENENZBS_KEY=""
-[[ -f "$SECRETS/scenenzbs_api_key" ]] && SCENENZBS_KEY=$(< "$SECRETS/scenenzbs_api_key")
-if [[ -n "$SCENENZBS_KEY" ]]; then
+# ── TreasureMaps ────────────────────────────────────────────────────────────────
+TREASUREMAPS_KEY=""
+[[ -f "$SECRETS/treasuremaps_api_key" ]] && TREASUREMAPS_KEY=$(< "$SECRETS/treasuremaps_api_key")
+if [[ -n "$TREASUREMAPS_KEY" ]]; then
   result=$(curl -sf --max-time 10 \
-    "https://scenenzbs.com/api?t=caps&apikey=$SCENENZBS_KEY" 2>/dev/null || echo "")
+    "https://treasure-maps.com/api?t=caps&apikey=$TREASUREMAPS_KEY" 2>/dev/null || echo "")
   if echo "$result" | grep -qi '<caps'; then
-    ok "SceneNZBs API Key"
+    ok "TreasureMaps API Key"
   elif echo "$result" | grep -qi 'error'; then
-    fail "SceneNZBs API Key (ungültig: $(echo "$result" | grep -o 'description="[^"]*"' | head -1))"
+    fail "TreasureMaps API Key (ungültig: $(echo "$result" | grep -o 'description="[^"]*"' | head -1))"
   else
-    fail "SceneNZBs API Key (keine Antwort)"
+    fail "TreasureMaps API Key (keine Antwort)"
   fi
 else
-  skip "SceneNZBs"
+  skip "TreasureMaps"
 fi
 
 # ── Context7 ────────────────────────────────────────────────────────────────────

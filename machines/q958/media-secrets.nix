@@ -24,8 +24,8 @@ let
   };
 
   # ── Indexer ──────────────────────────────────────────────────────────────────
-  sceneNzbsKey =
-    mk.scenenzbs.apiKey or (throw "devKeys.media.scenenzbs.apiKey in profile.local.nix setzen");
+  treasureMapsKey =
+    mk.treasuremaps.apiKey or (throw "devKeys.media.treasuremaps.apiKey in profile.local.nix setzen");
 
   # ── Usenet-Newsserver ────────────────────────────────────────────────────────
   usenet = local.secrets.usenet or { };
@@ -65,8 +65,8 @@ let
     ''}
 
     # ── Indexer ───────────────────────────────────────────────────────────────
-    printf '%s' '${sceneNzbsKey}' > ${secretsDir}/scenenzbs_api_key
-    chmod 600 ${secretsDir}/scenenzbs_api_key
+    printf '%s' '${treasureMapsKey}' > ${secretsDir}/treasuremaps_api_key
+    chmod 600 ${secretsDir}/treasuremaps_api_key
 
     # ── Optionale *arr / Media-App Keys ──────────────────────────────────────
     ${lib.optionalString (arrKeys.lidarr != "") ''

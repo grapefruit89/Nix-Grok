@@ -42,7 +42,7 @@
         jellyfin.apiKey  = ""; # leer = kein jellyfin_api_key
         jellyseerr.apiKey = ""; # leer = kein jellyseerr_api_key
         # Indexer
-        scenenzbs.apiKey = "CHANGE_ME";
+        treasuremaps.apiKey = "CHANGE_ME";
       };
     };
 
