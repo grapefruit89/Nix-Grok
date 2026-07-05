@@ -46,6 +46,7 @@ meta:
 | [028](028-systemd-service-isolation.md) | Systemd Service Isolation — mkHardened Factory | accepted | 2026-07-05 | lib/systemd-hardening.nix |
 | [029](029-mtls-zero-trust-internal.md) | mTLS Zero-Trust — Interne Dienst-Kommunikation | proposed | 2026-07-05 | (noch nicht implementiert) |
 | [030](030-media-stack-factory-hardening.md) | Media-Stack Inventory — was bereits implementiert war | accepted | 2026-07-05 | 51-jellyfin.nix, arr-helper.nix, caddy-ingress.nix |
+| [031](031-caddy-zones-konzept.md) | Caddy-Zonen-Konzept — admin-hangar / family-pocketid / public | accepted | 2026-07-05 | lib/services-spec.nix, lib/caddy-ingress.nix |
 
 ## Wann neues ADR?
 
@@ -82,3 +83,4 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-06-29 | ADR 013–017: Flake-Portabilität, Caddy Security-Härtung I+II, CPU power-profiles-daemon+thermald, Caddy Health Checks |
 | 2026-07-05 | ADR 018–020 (Caddy Dual-Log, UDS-First, Legacy-Stack) nachgetragen; ADR 021 withdrawn; ADR 022–023 (RAID, Backup); ADR 024 (systemd-creds); ADR 025 (Pocket-ID OIDC) |
 | 2026-07-05 | ADR 026–028 (Kernel-Härtung, Kernel-Slim, Systemd-Isolation); ADR 029 (mTLS proposed); ADR 030 (Media-Stack Inventory) |
+| 2026-07-05 | ADR 031 (Caddy-Zonen-Konzept: admin-hangar / family-pocketid / public) |
