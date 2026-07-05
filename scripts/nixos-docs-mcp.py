@@ -115,7 +115,7 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "query":  {"type": "string", "description": "FTS5-Suchbegriff (Wörter, Phrasen in \"\", Prefix*)"},
-                "layer":  {"type": "integer", "description": "Optional: Filter auf Modul-Layer (1-9)"},
+                "layer":  {"type": "integer", "description": "Optional: Filter auf Modul-Layer (0=core, 10=network, 20=security, 30=storage, 40=services, 50=media, 60=home, 70=monitoring, 80=agents, 90=profiles)", "minimum": 0, "maximum": 90},
                 "role":   {"type": "string",  "description": "Optional: module | lib | machine | script | package"},
                 "limit":  {"type": "integer", "default": 10}
             },

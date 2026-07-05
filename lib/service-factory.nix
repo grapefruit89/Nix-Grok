@@ -144,6 +144,9 @@ rec {
       persistDirs ? [ ],
       cacheDir ? "/var/cache/${name}",
       manageIngress ? null,
+      # null = keine Einschränkung (Default); Liste = nur diese CIDRs erlaubt.
+      # Nur für LAN-only Dienste setzen — *arr und andere WAN-Dienste brauchen null.
+      ipAllow ? null,
     }:
     let
       domain = config.my.configs.identity.domain;
@@ -174,6 +177,10 @@ rec {
             ReadOnlyPaths = readOnlyPaths;
           }
           ++ lib.optional (memoryPolicy != null) memoryPolicy
+          ++ lib.optional (ipAllow != null) {
+            IPAddressAllow = lib.mkDefault ipAllow;
+            IPAddressDeny = lib.mkDefault "any";
+          }
           ++ [ extraSystemd ]
         );
       })
