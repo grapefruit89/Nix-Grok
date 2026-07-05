@@ -4,6 +4,9 @@
 #   layer: 5
 #   role: lib
 #   purpose: mkHardened — systemd serviceConfig Hardening-Factory (ProtectSystem, Caps, RW-Pfade)
+#   docs:
+#     - docs/adr/028-systemd-service-isolation.md
+#     - docs/guides/GUIDE-kernel-hardening.md
 #   tags:
 #     - systemd
 #     - hardening

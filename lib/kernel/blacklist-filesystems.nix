@@ -28,7 +28,7 @@
   "jfs"
 
   # Wechselmedien / optische Medien
-  "exfat"
+  # exfat intentionally NOT blacklisted — USB sticks with exFAT are valid (ADR-027)
   "isofs"
   "udf"
 

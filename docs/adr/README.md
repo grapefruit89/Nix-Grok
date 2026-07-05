@@ -41,6 +41,10 @@ meta:
 | [023](023-backup-philosophy.md) | Backup-Philosophie — Nur Unwiederbringliches sichern | accepted | 2026-06-30 | restic-backup.nix |
 | [024](024-systemd-creds-tpm.md) | systemd-creds + TPM2 statt sops-nix | accepted | 2026-07-05 | modules/00-core/05-creds.nix, flake.nix |
 | [025](025-pocket-id-oidc-provider.md) | Pocket-ID als OIDC/Passkey Provider | accepted | 2026-07-05 | modules/10-network/17-pocket-id.nix |
+| [026](026-kernel-hardening-sysctl.md) | Kernel-Härtung — sysctl, Boot-Parameter, Mount-Flags | accepted | 2026-07-05 | modules/20-security/26-kernel-hardening.nix |
+| [027](027-kernel-slim-module-policy.md) | Kernel-Slim — Modul-Blacklisting-Policy (Whitelist/Blacklist) | accepted | 2026-07-05 | lib/kernel/, modules/20-security/25-kernel-policy.nix |
+| [028](028-systemd-service-isolation.md) | Systemd Service Isolation — mkHardened Factory | accepted | 2026-07-05 | lib/systemd-hardening.nix |
+| [029](029-mtls-zero-trust-internal.md) | mTLS Zero-Trust — Interne Dienst-Kommunikation | proposed | 2026-07-05 | (noch nicht implementiert) |
 
 ## Wann neues ADR?
 

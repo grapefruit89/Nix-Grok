@@ -3,6 +3,9 @@
 #   layer: 5
 #   role: lib
 #   purpose: Kernel-Slim-Zwiebelschale — Whitelist/Blacklist + Assertions
+#   docs:
+#     - docs/adr/027-kernel-slim-module-policy.md
+#     - docs/guides/GUIDE-kernel-hardening.md
 #   tags:
 #     - kernel
 #     - policy

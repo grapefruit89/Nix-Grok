@@ -4,7 +4,8 @@
 #   role: module
 #   purpose: Kernel- und System-Härtung (sysctl, Boot-Parameter, Mount-Flags)
 #   docs:
-#     - docs/guides/GUIDE-security-secrets.md
+#     - docs/adr/026-kernel-hardening-sysctl.md
+#     - docs/guides/GUIDE-kernel-hardening.md
 #   tags:
 #     - security
 #     - kernel
