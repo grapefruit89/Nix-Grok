@@ -33,6 +33,14 @@ meta:
 | [015](015-cpu-power-profiles-daemon-thermald.md) | CPU-Energieverwaltung — power-profiles-daemon + thermald (Intel HWP/EPP) | accepted | 2026-06-29 | machines/q958/default.nix |
 | [016](016-caddy-security-headers-coop-scanners.md) | Caddy Security-Härtung II — Server-Header, COOP, Scanner-Blocking | accepted | 2026-06-29 | lib/caddy-snippets.nix |
 | [017](017-caddy-health-checks-error-fallback.md) | Caddy Health Checks — 503-Fallback für ausgefallene Dienste | accepted | 2026-06-29 | lib/caddy-snippets.nix, lib/caddy-ingress.nix |
+| [018](018-caddy-dual-log-dsgvo.md) | Caddy Dual-Log — DSGVO + journald für CrowdSec | accepted | 2026-06-29 | lib/caddy-snippets.nix |
+| [019](019-uds-first-philosophy.md) | Unix-Domain-Sockets als primäres IPC-Protokoll | accepted | 2026-06-30 | caddy-ingress, alle Backend-Dienste |
+| [020](020-no-legacy-explicit-stack.md) | Explizit ersetzte Technologien — Legacy-Stack | accepted | 2026-06-30 | rollout.nix, flake.nix |
+| [021](021-sops-impermanence-boot-timing.md) | SOPS Boot-Timing mit Impermanence | withdrawn | 2026-07-05 | → ADR-024 (sops-nix entfällt) |
+| [022](022-no-raid-distance-parity.md) | Keine lokale Redundanz — Geografische Distanz statt RAID | accepted | 2026-06-30 | storage, restic |
+| [023](023-backup-philosophy.md) | Backup-Philosophie — Nur Unwiederbringliches sichern | accepted | 2026-06-30 | restic-backup.nix |
+| [024](024-systemd-creds-tpm.md) | systemd-creds + TPM2 statt sops-nix | accepted | 2026-07-05 | modules/00-core/05-creds.nix, flake.nix |
+| [025](025-pocket-id-oidc-provider.md) | Pocket-ID als OIDC/Passkey Provider | accepted | 2026-07-05 | modules/10-network/17-pocket-id.nix |
 
 ## Wann neues ADR?
 
@@ -67,3 +75,4 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-06-27 | ADR 011 (Unified Port=UID=FolderPrefix, Server-Map) |
 | 2026-06-28 | ADR 001 aktualisiert (Blocky→Technitium+API-DoT-Configure); ADR 012 (Moderne CLI-Tools) |
 | 2026-06-29 | ADR 013–017: Flake-Portabilität, Caddy Security-Härtung I+II, CPU power-profiles-daemon+thermald, Caddy Health Checks |
+| 2026-07-05 | ADR 018–020 (Caddy Dual-Log, UDS-First, Legacy-Stack) nachgetragen; ADR 021 withdrawn; ADR 022–023 (RAID, Backup); ADR 024 (systemd-creds); ADR 025 (Pocket-ID OIDC) |
