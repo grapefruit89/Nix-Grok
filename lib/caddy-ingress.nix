@@ -44,6 +44,7 @@ let
   genAuthVhost = upstream: ''
     import security_headers
     import upstream_errors
+    import sso_redirect
     handle /api/auth/* {
       reverse_proxy ${upstream}
     }
@@ -64,6 +65,7 @@ let
     import streamer_headers
     import security_headers
     import upstream_errors
+    import sso_redirect
 
     @jellyfin_client header_regexp X-Emby-Authorization (?i)MediaBrowser
 
@@ -83,6 +85,7 @@ let
     import streamer_headers
     import security_headers
     import upstream_errors
+    import sso_redirect
 
     @navidrome_api {
       path /rest/*
@@ -135,6 +138,7 @@ let
         import streamer_headers
         import security_headers
         import sso_auth
+        import sso_redirect
         import upstream_errors
         reverse_proxy ${upstream} {
           flush_interval -1
@@ -148,6 +152,7 @@ let
       ''
         import security_headers
         import sso_auth
+        import sso_redirect
         import upstream_errors
         reverse_proxy ${upstream}
       ''

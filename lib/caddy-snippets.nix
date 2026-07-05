@@ -31,6 +31,8 @@ let
             uri /oauth2/auth
             copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
           }
+        }
+        (sso_redirect) {
           handle_errors 401 {
             redir https://oauth.${oauth2Domain}/oauth2/sign_in?rd={uri} 302
           }
@@ -52,6 +54,7 @@ let
             }
           }
         }
+        (sso_redirect) {}
       ''
     else
       "";

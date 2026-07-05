@@ -153,25 +153,25 @@ let
     };
     sonarr = {
       port = ports.sonarr;
-      zone = "family-pocketid";
+      zone = "admin-hangar";
       subdomain = "sonarr";
       description = "TV";
     };
     radarr = {
       port = ports.radarr;
-      zone = "family-pocketid";
+      zone = "admin-hangar";
       subdomain = "radarr";
       description = "Movies";
     };
     readarr = {
       port = ports.readarr;
-      zone = "family-pocketid";
+      zone = "admin-hangar";
       subdomain = "readarr";
       description = "Books";
     };
     prowlarr = {
       port = ports.prowlarr;
-      zone = "family-pocketid";
+      zone = "admin-hangar";
       subdomain = "prowlarr";
       description = "Indexers";
     };
@@ -189,14 +189,14 @@ let
     };
     lidarr = {
       port = ports.lidarr;
-      zone = "family-pocketid";
+      zone = "admin-hangar";
       subdomain = "lidarr";
       description = "Music Downloader (Companion zu Navidrome)";
     };
     vaultwarden = {
 
       port = ports.vaultwarden;
-      zone = "family-pocketid";
+      zone = "admin-hangar";
       subdomain = "vault";
       description = "Passwords";
     };
