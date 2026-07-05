@@ -12,12 +12,41 @@
 #     - docs/adr/017-caddy-health-checks-error-fallback.md
 # ---
 {
-  lib,
-  pocketIdPort,
+  pocketIdPort ? null,
   lanCidr ? "192.168.0.0/16",
+  oauth2proxyPort ? null,
+  oauth2Domain ? null,
 }:
 let
   privateCidr = "100.64.0.0/10";
+  ssoSnippet =
+    if oauth2proxyPort != null && oauth2Domain != null then
+      ''
+        (sso_auth) {
+          forward_auth 127.0.0.1:${toString oauth2proxyPort} {
+            uri /oauth2/auth
+            copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+          }
+          handle_errors 401 {
+            redir https://oauth.${oauth2Domain}/oauth2/sign_in?rd={uri} 302
+          }
+        }
+      ''
+    else if pocketIdPort != null then
+      ''
+        (sso_auth) {
+          forward_auth 127.0.0.1:${toString pocketIdPort} {
+            uri /api/auth/verify
+            copy_headers X-Forwarded-User X-Forwarded-Method X-Forwarded-Uri
+            transport http {
+              keepalive 30s
+              keepalive_idle_conns 10
+            }
+          }
+        }
+      ''
+    else
+      "";
 in
 {
   extraConfig = ''
@@ -73,16 +102,5 @@ in
       }
     }
   ''
-  + lib.optionalString (pocketIdPort != null) ''
-    (sso_auth) {
-      forward_auth 127.0.0.1:${toString pocketIdPort} {
-        uri /api/auth/verify
-        copy_headers X-Forwarded-User X-Forwarded-Method X-Forwarded-Uri
-        transport http {
-          keepalive 30s
-          keepalive_idle_conns 10
-        }
-      }
-    }
-  '';
+  + ssoSnippet;
 }

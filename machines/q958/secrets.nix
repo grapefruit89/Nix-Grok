@@ -52,6 +52,8 @@ let
   oidcNavidrome = local.secrets.oidc.navidrome or { };
   ddnsRecord = p.network.ddns.record;
   ddnsFqdn = "${ddnsRecord}.${ddnsZone}";
+  oauth2ClientId = (local.secrets.devKeys.oauth2proxy or { }).clientId or "";
+  oauth2ClientSecret = (local.secrets.devKeys.oauth2proxy or { }).clientSecret or "";
 
   provisionScript = pkgs.writeShellScript "q958-secrets-provision" ''
         set -euo pipefail
@@ -229,6 +231,19 @@ let
           chmod 600 ${secretsDir}/privado.netns.conf
         fi
 
+        # oauth2-proxy OIDC-Client (Pocket-ID App-Registrierung)
+        # In profile.local.nix setzen: secrets.devKeys.oauth2proxy = { clientId = "..."; clientSecret = "..."; }
+        if [ -n "${oauth2ClientId}" ] && [ -n "${oauth2ClientSecret}" ]; then
+          printf 'OAUTH2_PROXY_CLIENT_ID=%s\nOAUTH2_PROXY_CLIENT_SECRET=%s\n' \
+            "${oauth2ClientId}" "${oauth2ClientSecret}" > ${secretsDir}/oauth2-proxy.env
+          chmod 600 ${secretsDir}/oauth2-proxy.env
+        fi
+        # Cookie-Secret — einmalig generiert, nie überschrieben
+        if [ ! -f ${secretsDir}/oauth2-proxy-cookie-secret ]; then
+          ${pkgs.openssl}/bin/openssl rand -base64 32 > ${secretsDir}/oauth2-proxy-cookie-secret
+          chmod 600 ${secretsDir}/oauth2-proxy-cookie-secret
+        fi
+
         # Grok: System-Secret → User-Home wenn Key in context7.env steht
         if [ -f ${secretsDir}/${p.secrets.files.context7} ] && \
            grep -q '^CONTEXT7_API_KEY=.\+' ${secretsDir}/${p.secrets.files.context7} 2>/dev/null; then
@@ -266,6 +281,7 @@ in
       "home-assistant-mqtt-provision.service"
       "home-assistant.service"
       "ddns-updater.service"
+      "oauth2-proxy.service"
     ];
   };
 }

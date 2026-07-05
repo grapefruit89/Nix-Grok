@@ -9,5 +9,6 @@
     ./25-kernel-policy.nix
     ./26-kernel-hardening.nix
     ./27-hardened-core.nix
+    ./28-oauth2-proxy.nix
   ];
 }
