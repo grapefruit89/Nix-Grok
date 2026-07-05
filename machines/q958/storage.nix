@@ -46,11 +46,11 @@ in
     "d /data/media 2775 root media -"
     "d /data/downloads 2775 root media -"
     "d /mnt/fast_pool/cache/jellyfin 0775 jellyfin media -"
-    "d /mnt/fast_pool/metadata/jellyfin 0775 jellyfin media -"
-    "d /mnt/fast_pool/metadata/sonarr 0775 sonarr media -"
-    "d /mnt/fast_pool/metadata/radarr 0775 radarr media -"
-    "d /mnt/fast_pool/metadata/prowlarr 0775 prowlarr media -"
-    "d /mnt/fast_pool/metadata/readarr 0775 readarr media -"
+    "d /mnt/fast_pool/metadata/jellyfin 2775 jellyfin media -"
+    "d /mnt/fast_pool/metadata/sonarr 2775 sonarr media -"
+    "d /mnt/fast_pool/metadata/radarr 2775 radarr media -"
+    "d /mnt/fast_pool/metadata/prowlarr 2775 prowlarr media -"
+    "d /mnt/fast_pool/metadata/readarr 2775 readarr media -"
   ];
 
   my.services.storage-automount = {

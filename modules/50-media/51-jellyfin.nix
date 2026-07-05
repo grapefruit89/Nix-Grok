@@ -337,6 +337,18 @@ in
           persistDirs = [ "/var/lib/seerr" ];
           readWritePaths = [ "/var/lib/seerr" ];
         })
+        {
+          systemd.services.seerr.serviceConfig.ExecStartPre =
+            let
+              walScript = pkgs.writeShellScript "seerr-wal-pragma" ''
+                DB="/var/lib/seerr/db/db.sqlite3"
+                [ -f "$DB" ] || exit 0
+                ${pkgs.sqlite}/bin/sqlite3 "$DB" "PRAGMA journal_mode=WAL;" >/dev/null
+                echo "seerr: SQLite WAL mode activated"
+              '';
+            in
+            lib.mkBefore [ "+${walScript}" ];
+        }
       ]
     ))
   ];

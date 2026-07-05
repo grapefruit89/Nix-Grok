@@ -13,5 +13,5 @@
   <PublishedServerUriBySubnet>
     <string>0.0.0.0/0|@JELLYFIN_URL@</string>
   </PublishedServerUriBySubnet>
-  <AutoDiscovery>false</AutoDiscovery>
+  <AutoDiscovery>true</AutoDiscovery>
 </NetworkConfiguration>

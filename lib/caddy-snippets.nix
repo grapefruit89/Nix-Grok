@@ -23,6 +23,10 @@ let
     if oauth2proxyPort != null && oauth2Domain != null then
       ''
         (sso_auth) {
+          # Drop forged client-set auth headers before the auth proxy sees the request
+          request_header -X-Auth-Request-User
+          request_header -X-Auth-Request-Email
+          request_header -X-Auth-Request-Groups
           forward_auth 127.0.0.1:${toString oauth2proxyPort} {
             uri /oauth2/auth
             copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
@@ -35,6 +39,10 @@ let
     else if pocketIdPort != null then
       ''
         (sso_auth) {
+          # Drop forged client-set headers before Pocket-ID verifies the request
+          request_header -X-Forwarded-User
+          request_header -X-Forwarded-Method
+          request_header -X-Forwarded-Uri
           forward_auth 127.0.0.1:${toString pocketIdPort} {
             uri /api/auth/verify
             copy_headers X-Forwarded-User X-Forwarded-Method X-Forwarded-Uri
