@@ -132,6 +132,25 @@ in
           apiKeyFile = "/var/lib/secrets/treasuremaps_api_key";
         }
       ];
+      backupIndexers = lib.optionals (stufe >= 6) [
+        {
+          name = "TreasureMaps (Backup)";
+          baseUrl = "https://treasure-maps.com";
+          apiKeyFile = "/var/lib/secrets/treasuremaps_api_key";
+          categories = [
+            5000
+            5100
+            5140
+            2000
+            2100
+            2140
+          ];
+          targetApps = [
+            "sonarr"
+            "radarr"
+          ];
+        }
+      ];
     };
   };
 

@@ -16,39 +16,42 @@ let
   prowlarrInVpn = vpnConn.isVpnConfined vpnCfg "prowlarr";
 
   # Arr-Applications die automatisch in Prowlarr registriert werden.
-  # Alle aktivierten Arr-Services werden erfasst (kein manueller Eintrag nötig).
   autoApps = lib.filterAttrs (_: v: v.enabled) {
     sonarr = {
       enabled = config.my.services.sonarr.enable;
       port = ports.sonarr;
       host = hostBridgeAddr;
+      apiVersion = "v3";
     };
     radarr = {
       enabled = config.my.services.radarr.enable;
       port = ports.radarr;
       host = hostBridgeAddr;
+      apiVersion = "v3";
     };
     readarr = {
       enabled = config.my.services.readarr.enable;
       port = ports.readarr;
       host = hostBridgeAddr;
+      apiVersion = "v1";
     };
     lidarr = {
       enabled = config.my.services.lidarr.enable;
       port = ports.lidarr;
       host = hostBridgeAddr;
+      apiVersion = "v1";
     };
   };
 
-  # Indexer-JSON für das Sync-Script generieren
   indexersJson = builtins.toJSON cfgSync.indexers;
+  backupIndexersJson = builtins.toJSON cfgSync.backupIndexers;
 
-  # Arr-Application-JSON für das Sync-Script generieren
   appsJson = builtins.toJSON (
     lib.mapAttrsToList (name: app: {
       inherit name;
       port = app.port;
       host = app.host;
+      apiVersion = app.apiVersion;
       apiKeyFile = "/var/lib/secrets/${name}_api_key";
     }) autoApps
   );
@@ -109,6 +112,47 @@ in
       default = [ ];
       description = "Usenet/Torrent-Indexer, die deklarativ in Prowlarr registriert werden.";
     };
+
+    backupIndexers = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            name = lib.mkOption {
+              type = lib.types.str;
+              description = "Indexer-Name in den Arr-Apps (wird mit (Backup) suffix empfohlen).";
+            };
+            baseUrl = lib.mkOption {
+              type = lib.types.str;
+              description = "Basis-URL des Indexers.";
+            };
+            apiKeyFile = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+              description = "Pfad zur Datei mit dem Indexer-API-Key.";
+            };
+            categories = lib.mkOption {
+              type = lib.types.listOf lib.types.int;
+              default = [
+                5000
+                5100
+                5140
+                2000
+                2100
+                2140
+              ];
+              description = "Newznab-Kategorie-IDs (TV+Movies Standard).";
+            };
+            targetApps = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [ ];
+              description = "Arr-App-Namen die diesen Indexer erhalten (leer = alle autoApps).";
+            };
+          };
+        }
+      );
+      default = [ ];
+      description = "Indexer direkt (unabhängig von Prowlarr-Sync) als disabled Backup in Arr-Apps registrieren.";
+    };
   };
 
   # ============================================================================
@@ -143,7 +187,6 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
           User = "root";
-          # Retry: VPN braucht nach Boot manchmal einen Moment
           Restart = "on-failure";
           RestartSec = "30s";
           StartLimitBurst = 5;
@@ -158,6 +201,7 @@ in
           SYNC_LEVEL = cfgSync.syncLevel;
           INDEXERS_JSON = indexersJson;
           APPS_JSON = appsJson;
+          BACKUP_INDEXERS_JSON = backupIndexersJson;
         };
 
         script = ''
@@ -234,7 +278,6 @@ in
 
           echo "$APPS_JSON" | ${pkgs.jq}/bin/jq -c '.[]' | while read -r app; do
             NAME=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.name')
-            # Ersten Buchstaben groß: sonarr → Sonarr
             IMPL=$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c1 | tr '[:lower:]' '[:upper:]')
             IMPL="$IMPL$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c2-)"
 
@@ -295,7 +338,90 @@ in
             -H "Content-Type: application/json" \
             -d '{"name":"ApplicationsSync"}' \
             "$API/api/v1/command" >/dev/null
-          echo "Application-Sync-Command gesendet. Prowlarr-Sync abgeschlossen."
+          echo "Application-Sync-Command gesendet."
+
+          # ── BACKUP-INDEXER DIREKT IN ARR-APPS REGISTRIEREN (disabled) ─────────
+          if [ "$BACKUP_INDEXERS_JSON" = "[]" ]; then
+            echo "Prowlarr-Sync abgeschlossen."
+            exit 0
+          fi
+
+          echo "=== Backup-Indexer in Arr-Apps registrieren (disabled) ==="
+          echo "$BACKUP_INDEXERS_JSON" | ${pkgs.jq}/bin/jq -c '.[]' | while read -r bidx; do
+            BIDX_NAME=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.name')
+            BIDX_URL=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.baseUrl')
+            BIDX_KEYFILE=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
+            BIDX_CATS=$(echo "$bidx" | ${pkgs.jq}/bin/jq -c '.categories')
+            BIDX_TARGETS=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.targetApps | join(",")')
+            BIDX_KEY=""
+            [ -n "$BIDX_KEYFILE" ] && [ -f "$BIDX_KEYFILE" ] && BIDX_KEY=$(cat "$BIDX_KEYFILE")
+
+            # Apps filtern: wenn targetApps leer → alle autoApps, sonst nur gelistete
+            FILTERED_APPS=$(echo "$APPS_JSON" | ${pkgs.jq}/bin/jq -c \
+              --arg t "$BIDX_TARGETS" \
+              'if $t == "" then .[] else .[] | select(.name as $n | $t | split(",") | any(. == $n)) end')
+
+            echo "$FILTERED_APPS" | while read -r app; do
+              APP_NAME=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.name')
+              APP_PORT=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.port')
+              APP_HOST=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.host')
+              APP_APIVER=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.apiVersion')
+              APP_KEYFILE=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
+              [ ! -f "$APP_KEYFILE" ] && { echo "$APP_NAME: API-Key fehlt — übersprungen."; continue; }
+              APP_KEY=$(cat "$APP_KEYFILE")
+              ARR_API="http://$APP_HOST:$APP_PORT/api/$APP_APIVER"
+
+              # Erreichbarkeit kurz prüfen
+              if ! curl -sf --max-time 5 \
+                   -H "X-Api-Key: $APP_KEY" \
+                   "$ARR_API/system/status" >/dev/null 2>&1; then
+                echo "$APP_NAME: nicht erreichbar — Backup-Indexer übersprungen."
+                continue
+              fi
+
+              EXISTING=$(curl -sf -H "X-Api-Key: $APP_KEY" "$ARR_API/indexer" | \
+                ${pkgs.jq}/bin/jq -r --arg n "$BIDX_NAME" \
+                '.[] | select(.name == $n) | .id // empty')
+
+              if [ -z "$EXISTING" ]; then
+                PAYLOAD=$(${pkgs.jq}/bin/jq -n \
+                  --arg name "$BIDX_NAME" \
+                  --arg url "$BIDX_URL" \
+                  --arg key "$BIDX_KEY" \
+                  --argjson cats "$BIDX_CATS" \
+                  '{
+                    name: $name,
+                    enable: false,
+                    protocol: "usenet",
+                    priority: 50,
+                    supportsRss: true,
+                    supportsSearch: true,
+                    implementation: "Newznab",
+                    implementationName: "Newznab",
+                    configContract: "NewznabSettings",
+                    fields: [
+                      { name: "baseUrl", value: $url },
+                      { name: "apiKey", value: $key },
+                      { name: "categories", value: $cats }
+                    ]
+                  }')
+
+                if curl -sf -X POST \
+                     -H "X-Api-Key: $APP_KEY" \
+                     -H "Content-Type: application/json" \
+                     -d "$PAYLOAD" \
+                     "$ARR_API/indexer" >/dev/null; then
+                  echo "$APP_NAME: Backup-Indexer '$BIDX_NAME' (disabled) registriert."
+                else
+                  echo "$APP_NAME: Fehler beim Registrieren von '$BIDX_NAME'." >&2
+                fi
+              else
+                echo "$APP_NAME: Backup-Indexer '$BIDX_NAME' bereits vorhanden (ID: $EXISTING) — übersprungen."
+              fi
+            done
+          done
+
+          echo "Prowlarr-Sync abgeschlossen."
         '';
       };
     })
