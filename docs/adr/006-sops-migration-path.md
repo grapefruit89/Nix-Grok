@@ -1,83 +1,64 @@
 ---
 meta:
   role: doc
-  purpose: ADR-006 SOPS-Migration — Pfad von secrets-provision zu SOPS für Cloudflare-Token
-  status: accepted
+  purpose: ADR-006 SOPS-Migration — SUPERSEDED by ADR-024
+  status: superseded
   date: 2026-06-17
+  superseded_by: docs/adr/024-systemd-creds-tpm.md
   betrifft:
     - machines/q958/secrets.nix
     - machines/q958/profile.local.nix
     - modules/10-network/11-network.nix
   docs:
     - docs/adr/README.md
-    - docs/adr/010-production-ssh-impermanence.md
+    - docs/adr/024-systemd-creds-tpm.md
   tags:
     - adr
     - sops
     - secrets
-    - cloudflare
-    - ddns
+    - superseded
 ---
 
-# ADR-006: SOPS-Migration — Pfad von secrets-provision {#adr-006}
+# ADR-006: SOPS-Migration ~~— SUPERSEDED~~ {#adr-006}
+
+> **SUPERSEDED** — Ersetzt durch [ADR-024: systemd-creds + TPM2](024-systemd-creds-tpm.md) (2026-07-05).
+>
+> Der geplante sops-nix-Migrationspfad wurde nach Analyse verworfen.
+> sops-nix ist für q958 (single-host, rotierbare Keys) ein Anti-Pattern.
+> Siehe [ANTIPATTERNS.md#sops-nix](../guides/ANTIPATTERNS.md#sops-nix).
+
+---
 
 | Feld | Wert |
 |------|------|
-| **Status** | accepted |
+| **Status** | ~~accepted~~ **superseded** |
 | **Datum** | 2026-06-17 |
-| **Host** | q958 |
+| **Superseded by** | [ADR-024](024-systemd-creds-tpm.md) |
 
-## Kontext {#kontext}
+## Historischer Kontext (zur Nachvollziehbarkeit)
 
-- Heute: `machines/q958/secrets.nix` + `profile.local.nix` → `/var/lib/secrets` (Dev/Rollout < 9).
-- mynixos nutzt SOPS + `dns-automation` mit `sops.secrets.cloudflare_token`.
-- DDNS und DNS-Guard brauchen einen Cloudflare API-Token — noch **ohne** SOPS.
-- AGENTS.md: SOPS erst ganz am Ende des Rollouts (Stufe 9+, [ADR-010](010-production-ssh-impermanence.md)).
+Der ursprüngliche Plan sah vor:
 
-## Entscheidung {#entscheidung}
+- **Stufe < 9**: `secrets-provision` + `profile.local.nix` → `/var/lib/secrets/`
+- **Stufe 9+**: sops-nix ersetzt Klartext-Provision
 
-1. **Jetzt (Stufe < 9):** Token in `profile.local.nix` → `q958-secrets-provision` schreibt:
-   - `/var/lib/secrets/cloudflare_api_token`
-   - `/var/lib/secrets/ddns-updater-config.json`
-2. **DDNS:** `services.ddns-updater` (qdm12), kein Cloudflared-Tunnel — Fritzbox Port-Forward 80/443 + Caddy ACME.
-3. **DNS-Guard:** optionaler Timer in `modules/10-network/11-network.nix`, liest dasselbe Token-File.
-4. **Später (Stufe 9+):** SOPS ersetzt `profile.local`-Klartext; Provision-Script wird dünn oder entfällt.
+Dieser Plan wurde am 2026-07-05 verworfen, weil:
 
-### Migrationspfad {#migrationspfad}
+1. sops-nix bringt für single-host keinen Mehrwert (kein Multi-Host-Sharing, kein Git-Versionierungsbedarf)
+2. Age-Key auf Disk ist eine reale Schwachstelle (systemd-creds + TPM hat dieses Problem nicht)
+3. Flake-Input + `.sops.yaml` + Boot-Timing-Komplexität (ADR-021) für null echten Sicherheitsgewinn
+
+## Aktueller Stand
 
 ```
-Stufe < 9:  profile.local.nix → secrets-provision → /var/lib/secrets/*
-Stufe 9+:   sops.secrets.cloudflare_token → /run/secrets/cloudflare_token
+Dev (Stufe < 9):  profile.local.nix → secrets-provision → /var/lib/secrets/*
+                  (unverändert)
+
+Production (Stufe 9+): systemd-creds → /var/lib/credstore.encrypted/*.cred
+                       → LoadCredentialEncrypted= in Service-Units
+                       → ADR-024
 ```
 
-## Konsequenzen {#konsequenzen}
+## Siehe auch
 
-### Positiv {#positiv}
-
-- Dynamische IP (Speedport) → Cloudflare A-Record ohne manuelles Dashboard.
-- Kein Tunnel — direkter Caddy-Ingress bleibt Architektur-Kern.
-- Migrationspfad dokumentiert; mynixos-Muster ohne `options.my.meta.*`.
-
-### Negativ {#negativ}
-
-- Token liegt bis SOPS in gitignored `profile.local.nix` — nicht auf anderen Hosts kopieren.
-- HTTP-01 ACME braucht erreichbare Ports 80/443 am Router.
-
-### Implementierung {#implementierung}
-
-| Artefakt | Pfad |
-|----------|------|
-| Gateway | `modules/10-network/11-network.nix` |
-| Provision | `machines/q958/secrets.nix` |
-| Registry | `NIXH-10-GTW-001` |
-
-## Alternativen verworfen {#alternativen}
-
-- **Cloudflared Tunnel** — ersetzt Caddy-Ingress, widerspricht q958-Design (Caddy als einziger Ingress). Abgelehnt.
-- **Sofort SOPS** — zu früh im Rollout, erhöht Komplexität bevor System stabil läuft. Abgelehnt.
-- **ClamAV** — offen; separates ADR wenn AV auf Gateway-Ebene gewünscht.
-
-## Siehe auch {#siehe-auch}
-
-- [ADR-010 — Production-Modus](010-production-ssh-impermanence.md) — Stufe 9+ wo SOPS aktiviert wird
-- [GUIDE-security-secrets.md#secrets](../guides/GUIDE-security-secrets.md#secrets) — Secrets-Betrieb bis Stufe 9, SOPS-Migration
+- [ADR-024 — systemd-creds + TPM2](024-systemd-creds-tpm.md) — aktuelle Strategie

@@ -7,6 +7,7 @@ meta:
     - docs/adr/012-modern-cli-tools.md
     - docs/adr/004-unix-socket-upstreams.md
     - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/024-systemd-creds-tpm.md
   tags:
     - antipattern
     - architecture
@@ -15,6 +16,23 @@ meta:
 # Antipatterns {#antipatterns}
 
 > Explizit **nicht** im q958-Repo — portiert aus nix-hermes `Guides/ANTIPATTERN-*`.
+
+## sops-nix / agenix für single-host-Setups {#sops-nix}
+
+`sops-nix` oder `agenix` als Secret-Management für q958 (single-host, rotierbare Keys).
+
+**Warum nicht:**
+- Der einzige echte Vorteil (verschlüsselte Secrets versionierbar im Git, Multi-Host-Sharing) ist für q958 **wertlos** — ein Host, Secrets nicht im Repo.
+- `age.keys.txt` / SSH-Decryption-Key liegt lesbar auf Disk — wer ihn hat, hat alle Secrets.
+- `sops-nix` ist ein Flake-Input: externe Dependency für null echten Sicherheitsgewinn.
+- Boot-Timing-Komplexität mit Impermanence (ADR-021, jetzt withdrawn).
+- Nix-Store-Leak-Risiko: sops-Pfade und Strukturen fließen durch die Evaluierung.
+
+**Stattdessen:** `my.creds` (systemd-creds) — kein Flake-Input, kein Key auf Disk (TPM),
+automatisches Credential-Cleanup durch systemd. Assertion in `05-creds.nix` verhindert
+versehentliches Aktivieren von sops-nix im Repo.
+
+Siehe [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md).
 
 ## Legacy iptables-Firewall {#iptables}
 
@@ -118,6 +136,7 @@ Mutual TLS (Client-Zertifikate) für interne Admin-Interfaces (Cockpit, Grafana-
 
 ## Siehe auch {#siehe-auch}
 
+- [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md) — Secrets-Strategie
 - [ADR-007 — Dendritische Module](../adr/007-dendritic-one-file-per-service.md) — warum keine Monolith-Stacks oder Auto-Imports
 - [ADR-004 — Unix-Socket-Upstreams](../adr/004-unix-socket-upstreams.md) — warum kein Socat-Umweg
 - [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md) — warum kein legacy iptables

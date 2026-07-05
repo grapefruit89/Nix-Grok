@@ -29,7 +29,7 @@ Quelle: Portierung bewährter Patterns ohne 5-Schichten-Bruch. **`.enable` bleib
 | 6 | `runtime-guard.nix` ab Stufe 8 | [x] | lockdown + fail2ban + crowdsec live checks |
 | 7 | VPN-NetNS Usenet-Stack | [x] | `modules/10-vpn-confinement.nix` (Stufe 6+, ersetzt UID-Routing) |
 | 8 | `mkStreamer` Jellyfin | [x] | `lib/service-factory.nix`, `jellyfin.nix` |
-| 9 | SOPS nach v5-Muster | [~] | `modules/05-sops.nix` + flake `sops-nix` — aktiv ab Stufe 9 |
+| 9 | ~~SOPS nach v5-Muster~~ → **systemd-creds** | [x] | `modules/00-core/05-creds.nix` — sops-nix ist Anti-Pattern ([ADR-024](adr/024-systemd-creds-tpm.md)) |
 
 **Bewusst nicht übernommen:** dendritisches Auto-Import, `registry.nix`-Defaults, Tailscale-Verbot, Caddy `dynamic_dns`, NIXMETA 2.0.
 
@@ -56,6 +56,7 @@ Quelle: Portierung bewährter Patterns ohne 5-Schichten-Bruch. **`.enable` bleib
 | Claude nix_os Prompt-XML | Prompt-Engineering |
 | DeepSeek auto-locale | Nicht reproduzierbar |
 | **Pocket-ID vor Jellyfin-Apps** | Apps: `X-Emby-Authorization` → kein OIDC |
+| **sops-nix / agenix** | Anti-Pattern für single-host: Age-Key auf Disk, kein Multi-Host-Nutzen → systemd-creds ([ADR-024](adr/024-systemd-creds-tpm.md)) |
 
 ---
 
@@ -79,7 +80,7 @@ Quelle: homelab_server USB → `lib/caddy-snippets.nix`
 
 ## Auth-Matrix — wer bekommt was?
 
-Ziel: „LAN = WAN überall `sso_auth`“. **Jellyfin-Apps** sind die Ausnahme (kein OIDC).
+Ziel: „LAN = WAN überall `sso_auth`". **Jellyfin-Apps** sind die Ausnahme (kein OIDC).
 
 | Dienst | LAN (du, Fire TV, Handy) | WAN (Internet) | Mechanismus |
 |--------|--------------------------|----------------|-------------|
@@ -123,7 +124,7 @@ Code: `modules/50-media/jellyfin.nix`.
 ## Stufe 6 — Media
 
 - [ ] `rollout.stufe = 6` nach Caddy-Stabilität
-- [x] arr-Factory, SAB Kill-Switch, SceneNZBs idempotent
+- [x] arr-Factory, SAB Kill-Switch, TreasureMaps idempotent
 - [ ] Unraid-Cutover (`docs/unraid-migration-map.md`)
 
 ---
@@ -209,7 +210,10 @@ Noch offen:
 ## Stufe 9 — Production
 
 - [x] `/var/lib/pocket-id` in Impermanence-Pfade vorbereitet
-- [ ] Impermanence aktiv, SOPS, Dev-Secrets raus
+- [x] sops-nix durch systemd-creds ersetzt (`my.creds`, [ADR-024](adr/024-systemd-creds-tpm.md))
+- [ ] `my.creds.enable = true` — Credentials mit `systemd-creds encrypt` versiegeln
+- [ ] Impermanence aktiv, Dev-Secrets (profile.local.nix) durch Credential-Store ersetzen
+- [ ] TPM-Migration optional: `my.creds.useTpm = true` + Credentials neu versiegeln
 
 ---
 
@@ -217,6 +221,45 @@ Noch offen:
 
 - [x] `chat_insights_seed.json` — homelab Kirschen, unraid nur Vorlage
 - [ ] SQLite + vec Embeddings (Ollama)
+
+---
+
+## Zukunft — Future Scope
+
+Ideen die identifiziert und auf Eis gelegt wurden. Nicht jetzt, aber klar dokumentiert.
+
+### Secret-Rotation-Webfrontend
+
+Web-UI für deklarative Secret-Rotation ohne Repo-Zugriff.
+
+**Konzept:** systemd Path Units überwachen ein `pending/`-Verzeichnis. Ein Frontend
+schreibt einen neuen Key atomar (`mktemp` + `rename()`). Ein Validator-Service prüft
+den Key live gegen den Dienst (echter API-Call), versiegelt ihn dann mit
+`systemd-creds encrypt` und restartet die Ziel-Unit.
+
+**Kritische Design-Punkte (vor Implementierung klären):**
+- Atomares Schreiben: `pending/.key.tmp` → `rename()` (kein direktes Write)
+- Permission-Modell: `pending/` auf `tmpfs`, `2770` mit eigenem Service-User
+- Restart-Lifecycle: `systemctl restart` nach Credential-Rotation (der harte Teil)
+- Coalescing: Service iteriert alle `*.pending`-Dateien, nicht nur eine
+- Crash-Cleanup: `ExecStopPost` löscht `*.processing`, auch bei Absturz
+
+**Abhängigkeiten:** systemd-creds muss erst stabil laufen (Stufe 9+).
+
+### NixOS-Projekt Audit-Template
+
+Meta-Tooling: Template um fremde NixOS-Projekte gegen q958-Architektur-Standards zu prüfen.
+
+**Scope:** Fremd-Audit (andere Projekte), nicht Selbst-Audit des eigenen Repos.
+
+**Kern-Checkliste:**
+- Iron-Topology-Prüfung (kein zweiter Repo-Pfad, kein erfundenes Zweit-Repo)
+- Anti-Pattern-Screen (sops-nix, Docker, Flake-Frameworks, IFD)
+- Zwei-Rail-Check (dev/production-Unterscheidung vorhanden?)
+- Vollständigkeit: X% der .nix-Dateien gesichtet (nicht nur Stichproben)
+- Score mit expliziter Gewichtung pro Kriterium (reproduzierbar über mehrere Audits)
+
+**Status:** Idee dokumentiert, Implementierung wenn erstes Fremd-Audit ansteht.
 
 ---
 

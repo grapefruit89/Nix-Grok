@@ -4,18 +4,19 @@ meta:
   purpose: Betriebsguide Sovereign-Unlock, SSH-Härtung, Secrets
   docs:
     - docs/adr/010-production-ssh-impermanence.md
-    - docs/adr/006-sops-migration-path.md
+    - docs/adr/024-systemd-creds-tpm.md
     - docs/SECURITY.md
     - modules/20-security.nix
   tags:
     - security
     - ssh
-    - sops
+    - systemd-creds
+    - secrets
 ---
 
 # Security & Secrets Guide {#guide-security}
 
-> LUKS-Unlock, SSH Zero-Trust, Fail2ban↔nftables, Secrets-Pfad bis SOPS (Stufe 9).
+> LUKS-Unlock, SSH Zero-Trust, Fail2ban↔nftables, Secrets via systemd-creds (Stufe 9).
 
 ## Modi {#modi}
 
@@ -42,10 +43,59 @@ ssh -p 53844 moritz@100.64.0.1   # nach Stufe 9
 - Initrd-SSH-Port: `security.sovereignUnlock.sshPort` (2222)
 - QR-Fallback: `nms-qr-fallback` nach 30s ohne Mapper
 
-## Secrets (aktuell) {#secrets}
+## Secrets {#secrets}
 
-Bis Stufe 9: `secrets-provision` → `/var/lib/secrets/*` (Tier A).  
-Ab Stufe 9: `my.sops.enable` — Migration siehe [ADR-006 — SOPS-Migration](../adr/006-sops-migration-path.md).
+### Dev (Stufe < 9): secrets-provision {#secrets-dev}
+
+`profile.local.nix` → Activation Script → `/var/lib/secrets/*`
+
+Gitignored, nur auf der Maschine, keine Verschlüsselung nötig (Dev-Werte).
+
+### Production (Stufe 9+): systemd-creds {#secrets-prod}
+
+`my.creds.enable = true` → `LoadCredentialEncrypted=` in Service-Units → `$CREDENTIALS_DIRECTORY/<name>`
+
+Kein Flake-Input, kein Age-Key auf Disk, automatisches Cleanup durch systemd.
+Vollständige Strategie: [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md).
+
+#### Credential versiegeln (einmalig pro Secret)
+
+```bash
+# Ohne TPM (host key — Default):
+printf '%s' 'WERT' | systemd-creds encrypt \
+  --name=sonarr_api_key - /var/lib/credstore.encrypted/sonarr_api_key.cred
+
+# Mit TPM (nach my.creds.useTpm = true):
+printf '%s' 'WERT' | systemd-creds encrypt --with-key=tpm2 \
+  --name=sonarr_api_key - /var/lib/credstore.encrypted/sonarr_api_key.cred
+```
+
+#### TPM-Migration: ein Boolean-Flip
+
+```nix
+# In rollout.nix — mehr ist nicht nötig:
+my.creds.useTpm = true;  # war: false
+```
+
+Danach alle Credentials neu versiegeln (einmalig), rebuild.
+
+#### In Service-Units nutzen
+
+```nix
+systemd.services.sonarr.serviceConfig = {
+  LoadCredentialEncrypted =
+    "sonarr_api_key:${config.my.creds.storeDir}/sonarr_api_key.cred";
+};
+# Im Service-Script: $CREDENTIALS_DIRECTORY/sonarr_api_key
+```
+
+### Anti-Pattern: sops-nix ist verboten {#sops-verboten}
+
+sops-nix / agenix sind für q958 explizit verboten. Begründung und Assertion in:
+
+- [ANTIPATTERNS.md#sops-nix](ANTIPATTERNS.md#sops-nix)
+- [ADR-024](../adr/024-systemd-creds-tpm.md)
+- `modules/00-core/05-creds.nix` — Build-Fehler wenn sops aktiviert
 
 ## Hardened Core (Stufe 9 / Production) {#hardened-core}
 
@@ -77,8 +127,8 @@ Mit aktiver nftables-Firewall: `banaction = nftables-f2b-set` — Bans landen im
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-006 — SOPS-Migration](../adr/006-sops-migration-path.md) — Secrets-Strategie bis Stufe 9 und danach
+- [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md) — Secrets-Strategie ab Stufe 9
 - [ADR-010 — Production SSH + Impermanence](../adr/010-production-ssh-impermanence.md) — SSH-Härtung und tmpfs-Root-Entscheidung
 - [GUIDE-nftables-hardening.md](GUIDE-nftables-hardening.md) — L4-Firewall, Fail2ban↔nftables, skuid-Segmentierung
-- [ANTIPATTERNS.md#ssh-rescue](ANTIPATTERNS.md#ssh-rescue) — Rescue-SSH nie auf Production-Port
+- [ANTIPATTERNS.md#sops-nix](ANTIPATTERNS.md#sops-nix) — warum kein sops-nix
 - [RUNBOOK.md](../RUNBOOK.md) — Quick-Fix bei Sicherheits-Incidents

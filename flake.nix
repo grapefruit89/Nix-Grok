@@ -28,11 +28,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -46,7 +41,6 @@
       impermanence,
       home-manager,
       hermes-agent,
-      sops-nix,
       llm-agents,
       ...
     }:
@@ -78,7 +72,6 @@
             impermanence.nixosModules.impermanence
             home-manager.nixosModules.home-manager
             hermes-agent.nixosModules.default
-            sops-nix.nixosModules.sops
           ];
         };
       };
