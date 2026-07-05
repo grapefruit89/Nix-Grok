@@ -216,6 +216,35 @@ Jellyseerr prüft danach nochmal mit Jellyfin-Auth — doppelte Absicherung.
 
 ---
 
+## Navidrome OIDC {#navidrome-oidc}
+
+Navidrome nutzt Pocket-ID als OIDC-Provider — im Gegensatz zu Jellyseerr.
+Der `DiscoveryUrl` ist in `55-navidrome.nix` statisch konfiguriert;
+`ClientId` + `ClientSecret` kommen via `EnvironmentFile` (nicht in Git).
+
+### Einmalige Ersteinrichtung (nach erstem Start) {#navidrome-oidc-setup}
+
+```
+1. Pocket-ID Web-UI → Applications → New
+   Name: "Navidrome"
+   Callback URL: https://music.<domain>/auth/oidc/callback
+   → Client-ID + Client-Secret notieren
+
+2. profile.local.nix:
+   secrets.oidc.navidrome = {
+     clientId = "navidrome";
+     clientSecret = "<secret>";
+   };
+
+3. nixos-rebuild switch
+   → /var/lib/secrets/navidrome-oidc.env wird durch secrets-provision angelegt
+   → Navidrome startet dann mit OIDC aktiviert
+
+4. Test: https://music.<domain> → Login über Pocket-ID
+```
+
+Das EnvironmentFile wird mit `-`-Prefix geladen — Navidrome startet auch ohne Secrets (kein Block beim ersten Rebuild).
+
 ## Debugging {#debugging}
 
 ```bash
