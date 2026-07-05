@@ -157,95 +157,101 @@ in
     };
   };
 
-  config = lib.mkIf (anyEnabled && config.my.media.sync.locale.enable) {
-    systemd.services.arr-sync-locale = {
-      description = "Declarative Media Locale Sync (Jellyfin + SABnzbd)";
-      after =
-        lib.optional cfgJellyfin.enable "jellyfin.service"
-        ++ lib.optional cfgSabnzbd.enable "sabnzbd.service";
-      wants =
-        lib.optional cfgJellyfin.enable "jellyfin.service"
-        ++ lib.optional cfgSabnzbd.enable "sabnzbd.service";
-      wantedBy = [ "multi-user.target" ];
+  config = lib.mkMerge [
+    # Auto-Enable: mkDefault true wenn Jellyfin oder SABnzbd aktiv — überschreibbar mit mkForce false
+    (lib.mkIf anyEnabled {
+      my.media.sync.locale.enable = lib.mkDefault true;
+    })
+    (lib.mkIf (anyEnabled && config.my.media.sync.locale.enable) {
+      systemd.services.arr-sync-locale = {
+        description = "Declarative Media Locale Sync (Jellyfin + SABnzbd)";
+        after =
+          lib.optional cfgJellyfin.enable "jellyfin.service"
+          ++ lib.optional cfgSabnzbd.enable "sabnzbd.service";
+        wants =
+          lib.optional cfgJellyfin.enable "jellyfin.service"
+          ++ lib.optional cfgSabnzbd.enable "sabnzbd.service";
+        wantedBy = [ "multi-user.target" ];
 
-      path = with pkgs; [
-        python3
-        coreutils
-        gnugrep
-        gnused
-      ];
+        path = with pkgs; [
+          python3
+          coreutils
+          gnugrep
+          gnused
+        ];
 
-      startLimitIntervalSec = 300;
+        startLimitIntervalSec = 300;
 
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        User = "root";
-        # Neustart bei Fehlern (z.B. Service noch nicht bereit)
-        Restart = "on-failure";
-        RestartSec = "30s";
-        StartLimitBurst = 3;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          User = "root";
+          # Neustart bei Fehlern (z.B. Service noch nicht bereit)
+          Restart = "on-failure";
+          RestartSec = "30s";
+          StartLimitBurst = 3;
 
-      };
+        };
 
-      environment = {
-        TARGET_LANG = targetLang;
-        TARGET_LOCALE = targetLocale;
-        CATEGORIES_INI = categoriesIniBlock;
-        SAB_KEY_FILE = "/var/lib/secrets/sabnzbd_api_key";
-      };
+        environment = {
+          TARGET_LANG = targetLang;
+          TARGET_LOCALE = targetLocale;
+          CATEGORIES_INI = categoriesIniBlock;
+          SAB_KEY_FILE = "/var/lib/secrets/sabnzbd_api_key";
+        };
 
-      script = ''
-        # ── JELLYFIN LOCALE ──────────────────────────────────────────────────
-        ${lib.optionalString cfgJellyfin.enable ''
-          echo "=== Jellyfin Locale Sync ==="
-          ${pkgs.python3}/bin/python3 ${jellyfinLocaleScript}
-        ''}
+        script = ''
+          # ── JELLYFIN LOCALE ──────────────────────────────────────────────────
+          ${lib.optionalString cfgJellyfin.enable ''
+            echo "=== Jellyfin Locale Sync ==="
+            ${pkgs.python3}/bin/python3 ${jellyfinLocaleScript}
+          ''}
 
-        # ── SABNZBD LOCALE + KATEGORIEN ──────────────────────────────────────
-        ${lib.optionalString cfgSabnzbd.enable ''
-          echo "=== SABnzbd Locale + Kategorien Sync ==="
-          SAB_INI="/var/lib/sabnzbd/sabnzbd.ini"
+          # ── SABNZBD LOCALE + KATEGORIEN ──────────────────────────────────────
+          ${lib.optionalString cfgSabnzbd.enable ''
+            echo "=== SABnzbd Locale + Kategorien Sync ==="
+            SAB_INI="/var/lib/sabnzbd/sabnzbd.ini"
 
-          # SABnzbd muss mindestens einmal gelaufen sein, damit sabnzbd.ini existiert
-          if [ ! -f "$SAB_INI" ]; then
-            echo "sabnzbd.ini noch nicht vorhanden — Sync wird übersprungen (SABnzbd noch nicht initialisiert)."
-          else
-            # Sprache setzen
-            if grep -q "^language" "$SAB_INI"; then
-              sed -i "s|^language.*|language = $TARGET_LANG|" "$SAB_INI"
+            # SABnzbd muss mindestens einmal gelaufen sein, damit sabnzbd.ini existiert
+            if [ ! -f "$SAB_INI" ]; then
+              echo "sabnzbd.ini noch nicht vorhanden — Sync wird übersprungen (SABnzbd noch nicht initialisiert)."
             else
-              sed -i "1s|^|language = $TARGET_LANG\n|" "$SAB_INI"
-            fi
-            echo "SABnzbd: Sprache auf $TARGET_LANG gesetzt."
+              # Sprache setzen
+              if grep -q "^language" "$SAB_INI"; then
+                sed -i "s|^language.*|language = $TARGET_LANG|" "$SAB_INI"
+              else
+                sed -i "1s|^|language = $TARGET_LANG\n|" "$SAB_INI"
+              fi
+              echo "SABnzbd: Sprache auf $TARGET_LANG gesetzt."
 
-            # API-Key setzen (aus Secret)
-            if [ -f "$SAB_KEY_FILE" ]; then
-              SAB_KEY=$(cat "$SAB_KEY_FILE")
-              for key in api_key nzb_key; do
-                if grep -q "^$key" "$SAB_INI"; then
-                  sed -i "s|^$key.*|$key = $SAB_KEY|" "$SAB_INI"
-                else
-                  sed -i "1s|^|$key = $SAB_KEY\n|" "$SAB_INI"
-                fi
-              done
-              echo "SABnzbd: API-Keys gesetzt."
-            fi
+              # API-Key setzen (aus Secret)
+              if [ -f "$SAB_KEY_FILE" ]; then
+                SAB_KEY=$(cat "$SAB_KEY_FILE")
+                for key in api_key nzb_key; do
+                  if grep -q "^$key" "$SAB_INI"; then
+                    sed -i "s|^$key.*|$key = $SAB_KEY|" "$SAB_INI"
+                  else
+                    sed -i "1s|^|$key = $SAB_KEY\n|" "$SAB_INI"
+                  fi
+                done
+                echo "SABnzbd: API-Keys gesetzt."
+              fi
 
-            # Kategorien: nur einfügen wenn [categories] noch nicht existiert
-            if ! grep -q "^\[categories\]" "$SAB_INI"; then
-              echo "SABnzbd: Kategorien werden eingefügt..."
-              printf '\n%s\n' "$CATEGORIES_INI" >> "$SAB_INI"
-              echo "SABnzbd: Kategorien eingefügt. Neustart zum Einlesen..."
-              systemctl restart sabnzbd.service || true
-            else
-              echo "SABnzbd: Kategorien bereits vorhanden — übersprungen."
+              # Kategorien: nur einfügen wenn [categories] noch nicht existiert
+              if ! grep -q "^\[categories\]" "$SAB_INI"; then
+                echo "SABnzbd: Kategorien werden eingefügt..."
+                printf '\n%s\n' "$CATEGORIES_INI" >> "$SAB_INI"
+                echo "SABnzbd: Kategorien eingefügt. Neustart zum Einlesen..."
+                systemctl restart sabnzbd.service || true
+              else
+                echo "SABnzbd: Kategorien bereits vorhanden — übersprungen."
+              fi
             fi
-          fi
-        ''}
+          ''}
 
-        echo "Locale-Sync abgeschlossen."
-      '';
-    };
-  };
+          echo "Locale-Sync abgeschlossen."
+        '';
+      };
+    })
+  ];
 }

@@ -87,139 +87,145 @@ in
   # ============================================================================
   # CONFIG
   # ============================================================================
-  config = lib.mkIf (cfgSabnzbd.enable && cfgSync.enable && arrTargets != { }) {
-    systemd.services.arr-sync-download-clients = {
-      description = "Declarative SABnzbd Download-Client Registration in *Arr";
-      # Warten bis alle beteiligten Services laufen
-      after = [ "sabnzbd.service" ] ++ lib.mapAttrsToList (name: _: "${name}.service") arrTargets;
-      wants = [ "sabnzbd.service" ];
-      wantedBy = [ "multi-user.target" ];
+  config = lib.mkMerge [
+    # Auto-Enable: mkDefault true wenn SABnzbd + mind. ein *arr-Service aktiv — überschreibbar mit mkForce false
+    (lib.mkIf (cfgSabnzbd.enable && arrTargets != { }) {
+      my.media.sync.downloadClients.enable = lib.mkDefault true;
+    })
+    (lib.mkIf (cfgSabnzbd.enable && cfgSync.enable && arrTargets != { }) {
+      systemd.services.arr-sync-download-clients = {
+        description = "Declarative SABnzbd Download-Client Registration in *Arr";
+        # Warten bis alle beteiligten Services laufen
+        after = [ "sabnzbd.service" ] ++ lib.mapAttrsToList (name: _: "${name}.service") arrTargets;
+        wants = [ "sabnzbd.service" ];
+        wantedBy = [ "multi-user.target" ];
 
-      path = with pkgs; [
-        curl
-        jq
-        coreutils
-      ];
+        path = with pkgs; [
+          curl
+          jq
+          coreutils
+        ];
 
-      startLimitIntervalSec = 300;
+        startLimitIntervalSec = 300;
 
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        User = "root";
-        Restart = "on-failure";
-        RestartSec = "30s";
-        StartLimitBurst = 3;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          User = "root";
+          Restart = "on-failure";
+          RestartSec = "30s";
+          StartLimitBurst = 3;
 
-      };
+        };
 
-      environment = {
-        SAB_HOST = sabHost;
-        SAB_PORT = toString sabPort;
-        SAB_KEY_FILE = "/var/lib/secrets/sabnzbd_api_key";
-        HOST_BRIDGE = hostBridgeAddr;
-        TARGETS_JSON = targetsJson;
-      };
+        environment = {
+          SAB_HOST = sabHost;
+          SAB_PORT = toString sabPort;
+          SAB_KEY_FILE = "/var/lib/secrets/sabnzbd_api_key";
+          HOST_BRIDGE = hostBridgeAddr;
+          TARGETS_JSON = targetsJson;
+        };
 
-      script = ''
-        # SABnzbd-API-Key prüfen
-        if [ ! -f "$SAB_KEY_FILE" ]; then
-          echo "SABnzbd API-Key-Datei fehlt: $SAB_KEY_FILE — Download-Client-Sync übersprungen."
-          exit 0
-        fi
-        SAB_KEY=$(cat "$SAB_KEY_FILE")
-
-        # SABnzbd-Erreichbarkeit prüfen (max 60s)
-        echo "Warte auf SABnzbd bei http://$SAB_HOST:$SAB_PORT..."
-        for i in $(seq 1 30); do
-          if curl -sf --max-time 5 \
-               "http://$SAB_HOST:$SAB_PORT/api?apikey=$SAB_KEY&mode=version" >/dev/null 2>&1; then
-            echo "SABnzbd erreichbar (Versuch $i)."
-            break
-          fi
-          [ "$i" -eq 30 ] && {
-            echo "SABnzbd nicht erreichbar nach 60s — Sync übersprungen."
+        script = ''
+          # SABnzbd-API-Key prüfen
+          if [ ! -f "$SAB_KEY_FILE" ]; then
+            echo "SABnzbd API-Key-Datei fehlt: $SAB_KEY_FILE — Download-Client-Sync übersprungen."
             exit 0
-          }
-          sleep 2
-        done
-
-        # ── DOWNLOAD-CLIENT IN JEDEM *ARR REGISTRIEREN ───────────────────────
-        echo "$TARGETS_JSON" | ${pkgs.jq}/bin/jq -c '.[]' | while read -r target; do
-          NAME=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.name')
-          PORT=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.port')
-          API_VER=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.apiVersion')
-          CATEGORY=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.category')
-          APIKEY_FILE=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
-          IMPL=$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c1 | tr '[:lower:]' '[:upper:]')
-          IMPL="$IMPL$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c2-)"
-
-          if [ ! -f "$APIKEY_FILE" ]; then
-            echo "$IMPL: API-Key-Datei fehlt ($APIKEY_FILE) — übersprungen."
-            continue
           fi
-          APIKEY=$(cat "$APIKEY_FILE")
-          ARR_API="http://$HOST_BRIDGE:$PORT/api/$API_VER"
+          SAB_KEY=$(cat "$SAB_KEY_FILE")
 
-          # Warten bis dieser Arr-Service erreichbar ist (max 30s)
-          for j in $(seq 1 15); do
+          # SABnzbd-Erreichbarkeit prüfen (max 60s)
+          echo "Warte auf SABnzbd bei http://$SAB_HOST:$SAB_PORT..."
+          for i in $(seq 1 30); do
             if curl -sf --max-time 5 \
-                 -H "X-Api-Key: $APIKEY" \
-                 "$ARR_API/system/status" >/dev/null 2>&1; then
+                 "http://$SAB_HOST:$SAB_PORT/api?apikey=$SAB_KEY&mode=version" >/dev/null 2>&1; then
+              echo "SABnzbd erreichbar (Versuch $i)."
               break
             fi
-            [ "$j" -eq 15 ] && {
-              echo "$IMPL: nicht erreichbar — übersprungen."
-              continue 2
+            [ "$i" -eq 30 ] && {
+              echo "SABnzbd nicht erreichbar nach 60s — Sync übersprungen."
+              exit 0
             }
             sleep 2
           done
 
-          # Prüfen ob SABnzbd schon registriert ist
-          EXISTING=$(curl -sf -H "X-Api-Key: $APIKEY" "$ARR_API/downloadclient" | \
-            ${pkgs.jq}/bin/jq -r '.[] | select(.implementation == "Sabnzbd") | .id // empty')
+          # ── DOWNLOAD-CLIENT IN JEDEM *ARR REGISTRIEREN ───────────────────────
+          echo "$TARGETS_JSON" | ${pkgs.jq}/bin/jq -c '.[]' | while read -r target; do
+            NAME=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.name')
+            PORT=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.port')
+            API_VER=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.apiVersion')
+            CATEGORY=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.category')
+            APIKEY_FILE=$(echo "$target" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
+            IMPL=$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c1 | tr '[:lower:]' '[:upper:]')
+            IMPL="$IMPL$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c2-)"
 
-          if [ -z "$EXISTING" ]; then
-            echo "$IMPL: SABnzbd als Download-Client registrieren (Kategorie: $CATEGORY)..."
-
-            PAYLOAD=$(${pkgs.jq}/bin/jq -n \
-              --arg sabHost "$SAB_HOST" \
-              --argjson sabPort "$SAB_PORT" \
-              --arg sabKey "$SAB_KEY" \
-              --arg category "$CATEGORY" \
-              '{
-                enable: true,
-                name: "SABnzbd",
-                protocol: "usenet",
-                priority: 1,
-                implementationName: "SABnzbd",
-                implementation: "Sabnzbd",
-                configContract: "SabnzbdSettings",
-                fields: [
-                  { name: "host", value: $sabHost },
-                  { name: "port", value: $sabPort },
-                  { name: "useSsl", value: false },
-                  { name: "apiKey", value: $sabKey },
-                  { name: "category", value: $category }
-                ]
-              }')
-
-            if curl -sf -X POST \
-                 -H "X-Api-Key: $APIKEY" \
-                 -H "Content-Type: application/json" \
-                 -d "$PAYLOAD" \
-                 "$ARR_API/downloadclient" >/dev/null; then
-              echo "$IMPL: SABnzbd (Kategorie: $CATEGORY) registriert."
-            else
-              echo "$IMPL: Fehler beim Registrieren von SABnzbd." >&2
+            if [ ! -f "$APIKEY_FILE" ]; then
+              echo "$IMPL: API-Key-Datei fehlt ($APIKEY_FILE) — übersprungen."
+              continue
             fi
-          else
-            echo "$IMPL: SABnzbd bereits registriert (ID: $EXISTING) — übersprungen."
-          fi
-        done
+            APIKEY=$(cat "$APIKEY_FILE")
+            ARR_API="http://$HOST_BRIDGE:$PORT/api/$API_VER"
 
-        echo "Download-Client-Sync abgeschlossen."
-      '';
-    };
-  };
+            # Warten bis dieser Arr-Service erreichbar ist (max 30s)
+            for j in $(seq 1 15); do
+              if curl -sf --max-time 5 \
+                   -H "X-Api-Key: $APIKEY" \
+                   "$ARR_API/system/status" >/dev/null 2>&1; then
+                break
+              fi
+              [ "$j" -eq 15 ] && {
+                echo "$IMPL: nicht erreichbar — übersprungen."
+                continue 2
+              }
+              sleep 2
+            done
+
+            # Prüfen ob SABnzbd schon registriert ist
+            EXISTING=$(curl -sf -H "X-Api-Key: $APIKEY" "$ARR_API/downloadclient" | \
+              ${pkgs.jq}/bin/jq -r '.[] | select(.implementation == "Sabnzbd") | .id // empty')
+
+            if [ -z "$EXISTING" ]; then
+              echo "$IMPL: SABnzbd als Download-Client registrieren (Kategorie: $CATEGORY)..."
+
+              PAYLOAD=$(${pkgs.jq}/bin/jq -n \
+                --arg sabHost "$SAB_HOST" \
+                --argjson sabPort "$SAB_PORT" \
+                --arg sabKey "$SAB_KEY" \
+                --arg category "$CATEGORY" \
+                '{
+                  enable: true,
+                  name: "SABnzbd",
+                  protocol: "usenet",
+                  priority: 1,
+                  implementationName: "SABnzbd",
+                  implementation: "Sabnzbd",
+                  configContract: "SabnzbdSettings",
+                  fields: [
+                    { name: "host", value: $sabHost },
+                    { name: "port", value: $sabPort },
+                    { name: "useSsl", value: false },
+                    { name: "apiKey", value: $sabKey },
+                    { name: "category", value: $category }
+                  ]
+                }')
+
+              if curl -sf -X POST \
+                   -H "X-Api-Key: $APIKEY" \
+                   -H "Content-Type: application/json" \
+                   -d "$PAYLOAD" \
+                   "$ARR_API/downloadclient" >/dev/null; then
+                echo "$IMPL: SABnzbd (Kategorie: $CATEGORY) registriert."
+              else
+                echo "$IMPL: Fehler beim Registrieren von SABnzbd." >&2
+              fi
+            else
+              echo "$IMPL: SABnzbd bereits registriert (ID: $EXISTING) — übersprungen."
+            fi
+          done
+
+          echo "Download-Client-Sync abgeschlossen."
+        '';
+      };
+    })
+  ];
 }

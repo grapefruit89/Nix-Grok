@@ -123,10 +123,8 @@ in
   };
 
   my.media.sync = {
-    locale.enable = erstAb 6;
-    downloadClients.enable = erstAb 6;
+    # locale, downloadClients, prowlarr auto-aktiviert via mkDefault true in den Modulen
     prowlarr = {
-      enable = erstAb 6;
       indexers = lib.optionals (stufe >= 6) [
         {
           name = "SceneNZBs";
