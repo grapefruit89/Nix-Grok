@@ -14,6 +14,7 @@
 {
   imports = [
     ./11-network.nix
+    ./12-blocky.nix
     ./13-gateway.nix
     ./14-ingress.nix
     ./15-databases.nix
