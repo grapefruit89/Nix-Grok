@@ -4,7 +4,7 @@
 #   role: lib
 #   purpose: Kernel-Blacklist global — Datacenter/Legacy/Sicherheit/Netzwerkprotokolle
 #   docs:
-#     - docs/adr/002-ipv6-homelab-v4-only.md
+#     - docs/adr/1002-ipv6-homelab-v4-only.md
 #   tags:
 #     - kernel
 #     - blacklist

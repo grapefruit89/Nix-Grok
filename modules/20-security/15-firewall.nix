@@ -4,7 +4,7 @@
 #   role: module
 #   purpose: nftables L4 — checkRuleset, WAN-Härtung, skuid, CrowdSec/Fail2ban
 #   docs:
-#     - docs/adr/008-nftables-l4-hardening.md
+#     - docs/adr/2008-nftables-l4-hardening.md
 #     - docs/guides/GUIDE-nftables-hardening.md
 #   lib:
 #     - lib/nftables-rules.nix
@@ -97,6 +97,17 @@ in
     skuidSegmentation = {
       enable = lib.mkEnableOption "meta skuid Micro-Segmentation (UID-Registry, Stufe 8+)";
     };
+
+    geoipAutoUpdate = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        # Kontrollierter Escape-Hatch: lädt wöchentlich GeoIP-Blocklisten von ipdeny.com und
+        # mutiert live das nftables-Set geoip_blocked via `nft -f`. Nicht reproduzierbar ohne
+        # Netzwerk (Runtime-Abhängigkeit). Auf air-gapped oder Offline-Systemen deaktivieren.
+        description = "Wöchentlicher GeoIP-Update-Timer (ipdeny.com → nftables geoip_blocked). Escape-Hatch, deaktivierbar.";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -128,7 +139,7 @@ in
       }
     ];
 
-    systemd.services.nftables-geoip-update = {
+    systemd.services.nftables-geoip-update = lib.mkIf cfg.geoipAutoUpdate.enable {
       description = "Geo-IP blocklist → nftables set geoip_blocked";
       after = [
         "network-online.target"
@@ -171,7 +182,7 @@ in
       };
     };
 
-    systemd.timers.nftables-geoip-update = {
+    systemd.timers.nftables-geoip-update = lib.mkIf cfg.geoipAutoUpdate.enable {
       description = "Weekly Geo-IP refresh";
       wantedBy = [ "timers.target" ];
       timerConfig = {

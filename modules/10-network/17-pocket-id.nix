@@ -6,7 +6,10 @@
 let
   cfgPocketId = config.my.services.pocket-id;
   domain = config.my.configs.identity.domain;
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
 in
 {
   # ============================================================================

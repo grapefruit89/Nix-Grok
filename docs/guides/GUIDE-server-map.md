@@ -4,8 +4,8 @@ meta:
   purpose: Server-Landkarte — alle Services mit ID, Port/Socket, UID, Ist-Status
   docs:
     - docs/adr/011-unified-port-uid-schema.md
-    - docs/adr/004-unix-socket-upstreams.md
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/1004-unix-socket-upstreams.md
+    - docs/adr/2008-nftables-l4-hardening.md
   lib:
     - lib/server-map.nix
     - lib/unix-sockets.nix
@@ -104,7 +104,7 @@ meta:
 
 > **Servarr-Suite + Jellyfin** (.NET-Runtime): keine native Unix-Domain-Socket-Unterstützung —
 > bleiben dauerhaft TCP. Wildcard-Binding ist durch VPN-Confinement und Firewall (Stufe ≥8) abgesichert.
-> Siehe [ADR-004 — UDS-Konsequenzen](../adr/004-unix-socket-upstreams.md).
+> Siehe [ADR-1004 — UDS-Konsequenzen](../adr/1004-unix-socket-upstreams.md).
 
 ---
 
@@ -214,8 +214,8 @@ id sonarr radarr readarr prowlarr sabnzbd lidarr
 ## Siehe auch {#siehe-auch}
 
 - [ADR-011 — Unified Port=UID-Schema](../adr/011-unified-port-uid-schema.md) — Warum ID = Port = UID = Ordner-Präfix
-- [ADR-004 — Unix-Socket-Upstreams](../adr/004-unix-socket-upstreams.md) — welche Services UDS vs. TCP und warum
-- [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md) — `skuid`-Regeln die UIDs aus dieser Tabelle nutzen
+- [ADR-1004 — Unix-Socket-Upstreams](../adr/1004-unix-socket-upstreams.md) — welche Services UDS vs. TCP und warum
+- [ADR-2008 — nftables L4-Härtung](../adr/2008-nftables-l4-hardening.md) — `skuid`-Regeln die UIDs aus dieser Tabelle nutzen
 - [`lib/server-map.nix`](../../lib/server-map.nix) — maschinenlesbare Quelle der Wahrheit
 - [`lib/unix-sockets.nix`](../../lib/unix-sockets.nix) — Socket-Pfade für `toCaddyUpstream`-Helper
 - [`lib/uid-registry.nix`](../../lib/uid-registry.nix) — UID/GID-Vergabe

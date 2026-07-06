@@ -3,10 +3,10 @@ meta:
   role: doc
   purpose: Betriebsguide DNS (Blocky), Valkey, PostgreSQL
   docs:
-    - docs/adr/001-dns-dot-fail-closed.md
-    - docs/adr/004-unix-socket-upstreams.md
+    - docs/adr/1001-dns-dot-fail-closed.md
+    - docs/adr/1004-unix-socket-upstreams.md
     - docs/adr/011-unified-port-uid-schema.md
-    - docs/adr/002-ipv6-homelab-v4-only.md
+    - docs/adr/1002-ipv6-homelab-v4-only.md
     - modules/10-network.nix
   tags:
     - network
@@ -28,7 +28,7 @@ meta:
 
 Konfiguration: `machines/q958/default.nix` → `my.configs`; Aktivierung: `machines/q958/rollout.nix` (ab Stufe 2).
 
-Valkey und PostgreSQL kommunizieren intern über Unix Domain Sockets ([ADR-004](../adr/004-unix-socket-upstreams.md)).
+Valkey und PostgreSQL kommunizieren intern über Unix Domain Sockets ([ADR-1004](../adr/1004-unix-socket-upstreams.md)).
 
 ## PostgreSQL {#postgresql}
 
@@ -51,7 +51,7 @@ OOM-Schutz: PostgreSQL `shared_buffers` ~8G — MemoryMax skaliert mit `hardware
 sudo -u valkey valkey-cli info memory
 ```
 
-Valkey nutzt UDS `/run/redis-valkey/valkey.sock` — kein TCP-Port ([ADR-004](../adr/004-unix-socket-upstreams.md)).
+Valkey nutzt UDS `/run/redis-valkey/valkey.sock` — kein TCP-Port ([ADR-1004](../adr/1004-unix-socket-upstreams.md)).
 
 ## Blocky {#blocky}
 
@@ -64,12 +64,12 @@ dig @127.0.0.1 cloudflare.com +short
 systemctl status blocky.service
 ```
 
-Blocky ist Tier-0-Dienst mit MemoryMax 500M und OOMScoreAdjust −900 ([ADR-001](../adr/001-dns-dot-fail-closed.md), [ADR-003](../adr/003-oom-cgroup-isolation.md)).
+Blocky ist Tier-0-Dienst mit MemoryMax 500M und OOMScoreAdjust −900 ([ADR-1001](../adr/1001-dns-dot-fail-closed.md), [ADR-003](../adr/003-oom-cgroup-isolation.md)).
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-001 — DNS-over-TLS fail-closed](../adr/001-dns-dot-fail-closed.md) — Blocky als Tier-0-Dienst
-- [ADR-002 — IPv6 v4-only](../adr/002-ipv6-homelab-v4-only.md) — warum nur IPv4 im Homelab
-- [ADR-004 — Unix-Socket-Upstreams](../adr/004-unix-socket-upstreams.md) — Valkey und PostgreSQL via UDS
+- [ADR-1001 — DNS-over-TLS fail-closed](../adr/1001-dns-dot-fail-closed.md) — Blocky als Tier-0-Dienst
+- [ADR-1002 — IPv6 v4-only](../adr/1002-ipv6-homelab-v4-only.md) — warum nur IPv4 im Homelab
+- [ADR-1004 — Unix-Socket-Upstreams](../adr/1004-unix-socket-upstreams.md) — Valkey und PostgreSQL via UDS
 - [ADR-011 — Port=UID-Schema](../adr/011-unified-port-uid-schema.md) — Port-Konvention für 10xx-Services
 - [ADR-003 — OOM-Isolation](../adr/003-oom-cgroup-isolation.md) — MemoryMax für PostgreSQL und Blocky

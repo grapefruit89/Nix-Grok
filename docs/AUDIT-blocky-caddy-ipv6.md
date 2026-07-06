@@ -327,8 +327,8 @@ dig @127.0.0.1 google.com AAAA           # → leer / NOERROR ohne AAAA
 
 | ADR | Thema |
 |-----|-------|
-| [001](adr/001-dns-dot-fail-closed.md) | DoT, Blocky-only, fail-closed |
-| [002](adr/002-ipv6-homelab-v4-only.md) | IPv6 ad acta, Tailscale-Ausnahme |
+| [001](adr/1001-dns-dot-fail-closed.md) | DoT, Blocky-only, fail-closed |
+| [002](adr/1002-ipv6-homelab-v4-only.md) | IPv6 ad acta, Tailscale-Ausnahme |
 | [003](adr/003-oom-cgroup-isolation.md) | MemoryMax/OOM-Tiers |
 
 Vollständiger Index: [`docs/adr/README.md`](adr/README.md)

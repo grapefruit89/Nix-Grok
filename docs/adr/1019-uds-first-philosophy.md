@@ -9,7 +9,7 @@ meta:
     - security
 ---
 
-# ADR-019: Unix-Domain-Sockets First
+# ADR-1019: Unix-Domain-Sockets First
 
 **Status:** Accepted  
 **Datum:** 2026-06-30  
@@ -110,6 +110,6 @@ Wenn ein neuer Dienst hinzukommt:
 
 ## Verwandte ADRs
 
-- ADR-004: Unix Socket Upstreams (erstes UDS-Konzept)
+- ADR-1004: Unix Socket Upstreams (erstes UDS-Konzept)
 - ADR-011: Unified Port/UID-Schema (Ports bleiben für TCP-Dienste als ID)
-- ADR-017: Caddy Health Checks
+- ADR-1017: Caddy Health Checks

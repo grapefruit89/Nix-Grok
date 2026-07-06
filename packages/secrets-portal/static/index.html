@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secrets Portal</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: #111;
+    color: #ccc;
+    padding: 2rem;
+    min-height: 100vh;
+  }
+
+  h1 {
+    color: #fff;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+  }
+  .subtitle {
+    color: #555;
+    font-size: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  col.col-info  { width: 30%; }
+  col.col-input { width: 52%; }
+  col.col-btn   { width: 18%; }
+
+  thead th {
+    text-align: left;
+    font-size: 0.7rem;
+    color: #444;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0 0.6rem 0.5rem;
+    border-bottom: 1px solid #222;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #1c1c1c;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: #161616; }
+
+  td {
+    padding: 0.85rem 0.6rem;
+    vertical-align: top;
+  }
+
+  .secret-label {
+    font-weight: bold;
+    font-size: 0.85rem;
+    color: #e0e0e0;
+    word-break: break-word;
+  }
+  .secret-desc {
+    color: #555;
+    font-size: 0.72rem;
+    margin-top: 0.25rem;
+    line-height: 1.4;
+  }
+  .secret-link {
+    display: inline-block;
+    margin-top: 0.35rem;
+    color: #2979ff;
+    font-size: 0.7rem;
+    text-decoration: none;
+  }
+  .secret-link:hover { text-decoration: underline; }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    margin-top: 0.4rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+  }
+  .status-ok     { color: #43a047; background: #1a2e1a; }
+  .status-missing{ color: #e53935; background: #2e1a1a; }
+
+  .input-wrap { position: relative; }
+
+  input[type=password],
+  input[type=text] {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #e0e0e0;
+    padding: 0.45rem 2rem 0.45rem 0.5rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus          { border-color: #555; }
+  input.state-valid    { border-color: #43a047; }
+  input.state-invalid  { border-color: #e53935; }
+
+  .toggle-vis {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #444;
+    font-size: 0.8rem;
+    user-select: none;
+  }
+  .toggle-vis:hover { color: #888; }
+
+  .field-error {
+    color: #e57373;
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    min-height: 1em;
+  }
+
+  .btn-seal {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-family: inherit;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    background: #1565c0;
+    color: #fff;
+  }
+  .btn-seal:disabled           { background: #1e1e1e; color: #3a3a3a; cursor: not-allowed; }
+  .btn-seal.state-checking     { background: #333; color: #888; }
+  .btn-seal.state-success      { background: #2e7d32; color: #fff; }
+  .btn-seal.state-error        { background: #b71c1c; color: #fff; }
+  .btn-seal:not(:disabled):hover { filter: brightness(1.15); }
+
+  #status-bar {
+    margin-top: 2rem;
+    font-size: 0.72rem;
+    color: #444;
+    border-top: 1px solid #1c1c1c;
+    padding-top: 0.75rem;
+  }
+  #error-banner {
+    display: none;
+    background: #2e1a1a;
+    border: 1px solid #5c1a1a;
+    color: #ef9a9a;
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 3px;
+    margin-bottom: 1.5rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>Secrets Portal</h1>
+<p class="subtitle">Nur aus LAN / Netbird erreichbar &mdash; alle &Auml;nderungen werden versiegelt in /var/lib/credstore.encrypted</p>
+
+<div id="error-banner"></div>
+
+<table>
+  <colgroup>
+    <col class="col-info">
+    <col class="col-input">
+    <col class="col-btn">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>Credential</th>
+      <th>Wert</th>
+      <th>Aktion</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<div id="status-bar">Lade...</div>
+
+<script>
+"use strict";
+
+let secrets = [];
+
+async function load() {
+  try {
+    const res = await fetch('/api/secrets');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    secrets = await res.json();
+    render();
+    document.getElementById('status-bar').textContent =
+      `${secrets.length} Credentials geladen — ${secrets.filter(s => s.exists).length} versiegelt`;
+  } catch (e) {
+    showError('Fehler beim Laden: ' + e.message);
+    document.getElementById('status-bar').textContent = 'Ladefehler';
+  }
+}
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  for (const s of secrets) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div class="secret-label">${esc(s.label)}</div>
+        ${s.description ? `<div class="secret-desc">${esc(s.description)}</div>` : ''}
+        ${s.link ? `<a class="secret-link" href="${esc(s.link)}" target="_blank" rel="noopener">&#8599; Quelle</a>` : ''}
+        <div>
+          ${s.exists
+            ? `<span class="status status-ok">&#10003; versiegelt</span>`
+            : `<span class="status status-missing">&#9679; fehlt</span>`}
+        </div>
+      </td>
+      <td>
+        <div class="input-wrap">
+          <input type="password" id="val-${s.name}"
+            placeholder="Wert eingeben&hellip;"
+            autocomplete="off" spellcheck="false"
+            oninput="onInput('${s.name}')">
+          <span class="toggle-vis" onclick="toggleVis('${s.name}')" title="anzeigen/verstecken">&#9737;</span>
+        </div>
+        <div class="field-error" id="err-${s.name}"></div>
+      </td>
+      <td>
+        <button class="btn-seal" id="btn-${s.name}" disabled
+          onclick="seal('${s.name}')">Versiegeln</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function toggleVis(name) {
+  const inp = document.getElementById('val-' + name);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function onInput(name) {
+  const s   = secrets.find(x => x.name === name);
+  const inp = document.getElementById('val-' + name);
+  const btn = document.getElementById('btn-' + name);
+  const err = document.getElementById('err-' + name);
+  const val = inp.value;
+
+  if (!val) {
+    inp.className = '';
+    btn.disabled = true;
+    err.textContent = '';
+    return;
+  }
+
+  if (s.regex) {
+    try {
+      const ok = new RegExp(s.regex).test(val);
+      inp.className = ok ? 'state-valid' : 'state-invalid';
+      err.textContent = ok ? '' : 'Format nicht erkannt';
+      btn.disabled = !ok;
+    } catch {
+      inp.className = 'state-valid';
+      btn.disabled = false;
+    }
+  } else {
+    inp.className = val.length >= 8 ? 'state-valid' : 'state-invalid';
+    err.textContent = val.length < 8 ? 'Zu kurz (min. 8 Zeichen)' : '';
+    btn.disabled = val.length < 8;
+  }
+}
+
+async function seal(name) {
+  const inp = document.getElementById('val-' + name);
+  const btn = document.getElementById('btn-' + name);
+  const err = document.getElementById('err-' + name);
+  const val = inp.value;
+
+  btn.disabled = true;
+  btn.className = 'btn-seal state-checking';
+  btn.textContent = 'Prüfe…';
+  err.textContent = '';
+
+  try {
+    const vres = await fetch('/api/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, value: val }),
+    });
+    const vdata = await vres.json();
+
+    if (!vdata.valid) {
+      setBtn(btn, 'state-error', 'Fehler');
+      err.textContent = vdata.message || 'Validierung fehlgeschlagen';
+      setTimeout(() => resetBtn(btn, name, val), 2500);
+      return;
+    }
+
+    btn.textContent = 'Versiegele…';
+
+    const sres = await fetch('/api/seal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, value: val }),
+    });
+
+    if (sres.ok) {
+      setBtn(btn, 'state-success', '✓ Versiegelt');
+      inp.value = '';
+      inp.className = '';
+      setTimeout(load, 1200);
+    } else {
+      const msg = await sres.text();
+      setBtn(btn, 'state-error', 'Fehler');
+      err.textContent = msg || 'Versiegeln fehlgeschlagen';
+      setTimeout(() => resetBtn(btn, name, ''), 2500);
+    }
+  } catch (e) {
+    setBtn(btn, 'state-error', 'Fehler');
+    err.textContent = 'Netzwerkfehler: ' + e.message;
+    setTimeout(() => resetBtn(btn, name, ''), 2500);
+  }
+}
+
+function setBtn(btn, cls, text) {
+  btn.className = 'btn-seal ' + cls;
+  btn.textContent = text;
+  btn.disabled = true;
+}
+
+function resetBtn(btn, name, val) {
+  btn.className = 'btn-seal';
+  btn.textContent = 'Versiegeln';
+  // Re-evaluate whether button should be enabled
+  onInput(name);
+}
+
+function showError(msg) {
+  const b = document.getElementById('error-banner');
+  b.textContent = msg;
+  b.style.display = 'block';
+}
+
+load();
+</script>
+</body>
+</html>

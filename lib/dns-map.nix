@@ -40,7 +40,6 @@ let
     gatus = fqdn "gatus";
     scrutiny = fqdn "scrutiny";
     grafana = fqdn "grafana";
-    cockpit = fqdn "admin";
     amp = fqdn "amp";
     "zigbee-stack" = fqdn "zigbee";
     ddns-updater = fqdn "ddns";

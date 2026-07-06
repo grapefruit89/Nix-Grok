@@ -5,9 +5,9 @@ meta:
   docs:
     - docs/adr/007-dendritic-one-file-per-service.md
     - docs/adr/012-modern-cli-tools.md
-    - docs/adr/004-unix-socket-upstreams.md
-    - docs/adr/008-nftables-l4-hardening.md
-    - docs/adr/024-systemd-creds-tpm.md
+    - docs/adr/1004-unix-socket-upstreams.md
+    - docs/adr/2008-nftables-l4-hardening.md
+    - docs/adr/2024-systemd-creds-tpm.md
   tags:
     - antipattern
     - architecture
@@ -25,19 +25,19 @@ meta:
 - Der einzige echte Vorteil (verschlüsselte Secrets versionierbar im Git, Multi-Host-Sharing) ist für q958 **wertlos** — ein Host, Secrets nicht im Repo.
 - `age.keys.txt` / SSH-Decryption-Key liegt lesbar auf Disk — wer ihn hat, hat alle Secrets.
 - `sops-nix` ist ein Flake-Input: externe Dependency für null echten Sicherheitsgewinn.
-- Boot-Timing-Komplexität mit Impermanence (ADR-021, jetzt withdrawn).
+- Boot-Timing-Komplexität mit Impermanence (ADR-2021, jetzt withdrawn).
 - Nix-Store-Leak-Risiko: sops-Pfade und Strukturen fließen durch die Evaluierung.
 
 **Stattdessen:** `my.creds` (systemd-creds) — kein Flake-Input, kein Key auf Disk (TPM),
 automatisches Credential-Cleanup durch systemd. Assertion in `05-creds.nix` verhindert
 versehentliches Aktivieren von sops-nix im Repo.
 
-Siehe [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md).
+Siehe [ADR-2024 — systemd-creds + TPM2](../adr/2024-systemd-creds-tpm.md).
 
 ## Legacy iptables-Firewall {#iptables}
 
 `networking.firewall.enable = true` (iptables-Backend) statt nativem nftables.  
-**Stattdessen:** `modules/15-firewall.nix` + `lib/nftables-rules.nix` — siehe [ADR-008](../adr/008-nftables-l4-hardening.md) und [GUIDE-nftables-hardening](GUIDE-nftables-hardening.md).
+**Stattdessen:** `modules/15-firewall.nix` + `lib/nftables-rules.nix` — siehe [ADR-2008](../adr/2008-nftables-l4-hardening.md) und [GUIDE-nftables-hardening](GUIDE-nftables-hardening.md).
 
 ## Externe Media-Flakes (Nixarr/Nixflix als Input) {#media-flakes}
 
@@ -47,7 +47,7 @@ Flake-Inputs für *arr-Stacks erzeugen Versions-Drift und widersprechen AGENTS.m
 ## Socat-UDS-Bridges für Caddy {#socat-uds}
 
 Umweg über TCP statt Unix-Socket-Upstreams.  
-**Stattdessen:** [ADR-004 — Unix-Socket-Upstreams](../adr/004-unix-socket-upstreams.md).
+**Stattdessen:** [ADR-1004 — Unix-Socket-Upstreams](../adr/1004-unix-socket-upstreams.md).
 
 ## Kopia statt Restic {#kopia}
 
@@ -134,11 +134,18 @@ Mutual TLS (Client-Zertifikate) für interne Admin-Interfaces (Cockpit, Grafana-
 **Stattdessen:** `services.openssh.enable = true` (permanent aktiv). Für Rescue-Zugang: Dropbear auf Port 2222 als unabhängiger zweiter SSH-Daemon (`my.security.dropbear-rescue.enable`).  
 **Quelle:** knowledge-base ADR-012 (Socket Activation Safety).
 
+## mDNS / .local für interne Dienste {#mdns-local}
+
+`avahi.enable = true` + `services.X.mdns = true` oder Hostnamen als `hostname.local` über Caddy/Nginx exponieren.  
+**Warum nicht:** mDNS (Multicast DNS, RFC 6762) ist link-local — Multicast-Pakete (224.0.0.251) werden von keinem Router und keinem VPN-Tunnel weitergeleitet. WireGuard/Netbird-Peers bekommen `.local`-Namen nie aufgelöst. Für HTTPS bräuchte man self-signed Zertifikate (CA auf jedem Gerät installieren) oder bleibt bei HTTP — für Dienste die Secrets übertragen inakzeptabel.  
+**Stattdessen:** Technitium Split-Horizon DNS: `service.m7c5.de` löst intern zur LAN-IP auf, extern ist der Dienst via Caddy gesperrt. Caddy + Cloudflare DNS-01 Challenge stellt automatisch Let's Encrypt Zertifikate aus. Ergebnis: HTTPS ohne Warnings, funktioniert von LAN und WireGuard/Netbird, kein CA-Management.  
+**Ausnahme (acceptable):** Drucker, Chromecasts und andere Consumer-Geräte die kein DNS haben und ausschließlich auf mDNS angewiesen sind — dort ist Avahi für Service-Discovery (nicht für Web-Endpunkte) legitim.
+
 ## Siehe auch {#siehe-auch}
 
-- [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md) — Secrets-Strategie
+- [ADR-2024 — systemd-creds + TPM2](../adr/2024-systemd-creds-tpm.md) — Secrets-Strategie
 - [ADR-007 — Dendritische Module](../adr/007-dendritic-one-file-per-service.md) — warum keine Monolith-Stacks oder Auto-Imports
-- [ADR-004 — Unix-Socket-Upstreams](../adr/004-unix-socket-upstreams.md) — warum kein Socat-Umweg
-- [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md) — warum kein legacy iptables
+- [ADR-1004 — Unix-Socket-Upstreams](../adr/1004-unix-socket-upstreams.md) — warum kein Socat-Umweg
+- [ADR-2008 — nftables L4-Härtung](../adr/2008-nftables-l4-hardening.md) — warum kein legacy iptables
 - [ADR-012 — Moderne CLI-Tools](../adr/012-modern-cli-tools.md) — Tooling-Entscheidungen und DX-Standards
 - [GUIDE-dendritic-architecture.md](GUIDE-dendritic-architecture.md) — die richtige Architektur statt Antipatterns

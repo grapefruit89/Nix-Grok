@@ -12,9 +12,9 @@ meta:
     - lib/caddy-ingress.nix
   docs:
     - docs/adr/README.md
-    - docs/adr/014-caddy-security-headers-trusted-proxies.md
-    - docs/adr/016-caddy-security-headers-coop-scanners.md
-    - docs/adr/018-caddy-dual-log-dsgvo.md
+    - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+    - docs/adr/1016-caddy-security-headers-coop-scanners.md
+    - docs/adr/1018-caddy-dual-log-dsgvo.md
   tags:
     - adr
     - caddy
@@ -23,7 +23,7 @@ meta:
     - stabilität
 ---
 
-# ADR 017 — Caddy Health Checks und 503-Fallback {#adr-017}
+# ADR 017 — Caddy Health Checks und 503-Fallback {#adr-1017}
 
 ## Status {#status}
 
@@ -127,7 +127,7 @@ sudo systemctl start sonarr
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-014 — Caddy Security-Härtung I](014-caddy-security-headers-trusted-proxies.md) — Headers + trusted_proxies
-- [ADR-016 — Caddy Security-Härtung II](016-caddy-security-headers-coop-scanners.md) — Scanner-Blocking
-- [ADR-018 — Caddy Dual-Log DSGVO](018-caddy-dual-log-dsgvo.md) — IP-Anonymisierung
+- [ADR-1014 — Caddy Security-Härtung I](1014-caddy-security-headers-trusted-proxies.md) — Headers + trusted_proxies
+- [ADR-1016 — Caddy Security-Härtung II](1016-caddy-security-headers-coop-scanners.md) — Scanner-Blocking
+- [ADR-1018 — Caddy Dual-Log DSGVO](1018-caddy-dual-log-dsgvo.md) — IP-Anonymisierung
 - [RUNBOOK — Caddy](../RUNBOOK.md#caddy) — Caddy-spezifische Diagnose-Befehle

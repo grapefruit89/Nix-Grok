@@ -29,7 +29,7 @@ Quelle: Portierung bewährter Patterns ohne 5-Schichten-Bruch. **`.enable` bleib
 | 6 | `runtime-guard.nix` ab Stufe 8 | [x] | lockdown + fail2ban + crowdsec live checks |
 | 7 | VPN-NetNS Usenet-Stack | [x] | `modules/10-vpn-confinement.nix` (Stufe 6+, ersetzt UID-Routing) |
 | 8 | `mkStreamer` Jellyfin | [x] | `lib/service-factory.nix`, `jellyfin.nix` |
-| 9 | ~~SOPS nach v5-Muster~~ → **systemd-creds** | [x] | `modules/00-core/05-creds.nix` — sops-nix ist Anti-Pattern ([ADR-024](adr/024-systemd-creds-tpm.md)) |
+| 9 | ~~SOPS nach v5-Muster~~ → **systemd-creds** | [x] | `modules/00-core/05-creds.nix` — sops-nix ist Anti-Pattern ([ADR-2024](adr/2024-systemd-creds-tpm.md)) |
 
 **Bewusst nicht übernommen:** dendritisches Auto-Import, `registry.nix`-Defaults, Tailscale-Verbot, Caddy `dynamic_dns`, NIXMETA 2.0.
 
@@ -56,7 +56,7 @@ Quelle: Portierung bewährter Patterns ohne 5-Schichten-Bruch. **`.enable` bleib
 | Claude nix_os Prompt-XML | Prompt-Engineering |
 | DeepSeek auto-locale | Nicht reproduzierbar |
 | **Pocket-ID vor Jellyfin-Apps** | Apps: `X-Emby-Authorization` → kein OIDC |
-| **sops-nix / agenix** | Anti-Pattern für single-host: Age-Key auf Disk, kein Multi-Host-Nutzen → systemd-creds ([ADR-024](adr/024-systemd-creds-tpm.md)) |
+| **sops-nix / agenix** | Anti-Pattern für single-host: Age-Key auf Disk, kein Multi-Host-Nutzen → systemd-creds ([ADR-2024](adr/2024-systemd-creds-tpm.md)) |
 
 ---
 
@@ -210,7 +210,7 @@ Noch offen:
 ## Stufe 9 — Production
 
 - [x] `/var/lib/pocket-id` in Impermanence-Pfade vorbereitet
-- [x] sops-nix durch systemd-creds ersetzt (`my.creds`, [ADR-024](adr/024-systemd-creds-tpm.md))
+- [x] sops-nix durch systemd-creds ersetzt (`my.creds`, [ADR-2024](adr/2024-systemd-creds-tpm.md))
 - [ ] `my.creds.enable = true` — Credentials mit `systemd-creds encrypt` versiegeln
 - [ ] Impermanence aktiv, Dev-Secrets (profile.local.nix) durch Credential-Store ersetzen
 - [ ] TPM-Migration optional: `my.creds.useTpm = true` + Credentials neu versiegeln

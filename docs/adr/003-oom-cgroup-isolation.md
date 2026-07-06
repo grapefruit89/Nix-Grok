@@ -13,7 +13,7 @@ meta:
   docs:
     - docs/adr/README.md
     - docs/memory_oom.md
-    - docs/adr/001-dns-dot-fail-closed.md
+    - docs/adr/1001-dns-dot-fail-closed.md
     - docs/adr/005-critical-systemd-restart.md
     - docs/RUNBOOK.md
   tags:
@@ -39,7 +39,7 @@ meta:
 - Ein Leak oder Spike in **einer** App darf nicht SSH, Blocky oder das ganze System via Kernel-OOM-Killer destabilisieren.
 - `OOMScoreAdjust` allein reicht nicht — ohne `MemoryMax` kann ein Dienst unbegrenzt wachsen, bevor der globale OOM greift.
 - `Restart=always` ([ADR-005](005-critical-systemd-restart.md)) hilft nach Dienst-Crash, ersetzt aber keine cgroup-Käfigwand.
-- Blocky als kritischer DNS-Resolver bekommt Tier-0-Schutz und MemoryMax 500M ([ADR-001](001-dns-dot-fail-closed.md)).
+- Blocky als kritischer DNS-Resolver bekommt Tier-0-Schutz und MemoryMax 500M ([ADR-1001](1001-dns-dot-fail-closed.md)).
 
 ## Entscheidung {#entscheidung}
 
@@ -156,7 +156,7 @@ journalctl -k --no-pager | grep -iE 'oom|out of memory' --since '7 days ago'
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-001 — DNS-over-TLS](001-dns-dot-fail-closed.md) — Blocky als Tier-0-Dienst, MemoryMax 500M
+- [ADR-1001 — DNS-over-TLS](1001-dns-dot-fail-closed.md) — Blocky als Tier-0-Dienst, MemoryMax 500M
 - [ADR-005 — Restart=always](005-critical-systemd-restart.md) — Neustart nach cgroup-Kill
 - [docs/memory_oom.md](../memory_oom.md) — vollständige Cap-Tabelle aller Dienste
 - [RUNBOOK — Jellyfin OOM](../RUNBOOK.md#jellyfin) — Quick-Fix bei Jellyfin-OOM-Kill

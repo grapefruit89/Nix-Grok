@@ -34,7 +34,7 @@ was ist bereits vorhanden, was war KI-Halluzination?
 | SOPS `sshKeyPaths` falsch für Impermanence | **Hoch** — hätte Stufe-9-Boot-Fail verursacht | Behoben in `05-sops.nix` |
 | Kein No-GUI Build-Assert | Mittel — Headless-Policy nicht durchgesetzt | Behoben in `forbidden-tech.nix` |
 | SSH Socket-Aktivierung nicht als ANTIPATTERN | Niedrig — Wissen fehlte, kein Code-Problem | Dokumentiert |
-| Kein Anti-RAID ADR | Niedrig — gelebte Praxis, nicht dokumentiert | ADR-022 geschrieben |
+| Kein Anti-RAID ADR | Niedrig — gelebte Praxis, nicht dokumentiert | ADR-3022 geschrieben |
 | Kein learnings/-Ordner | Niedrig — fehlende Retrospektiv-Schicht | Dieser Ordner |
 
 ---
@@ -62,8 +62,8 @@ was ist bereits vorhanden, was war KI-Halluzination?
 
 | Datei | Typ | Inhalt |
 |-------|-----|--------|
-| `docs/adr/021-sops-impermanence-boot-timing.md` | ADR | SOPS Race-Condition Fix |
-| `docs/adr/022-no-raid-distance-parity.md` | ADR | Kein RAID — geografische Distanz |
+| `docs/adr/2021-sops-impermanence-boot-timing.md` | ADR | SOPS Race-Condition Fix |
+| `docs/adr/3022-no-raid-distance-parity.md` | ADR | Kein RAID — geografische Distanz |
 | `docs/guides/ANTIPATTERNS.md` | Guide-Update | SSH Socket-Aktivierung Eintrag |
 | `lib/forbidden-tech.nix` | Code | POL-FT-006/007/008 GUI-Assertions |
 | `modules/00-core/05-sops.nix` | Code | SOPS sshKeyPaths + Ordering Fix |

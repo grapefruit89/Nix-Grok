@@ -3,9 +3,9 @@ meta:
   role: doc
   purpose: Auth-Stack — Pocket-ID, OAuth2-Proxy, Caddy forward_auth, Jellyfin-Client-Split, Jellyseerr
   docs:
-    - docs/adr/025-pocket-id-oidc-provider.md
-    - docs/adr/014-caddy-security-headers-trusted-proxies.md
-    - docs/adr/019-uds-first-philosophy.md
+    - docs/adr/1025-pocket-id-oidc-provider.md
+    - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+    - docs/adr/1019-uds-first-philosophy.md
     - docs/guides/GUIDE-security-secrets.md
   tags:
     - auth
@@ -40,7 +40,7 @@ meta:
 ## Pocket-ID {#pocket-id}
 
 Passkey-nativer OIDC Provider. Single Go Binary, ~30 MB RAM idle.
-Entscheidung: [ADR-025 — Pocket-ID als OIDC Provider](../adr/025-pocket-id-oidc-provider.md).
+Entscheidung: [ADR-1025 — Pocket-ID als OIDC Provider](../adr/1025-pocket-id-oidc-provider.md).
 
 ### Konfiguration {#pocket-id-config}
 
@@ -274,9 +274,9 @@ journalctl -u caddy | grep forward_auth
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-025 — Pocket-ID als OIDC Provider](../adr/025-pocket-id-oidc-provider.md) — Entscheidung gegen Authentik/Keycloak
-- [ADR-014 — Caddy Security-Härtung](../adr/014-caddy-security-headers-trusted-proxies.md) — trusted_proxies, Security-Header
-- [ADR-019 — UDS-First](../adr/019-uds-first-philosophy.md) — warum Pocket-ID + Jellyseerr über TCP (kein UDS-Support)
+- [ADR-1025 — Pocket-ID als OIDC Provider](../adr/1025-pocket-id-oidc-provider.md) — Entscheidung gegen Authentik/Keycloak
+- [ADR-1014 — Caddy Security-Härtung](../adr/1014-caddy-security-headers-trusted-proxies.md) — trusted_proxies, Security-Header
+- [ADR-1019 — UDS-First](../adr/1019-uds-first-philosophy.md) — warum Pocket-ID + Jellyseerr über TCP (kein UDS-Support)
 - [GUIDE-security-secrets.md](GUIDE-security-secrets.md) — ENCRYPTION_KEY via systemd-creds (Stufe 9)
 - [GUIDE-media-stack.md](GUIDE-media-stack.md) — Jellyfin QSV, VPN-NetNS, *arr
 - [RUNBOOK.md](../RUNBOOK.md) — Quick-Fix bei Auth-Ausfall

@@ -58,7 +58,7 @@ in
             ANTIPATTERN: sops-nix ist für q958 (single-host, rotierbare Keys) verboten.
             Nutze my.creds (systemd-creds) stattdessen.
             Begründung: docs/guides/ANTIPATTERNS.md#sops-nix
-            ADR:        docs/adr/024-systemd-creds-tpm.md
+            ADR:        docs/adr/2024-systemd-creds-tpm.md
           '';
         }
       ];

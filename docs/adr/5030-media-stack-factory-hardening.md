@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-030 — Media-Stack Architektur-Inventory (was bereits implementiert war)
+  purpose: ADR-5030 — Media-Stack Architektur-Inventory (was bereits implementiert war)
   status: accepted
   date: 2026-07-05
   betrifft:
@@ -10,8 +10,8 @@ meta:
     - lib/caddy-ingress.nix
     - lib/service-factory.nix
   docs:
-    - docs/adr/008-nftables-l4-hardening.md
-    - docs/adr/024-systemd-creds-tpm.md
+    - docs/adr/2008-nftables-l4-hardening.md
+    - docs/adr/2024-systemd-creds-tpm.md
     - docs/adr/028-systemd-service-isolation.md
   tags:
     - media
@@ -22,7 +22,7 @@ meta:
     - inventory
 ---
 
-# ADR-030: Media-Stack Architektur-Inventory
+# ADR-5030: Media-Stack Architektur-Inventory
 
 ## Kontext
 
@@ -69,7 +69,7 @@ abgesichert werden soll: `(private_admin)` Snippet aus `caddy-snippets.nix` nutz
 Vorgeschlagenes Pattern: Nix-Submodule mit `{ _secret = "/path"; }` Platzhalter →
 sanitizeSecrets-Funktion für Store-sicheres JSON → jq-Injection zur Laufzeit.
 
-**Nicht implementiert**, weil systemd-creds (ADR-024) das Secret-Problem auf
+**Nicht implementiert**, weil systemd-creds (ADR-2024) das Secret-Problem auf
 Systemebene eleganter löst:
 
 - Dev (Stufe < 9): `/var/lib/secrets/*` via `secrets-provision` (EnvironmentFile)

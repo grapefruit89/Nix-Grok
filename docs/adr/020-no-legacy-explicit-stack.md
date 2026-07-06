@@ -13,7 +13,7 @@ meta:
     - no-legacy
   docs:
     - docs/adr/README.md
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/2008-nftables-l4-hardening.md
     - docs/adr/011-unified-port-uid-schema.md
 ---
 
@@ -54,7 +54,7 @@ boot.loader.systemd-boot.configurationLimit = 5;  # ESP-Schutz
 |----------|--------|-------|
 | NetworkManager | `systemd-networkd` | Deterministisch, declarativ, kein GUI-Overhead, besser für Server |
 | ifupdown | systemd-networkd | Veraltet, nicht mehr gepflegt |
-| iptables | `nftables` | Modernes Firewall-Framework, bessere Performance, atomic rule updates → ADR-008 |
+| iptables | `nftables` | Modernes Firewall-Framework, bessere Performance, atomic rule updates → ADR-2008 |
 | Legacy SMB (< SMB2.1) | Nicht genutzt | Sicherheitslücken, keine modernen Clients benötigen das |
 
 ---
@@ -103,7 +103,7 @@ systemd.timers.my-job = {
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
-| Blocky | Technitium DNS | Blocky hat DNS-over-TLS (DoT) fail-open-Verhalten gezeigt → ADR-001; Technitium hat vollständigere DoT-Implementierung |
+| Blocky | Technitium DNS | Blocky hat DNS-over-TLS (DoT) fail-open-Verhalten gezeigt → ADR-1001; Technitium hat vollständigere DoT-Implementierung |
 | systemd-resolved (als Stub) | Technitium lokal | Vollständige DNS-Kontrolle, kein doppeltes Stub-Layer |
 
 ---
@@ -165,8 +165,8 @@ Nix-Grok erzwingt folgende Policies zur Build-Zeit:
 
 ## Verwandte ADRs
 
-- ADR-001: DNS-over-TLS (Technitium statt Blocky)
-- ADR-002: IPv4-only Homelab
-- ADR-008: nftables L4 Hardening
+- ADR-1001: DNS-over-TLS (Technitium statt Blocky)
+- ADR-1002: IPv4-only Homelab
+- ADR-2008: nftables L4 Hardening
 - ADR-012: Modern CLI Tools
-- ADR-019: UDS-First Philosophy
+- ADR-1019: UDS-First Philosophy

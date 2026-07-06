@@ -21,6 +21,9 @@ let
     prowlarr = 5006; # war 969
     sabnzbd = 5007; # war 984
     lidarr = 5010;
+    # 20-security domain (20xx)
+    # Phase 1: läuft als root (systemd-creds host-key); UID reserviert für Phase 2 privilege-separation
+    secrets-portal = 2029;
   };
 
   defaultGroups = {

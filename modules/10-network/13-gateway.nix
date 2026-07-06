@@ -6,7 +6,7 @@
 #   purpose: DDNS-Updater (Cloudflare) + optional DNS-Guard — kein Cloudflared-Tunnel
 #   docs:
 #     - docs/SPEC_REGISTRY.md
-#     - docs/adr/006-sops-migration-path.md
+#     - docs/adr/2006-sops-migration-path.md
 #   lib:
 #     - lib/dns-map.nix
 #     - lib/service-factory.nix

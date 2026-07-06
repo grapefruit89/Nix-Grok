@@ -72,7 +72,7 @@ meta:
 <!--
   Was war das Problem / der Auslöser?
   - Stichpunkte, nicht Prosa
-  - Links zu verwandten ADRs: "...braucht statische UIDs ([ADR-008](008-nftables.md))"
+  - Links zu verwandten ADRs: "...braucht statische UIDs ([ADR-2008](008-nftables.md))"
   - Fehler/Symptome die zum Problem geführt haben
 -->
 

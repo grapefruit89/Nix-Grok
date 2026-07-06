@@ -56,17 +56,17 @@ docs/
 ## Kern-Entscheidungen (ADRs nach Thema)
 
 ### Netzwerk & DNS
-- [ADR-001](adr/001-dns-dot-fail-closed.md) — DNS-over-TLS fail-closed (Technitium)
-- [ADR-002](adr/002-ipv6-homelab-v4-only.md) — IPv4-only Homelab
+- [ADR-1001](adr/1001-dns-dot-fail-closed.md) — DNS-over-TLS fail-closed (Technitium)
+- [ADR-1002](adr/1002-ipv6-homelab-v4-only.md) — IPv4-only Homelab
 
 ### Storage
-- [ADR-022](adr/022-no-raid-distance-parity.md) — Kein RAID, geografische Distanz
+- [ADR-3022](adr/3022-no-raid-distance-parity.md) — Kein RAID, geografische Distanz
 
 ### Ingress & Caddy
-- [ADR-019](adr/019-uds-first-philosophy.md) — Unix-Socket-First Philosophie
+- [ADR-1019](adr/1019-uds-first-philosophy.md) — Unix-Socket-First Philosophie
 
 ### Security
-- [ADR-021](adr/021-sops-impermanence-boot-timing.md) — SOPS Boot-Timing mit Impermanence
+- [ADR-2021](adr/2021-sops-impermanence-boot-timing.md) — SOPS Boot-Timing mit Impermanence
 
 ### Architektur
 - [ADR-020](adr/020-no-legacy-explicit-stack.md) — No-Legacy Explizit-Stack

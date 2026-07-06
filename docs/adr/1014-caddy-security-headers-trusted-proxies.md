@@ -9,9 +9,9 @@ meta:
     - modules/10-network/11-network.nix
   docs:
     - docs/adr/README.md
-    - docs/adr/016-caddy-security-headers-coop-scanners.md
-    - docs/adr/017-caddy-health-checks-error-fallback.md
-    - docs/adr/018-caddy-dual-log-dsgvo.md
+    - docs/adr/1016-caddy-security-headers-coop-scanners.md
+    - docs/adr/1017-caddy-health-checks-error-fallback.md
+    - docs/adr/1018-caddy-dual-log-dsgvo.md
   tags:
     - adr
     - caddy
@@ -20,7 +20,7 @@ meta:
     - trusted-proxies
 ---
 
-# ADR 014 — Caddy Security-Härtung: Headers + trusted_proxies {#adr-014}
+# ADR 014 — Caddy Security-Härtung: Headers + trusted_proxies {#adr-1014}
 
 ## Status {#status}
 
@@ -75,12 +75,12 @@ services.caddy.globalConfig = lib.mkIf config.services.caddy.enable ''
 
 ## Alternativen verworfen {#alternativen}
 
-- **Caddy Geoblock (Maxmind):** Abgelehnt — Geoblock läuft bereits auf Kernel-Ebene via nftables `geoip_blocked` Set ([ADR-008](008-nftables-l4-hardening.md)). Caddy soll thin bleiben.
+- **Caddy Geoblock (Maxmind):** Abgelehnt — Geoblock läuft bereits auf Kernel-Ebene via nftables `geoip_blocked` Set ([ADR-2008](2008-nftables-l4-hardening.md)). Caddy soll thin bleiben.
 - **fail2ban/CrowdSec für Headers:** Nicht zuständig — Headers sind Caddy-Aufgabe, Blocking ist nftables-Aufgabe.
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-016 — Caddy Security-Härtung II](016-caddy-security-headers-coop-scanners.md) — Server-Header, COOP, Scanner-Blocking (Fortsetzung)
-- [ADR-017 — Caddy Health Checks](017-caddy-health-checks-error-fallback.md) — 503-Fallback für ausgefallene Dienste
-- [ADR-018 — Caddy Dual-Log DSGVO](018-caddy-dual-log-dsgvo.md) — IP-Anonymisierung in Caddy-Logs
-- [ADR-008 — nftables L4-Härtung](008-nftables-l4-hardening.md) — Geoblock auf Kernel-Ebene (komplementär)
+- [ADR-1016 — Caddy Security-Härtung II](1016-caddy-security-headers-coop-scanners.md) — Server-Header, COOP, Scanner-Blocking (Fortsetzung)
+- [ADR-1017 — Caddy Health Checks](1017-caddy-health-checks-error-fallback.md) — 503-Fallback für ausgefallene Dienste
+- [ADR-1018 — Caddy Dual-Log DSGVO](1018-caddy-dual-log-dsgvo.md) — IP-Anonymisierung in Caddy-Logs
+- [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — Geoblock auf Kernel-Ebene (komplementär)

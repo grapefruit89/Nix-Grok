@@ -3,7 +3,7 @@ meta:
   role: doc
   purpose: Guide — nftables L4-Härtung für Homelab q958
   docs:
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/2008-nftables-l4-hardening.md
     - docs/adr/011-unified-port-uid-schema.md
   tags:
     - guide
@@ -13,7 +13,7 @@ meta:
 # Guide: nftables L4-Härtung {#guide-nftables}
 
 > **Rollout:** Stufe 8+ · **Modul:** `modules/15-firewall.nix` · **Generator:** `lib/nftables-rules.nix`  
-> **Architektur-Entscheidung:** [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md)
+> **Architektur-Entscheidung:** [ADR-2008 — nftables L4-Härtung](../adr/2008-nftables-l4-hardening.md)
 
 ## Rollen-Trennung {#rollen-trennung}
 
@@ -23,7 +23,7 @@ meta:
 | DNS Adblock | StevenBlack, Easyprivacy | Blocky (`10-network.nix`) |
 | L7 Auth | SSO, Streaming | Caddy |
 
-**Kein Geo in Caddy** — eine Wahrheit in nftables ([ADR-008 — Entscheidung](../adr/008-nftables-l4-hardening.md#entscheidung)).
+**Kein Geo in Caddy** — eine Wahrheit in nftables ([ADR-2008 — Entscheidung](../adr/2008-nftables-l4-hardening.md#entscheidung)).
 
 ## Chain-Ablauf {#chain-ablauf}
 
@@ -83,7 +83,7 @@ URLs in `profile.local.nix` unter `alerting.ntfyTopic` / `alerting.webhookUrl`.
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-008 — nftables L4-Härtung](../adr/008-nftables-l4-hardening.md) — vollständige Architektur-Entscheidung mit Diagnose + Fix
+- [ADR-2008 — nftables L4-Härtung](../adr/2008-nftables-l4-hardening.md) — vollständige Architektur-Entscheidung mit Diagnose + Fix
 - [ADR-011 — Port=UID=Präfix-Schema](../adr/011-unified-port-uid-schema.md) — Basis für `skuid`-Regeln
 - [GUIDE-security-secrets.md](GUIDE-security-secrets.md) — Fail2ban-Kontext, SSH-Härtung, Kernel-Härtung
 - [RUNBOOK.md](../RUNBOOK.md) — Quick-Fix bei Firewall-Problemen

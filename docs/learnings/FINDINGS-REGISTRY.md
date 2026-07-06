@@ -12,10 +12,10 @@
 
 | ID | Befund | Quelle | Aktion | Datum | Status |
 |----|--------|--------|--------|-------|--------|
-| F-001 | SOPS Boot-Race mit Impermanence: `sshKeyPaths` muss auf Persist-Pfad zeigen, nicht Bind-Mount | knowledge-base/adr/ADR-016-Sops-Boot-Timing.md | `05-sops.nix` conditional sshKeyPaths + sops-install-secrets ordering; `docs/adr/021-sops-impermanence-boot-timing.md` | 2026-06-30 | ✅ implementiert |
+| F-001 | SOPS Boot-Race mit Impermanence: `sshKeyPaths` muss auf Persist-Pfad zeigen, nicht Bind-Mount | knowledge-base/adr/ADR-1016-Sops-Boot-Timing.md | `05-sops.nix` conditional sshKeyPaths + sops-install-secrets ordering; `docs/adr/2021-sops-impermanence-boot-timing.md` | 2026-06-30 | ✅ implementiert |
 | F-002 | SSH Socket-Aktivierung: Niemals SSH socket-aktivieren — Aussperr-Risiko überwiegt ~5MB RAM | knowledge-base/adr/ADR-012-Socket-Activation-Selection.md | `docs/guides/ANTIPATTERNS.md` — neuer Eintrag | 2026-06-30 | ✅ dokumentiert |
 | F-003 | No-GUI Build-Assertion: Build soll fehlschlagen wenn X11/GNOME/KDE aktiviert | knowledge-base/adr/ADR-010-Headless-Server-Law.md | `lib/forbidden-tech.nix` POL-FT-006/007/008 | 2026-06-30 | ✅ implementiert |
-| F-004 | Anti-RAID / Distance-Parity-Mandate: Geografische Redundanz > lokales RAID | knowledge-base/adr/ADR-015-Distance-Parity-Mandate.md | `docs/adr/022-no-raid-distance-parity.md` | 2026-06-30 | ✅ dokumentiert |
+| F-004 | Anti-RAID / Distance-Parity-Mandate: Geografische Redundanz > lokales RAID | knowledge-base/adr/ADR-015-Distance-Parity-Mandate.md | `docs/adr/3022-no-raid-distance-parity.md` | 2026-06-30 | ✅ dokumentiert |
 | F-005 | Dropbear Rescue SSH: Sekundärer SSH-Daemon auf Port 2222, unabhängig von OpenSSH | nix-hermes/ADR/ADR-23-dropbear-rescue.md | Bereits implementiert in Nix-Grok (`20-security.nix`, `erstAb 8`) — kein Handlungsbedarf | 2026-06-30 | ✅ bereits vorhanden |
 | F-006 | No-Legacy-Stack: Explizite Verbote für GRUB, cron, NetworkManager, iptables | mynixos-v5 | `docs/adr/020-no-legacy-explicit-stack.md` | 2026-06-30 | ✅ dokumentiert |
 | F-007 | IFD-Verbot (Import-From-Derivation) verlangsamt `nix eval` und `dry-build` | mynixos-v5 | `docs/guides/ANTIPATTERNS.md` + `lib/forbidden-tech.nix` (implizit via dry-build-gate) | 2026-06-30 | ✅ dokumentiert |

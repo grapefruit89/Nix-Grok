@@ -10,10 +10,26 @@
 #     - oom
 #     - systemd
 # ---
-{ lib }:
+#
+# Verwendung: import ./memory-policy.nix { inherit lib; ramGB = config.my.configs.hardware.ramGB; }
+#
+# RAM-adaptive Dienste leiten ihre Limits aus ramGB ab — damit skaliert die Konfiguration
+# automatisch mit jeder Maschine (profile.nix → default.nix → Option → hier).
+# Feste Limits bleiben wo die Anwendung eine bekannte, maschinenunabhängige Obergrenze hat.
+#
+# Formel-Konvention (RAM-adaptive):
+#   memoryMax  = floor(ramGB * Faktor), mit Mindestgrenze
+#   memoryHigh = 75% von memoryMax (Kernel warnt ab hier, OOM-Kill erst ab max)
+{
+  lib,
+  ramGB ? 16,
+}:
 let
   gb = n: "${toString n}G";
   mb = n: "${toString n}M";
+
+  # Helper: berechnet MemoryHigh aus MemoryMax (75%, mindestens 1 GB)
+  high75 = maxGB: lib.max 1 (lib.floor (maxGB * 0.75));
 
   mkServiceLimits =
     {
@@ -38,7 +54,10 @@ in
 {
   inherit mkServiceLimits gb mb;
 
-  # Tier 1 — Datenbank (RAM aus profile.nix hardware.ramGB)
+  # ── Tier 1 — Datenbank ──────────────────────────────────────────────────────
+  # postgres nimmt ramGB als explizites Argument (Caller: memory.postgres ramGB).
+  # Parameter-ramGB schattiert das äußere ramGB — Nix wählt immer den innersten Binding.
+  # 31.25% = PostgreSQL-Empfehlung für shared_buffers-kompatible MemoryMax auf dedizierten DB-Servern.
   postgres =
     ramGB:
     mkServiceLimits {
@@ -48,24 +67,37 @@ in
       memoryHigh = gb (lib.max 3 (lib.floor (ramGB * 0.25)));
     };
 
-  # Tier 4 — Media (expendable, Transcode-Spitzen)
+  # ── Tier 4 — Media ──────────────────────────────────────────────────────────
+  # 20% des RAM für Jellyfin: Transcode-Puffer + Plugin-Overhead skalieren mit RAM.
+  # Mindestens 2 GB: unter 2 GB ist Jellyfin praktisch unbrauchbar (keine HW-Transcode-Reserve).
+  # Auf q958 (32 GB): max=6 GB, high=4 GB — entspricht bisheriger Konfiguration.
   jellyfin =
     _:
+    let
+      maxGB = lib.max 2 (lib.floor (ramGB * 0.2));
+    in
     mkServiceLimits {
       oomScore = 100;
-      memoryMax = "6G";
-      memoryHigh = "4G";
+      memoryMax = gb maxGB;
+      memoryHigh = gb (high75 maxGB);
     };
 
+  # 6.25% des RAM für SABnzbd: Download-Puffer + Dekompression skalieren mit RAM.
+  # Mindestens 1 GB: unter 1 GB bricht die Pufferlogik bei großen NZBs zusammen.
+  # Auf q958 (32 GB): max=2 GB, high=1 GB — entspricht bisheriger Konfiguration.
   sabnzbd =
     _:
+    let
+      maxGB = lib.max 1 (lib.floor (ramGB * 0.0625));
+    in
     mkServiceLimits {
       oomScore = 300;
-      memoryMax = "2G";
-      memoryHigh = "1536M";
+      memoryMax = gb maxGB;
+      memoryHigh = gb (high75 maxGB);
     };
 
-  # Tier 1 — Ingress & Identität (OOM teils via critical-systemd.nix)
+  # ── Tier 1 — Ingress & Identität ────────────────────────────────────────────
+  # Caddy: reiner Reverse-Proxy, feste Obergrenze — kein RAM-Scaling sinnvoll.
   caddy =
     _:
     mkServiceLimits {
@@ -73,6 +105,8 @@ in
       memoryHigh = "512M";
     };
 
+  # PocketID: SSO-Dienst, sehr schlanker Footprint — fest auf 256M.
+  # OOMScore -900: kritischer Identitätsdienst, letzter Kandidat für OOM-Kill.
   pocketId =
     _:
     mkServiceLimits {
@@ -82,15 +116,22 @@ in
       memoryHigh = "192M";
     };
 
-  # Tier 3 — Observability
+  # ── Tier 3 — Observability ──────────────────────────────────────────────────
+  # 3% des RAM für Loki: Log-Retention-Index + Write-Ahead-Log skalieren mit RAM.
+  # Mindestens 1 GB: unter 1 GB wird Lokis Chunk-Cache zu klein (frequent disk flushes).
+  # Auf q958 (32 GB): max=1 GB, high=1 GB — entspricht bisheriger Konfiguration.
   loki =
     _:
+    let
+      maxGB = lib.max 1 (lib.floor (ramGB * 0.03));
+    in
     mkServiceLimits {
       oomScore = 300;
-      memoryMax = "1G";
-      memoryHigh = "768M";
+      memoryMax = gb maxGB;
+      memoryHigh = gb (high75 maxGB);
     };
 
+  # Vector/Grafana: feste Limits — Log-Shipper und Dashboard haben bekannte Footprints.
   vector =
     _:
     mkServiceLimits {
@@ -107,7 +148,9 @@ in
       memoryHigh = "384M";
     };
 
-  # Tier 4 — *arr (Sonarr, Radarr, Readarr, Prowlarr via arr-helper.nix)
+  # ── Tier 4 — *arr Stack ─────────────────────────────────────────────────────
+  # Sonarr/Radarr/Readarr/Prowlarr: feste 512M — Metadaten-Datenbanken sind klein,
+  # kein Scaling sinnvoll (Burst durch RSS-Sync ist kurz, nicht RAM-abhängig).
   arr =
     _:
     mkServiceLimits {
@@ -132,16 +175,24 @@ in
       memoryHigh = "384M";
     };
 
-  # Tier 5 — Apps (Slice = gemeinsames 2G-Budget für alle Paperless-Units)
-  paperless = {
-    slice = {
-      MemoryMax = lib.mkDefault "2G";
-      MemoryHigh = lib.mkDefault "1536M";
+  # ── Tier 5 — Apps ───────────────────────────────────────────────────────────
+  # Paperless: 6.25% des RAM für das gesamte Slice (alle Units zusammen).
+  # Mindestens 2 GB: OCR + ML-Klassifizierung braucht Arbeitsspeicher.
+  # Auf q958 (32 GB): max=2 GB, high=1 GB — entspricht bisheriger Konfiguration.
+  # Slice-Budget teilen sich: paperless-webserver, paperless-scheduler, paperless-task-queue.
+  paperless =
+    let
+      maxGB = lib.max 2 (lib.floor (ramGB * 0.0625));
+    in
+    {
+      slice = {
+        MemoryMax = lib.mkDefault (gb maxGB);
+        MemoryHigh = lib.mkDefault (gb (high75 maxGB));
+      };
+      service = mkServiceLimits {
+        oomScore = 250;
+      };
+      # nixpkgs paperless-Modul legt Units in system-paperless.slice ab
+      sliceName = "system-paperless.slice";
     };
-    service = mkServiceLimits {
-      oomScore = 250;
-    };
-    # nixpkgs paperless-Modul legt Units in system-paperless.slice ab
-    sliceName = "system-paperless.slice";
-  };
 }

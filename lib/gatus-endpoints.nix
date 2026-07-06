@@ -353,22 +353,14 @@ let
       })
     ];
 
-  forge =
-    lib.optionals (config.my.services.cockpit.enable or false) [
-      (mkTcp {
-        name = "cockpit";
-        group = "forge";
-        port = ports.cockpit;
-      })
-    ]
-    ++ lib.optionals (config.my.services.amp.enable or false) [
-      (mkHttp {
-        name = "amp";
-        group = "forge";
-        host = local;
-        port = ports.amp;
-      })
-    ];
+  forge = lib.optionals (config.my.services.amp.enable or false) [
+    (mkHttp {
+      name = "amp";
+      group = "forge";
+      host = local;
+      port = ports.amp;
+    })
+  ];
 
   endpoints = core ++ storage ++ dataServices ++ observability ++ media ++ apps ++ forge;
 in

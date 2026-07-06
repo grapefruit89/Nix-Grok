@@ -14,7 +14,7 @@ meta:
   docs:
     - docs/guides/GUIDE-auth-stack.md
     - docs/guides/GUIDE-security-secrets.md
-    - docs/adr/024-systemd-creds-tpm.md
+    - docs/adr/2024-systemd-creds-tpm.md
   tags:
     - auth
     - oidc
@@ -22,7 +22,7 @@ meta:
     - passkeys
 ---
 
-# ADR-025: Pocket-ID als OIDC/Passkey Provider
+# ADR-1025: Pocket-ID als OIDC/Passkey Provider
 
 **Status:** Accepted
 **Datum:** 2026-07-05
@@ -112,11 +112,11 @@ Das Modul `17-pocket-id.nix` setzt:
 
 - Alle SSO-Flows gehen über `auth.<domain>` (Pocket-ID)
 - Jellyseerr ist **Ausnahme**: nutzt Jellyfin-eigene Auth, kein OIDC (→ GUIDE-auth-stack.md)
-- Stufe 9: `ENCRYPTION_KEY` via `LoadCredential` aus systemd-creds (→ ADR-024)
+- Stufe 9: `ENCRYPTION_KEY` via `LoadCredential` aus systemd-creds (→ ADR-2024)
 - OIDC-Client-Provisioning ist manuell (Web-UI) — kein deklarativer Dateimechanismus
 
 ## Siehe auch
 
 - [GUIDE-auth-stack.md](../guides/GUIDE-auth-stack.md) — Auth-Matrix, OIDC-Clients, OAuth2-Proxy
-- [ADR-024 — systemd-creds](024-systemd-creds-tpm.md) — wie ENCRYPTION_KEY in Stufe 9 läuft
-- [ADR-019 — UDS-First](019-uds-first-philosophy.md) — Pocket-ID über TCP (kein UDS-Support)
+- [ADR-2024 — systemd-creds](2024-systemd-creds-tpm.md) — wie ENCRYPTION_KEY in Stufe 9 läuft
+- [ADR-1019 — UDS-First](1019-uds-first-philosophy.md) — Pocket-ID über TCP (kein UDS-Support)

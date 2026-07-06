@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-029 mTLS Zero-Trust — interne Dienst-Kommunikation (proposed, nicht implementiert)
+  purpose: ADR-2029 mTLS Zero-Trust — interne Dienst-Kommunikation (proposed, nicht implementiert)
   status: proposed
   date: 2026-07-05
   error_pattern: "certificate verify failed|tls.*handshake.*error|x509.*unknown authority"
@@ -9,10 +9,10 @@ meta:
   services: []
   betrifft: []
   docs:
-    - docs/adr/026-kernel-hardening-sysctl.md
+    - docs/adr/2026-kernel-hardening-sysctl.md
     - docs/adr/028-systemd-service-isolation.md
-    - docs/adr/004-unix-socket-upstreams.md
-    - docs/adr/019-uds-first-philosophy.md
+    - docs/adr/1004-unix-socket-upstreams.md
+    - docs/adr/1019-uds-first-philosophy.md
   tags:
     - adr
     - mtls
@@ -21,7 +21,7 @@ meta:
     - proposed
 ---
 
-# ADR-029: mTLS Zero-Trust — Interne Dienst-Kommunikation {#adr-029}
+# ADR-2029: mTLS Zero-Trust — Interne Dienst-Kommunikation {#adr-2029}
 
 | Feld | Wert |
 |------|------|
@@ -36,7 +36,7 @@ meta:
 
 ## Kontext {#kontext}
 
-- Aktuell kommunizieren interne Dienste primär über Unix-Domain-Sockets ([ADR-004](004-unix-socket-upstreams.md), [ADR-019](019-uds-first-philosophy.md)) — sicher und effizient für Same-Host-Kommunikation.
+- Aktuell kommunizieren interne Dienste primär über Unix-Domain-Sockets ([ADR-1004](1004-unix-socket-upstreams.md), [ADR-1019](1019-uds-first-philosophy.md)) — sicher und effizient für Same-Host-Kommunikation.
 - UDS reicht nicht für Multi-Host-Szenarien oder containerisierte Dienste auf separaten Netbird-Nodes.
 - Das "weicher Kern"-Problem: Wenn ein Dienst aus einer Sandbox ausbricht, könnte er intern andere Dienste direkt über TCP ansprechen, ohne weitere Authentifizierung.
 - Interne HTTP-Endpunkte (Servarr-APIs, Prometheus, etc.) sind derzeit nur über nftables-Regeln geschützt — kein kryptografischer Identitätsnachweis.
@@ -78,11 +78,11 @@ prowlarr.internal:443 {
 
 ### Zertifikat-Bereitstellung {#zertifikat-bereitstellung}
 
-Zertifikate werden über `systemd-creds` ([ADR-024](024-systemd-creds-tpm.md)) oder ein `step`-Sidecar-Service pro Dienst bereitgestellt. Die privaten Keys landen nie im Nix-Store.
+Zertifikate werden über `systemd-creds` ([ADR-2024](2024-systemd-creds-tpm.md)) oder ein `step`-Sidecar-Service pro Dienst bereitgestellt. Die privaten Keys landen nie im Nix-Store.
 
 ## Warum noch nicht implementiert {#noch-nicht}
 
-- UDS-first ([ADR-019](019-uds-first-philosophy.md)) deckt >90 % der internen Kommunikation ab — mTLS-Overhead wäre unverhältnismäßig.
+- UDS-first ([ADR-1019](1019-uds-first-philosophy.md)) deckt >90 % der internen Kommunikation ab — mTLS-Overhead wäre unverhältnismäßig.
 - `step-ca` als NixOS-Service braucht persistenten State und CA-Key-Management — Komplexität noch nicht gerechtfertigt.
 - Netbird (Tailscale-Mechanismus) bietet bereits E2E-Verschlüsselung für Multi-Host-Kommunikation.
 - **Trigger für Implementierung:** Sobald ein Dienst außerhalb des UDS-Perimeters Dienste ohne menschliche Authentifizierung aufrufen muss (Agent-zu-Agent über Netzwerk).
@@ -108,8 +108,8 @@ Zertifikate werden über `systemd-creds` ([ADR-024](024-systemd-creds-tpm.md)) o
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-004 — Unix-Socket-Upstreams](004-unix-socket-upstreams.md) — aktuelle primäre IPC-Methode
-- [ADR-019 — UDS-First-Philosophie](019-uds-first-philosophy.md) — warum UDS fast immer genug ist
-- [ADR-024 — systemd-creds TPM](024-systemd-creds-tpm.md) — Secret-Bereitstellung für Zertifikat-Keys
-- [ADR-026 — Kernel-Härtung](026-kernel-hardening-sysctl.md) — komplementäre Härtungsschicht
+- [ADR-1004 — Unix-Socket-Upstreams](1004-unix-socket-upstreams.md) — aktuelle primäre IPC-Methode
+- [ADR-1019 — UDS-First-Philosophie](1019-uds-first-philosophy.md) — warum UDS fast immer genug ist
+- [ADR-2024 — systemd-creds TPM](2024-systemd-creds-tpm.md) — Secret-Bereitstellung für Zertifikat-Keys
+- [ADR-2026 — Kernel-Härtung](2026-kernel-hardening-sysctl.md) — komplementäre Härtungsschicht
 - [ADR-028 — Systemd Service Isolation](028-systemd-service-isolation.md) — Sandbox-Ebene unter mTLS

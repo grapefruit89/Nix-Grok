@@ -33,6 +33,8 @@ in
 
   my.security.firewall.ipv6 = p.network.ipv6.firewall;
 
+  my.services.technitium-dns-server.splitHorizon.enable = true;
+
   my.services = {
     netbird.domain = "netbird.${config.my.configs.identity.domain}";
     netbird.setupKeyFile = secretPath "netbirdSetupKey";

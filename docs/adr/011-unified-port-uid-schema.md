@@ -12,9 +12,9 @@ meta:
   docs:
     - docs/adr/README.md
     - docs/guides/GUIDE-server-map.md
-    - docs/adr/004-unix-socket-upstreams.md
+    - docs/adr/1004-unix-socket-upstreams.md
     - docs/adr/007-dendritic-one-file-per-service.md
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/2008-nftables-l4-hardening.md
     - docs/adr/012-modern-cli-tools.md
   lib:
     - lib/uid-registry.nix
@@ -42,10 +42,10 @@ meta:
 
 - Ports waren historisch gewachsen: 8989 (Sonarr), 7878 (Radarr), 28981 (Paperless) — kein System, KI-Lookup nötig.
 - UIDs für *arr-Services: 969/978/984/987/989 — zufällig, kein Bezug zum Modul.
-- nftables `skuid`-Regeln brauchen statische, merkbare UIDs ([ADR-008](008-nftables-l4-hardening.md) — `skuid`-basierte VPN-Freigabe pro App).
+- nftables `skuid`-Regeln brauchen statische, merkbare UIDs ([ADR-2008](2008-nftables-l4-hardening.md) — `skuid`-basierte VPN-Freigabe pro App).
 - KI-Assistenten müssen Port ↔ UID ↔ Modul in einem Schritt ableiten können — ohne Lookup in Konfigurationsdateien.
 - Das dendritische Modul-Layout ([ADR-007](007-dendritic-one-file-per-service.md)) macht den Ordner-Präfix (`50-media`, `60-apps`, …) zur natürlichen Basis.
-- Unix-Socket-Upstreams ([ADR-004](004-unix-socket-upstreams.md)) brauchen eindeutige UDS-Pfade je Dienst.
+- Unix-Socket-Upstreams ([ADR-1004](1004-unix-socket-upstreams.md)) brauchen eindeutige UDS-Pfade je Dienst.
 
 ## Entscheidung {#entscheidung}
 
@@ -62,7 +62,7 @@ meta:
 ### Ausnahmen (unveränderlich) {#ausnahmen}
 
 - **SSH = 22**, **DNS = 53**, **MQTT = 1883** — IANA-Standards, externe Geräte können nicht umgestellt werden.
-- **Valkey = 6379** — RESP2-Protokoll-Default, nutzt UDS ohnehin ([ADR-004](004-unix-socket-upstreams.md)).
+- **Valkey = 6379** — RESP2-Protokoll-Default, nutzt UDS ohnehin ([ADR-1004](1004-unix-socket-upstreams.md)).
 
 ### Single Source of Truth {#single-source}
 
@@ -78,7 +78,7 @@ meta:
 ### Positiv {#positiv}
 
 - KI kann Port, UID und Modul ohne Suche ableiten: `sonarr` → 5003, Modul `50-media`, nftables `skuid 5003`.
-- nftables `skuid 5006 accept` ist selbsterklärend: Prowlarr darf VPN nutzen ([ADR-008](008-nftables-l4-hardening.md)).
+- nftables `skuid 5006 accept` ist selbsterklärend: Prowlarr darf VPN nutzen ([ADR-2008](2008-nftables-l4-hardening.md)).
 - Neue Services: Ordner-Präfix nehmen, nächste freie Stelle belegen — kein Koordinationsaufwand.
 - `lib/server-map.nix` ist maschinenlesbare Dokumentation für Grafana/Dashboards.
 
@@ -86,11 +86,11 @@ meta:
 
 - Einmalige UID-Migration: `chown -R` auf `/persist/var/lib/{sonarr,...}` nötig → [Migration](#migration).
 - Port-Änderungen erfordern Firewall-/Caddy-Reload (kein Hard-Blackout, aber kurze Unterbrechung).
-- Unix Sockets für *arr (Servarr/.NET) nicht möglich — bleiben TCP (→ [ADR-004](004-unix-socket-upstreams.md#konsequenzen)).
+- Unix Sockets für *arr (Servarr/.NET) nicht möglich — bleiben TCP (→ [ADR-1004](1004-unix-socket-upstreams.md#konsequenzen)).
 
 ### Unix Socket Ausbau {#unix-sockets}
 
-Vollständige Entscheidung welche Dienste UDS nutzen: [ADR-004](004-unix-socket-upstreams.md)
+Vollständige Entscheidung welche Dienste UDS nutzen: [ADR-1004](1004-unix-socket-upstreams.md)
 
 | Transport | Services |
 |-----------|---------|
@@ -135,6 +135,6 @@ sudo /etc/nixos/scripts/migrate-arr-uids.sh
 ## Siehe auch {#siehe-auch}
 
 - [ADR-007 — Dendritische Module](007-dendritic-one-file-per-service.md) — Ordner-Struktur als Basis für Präfix-Schema
-- [ADR-008 — nftables L4-Härtung](008-nftables-l4-hardening.md) — `skuid`-Regeln die statische UIDs aus diesem Schema nutzen
-- [ADR-004 — Unix-Socket-Upstreams](004-unix-socket-upstreams.md) — welche Dienste UDS statt TCP nutzen
+- [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — `skuid`-Regeln die statische UIDs aus diesem Schema nutzen
+- [ADR-1004 — Unix-Socket-Upstreams](1004-unix-socket-upstreams.md) — welche Dienste UDS statt TCP nutzen
 - [ADR-012 — Moderne CLI-Tools](012-modern-cli-tools.md) — gleicher DX-Commit-Kontext (Stufe 6)

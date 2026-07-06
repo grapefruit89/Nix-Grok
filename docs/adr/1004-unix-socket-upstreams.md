@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-004 Unix-Socket-Upstreams für Caddy — weniger TCP-Ports, klarere Ingress-Grenze
+  purpose: ADR-1004 Unix-Socket-Upstreams für Caddy — weniger TCP-Ports, klarere Ingress-Grenze
   status: accepted
   date: 2026-06-17
   betrifft:
@@ -19,7 +19,7 @@ meta:
     - uds
 ---
 
-# ADR-004: Unix-Socket-Upstreams für interne Dienste {#adr-004}
+# ADR-1004: Unix-Socket-Upstreams für interne Dienste {#adr-1004}
 
 | Feld | Wert |
 |------|------|

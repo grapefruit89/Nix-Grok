@@ -26,7 +26,10 @@
 let
   cfg = config.my.services.audiobookshelf;
   factory = import ../../lib/service-factory.nix { inherit lib; };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
   port = config.my.ports.audiobookshelf;
   mediaRoot = config.my.services.storage.poolMountPoint;
   storageReady = config.my.services.storage.enable or false;

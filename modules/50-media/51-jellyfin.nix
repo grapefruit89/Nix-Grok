@@ -5,7 +5,7 @@
 #   purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy + Pocket-ID SSO-Plugin
 #   docs:
 #     - docs/memory_oom.md
-#     - docs/adr/001-dns-dot-fail-closed.md
+#     - docs/adr/1001-dns-dot-fail-closed.md
 #   lib:
 #     - lib/memory-policy.nix
 #   services:
@@ -27,7 +27,7 @@
 #
 # Jellyseerr nutzt Jellyfin-Auth → benötigt kein eigenes OIDC.
 #
-# Transcode-Strategie (ADR-001 Anhang):
+# Transcode-Strategie (ADR-1001 Anhang):
 #   - /run/jellyfin-transcode ist ein dediziertes tmpfs (6 GB Limit, RAM-backed)
 #   - Segmente leben nie auf Disk → kein I/O-Wear, kein voll laufender ZFS-Pool
 #   - Cleanup-Timer läuft alle 5 min mit RAM-Druck-Adaption:
@@ -47,7 +47,10 @@
 }:
 let
   factory = import ../../lib/service-factory.nix { inherit lib; };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
   cfgJellyfin = config.my.services.jellyfin;
   cfgJellyseerr = config.my.services.jellyseerr;
   domain = config.my.configs.identity.domain;

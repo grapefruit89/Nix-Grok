@@ -38,8 +38,8 @@ Ideen und Patterns kommen von außen — als Inspiration, nicht als Dependency.
 
 | Thema | Entscheidung | Abgelehnte Alternative |
 |-------|-------------|------------------------|
-| DNS-Resolver | Technitium (DoT, fail-closed) | Blocky (fail-open Bug, ADR-001) |
-| Firewall | nftables nativ | iptables, ufw (ADR-008) |
+| DNS-Resolver | Technitium (DoT, fail-closed) | Blocky (fail-open Bug, ADR-1001) |
+| Firewall | nftables nativ | iptables, ufw (ADR-2008) |
 | VPN (Admin) | Netbird (self-hosted) | Tailscale (DNS-Konflikte bei v5) |
 | VPN (Usenet) | Privado WireGuard | OpenVPN (overhead) |
 
@@ -64,7 +64,7 @@ Ideen und Patterns kommen von außen — als Inspiration, nicht als Dependency.
 | SSO | Pocket-ID (OIDC) | Authelia (heavy), Keycloak (Java, resource-heavy) |
 | Secrets | SOPS + age | Vault (Server-Overhead), environment files plaintext |
 | Cert-Mgmt | Caddy ACME-intern | cert-manager (Kubernetes-heritage) |
-| Transport | Unix Domain Sockets first | TCP-Loopback (ADR-019) |
+| Transport | Unix Domain Sockets first | TCP-Loopback (ADR-1019) |
 
 ---
 
@@ -103,7 +103,7 @@ Drei Vorgänger-Repos wurden analysiert. Einmal gewonnenes Wissen wurde in ADRs 
 |------|-----|----------------------|--------|
 | `mynixos` (v1) | github.com/grapefruit89/mynixos | No-Legacy-Philosophie (ADR-020) | vollständig migriert |
 | `mynixos-v5` | github.com/grapefruit89/mynixos-v5 | Antipatterns, IFD-Verbot, SOURCES-Konzept | vollständig migriert |
-| `mynixos-knowledge-base` | github.com/grapefruit89/mynixos-knowledge-base | SOPS-Boot-Race (ADR-021), No-RAID (ADR-022), SSH Socket-Aktivierung ANTIPATTERN, No-GUI-Assertion | vollständig migriert |
+| `mynixos-knowledge-base` | github.com/grapefruit89/mynixos-knowledge-base | SOPS-Boot-Race (ADR-2021), No-RAID (ADR-3022), SSH Socket-Aktivierung ANTIPATTERN, No-GUI-Assertion | vollständig migriert |
 | `nix-hermes` | github.com/grapefruit89/nix-hermes | `LLM_FIRST_INSTRUCTIONS.md`-Muster (Nix-Grok ist bereits weiter mit nixos_docs.sqlite + MCP) | konzeptuell übernommen |
 
 ### Hinweis zu nix-hermes

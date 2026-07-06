@@ -7,9 +7,9 @@
 #     - caddy
 #     - snippets
 #   docs:
-#     - docs/adr/014-caddy-security-headers-trusted-proxies.md
-#     - docs/adr/016-caddy-security-headers-coop-scanners.md
-#     - docs/adr/017-caddy-health-checks-error-fallback.md
+#     - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+#     - docs/adr/1016-caddy-security-headers-coop-scanners.md
+#     - docs/adr/1017-caddy-health-checks-error-fallback.md
 # ---
 {
   pocketIdPort ? null,

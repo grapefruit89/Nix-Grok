@@ -25,7 +25,10 @@
 }:
 let
   cfgObs = config.my.observability;
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
   sockets = import ../../lib/unix-sockets.nix { inherit lib; };
   hardening = import ../../lib/systemd-hardening.nix { inherit lib; };
   domain = config.my.configs.identity.domain;

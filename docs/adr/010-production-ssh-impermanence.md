@@ -12,8 +12,8 @@ meta:
   docs:
     - docs/adr/README.md
     - docs/guides/GUIDE-security-secrets.md
-    - docs/adr/006-sops-migration-path.md
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/2006-sops-migration-path.md
+    - docs/adr/2008-nftables-l4-hardening.md
   tags:
     - adr
     - ssh
@@ -35,14 +35,14 @@ meta:
 
 Während der Entwicklung (Stufe < 9) bleibt SSH auf Port 22 und der Root ist tmpfs-freundlich. In Production (Stufe ≥ 9) gelten Zero-Trust-Defaults: kein Passwort-Login, gehärteter Port, ephemeres `/`.
 
-SOPS für Secrets-Management ([ADR-006](006-sops-migration-path.md)) wird ebenfalls erst in Stufe 9+ aktiviert. nftables ([ADR-008](008-nftables-l4-hardening.md)) liest `my.ports.ssh` — kein separates Port-Mapping in der Firewall.
+SOPS für Secrets-Management ([ADR-2006](2006-sops-migration-path.md)) wird ebenfalls erst in Stufe 9+ aktiviert. nftables ([ADR-2008](2008-nftables-l4-hardening.md)) liest `my.ports.ssh` — kein separates Port-Mapping in der Firewall.
 
 ## Entscheidung {#entscheidung}
 
 1. **`rollout.stufe >= 9`** setzt `my.mode = "production"` und aktiviert `my.impermanence`.
 2. **SSH-Port** wechselt über `rollout.nix`: `my.ports.ssh = productionSshPort` (q958: **53844**, Daten in `machines/q958/profile.nix`).
 3. **`PermitTTY`**: Match für LAN/Tailscale-CIDR → `yes`; Match All → `no` (`modules/20-security/ssh.nix`).
-4. **nftables** liest `my.ports.ssh` — kein separates Port-Mapping in der Firewall ([ADR-008](008-nftables-l4-hardening.md)).
+4. **nftables** liest `my.ports.ssh` — kein separates Port-Mapping in der Firewall ([ADR-2008](2008-nftables-l4-hardening.md)).
 5. **Dropbear-Rescue** bleibt unabhängig vom Modus aktiv (Stufe 8+).
 
 ### Rollout-Stufenplan {#stufenplan}
@@ -81,6 +81,6 @@ SOPS für Secrets-Management ([ADR-006](006-sops-migration-path.md)) wird ebenfa
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-006 — SOPS-Migration](006-sops-migration-path.md) — Secrets-Management das gleichzeitig mit Stufe 9 aktiviert wird
-- [ADR-008 — nftables L4-Härtung](008-nftables-l4-hardening.md) — Firewall liest `my.ports.ssh` dynamisch
+- [ADR-2006 — SOPS-Migration](2006-sops-migration-path.md) — Secrets-Management das gleichzeitig mit Stufe 9 aktiviert wird
+- [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — Firewall liest `my.ports.ssh` dynamisch
 - [GUIDE-security-secrets](../guides/GUIDE-security-secrets.md) — ausführliche Anleitung zur Secrets-Verwaltung

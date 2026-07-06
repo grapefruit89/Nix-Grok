@@ -4,7 +4,7 @@
 #   role: lib
 #   purpose: DNS-Upstream-Verschlüsselungs-Assertions (DoT/DoH)
 #   docs:
-#     - docs/adr/001-dns-dot-fail-closed.md
+#     - docs/adr/1001-dns-dot-fail-closed.md
 #     - docs/AUDIT-blocky-caddy-ipv6.md
 #   tags:
 #     - dns

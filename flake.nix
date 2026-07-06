@@ -51,10 +51,21 @@
         config.allowUnfree = true;
       };
       grok-cli = pkgs.callPackage ./packages/grok-cli { };
+      secrets-portal = pkgs.callPackage ./packages/secrets-portal { };
       claude-code-pkg = llm-agents.packages.${system}.claude-code;
     in
     {
-      packages.${system}.grok-cli = grok-cli;
+      packages.${system} = {
+        grok-cli = grok-cli;
+        secrets-portal = secrets-portal;
+        # Lokale Optionsreferenz: `nix build .#docs && cat result`
+        # Generiert JSON-Dokumentation aller my.* Optionen aus dem evaluierten q958-System.
+        # Benötigt profile.local.nix (secrets). Nur auf dem Host sinnvoll nutzbar.
+        docs =
+          (pkgs.nixosOptionsDoc {
+            options = self.nixosConfigurations.q958.options.my;
+          }).optionsJSON;
+      };
 
       nixosConfigurations = {
         q958 = nixpkgs.lib.nixosSystem {

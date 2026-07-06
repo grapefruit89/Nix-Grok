@@ -20,7 +20,10 @@
   ...
 }:
 let
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
   vpnConn = import ../../lib/vpn-connection.nix { inherit lib; };
   cfgSabnzbd = config.my.services.sabnzbd;
   vpnCfg = config.my.services.vpn-confinement;

@@ -5,7 +5,7 @@
 #   role: module
 #   purpose: VPN Network-Namespaces für Usenet (veth-Bridge, Kill-Switch, Healthcheck)
 #   docs:
-#     - docs/adr/009-vpn-leak-check.md
+#     - docs/adr/2009-vpn-leak-check.md
 #   tags:
 #     - vpn
 #     - netns

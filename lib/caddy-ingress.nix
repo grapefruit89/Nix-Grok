@@ -8,7 +8,7 @@
 #     - lib/caddy-ingress.nix
 #     - lib/service-enable.nix
 #   docs:
-#     - docs/adr/017-caddy-health-checks-error-fallback.md
+#     - docs/adr/1017-caddy-health-checks-error-fallback.md
 #   tags:
 #     - caddy
 #     - ingress

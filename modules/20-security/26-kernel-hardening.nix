@@ -4,7 +4,7 @@
 #   role: module
 #   purpose: Kernel- und System-Härtung (sysctl, Boot-Parameter, Mount-Flags)
 #   docs:
-#     - docs/adr/026-kernel-hardening-sysctl.md
+#     - docs/adr/2026-kernel-hardening-sysctl.md
 #     - docs/guides/GUIDE-kernel-hardening.md
 #   tags:
 #     - security
@@ -118,13 +118,13 @@ in
       "net.ipv4.icmp_ignore_bogus_error_responses" = 1; # Drop RFC-verletzte ICMP-Fehler
       "net.ipv4.tcp_timestamps" = 0;
       "net.ipv4.tcp_syn_retries" = 3;
-      "net.ipv4.tcp_max_syn_backlog" = 4096;
+      "net.ipv4.tcp_max_syn_backlog" = 4096; # SYN-Queue: 4096 = Schutz vor SYN-Flood ohne legitime Verbindungen zu verwerfen
       "net.ipv4.tcp_fin_timeout" = 15;
       "net.ipv6.conf.all.accept_ra" = 0;
       "net.ipv6.conf.default.accept_ra" = 0;
       "net.core.bpf_jit_harden" = 2;
-      "net.core.rmem_max" = 212992;
-      "net.core.wmem_max" = 212992;
+      "net.core.rmem_max" = 212992; # Socket Receive-Buffer (208 KB = Linux-Default). Kein Scaling nötig — kein Hochdurchsatz-Server.
+      "net.core.wmem_max" = 212992; # Socket Send-Buffer (208 KB = Linux-Default). Symmetrisch zu rmem_max.
       "net.ipv4.ip_unprivileged_port_start" = 1001; # pocket-id + other services with id >= 1001 bind directly
 
       # Memory / introspection

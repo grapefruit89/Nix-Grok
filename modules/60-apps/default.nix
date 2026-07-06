@@ -22,7 +22,10 @@ let
     inherit lib;
     oomScore = -900;
   };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
 in
 {
   imports = [
@@ -31,7 +34,6 @@ in
     ./61-homepage.nix
     ./automation.nix
     ./hermes.nix
-    ./forge.nix
     ./gaming.nix
   ];
 

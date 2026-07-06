@@ -8,9 +8,9 @@ meta:
     - lib/caddy-snippets.nix
   docs:
     - docs/adr/README.md
-    - docs/adr/014-caddy-security-headers-trusted-proxies.md
-    - docs/adr/017-caddy-health-checks-error-fallback.md
-    - docs/adr/018-caddy-dual-log-dsgvo.md
+    - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+    - docs/adr/1017-caddy-health-checks-error-fallback.md
+    - docs/adr/1018-caddy-dual-log-dsgvo.md
   tags:
     - adr
     - caddy
@@ -20,7 +20,7 @@ meta:
     - scanner
 ---
 
-# ADR 016 — Caddy Security-Härtung II: Server-Header, COOP, Scanner-Blocking {#adr-016}
+# ADR 016 — Caddy Security-Härtung II: Server-Header, COOP, Scanner-Blocking {#adr-1016}
 
 ## Status {#status}
 
@@ -28,7 +28,7 @@ meta:
 
 ## Kontext {#kontext}
 
-Chat-Transcript-Analyse (`deepseek/homelab_server/`) ergab drei weitere fehlende Härtungen in `caddy-snippets.nix`, die in der ersten Caddy-Härtungsrunde ([ADR-014](014-caddy-security-headers-trusted-proxies.md)) übersehen wurden.
+Chat-Transcript-Analyse (`deepseek/homelab_server/`) ergab drei weitere fehlende Härtungen in `caddy-snippets.nix`, die in der ersten Caddy-Härtungsrunde ([ADR-1014](1014-caddy-security-headers-trusted-proxies.md)) übersehen wurden.
 
 ### Problem 1: Server-Header gibt Caddy-Version preis {#problem-server-header}
 
@@ -41,7 +41,7 @@ Fix: `header -Server` entfernt den Header komplett.
 COOP (`Cross-Origin-Opener-Policy: same-origin`) isoliert das Browser-Fenster von fremden Origins:
 - Verhindert Zugriff via `window.opener` auf das übergeordnete Fenster
 - Notwendig für `SharedArrayBuffer` und `Atomics` in sicheren Kontexten
-- Ergänzt `X-Frame-Options` ([ADR-014](014-caddy-security-headers-trusted-proxies.md#snippets)) auf anderer Angriffsfläche
+- Ergänzt `X-Frame-Options` ([ADR-1014](1014-caddy-security-headers-trusted-proxies.md#snippets)) auf anderer Angriffsfläche
 
 ### Problem 3: Keine Scanner-Blockierung {#problem-scanner}
 
@@ -94,6 +94,6 @@ Nicht global empfohlen — `python-requests` UA-Block kann legitime interne Skri
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-014 — Caddy Security-Härtung I](014-caddy-security-headers-trusted-proxies.md) — erste Härtungsrunde (Headers + trusted_proxies)
-- [ADR-017 — Caddy Health Checks](017-caddy-health-checks-error-fallback.md) — 503-Fallback für ausgefallene Dienste
-- [ADR-018 — Caddy Dual-Log DSGVO](018-caddy-dual-log-dsgvo.md) — IP-Anonymisierung in Caddy-Logs
+- [ADR-1014 — Caddy Security-Härtung I](1014-caddy-security-headers-trusted-proxies.md) — erste Härtungsrunde (Headers + trusted_proxies)
+- [ADR-1017 — Caddy Health Checks](1017-caddy-health-checks-error-fallback.md) — 503-Fallback für ausgefallene Dienste
+- [ADR-1018 — Caddy Dual-Log DSGVO](1018-caddy-dual-log-dsgvo.md) — IP-Anonymisierung in Caddy-Logs

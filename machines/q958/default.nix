@@ -58,6 +58,8 @@ in
   my = {
     core = {
       boot-safeguard.enable = true;
+      # 1 GB ESP (NIXBOOT): 15 Generationen × ~50 MB worst-case = 750 MB + 77 MB belegt → 827 MB < 1 GB.
+      boot-safeguard.configurationLimit = 15;
       nix-tuning.enable = true;
       zram-swap.enable = true;
       kernel-slim = {
@@ -84,6 +86,7 @@ in
       };
       hardware = {
         ramGB = p.hardware.ramGB;
+        nixStoreGB = p.hardware.nixStoreGB;
       };
       server = {
         lanIP = p.network.lan.ip;
@@ -162,11 +165,6 @@ in
       };
       restic-backup.healthcheckUrl = p.restic.healthcheckUrl;
       homepage.agentZeroUrl = p.integrations.agentZero.url;
-      cockpit = {
-        amtHost = p.integrations.amt.host;
-        amtPort = p.integrations.amt.port;
-        exposeAmt = p.integrations.amt.host != "";
-      };
       home-assistant = {
         port = p.iot.homeAssistant.port;
         zigbeeDevice = zigbeeSocket;

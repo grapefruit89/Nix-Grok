@@ -11,9 +11,9 @@ meta:
     - modules/10-network/11-network.nix
   docs:
     - docs/adr/README.md
-    - docs/adr/014-caddy-security-headers-trusted-proxies.md
-    - docs/adr/016-caddy-security-headers-coop-scanners.md
-    - docs/adr/017-caddy-health-checks-error-fallback.md
+    - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+    - docs/adr/1016-caddy-security-headers-coop-scanners.md
+    - docs/adr/1017-caddy-health-checks-error-fallback.md
     - docs/RUNBOOK.md
   tags:
     - adr
@@ -24,7 +24,7 @@ meta:
     - ip-anonymisierung
 ---
 
-# ADR 018 — Caddy Dual-Log: DSGVO-Datei + journald für CrowdSec {#adr-018}
+# ADR 018 — Caddy Dual-Log: DSGVO-Datei + journald für CrowdSec {#adr-1018}
 
 ## Status {#status}
 
@@ -41,7 +41,7 @@ IP-Adressen in persistenten Logs nicht vollständig gespeichert werden. Journald
 sind ephemer und rotieren automatisch — sie fallen unter den Sicherheitszweck. Eine
 separate Datei für Audit/Compliance-Zwecke muss aber IP-anonymisiert sein.
 
-Die Caddy-Härtungsrunde ([ADR-014](014-caddy-security-headers-trusted-proxies.md)) fügte
+Die Caddy-Härtungsrunde ([ADR-1014](1014-caddy-security-headers-trusted-proxies.md)) fügte
 `trusted_proxies` hinzu — dadurch wird `client_ip` korrekt befüllt und muss ebenfalls
 maskiert werden.
 
@@ -97,7 +97,7 @@ log dsgvo_access {
 | `request.client_ip` | `93.184.216.34` | `93.184.216.0` |
 | IPv6 `request.remote_ip` | `2001:db8::1` | `2001:db8::` (/48) |
 
-`client_ip` ist Caddy ≥ 2.7-Standardfeld (nach X-Forwarded-For-Auflösung via [ADR-014](014-caddy-security-headers-trusted-proxies.md#network-config)) und muss ebenfalls maskiert werden.
+`client_ip` ist Caddy ≥ 2.7-Standardfeld (nach X-Forwarded-For-Auflösung via [ADR-1014](1014-caddy-security-headers-trusted-proxies.md#network-config)) und muss ebenfalls maskiert werden.
 
 ## Diagnose {#diagnose}
 
@@ -148,7 +148,7 @@ Vollständige Fehlerdetails: [RUNBOOK — Caddy](../RUNBOOK.md#caddy-ip-mask)
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-014 — Caddy Security-Härtung I](014-caddy-security-headers-trusted-proxies.md) — `trusted_proxies` macht `client_ip` relevant
-- [ADR-016 — Caddy Security-Härtung II](016-caddy-security-headers-coop-scanners.md) — Scanner-Blocking (komplementär)
-- [ADR-017 — Caddy Health Checks](017-caddy-health-checks-error-fallback.md) — 503-Fallback
+- [ADR-1014 — Caddy Security-Härtung I](1014-caddy-security-headers-trusted-proxies.md) — `trusted_proxies` macht `client_ip` relevant
+- [ADR-1016 — Caddy Security-Härtung II](1016-caddy-security-headers-coop-scanners.md) — Scanner-Blocking (komplementär)
+- [ADR-1017 — Caddy Health Checks](1017-caddy-health-checks-error-fallback.md) — 503-Fallback
 - [RUNBOOK — Caddy ip_mask](../RUNBOOK.md#caddy-ip-mask) — Quick-Fix bei ip_mask Syntaxfehler

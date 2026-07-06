@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: "ADR-031: Caddy-Zonen-Konzept — admin-hangar vs family-pocketid vs public"
+  purpose: "ADR-1031: Caddy-Zonen-Konzept — admin-hangar vs family-pocketid vs public"
   tags:
     - caddy
     - zones
@@ -11,11 +11,11 @@ meta:
     - lib/caddy-ingress.nix
     - lib/caddy-snippets.nix
     - lib/services-spec.nix
-    - docs/adr/014-caddy-security-headers-trusted-proxies.md
-    - docs/adr/025-pocket-id-oidc-provider.md
+    - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+    - docs/adr/1025-pocket-id-oidc-provider.md
 ---
 
-# ADR-031: Caddy-Zonen-Konzept — admin-hangar vs family-pocketid vs public
+# ADR-1031: Caddy-Zonen-Konzept — admin-hangar vs family-pocketid vs public
 
 **Status:** accepted  
 **Datum:** 2026-07-05  

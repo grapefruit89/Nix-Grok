@@ -4,8 +4,8 @@
 #   role: machine
 #   purpose: Stufe 0+ Zugang — LAN, DNS/IPv6-Assertions, SSH-Gate
 #   docs:
-#     - docs/adr/001-dns-dot-fail-closed.md
-#     - docs/adr/002-ipv6-homelab-v4-only.md
+#     - docs/adr/1001-dns-dot-fail-closed.md
+#     - docs/adr/1002-ipv6-homelab-v4-only.md
 #   tags:
 #     - access
 #     - rollout

@@ -18,7 +18,10 @@
   ...
 }:
 let
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
   cfgPaperless = config.my.services.paperless;
   domain = config.my.configs.identity.domain;
 in

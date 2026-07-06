@@ -4,7 +4,7 @@
 #   role: lib
 #   purpose: nftables ruleset Generator — WAN-Härtung, skuid, portscan
 #   docs:
-#     - docs/adr/008-nftables-l4-hardening.md
+#     - docs/adr/2008-nftables-l4-hardening.md
 #     - docs/guides/GUIDE-nftables-hardening.md
 #   tags:
 #     - nftables

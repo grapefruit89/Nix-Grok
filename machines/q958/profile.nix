@@ -4,8 +4,8 @@
 #   role: machine
 #   purpose: Einzige Datenquelle aller q958-Maschinenwerte
 #   docs:
-#     - docs/adr/001-dns-dot-fail-closed.md
-#     - docs/adr/002-ipv6-homelab-v4-only.md
+#     - docs/adr/1001-dns-dot-fail-closed.md
+#     - docs/adr/1002-ipv6-homelab-v4-only.md
 #   tags:
 #     - dns
 #     - ipv6
@@ -76,10 +76,41 @@ in
       ];
     };
     dns = {
+      # Single Source of Truth fuer resolved (IP#hostname) + Technitium API (IP:853)
+      # Reihenfolge: schnellste zuerst, geografisch und organisatorisch diversifiziert
       bootstrap = [
-        "tcp-tls:1.1.1.1:853"
-        "tcp-tls:9.9.9.9:853"
-        "tcp-tls:149.112.112.112:853"
+        {
+          ip = "1.1.1.1";
+          hostname = "cloudflare-dns.com";
+        } # Cloudflare primary
+        {
+          ip = "1.0.0.1";
+          hostname = "cloudflare-dns.com";
+        } # Cloudflare secondary
+        {
+          ip = "9.9.9.9";
+          hostname = "dns.quad9.net";
+        } # Quad9 primary
+        {
+          ip = "149.112.112.112";
+          hostname = "dns.quad9.net";
+        } # Quad9 secondary
+        {
+          ip = "194.242.2.2";
+          hostname = "dns.mullvad.net";
+        } # Mullvad (SE, kein Log)
+        {
+          ip = "94.140.14.14";
+          hostname = "dns.adguard-dns.com";
+        } # AdGuard (EU)
+        {
+          ip = "94.140.15.15";
+          hostname = "dns.adguard-dns.com";
+        } # AdGuard secondary
+        {
+          ip = "46.182.19.48";
+          hostname = "dot.digitalcourage.de";
+        } # Digitalcourage (DE, nonprofit)
       ];
     };
     # IPv6 Homelab: ad acta — nur v4 auf LAN-PHY (eno1). Ausnahme: wt0 (Netbird/Mesh).
@@ -96,6 +127,7 @@ in
 
   hardware = {
     ramGB = 32;
+    nixStoreGB = 468; # /dev/sda2 (NIXPERSIST), Stand 2026-07
     cpu = {
       model = "i3-9100";
       generation = 9;

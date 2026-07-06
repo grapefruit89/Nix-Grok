@@ -50,7 +50,7 @@ in
         passwordFile = "/var/lib/secrets/restic_password";
         environmentFile = "/var/lib/secrets/restic_s3_creds";
 
-        # Backup-Philosophie (ADR-023): nur unwiederbringliche Daten.
+        # Backup-Philosophie (ADR-3023): nur unwiederbringliche Daten.
         # Medien (Tier C), Thumbnails, Caches → kein Backup (re-downloadbar / re-generierbar).
         # /etc/nixos → kein Backup (steht auf GitHub, redundant und S3-teuer).
         paths = [

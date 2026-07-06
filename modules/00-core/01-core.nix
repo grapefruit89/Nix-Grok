@@ -20,8 +20,10 @@ let
   cfgBoot = config.my.core.boot-safeguard;
   cfgNix = config.my.core.nix-tuning;
   cfgZram = config.my.core.zram-swap;
+  cfgJournald = config.my.core.journald;
 
   ramGB = config.my.configs.hardware.ramGB;
+  nixStoreGB = config.my.configs.hardware.nixStoreGB;
   isLowRam = ramGB <= 4;
   isMidRam = ramGB > 4 && ramGB <= 8;
 in
@@ -32,6 +34,30 @@ in
   options.my = {
     core = {
       boot-safeguard.enable = lib.mkEnableOption "Boot safeguard generation limits";
+      boot-safeguard.configurationLimit = lib.mkOption {
+        type = lib.types.int;
+        default = 5;
+        description = ''
+          Maximale Anzahl NixOS-Generationen im EFI-Bootloader-Menü.
+          Schützt die ESP-Partition vor Überlauf — jede Generation belegt ~15–50 MB
+          (Kernel + Initrd + Bootloader-Eintrag). q958: 1 GB ESP (NIXBOOT), default 5 konservativ.
+          Auf Maschinen mit kleiner ESP (256–512 MB) auf 3 senken.
+        '';
+      };
+      journald.maxUse = lib.mkOption {
+        type = lib.types.str;
+        default = "500M";
+        description = ''
+          Maximale Journal-Größe (SystemMaxUse). Verhindert unbegrenztes Wachstum von
+          /var/log/journal ohne Impermanence. 500M = ausreichend für Debugging auf kleinen SSDs.
+          Auf Systemen mit viel Disk (≥ 500 GB) kann dieser Wert auf 1–2G erhöht werden.
+        '';
+      };
+      journald.maxRetention = lib.mkOption {
+        type = lib.types.str;
+        default = "90day";
+        description = "Maximale Journal-Retention (MaxRetentionSec). 90 Tage für Incident-Analyse; auf Impermanence irrelevant.";
+      };
       nix-tuning.enable = lib.mkEnableOption "Nix store performance tuning and GC";
       nix-tuning.maxJobs = lib.mkOption {
         type = lib.types.nullOr lib.types.int;
@@ -94,6 +120,10 @@ in
           type = lib.types.int;
           description = "Installed RAM in GB (set in machines/<host>/profile.nix).";
         };
+        nixStoreGB = lib.mkOption {
+          type = lib.types.int;
+          description = "Nix-Store-Partition-Größe in GB — bestimmt GC-Trigger (min-free/max-free).";
+        };
       };
       server = {
         lanIP = lib.mkOption {
@@ -108,13 +138,35 @@ in
       };
       network = {
         dnsBootstrap = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                ip = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Server-IP.";
+                };
+                hostname = lib.mkOption {
+                  type = lib.types.str;
+                  description = "TLS-Hostname fuer SNI.";
+                };
+              };
+            }
+          );
           default = [
-            "tcp-tls:1.1.1.1:853"
-            "tcp-tls:9.9.9.9:853"
-            "tcp-tls:149.112.112.112:853"
+            {
+              ip = "1.1.1.1";
+              hostname = "cloudflare-dns.com";
+            }
+            {
+              ip = "9.9.9.9";
+              hostname = "dns.quad9.net";
+            }
+            {
+              ip = "149.112.112.112";
+              hostname = "dns.quad9.net";
+            }
           ];
-          description = "Verschlüsselter DNS-Bootstrap (DoT/DoH) — niemals Klartext-IP.";
+          description = "DoT-Nameserver — Single Source of Truth für resolved + Technitium-Forwarder. Niemals Klartext-IP.";
         };
         ipv6 = {
           disableOnInterfaces = lib.mkOption {
@@ -147,17 +199,17 @@ in
       # Enable nix-ld to run unpatched dynamic binaries
       programs.nix-ld.enable = true;
 
-      # Journal-Größe begrenzen (ohne Impermanence wächst /var/log/journal unbegrenzt)
+      # Journal-Größe begrenzen (ohne Impermanence wächst /var/log/journal unbegrenzt).
+      # Werte konfigurierbar via my.core.journald.maxUse + .maxRetention.
       services.journald.extraConfig = lib.mkDefault ''
-        SystemMaxUse=500M
-        MaxRetentionSec=90day
+        SystemMaxUse=${cfgJournald.maxUse}
+        MaxRetentionSec=${cfgJournald.maxRetention}
       '';
     }
 
     # ── BOOT SAFEGUARD ────────────────────────────────────────────────────────
     (lib.mkIf cfgBoot.enable {
-      # Verhindert Überlauf der EFI System-Partition (ESP) bei strengem 96MB Limit
-      boot.loader.systemd-boot.configurationLimit = 5;
+      boot.loader.systemd-boot.configurationLimit = cfgBoot.configurationLimit;
     })
 
     # ── KERNEL SLIMMING → machines/<host>/kernel-slim.nix
@@ -179,8 +231,11 @@ in
           auto-optimise-store = true;
           builders-use-substitutes = true;
           fallback = true;
-          min-free = 5 * 1024 * 1024 * 1024; # 5 GB → GC auslösen
-          max-free = 10 * 1024 * 1024 * 1024; # 10 GB → GC-Ziel
+          # GC-Trigger: 1% des Stores → GC auslösen; 2% → GC-Ziel.
+          # Abgeleitet aus my.configs.hardware.nixStoreGB (profile.nix) — skaliert mit jeder Maschine.
+          # q958 (468 GB): min ≈ 4.7 GB, max ≈ 9.4 GB.
+          min-free = nixStoreGB * 1073741824 / 100;
+          max-free = nixStoreGB * 1073741824 / 50;
 
           # GC-Roots für schnelles inkrementelles Rebuilding erhalten
           keep-outputs = true;
@@ -208,7 +263,8 @@ in
             else
               lib.mkDefault 0;
 
-          # Build-Timeout gegen hängende Prozesse
+          # 1h timeout: hängende Builds (häufig bei Cross-Compile oder Fetcher-Deadlock).
+          # 10min max-silent-time: Build ohne stdout → hängt wahrscheinlich in IO/Network.
           timeout = 3600;
           max-silent-time = 600;
 
@@ -288,9 +344,14 @@ in
         fuzzyCompletion = true;
         keybindings = true;
       };
+    })
 
-      # Pre-commit-Hooks nach jedem Rebuild automatisch einrichten,
-      # damit kein Commit ohne nixfmt/statix/deadnix möglich ist.
+    # ── PRE-COMMIT HOOKS (nur development) ───────────────────────────────────
+    # .git/hooks/ liegt außerhalb des Nix-Store — activationScript ist der idiomatische
+    # Escape-Hatch um POL-FMT-010..012 (nixfmt/statix/deadnix) nach jedem switch
+    # automatisch durchzusetzen. Nur in my.mode == "development" sinnvoll;
+    # Produktionsserver haben kein /etc/nixos/.git und keinen Dev-Workflow.
+    (lib.mkIf (cfgNix.enable && config.my.mode == "development") {
       system.activationScripts.preCommitInstall = {
         deps = [ ];
         text = ''
@@ -319,11 +380,20 @@ in
             25;
       };
 
-      # Kernel-Parameter für aggressives und effizientes ZRAM-Paging
+      # Kernel-Parameter für aggressives und effizientes ZRAM-Paging.
+      # Quellen: kernel.org ZRAM-Doku + systemd/zram-generator-Empfehlungen.
       boot.kernel.sysctl = {
-        "vm.swappiness" = lib.mkForce 180; # Paging bevorzugt in ZRAM komprimieren
-        "vm.page-cluster" = lib.mkDefault 0; # Deaktiviert unnötiges Read-Ahead
-        "vm.vfs_cache_pressure" = lib.mkDefault 150; # Aggressiveres Freigeben von Verzeichnis- und Inode-Caches im RAM
+        # ZRAM-Bereich (0-200): 180 signalisiert dem Kernel, RAM aggressiv in das
+        # schnelle komprimierte ZRAM auszulagern statt gar nicht zu swappen.
+        # Default (60) ist für langsame Disk-Swap gedacht — auf ZRAM (RAM-Geschwindigkeit)
+        # ist Swapping praktisch kostenlos, daher hoher Wert sinnvoll.
+        "vm.swappiness" = lib.mkForce 180;
+        # ZRAM braucht kein Read-Ahead: einzelne komprimierte Pages werden direkt
+        # gelesen. Read-Ahead würde nur unnötig Bandbreite verschwenden.
+        "vm.page-cluster" = lib.mkDefault 0;
+        # >100 = Kernel gibt VFS-Caches (Dentries/Inodes) schneller frei → mehr RAM
+        # für Anwendungen und ZRAM-komprimierte Pages. Sinnvoll auf RAM-beschränkten Systemen.
+        "vm.vfs_cache_pressure" = lib.mkDefault 150;
       };
     })
   ];

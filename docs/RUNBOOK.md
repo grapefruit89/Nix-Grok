@@ -19,7 +19,7 @@ meta:
 
 | error_pattern | Service | Quick-Fix | ADR |
 |---|---|---|---|
-| `strconv\.Atoi.*invalid syntax` | caddy | `ip_mask 24` statt `/24` | [018](adr/018-caddy-dual-log-dsgvo.md) |
+| `strconv\.Atoi.*invalid syntax` | caddy | `ip_mask 24` statt `/24` | [018](adr/1018-caddy-dual-log-dsgvo.md) |
 | `Failed to load environment files` | lidarr, readarr | `sudo touch /var/lib/secrets/<name>.env && sudo chmod 600 ...` | — |
 | `cannot change owner.*not permitted` | jellyfin | `systemd.tmpfiles.rules` statt `install -d -o` | — |
 | `Failed to set up mount namespacing` | arr-apps | BindPaths-Ziel + Quellverzeichnis anlegen | — |
@@ -53,7 +53,7 @@ sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 # und in tmux: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
 ```
 
-**Verwandt:** [ADR-018 — Caddy Dual-Log DSGVO](adr/018-caddy-dual-log-dsgvo.md)
+**Verwandt:** [ADR-1018 — Caddy Dual-Log DSGVO](adr/1018-caddy-dual-log-dsgvo.md)
 
 ---
 

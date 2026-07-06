@@ -37,6 +37,33 @@ Entscheidungsreihenfolge für jede Änderung am Stack:
 
 Kurzform: *„Declarative Core + Surgical Glue"*
 
+### OS-native-first für kritische Infrastruktur (ADR-032)
+
+Bei jeder Aufgabe die kritische Infrastruktur berührt (TLS, DNS, Secrets, Backup)
+gilt eine strikte Rangfolge:
+
+```
+1. Kernel / systemd-Mechanismus        → systemd-creds, systemd-resolved DoT
+2. NixOS-Modul (security.*, networking.*) → security.acme (lego), nftables
+3. Eigenständiges spezialisiertes Tool → restic, ddns-updater, lego
+4. Plugin eines bestehenden Diensts    → Caddy-ACME, Caddy-DNS  ← nur wenn 1-3 unmöglich
+5. Selbstgeschriebener Code            → nur als "Surgical Glue"
+```
+
+**Leitbeispiele:**
+- TLS-Zertifikate: `security.acme` (lego) statt Caddy-ACME — Certs gehören nicht in den Proxy-State
+- DNS-Verschlüsselung: `systemd-resolved` DoT + Technitium statt Caddy-DNS-Proxy
+- Secrets: `systemd-creds` + TPM2 statt sops-nix oder Vault-Plugin
+- Secrets-Portal: eigenständiger Go-Service statt Vaultwarden-Workflow
+
+**Warum:** Ein Plugin eines bestehenden Diensts macht dessen Ausfall zum Ausfall der
+kritischen Funktion. Separation of Concerns: Caddy macht Reverse-Proxy, lego macht TLS.
+Jedes Tool hat einen Job.
+
+**Warnsignal für dich:** Wenn du überlegst ein Caddy-Plugin, Grafana-Plugin o.ä. für
+etwas Kritisches zu nutzen — erst prüfen ob NixOS das nativ kann.
+Vollständige Heuristik: `docs/adr/032-os-native-first.md`
+
 ## Schreibzugriff auf /etc/nixos
 
 `/etc/nixos` gehört nach dem Benutzer-Refactor (2026-06-28) **root**.

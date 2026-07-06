@@ -32,7 +32,10 @@
 let
   cfg = config.my.services.navidrome;
   factory = import ../../lib/service-factory.nix { inherit lib; };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
   domain = config.my.configs.identity.domain;
   port = config.my.ports.navidrome;
   mediaRoot = config.my.services.storage.poolMountPoint;

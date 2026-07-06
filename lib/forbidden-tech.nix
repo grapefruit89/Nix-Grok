@@ -10,6 +10,8 @@ let
     lanzaboote = "Lanzaboote nicht im Einsatz — systemd-boot.";
     passwords = "SSH-Passwort-Auth nur in Dev (Stufe < 9) — Production key-only.";
     gui = "X11/Wayland verboten auf Headless-Server — Desktop-Pakete fressen RAM + vergrößern Attack Surface (ADR-020).";
+    semaphore = "Semaphore/Ansible verboten — imperatives Infrastruktur-Management widerspricht dem deklarativen NixOS-Mindset. NixOS ist die einzige Wahrheitsquelle (ADR-034).";
+    cockpit = "Cockpit entfernt — Angriffsfläche überwiegt Nutzen für Ein-Personen-Homelab (ADR-033). SSH + nixos-rebuild ist die einzige Admin-Schnittstelle.";
 
     # Formatter-Policy
     fmtBanned = "Verbotener Nix-Formatter — ausschließlich nixfmt (RFC-Style) + statix + deadnix.";
@@ -36,6 +38,8 @@ in
     (must (
       !(config.services.desktopManager.plasma6.enable or false)
     ) "[POL-FT-008] KDE Plasma: ${reasons.gui}")
+    (must (!(config.services.semaphore.enable or false)) "[POL-FT-009] Semaphore: ${reasons.semaphore}")
+    (must (!(config.services.cockpit.enable or false)) "[POL-FT-010] Cockpit: ${reasons.cockpit}")
   ];
 
   # Wenn nftables-Firewall-Stack aktiv

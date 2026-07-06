@@ -12,7 +12,7 @@ meta:
     - modules/60-apps/
     - modules/50-media/
   docs:
-    - docs/adr/026-kernel-hardening-sysctl.md
+    - docs/adr/2026-kernel-hardening-sysctl.md
     - docs/adr/003-oom-cgroup-isolation.md
     - docs/adr/007-dendritic-one-file-per-service.md
     - docs/guides/GUIDE-kernel-hardening.md
@@ -175,8 +175,8 @@ systemctl show pocket-id | grep -E 'ProtectSystem|NoNewPrivileges|ProtectHome'
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-026 — Kernel-Härtung sysctl](026-kernel-hardening-sysctl.md) — Kernel-Ebene als Basis
-- [ADR-027 — Kernel-Slim](027-kernel-slim-module-policy.md) — Modul-Blacklisting als weitere Schicht
+- [ADR-2026 — Kernel-Härtung sysctl](2026-kernel-hardening-sysctl.md) — Kernel-Ebene als Basis
+- [ADR-2027 — Kernel-Slim](2027-kernel-slim-module-policy.md) — Modul-Blacklisting als weitere Schicht
 - [ADR-003 — OOM cgroup-Isolation](003-oom-cgroup-isolation.md) — Ressourcen-Isolation via Memory-Limits
 - [ADR-007 — Dendritische Module](007-dendritic-one-file-per-service.md) — eine Datei pro Dienst als Kontext
 - [GUIDE-kernel-hardening.md](../guides/GUIDE-kernel-hardening.md) — Betriebsguide

@@ -6,7 +6,7 @@
 #   docs:
 #     - docs/guides/GUIDE-security-secrets.md
 #   docs:
-#     - docs/adr/026-kernel-hardening-sysctl.md
+#     - docs/adr/2026-kernel-hardening-sysctl.md
 #     - docs/guides/GUIDE-kernel-hardening.md
 #   tags:
 #     - security
@@ -28,7 +28,7 @@ in
     lockKernelModules = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Lock kernel module loading after boot — active by default at stufe 9 (ADR-026).";
+      description = "Lock kernel module loading after boot — active by default at stufe 9 (ADR-2026).";
     };
   };
 

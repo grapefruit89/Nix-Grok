@@ -113,12 +113,6 @@ let
       subdomain = "sabnzbd";
       description = "Usenet (VPN-confined)";
     };
-    cockpit = {
-      port = ports.cockpit;
-      zone = "admin-hangar";
-      subdomain = "admin";
-      description = "Host Admin";
-    };
     technitium-dns-server = {
       port = ports.technitium-dns;
       zone = "admin-hangar";

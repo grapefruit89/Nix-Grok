@@ -4,7 +4,7 @@ meta:
   purpose: Betriebsguide Media-Stack, VPN-NetNS, Config-Sync, QSV
   docs:
     - docs/adr/007-dendritic-one-file-per-service.md
-    - docs/adr/009-vpn-leak-check.md
+    - docs/adr/2009-vpn-leak-check.md
     - docs/adr/003-oom-cgroup-isolation.md
     - docs/adr/011-unified-port-uid-schema.md
     - docs/guides/GUIDE-dendritic-architecture.md
@@ -38,7 +38,7 @@ meta:
 - Namespace `usenet`: WireGuard + nftables Kill-Switch
 - veth-Bridge: Host `192.168.15.5` ↔ NS `192.168.15.1`
 - Prowlarr/SABnzbd im NS; Sonarr/Radarr auf Host
-- Leak-Check: [ADR-009 — VPN-Leak-Check](../adr/009-vpn-leak-check.md)
+- Leak-Check: [ADR-2009 — VPN-Leak-Check](../adr/2009-vpn-leak-check.md)
 
 ```bash
 systemctl status usenet.service
@@ -100,7 +100,7 @@ Bulk-Import per curl: siehe nix-hermes `jellyfin_configs/*.json` (manuell, kein 
 ## Siehe auch {#siehe-auch}
 
 - [ADR-007 — Dendritische Module](../adr/007-dendritic-one-file-per-service.md) — Eine-Datei-pro-Dienst Konvention
-- [ADR-009 — VPN-Leak-Check](../adr/009-vpn-leak-check.md) — Leak-Detection für Prowlarr/SABnzbd im NetNS
+- [ADR-2009 — VPN-Leak-Check](../adr/2009-vpn-leak-check.md) — Leak-Detection für Prowlarr/SABnzbd im NetNS
 - [ADR-003 — OOM-Isolation](../adr/003-oom-cgroup-isolation.md) — MemoryMax für Jellyfin (12G), SABnzbd, *arr
 - [ADR-011 — Port=UID-Schema](../adr/011-unified-port-uid-schema.md) — UIDs 5001–5008 für Media-Services
 - [GUIDE-dendritic-architecture.md](GUIDE-dendritic-architecture.md) — Architektur-Konventionen hinter `50-media/`

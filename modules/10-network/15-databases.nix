@@ -9,7 +9,10 @@ let
   cfgPostgres = config.my.services.postgresql;
   ramGB = config.my.configs.hardware.ramGB;
   sockets = import ../../lib/unix-sockets.nix { inherit lib; };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
 in
 {
   # ============================================================================
@@ -51,6 +54,9 @@ in
 
       # Valkey Server Sandboxing
       systemd.services.redis-valkey.serviceConfig = {
+        # Session-Cache für Pocket-ID — stirbt Valkey, verlieren alle aktiven SSO-Sessions
+        # ihre Auth-State sofort. Daher sehr negativ: letzter OOM-Kill-Kandidat nach postgres/pocketId.
+        OOMScoreAdjust = lib.mkDefault (-600);
         RuntimeDirectoryMode = lib.mkForce "0755";
         ProtectSystem = "strict";
         ProtectHome = true;

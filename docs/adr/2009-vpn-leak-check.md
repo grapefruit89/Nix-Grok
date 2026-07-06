@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-009 VPN-NetNS-Leak-Check per systemd-Timer — SABnzbd + Prowlarr Egress-Verifikation
+  purpose: ADR-2009 VPN-NetNS-Leak-Check per systemd-Timer — SABnzbd + Prowlarr Egress-Verifikation
   status: accepted
   date: 2026-06-17
   error_pattern: "vpn.leak.check.*failed|IP.*match.*host|sabnzbd.*stopped.*leak|prowlarr.*stopped.*leak"
@@ -12,7 +12,7 @@ meta:
   docs:
     - docs/adr/README.md
     - docs/guides/GUIDE-media-stack.md
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/2008-nftables-l4-hardening.md
   tags:
     - adr
     - vpn
@@ -21,7 +21,7 @@ meta:
     - prowlarr
 ---
 
-# ADR-009: VPN-NetNS-Leak-Check {#adr-009}
+# ADR-2009: VPN-NetNS-Leak-Check {#adr-2009}
 
 | Feld | Wert |
 |------|------|
@@ -34,7 +34,7 @@ meta:
 
 SABnzbd und Prowlarr laufen in einem dedizierten Network-Namespace mit WireGuard-Kill-Switch. Fällt der Tunnel trotzdem aus oder routet falsch, könnte Egress über die Host-ISP-IP laufen — ein Datenschutz- und Compliance-Risiko.
 
-Die nftables-Firewall ([ADR-008](008-nftables-l4-hardening.md)) schützt auf L4, erkennt aber keinen falschen Route im VPN-NetNS.
+Die nftables-Firewall ([ADR-2008](2008-nftables-l4-hardening.md)) schützt auf L4, erkennt aber keinen falschen Route im VPN-NetNS.
 
 ## Entscheidung {#entscheidung}
 
@@ -90,9 +90,9 @@ systemctl status vpn-leak-check --no-pager
 
 - **Systemweite VPN-Routing-Alternative** (nix-hermes Option 2) — würde alle Dienste durch VPN zwingen; nicht gewollt für Homelab. Abgelehnt.
 - **Recyclarr / externe Flake-Inputs** — außerhalb Scope dieses ADR; keine externen Flake-Inputs ([ADR-013](013-flake-portability.md)).
-- **Nur nftables-Egress-Regeln** ([ADR-008](008-nftables-l4-hardening.md)) — erkennen keinen falschen Route-Leak im NetNS. Nicht ausreichend alleine.
+- **Nur nftables-Egress-Regeln** ([ADR-2008](2008-nftables-l4-hardening.md)) — erkennen keinen falschen Route-Leak im NetNS. Nicht ausreichend alleine.
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-008 — nftables L4-Härtung](008-nftables-l4-hardening.md) — Egress-Regeln die VPN-NetNS ergänzen
+- [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — Egress-Regeln die VPN-NetNS ergänzen
 - [GUIDE-media-stack](../guides/GUIDE-media-stack.md) — SABnzbd/Prowlarr im VPN-NetNS-Kontext

@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-027 Kernel-Slim — Modul-Blacklisting-Policy (Whitelist/Blacklist Zwiebelschale)
+  purpose: ADR-2027 Kernel-Slim — Modul-Blacklisting-Policy (Whitelist/Blacklist Zwiebelschale)
   status: accepted
   date: 2026-07-05
   error_pattern: "modprobe: FATAL: Module .* not found|modprobe: ERROR.*could not insert|module blacklisted"
@@ -16,7 +16,7 @@ meta:
     - modules/20-security/25-kernel-policy.nix
     - machines/q958/kernel-slim.nix
   docs:
-    - docs/adr/026-kernel-hardening-sysctl.md
+    - docs/adr/2026-kernel-hardening-sysctl.md
     - docs/guides/GUIDE-kernel-hardening.md
   tags:
     - adr
@@ -26,7 +26,7 @@ meta:
     - module-policy
 ---
 
-# ADR-027: Kernel-Slim — Modul-Blacklisting-Policy {#adr-027}
+# ADR-2027: Kernel-Slim — Modul-Blacklisting-Policy {#adr-2027}
 
 | Feld | Wert |
 |------|------|
@@ -171,7 +171,7 @@ sudo modprobe hfs 2>&1   # → FATAL: Module hfs not found / blacklisted
 
 ## Alternativen verworfen {#alternativen}
 
-- **`security.lockKernelModules` allein** — sperrt alle Module nach Boot, löst aber nicht das Problem von Modulen die *während* des Boots geladen werden. Komplementär, nicht alternativ ([ADR-026](026-kernel-hardening-sysctl.md#lockdown)).
+- **`security.lockKernelModules` allein** — sperrt alle Module nach Boot, löst aber nicht das Problem von Modulen die *während* des Boots geladen werden. Komplementär, nicht alternativ ([ADR-2026](2026-kernel-hardening-sysctl.md#lockdown)).
 - **Kein Blacklisting** — mehr Angriffsfläche, kein RAM-Gewinn. Abgelehnt.
 - **Whitelist-only (alle anderen blockiert)** — in NixOS ohne Custom-Kernel-Build nicht praktikabel; Blacklist ist der machbare Kompromiss.
 
@@ -183,6 +183,6 @@ sudo modprobe hfs 2>&1   # → FATAL: Module hfs not found / blacklisted
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-026 — Kernel-Härtung sysctl](026-kernel-hardening-sysctl.md) — komplementäre Kernel-Härtungsschicht
+- [ADR-2026 — Kernel-Härtung sysctl](2026-kernel-hardening-sysctl.md) — komplementäre Kernel-Härtungsschicht
 - [ADR-028 — Systemd Service Isolation](028-systemd-service-isolation.md) — Sandbox auf Anwendungsebene
 - [GUIDE-kernel-hardening.md](../guides/GUIDE-kernel-hardening.md) — Betriebsguide

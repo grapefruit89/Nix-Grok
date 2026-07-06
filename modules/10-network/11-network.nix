@@ -21,7 +21,12 @@ in
   # ============================================================================
   # OPTIONS
   # ============================================================================
-  options.my.services.technitium-dns-server.enable = lib.mkEnableOption "Technitium DNS Server";
+  options.my.services.technitium-dns-server = {
+    enable = lib.mkEnableOption "Technitium DNS Server";
+    splitHorizon = {
+      enable = lib.mkEnableOption "Split-Horizon DNS: *.domain → LAN-IP via Technitium";
+    };
+  };
 
   # ============================================================================
   # CONFIG
@@ -39,82 +44,125 @@ in
     }
 
     # ── TECHNITIUM DNS SERVER ─────────────────────────────────────────────────
-    (lib.mkIf cfgTechnitium.enable {
-      services.technitium-dns-server.enable = true;
+    # ADR-1001: DNS-over-TLS Architektur
+    #
+    # HOST-DNS (kein Chicken-Egg-Problem):
+    #   resolved → DoT direkt (8 Server, deklarativ) — KEINE Abhängigkeit von Technitium
+    #
+    # LAN-CLIENTS:
+    #   → Technitium (127.0.0.1:53 / LAN-IP:53)
+    #   → Technitium leitet weiter zu DoT (8 Server, via API konfiguriert, non-critical)
+    #
+    # Technitium-Rolle: split-horizon (zukünftig deklarativ), LAN-DNS, Web-UI
+    # Technitium-Ausfall: host-DNS läuft weiter via resolved-DoT, LAN-Clients betroffen
+    (lib.mkIf cfgTechnitium.enable (
+      let
+        dot = config.my.configs.network.dnsBootstrap;
+        # resolved-Format: "IP#TLS-Hostname IP#TLS-Hostname ..."
+        resolvedDns = lib.concatStringsSep " " (map (s: "${s.ip}#${s.hostname}") dot);
+        # Technitium-API-Format: "IP:853,IP:853,..."
+        dotServers = lib.concatStringsSep "," (map (s: "${s.ip}:853") dot);
+        webPort = config.my.ports."technitium-dns";
+        domain = config.my.configs.identity.domain;
+        lanIp = config.my.configs.server.lanIP;
+        splitHorizonEnabled = config.my.services.technitium-dns-server.splitHorizon.enable;
 
-      # systemd-resolved als DNS-Proxy:
-      # Primary: 127.0.0.1 (Technitium), Fallback: DoT-Server (automatisch wenn Technitium down)
-      services.resolved = {
-        enable = lib.mkForce true;
-        settings.Resolve = {
-          DNS = "127.0.0.1";
-          DNSOverTLS = "opportunistic";
-          DNSSEC = "opportunistic";
-          LLMNR = "no";
-          MulticastDNS = "no";
-          Cache = "yes";
-          # FallbackDNS: DoT-Server mit TLS-Hostname für SNI-Verifikation
-          FallbackDNS = lib.mkForce "1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net 149.112.112.112#dns.quad9.net";
-        };
-      };
-      # resolved verwaltet /etc/resolv.conf selbst (→ 127.0.0.53 stub)
-      networking.resolvconf.enable = lib.mkForce false;
-      networking.nameservers = lib.mkForce [ ];
+        configScript = pkgs.writeShellScript "technitium-dns-configure" ''
+          set -euo pipefail
+          API="http://localhost:${toString webPort}"
+          CURL="${pkgs.curl}/bin/curl"
+          JQ="${pkgs.jq}/bin/jq"
 
-      networking.enableIPv6 = lib.mkDefault false;
-
-      my.impermanence.extraPaths = [ "/var/lib/technitium-dns-server" ];
-
-      systemd.services.technitium-dns-server = {
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        wantedBy = [ "multi-user.target" ];
-        before = lib.mkIf config.services.caddy.enable [ "caddy.service" ];
-        # LogsDirectory fehlt im nixpkgs-Modul → ProtectSystem=strict blockiert /var/log-Zugriff
-        serviceConfig.LogsDirectory = "technitium";
-      };
-
-      # ADR-001: DoT-only Upstream erzwingen — einmalig via API (idempotent per Marker-Datei)
-      systemd.services.technitium-dns-configure =
-        let
-          webPort = config.my.ports."technitium-dns";
-          # Technitium-API-Format: "1.1.1.1:853" (ohne "tcp-tls:" Präfix)
-          dotServers = lib.concatStringsSep "," (
-            map (s: lib.removePrefix "tcp-tls:" s) config.my.configs.network.dnsBootstrap
-          );
-          configScript = pkgs.writeShellScript "technitium-dns-configure" ''
-            set -euo pipefail
-            MARKER="/var/lib/technitium-dns-server/.dot-configured"
-            API="http://localhost:${toString webPort}"
-
-            if [ -f "$MARKER" ]; then
-              echo "technitium-dns-configure: DoT already set (marker exists), skipping."
+          # ── Login ──────────────────────────────────────────────────────────
+          for i in $(seq 1 30); do
+            TOKEN=$($CURL -sf "$API/api/user/login?user=admin&pass=admin" 2>/dev/null | \
+              $JQ -r '.response.token // empty' 2>/dev/null || true)
+            [ -n "$TOKEN" ] && break
+            [ "$i" -eq 30 ] && {
+              echo "technitium-dns-configure: WARNING — API nicht erreichbar." >&2
+              echo "  Host-DNS laeuft weiter via resolved-DoT." >&2
               exit 0
-            fi
+            }
+            sleep 2
+          done
 
-            for i in $(seq 1 30); do
-              TOKEN=$(${pkgs.curl}/bin/curl -sf \
-                "$API/api/user/login?user=admin&pass=admin" 2>/dev/null | \
-                ${pkgs.jq}/bin/jq -r '.response.token // empty' 2>/dev/null || true)
-              [ -n "$TOKEN" ] && break
-              [ "$i" -eq 30 ] && {
-                echo "technitium-dns-configure: API not reachable or wrong password." >&2
-                echo "  → DoT forwarders NOT configured. Set manually at $API" >&2
-                echo "  → Forwarders to set: ${dotServers}" >&2
-                exit 0
-              }
-              sleep 2
-            done
+          # ── DoT-Forwarder: prüfe ob bereits gesetzt (API-State, kein Marker) ──
+          CURRENT=$($CURL -sf "$API/api/settings/get?token=$TOKEN" 2>/dev/null | \
+            $JQ -r '.response.dnsServerDomainName // ""' 2>/dev/null || echo "")
+          CURRENT_FWD=$($CURL -sf "$API/api/settings/get?token=$TOKEN" 2>/dev/null | \
+            $JQ -r '[.response.forwarders[]?.nameServer] | join(",") // ""' 2>/dev/null || echo "")
+          WANT_FWD="${dotServers}"
 
-            ${pkgs.curl}/bin/curl -sf -X POST "$API/api/settings/set" \
-              -d "token=$TOKEN&forwarders=${dotServers}&forwarderProtocol=Tls" \
+          if [ "$CURRENT_FWD" != "$WANT_FWD" ]; then
+            $CURL -sf -X POST "$API/api/settings/set" \
+              -d "token=$TOKEN&forwarders=$WANT_FWD&forwarderProtocol=Tls" \
               -o /dev/null
-            touch "$MARKER"
-            echo "technitium-dns-configure: DoT forwarders set → ${dotServers}"
-          '';
-        in
-        {
-          description = "Technitium DNS: DoT-only Forwarder konfigurieren (ADR-001)";
+            echo "technitium-dns-configure: DoT-Forwarder gesetzt → $WANT_FWD"
+          else
+            echo "technitium-dns-configure: DoT-Forwarder bereits korrekt, kein Update."
+          fi
+
+          ${lib.optionalString splitHorizonEnabled ''
+            # ── Split-Horizon Zone: prüfe ob bereits vorhanden (API-State) ─────
+            ZONE_EXISTS=$($CURL -sf "$API/api/zones/list?token=$TOKEN" 2>/dev/null | \
+              $JQ -r \'.response.zones[]? | select(.name == "${domain}") | .name\' 2>/dev/null || echo "")
+
+            if [ -z "$ZONE_EXISTS" ]; then
+              echo "technitium-dns-configure: Split-Horizon Zone ${domain} anlegen..."
+              $CURL -sf -X POST "$API/api/zones/create" \
+                -d "token=$TOKEN&zone=${domain}&type=Primary" -o /dev/null
+              $CURL -sf -X POST "$API/api/zones/records/add" \
+                -d "token=$TOKEN&zone=${domain}&domain=*.${domain}&type=A&ipAddress=${lanIp}&ttl=300" \
+                -o /dev/null
+              echo "technitium-dns-configure: *.${domain} → ${lanIp} (300s TTL)"
+            else
+              echo "technitium-dns-configure: Split-Horizon Zone ${domain} bereits vorhanden."
+            fi
+          ''}
+        '';
+      in
+      {
+        services.technitium-dns-server.enable = true;
+
+        # resolved → DoT direkt (kein Technitium-Umweg, kein Chicken-Egg-Problem)
+        # DNSOverTLS=yes: strict — niemals Plaintext-Fallback
+        services.resolved = {
+          enable = lib.mkForce true;
+          settings.Resolve = {
+            DNS = resolvedDns;
+            DNSOverTLS = "yes";
+            DNSSEC = "allow-downgrade";
+            LLMNR = "no";
+            MulticastDNS = "no";
+            Cache = "yes";
+            FallbackDNS = "";
+          };
+        };
+        # resolved verwaltet /etc/resolv.conf selbst (→ 127.0.0.53 stub)
+        networking.resolvconf.enable = lib.mkForce false;
+        networking.nameservers = lib.mkForce [ ];
+
+        networking.enableIPv6 = lib.mkDefault false;
+
+        my.impermanence.extraPaths = [ "/var/lib/technitium-dns-server" ];
+
+        systemd.services.technitium-dns-server = {
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          wantedBy = [ "multi-user.target" ];
+          before = lib.mkIf config.services.caddy.enable [ "caddy.service" ];
+          serviceConfig = {
+            # LogsDirectory fehlt im nixpkgs-Modul → ProtectSystem=strict blockiert /var/log-Zugriff
+            LogsDirectory = "technitium";
+            # LAN-DNS für alle Clients — Ausfall trifft das gesamte LAN.
+            # Nicht -900 weil Host selbst via resolved→DoT unabhängig weiterläuft.
+            OOMScoreAdjust = lib.mkDefault (-300);
+          };
+        };
+
+        # Technitium LAN-DoT + Split-Horizon konfigurieren (non-critical für Host-DNS)
+        systemd.services.technitium-dns-configure = {
+          description = "Technitium DNS: DoT-Forwarder + Split-Horizon Zone";
           after = [ "technitium-dns-server.service" ];
           wants = [ "technitium-dns-server.service" ];
           wantedBy = [ "technitium-dns-server.service" ];
@@ -125,29 +173,49 @@ in
           };
         };
 
-      assertions = [
-        {
-          assertion = config.services.resolved.enable or false;
-          message = "DNS: systemd-resolved muss aktiv sein (DoT-Failsafe über Technitium).";
-        }
-        {
-          assertion = (config.services.resolved.settings.Resolve.DNSOverTLS or "no") != "no";
-          message = "DNS-POLICY: services.resolved.settings.Resolve.DNSOverTLS muss 'opportunistic' oder 'yes' sein — Port 53 outbound ist nftables-gesperrt, unverschlüsseltes DNS ist verboten!";
-        }
-        {
-          assertion = config.networking.nameservers == [ ];
-          message = "DNS-POLICY: networking.nameservers muss leer sein — externe Einträge würden /etc/resolv.conf überschreiben und DoT umgehen!";
-        }
-        {
-          assertion = config.my.configs.network.ipv6.firewall == false;
-          message = "IPv6: Homelab-v4-only — my.configs.network.ipv6.firewall muss false sein.";
-        }
-        {
-          assertion = !(config.networking.enableIPv6 or true);
-          message = "IPv6: networking.enableIPv6 muss false sein — Kernel-Ebene muss IPv6 deaktivieren.";
-        }
-      ];
-    })
+        # Split-Horizon HOST: /etc/hosts Einträge aus services.spec (NSS vor DNS)
+        # Kein API-Call, kein Dummy-Interface — 100% deklarativ in Nix.
+        # Jeder Dienst in services.spec bekommt automatisch einen /etc/hosts-Eintrag.
+        # LAN-Clients: Technitium-Zone (API-basiert, nicht-kritisch wegen NAT-Hairpin).
+        networking.extraHosts = lib.mkIf splitHorizonEnabled (
+          let
+            fqdns = lib.concatStringsSep " " (
+              lib.mapAttrsToList (
+                _name: entry: lib.optionalString (entry.subdomain != null) "${entry.subdomain}.${domain}"
+              ) config.my.services.spec
+            );
+          in
+          lib.optionalString (fqdns != "") "${lanIp} ${fqdns}"
+        );
+
+        assertions = [
+          {
+            assertion = config.services.resolved.enable or false;
+            message = "DNS: systemd-resolved muss aktiv sein (direkt DoT ohne Technitium-Umweg).";
+          }
+          {
+            assertion = (config.services.resolved.settings.Resolve.DNSOverTLS or "no") == "yes";
+            message = "DNS-POLICY: DNSOverTLS muss 'yes' (strict) sein — Host-DNS geht direkt an DoT-Upstreams, kein Plaintext-Fallback erlaubt!";
+          }
+          {
+            assertion = (config.services.resolved.settings.Resolve.DNS or "") != "127.0.0.1";
+            message = "DNS-POLICY: resolved darf nicht 127.0.0.1 (Technitium) als primary DNS nutzen — direkt DoT verwenden!";
+          }
+          {
+            assertion = config.networking.nameservers == [ ];
+            message = "DNS-POLICY: networking.nameservers muss leer sein — externe Einträge würden /etc/resolv.conf überschreiben und DoT umgehen!";
+          }
+          {
+            assertion = config.my.configs.network.ipv6.firewall == false;
+            message = "IPv6: Homelab-v4-only — my.configs.network.ipv6.firewall muss false sein.";
+          }
+          {
+            assertion = !(config.networking.enableIPv6 or true);
+            message = "IPv6: networking.enableIPv6 muss false sein — Kernel-Ebene muss IPv6 deaktivieren.";
+          }
+        ];
+      }
+    ))
 
     # ── CADDY GLOBAL CONFIG & SNIPPETS ────────────────────────────────────────
     # ADR 018: Dual-Log — default-Logger (stdout→journald→CrowdSec) bleibt unverändert.

@@ -10,7 +10,7 @@ meta:
   docs:
     - docs/adr/README.md
     - docs/guides/GUIDE-dendritic-architecture.md
-    - docs/adr/004-unix-socket-upstreams.md
+    - docs/adr/1004-unix-socket-upstreams.md
     - docs/adr/005-critical-systemd-restart.md
     - docs/adr/011-unified-port-uid-schema.md
   tags:
@@ -34,7 +34,7 @@ meta:
 - Das Media-Stack-Monolith `arr-stack.nix` vermischte vier unabhängige Dienste.
 - KB-Pattern „Pragmatic Dendritic Synthesis" empfiehlt: **eine Datei = ein Dienst**, `.enable` nur in `rollout.nix`.
 - Sonarr und Radarr werden auf q958 **immer gemeinsam** genutzt — eine gemeinsame Datei ist pragmatischer als zwei Duplikate.
-- Unix-Socket-Upstreams ([ADR-004](004-unix-socket-upstreams.md)) brauchen je eine Lib-Registrierung pro Dienst.
+- Unix-Socket-Upstreams ([ADR-1004](1004-unix-socket-upstreams.md)) brauchen je eine Lib-Registrierung pro Dienst.
 - Port/UID-Schema ([ADR-011](011-unified-port-uid-schema.md)) nutzt den Ordner-Präfix als Präfix-Basis.
 
 ## Entscheidung {#entscheidung}
@@ -74,7 +74,7 @@ modules/
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-004 — Unix-Socket-Upstreams](004-unix-socket-upstreams.md) — Sockets werden pro Dienst-Datei registriert
+- [ADR-1004 — Unix-Socket-Upstreams](1004-unix-socket-upstreams.md) — Sockets werden pro Dienst-Datei registriert
 - [ADR-005 — Restart=always](005-critical-systemd-restart.md) — `critical-systemd.nix` wird pro Datei eingebunden
 - [ADR-011 — Port/UID-Schema](011-unified-port-uid-schema.md) — Ordner-Präfix `XX` als Basis für Port/UID-Nummerierung
 - [ADR-013 — Flake-Portabilität](013-flake-portability.md) — keine externen Flake-Inputs für Dienst-Module

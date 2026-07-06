@@ -3,8 +3,8 @@ meta:
   role: doc
   purpose: Betriebsguide Kernel-Härtung — Kernel-Slim, sysctl, Systemd Service Isolation
   docs:
-    - docs/adr/026-kernel-hardening-sysctl.md
-    - docs/adr/027-kernel-slim-module-policy.md
+    - docs/adr/2026-kernel-hardening-sysctl.md
+    - docs/adr/2027-kernel-slim-module-policy.md
     - docs/adr/028-systemd-service-isolation.md
     - modules/20-security/26-kernel-hardening.nix
     - modules/20-security/27-hardened-core.nix
@@ -39,7 +39,7 @@ meta:
 
 ## Schicht 1 — Kernel-Slim: Modul-Blacklisting {#kernel-slim}
 
-**Entscheidung:** [ADR-027](../adr/027-kernel-slim-module-policy.md)
+**Entscheidung:** [ADR-2027](../adr/2027-kernel-slim-module-policy.md)
 
 ### Was wird geblacklistet? {#was-geblacklistet}
 
@@ -97,7 +97,7 @@ lsmod | wc -l
 
 ## Schicht 2 — Kernel sysctl + Boot-Parameter {#kernel-sysctl}
 
-**Entscheidung:** [ADR-026](../adr/026-kernel-hardening-sysctl.md) · Aktiv ab Stufe 8
+**Entscheidung:** [ADR-2026](../adr/2026-kernel-hardening-sysctl.md) · Aktiv ab Stufe 8
 
 ### Wichtigste sysctl-Werte {#sysctl-werte}
 
@@ -258,9 +258,9 @@ kernel.requiredModules = [ "fehlendes_modul" ];
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-026 — Kernel-Härtung sysctl](../adr/026-kernel-hardening-sysctl.md)
-- [ADR-027 — Kernel-Slim Modul-Policy](../adr/027-kernel-slim-module-policy.md)
+- [ADR-2026 — Kernel-Härtung sysctl](../adr/2026-kernel-hardening-sysctl.md)
+- [ADR-2027 — Kernel-Slim Modul-Policy](../adr/2027-kernel-slim-module-policy.md)
 - [ADR-028 — Systemd Service Isolation](../adr/028-systemd-service-isolation.md)
-- [ADR-029 — mTLS Zero-Trust (proposed)](../adr/029-mtls-zero-trust-internal.md)
+- [ADR-2029 — mTLS Zero-Trust (proposed)](../adr/2029-mtls-zero-trust-internal.md)
 - [GUIDE-security-secrets.md](GUIDE-security-secrets.md) — SSH, Sovereign Unlock, Secrets
 - [GUIDE-nftables-hardening.md](GUIDE-nftables-hardening.md) — Netzwerk-Härtung (Schicht 4)

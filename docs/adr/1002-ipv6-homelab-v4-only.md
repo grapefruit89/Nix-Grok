@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-002 IPv6 Homelab v4-only auf eno1
+  purpose: ADR-1002 IPv6 Homelab v4-only auf eno1
   status: accepted
   date: 2026-06-17
   betrifft:
@@ -13,8 +13,8 @@ meta:
     - modules/40-observability/crowdsec.nix
   docs:
     - docs/adr/README.md
-    - docs/adr/001-dns-dot-fail-closed.md
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/1001-dns-dot-fail-closed.md
+    - docs/adr/2008-nftables-l4-hardening.md
   tags:
     - adr
     - ipv6
@@ -22,7 +22,7 @@ meta:
     - network
 ---
 
-# ADR-002: IPv6 Homelab ad acta (v4-only LAN) {#adr-002}
+# ADR-1002: IPv6 Homelab ad acta (v4-only LAN) {#adr-1002}
 
 | Feld | Wert |
 |------|------|
@@ -34,9 +34,9 @@ meta:
 ## Kontext {#kontext}
 
 - Fritzbox-LAN ist **IPv4-praktisch** (`192.168.2.0/24`); IPv6 auf `eno1` bringt Komplexität ohne Nutzen.
-- Geo-Blocklist (`modules/15-firewall.nix`) und CrowdSec-Integration sind **v4-fokussiert** ([ADR-008](008-nftables-l4-hardening.md)).
+- Geo-Blocklist (`modules/15-firewall.nix`) und CrowdSec-Integration sind **v4-fokussiert** ([ADR-2008](2008-nftables-l4-hardening.md)).
 - nftables mit parallelen v4/v6-Regeln erhöht Fehlerrisiko (z. B. `ip6` vs `meta nfproto ipv6`).
-- DNS: Technitium soll konsistent **nur v4** zum WAN und **keine AAAA** ins LAN liefern ([ADR-001](001-dns-dot-fail-closed.md)).
+- DNS: Technitium soll konsistent **nur v4** zum WAN und **keine AAAA** ins LAN liefern ([ADR-1001](1001-dns-dot-fail-closed.md)).
 - **Tailscale** Mesh-VPN darf nicht gebrochen werden.
 
 ## Entscheidung {#entscheidung}
@@ -44,7 +44,7 @@ meta:
 1. **`profile.nix`:** `ipv6.disableOnInterfaces = [ "eno1" ]`, `ipv6.firewall = false`.
 2. **Kernel/sysctl** auf `eno1`: `disable_ipv6=1`, `accept_ra=0`, `autoconf=0`.
 3. **systemd-networkd** (`access.nix`): `IPv6AcceptRA = no` auf LAN.
-4. **nftables** ([ADR-008](008-nftables-l4-hardening.md)): kein `crowdsec_blocked_ipv6`; Drop-Regel für `meta nfproto ipv6` auf `iifname eno1`.
+4. **nftables** ([ADR-2008](2008-nftables-l4-hardening.md)): kein `crowdsec_blocked_ipv6`; Drop-Regel für `meta nfproto ipv6` auf `iifname eno1`.
 5. **CrowdSec bouncer:** `nftables.ipv6.enabled = false`.
 6. **Technitium/DNS:** `connectIPVersion = v4`, `filtering.queryTypes = [ "AAAA" ]`, Sandbox ohne `AF_INET6`.
 7. **Assertion:** `ipv6.firewall == false` wenn Technitium/DNS aktiv.
@@ -55,7 +55,7 @@ meta:
 ### Positiv {#positiv}
 
 - Weniger Firewall-/DNS-/Monitoring-Komplexität.
-- Einheitliches v4-Modell für Geo-Block, CrowdSec, DNS ([ADR-008](008-nftables-l4-hardening.md)).
+- Einheitliches v4-Modell für Geo-Block, CrowdSec, DNS ([ADR-2008](2008-nftables-l4-hardening.md)).
 - Klare Dokumentation und Build-Assertions gegen v6-Regression.
 
 ### Negativ / Trade-offs {#negativ}
@@ -97,7 +97,7 @@ dig @127.0.0.1 google.com AAAA +short         # leer
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-001 — DNS-over-TLS](001-dns-dot-fail-closed.md) — DNS AAAA-Filter + v4-only Resolver-Konfiguration
-- [ADR-008 — nftables L4-Härtung](008-nftables-l4-hardening.md) — Firewall-Regeln die diese v4-only Entscheidung voraussetzen
+- [ADR-1001 — DNS-over-TLS](1001-dns-dot-fail-closed.md) — DNS AAAA-Filter + v4-only Resolver-Konfiguration
+- [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — Firewall-Regeln die diese v4-only Entscheidung voraussetzen
 - [GUIDE-network-database.md](../guides/GUIDE-network-database.md) — DNS + PostgreSQL Betriebsguide (v4-only Kontext)
 - [GUIDE-data-management.md#rsync](../guides/GUIDE-data-management.md#rsync) — rsync braucht explizite IPv4-Ziele auf q958

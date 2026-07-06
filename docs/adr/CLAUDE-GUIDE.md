@@ -37,7 +37,7 @@ Explizite IDs sind stabiler gegen Umbenennungen:
 
 **Verlinkung:**
 - Innerhalb derselben Datei: `[→ Quickstart](#quickstart)`
-- Dateiübergreifend: `[ADR-018](018-caddy-dual-log-dsgvo.md)` — Anker nur wenn im Ziel vorhanden!
+- Dateiübergreifend: `[ADR-1018](1018-caddy-dual-log-dsgvo.md)` — Anker nur wenn im Ziel vorhanden!
 - Aus Guides: `[→ Observability](../guides/GUIDE-observability.md#metriken)`
 
 **Für KIs:** Das globale TOC (`docs/TOC.md`) listet ALLE Anker aller Dateien — generiert via `scripts/gen-toc.sh`.
@@ -120,8 +120,8 @@ Verwandte Entscheidungen MÜSSEN verlinkt sein:
 ```markdown
 ## Siehe auch {#siehe-auch}
 
-- [ADR-008 — nftables L4-Härtung](008-nftables-l4-hardening.md) — Firewall-Kontext
-- [ADR-014 — Caddy trusted_proxies](014-caddy-security-headers-trusted-proxies.md)
+- [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — Firewall-Kontext
+- [ADR-1014 — Caddy trusted_proxies](1014-caddy-security-headers-trusted-proxies.md)
 - [GUIDE-observability](../guides/GUIDE-observability.md#alerting) — Alert-Stack
 - [RUNBOOK — Caddy](../RUNBOOK.md#caddy) — Bekannte Caddy-Fehler
 ```

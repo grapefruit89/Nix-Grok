@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-026 Kernel-Härtung — sysctl, Boot-Parameter, Mount-Flags
+  purpose: ADR-2026 Kernel-Härtung — sysctl, Boot-Parameter, Mount-Flags
   status: accepted
   date: 2026-07-05
   error_pattern: "ERROR: could not insert module|Operation not permitted.*lockdown|Lockdown: direct memory|kernel.* write protected"
@@ -12,9 +12,9 @@ meta:
     - modules/20-security/27-hardened-core.nix
     - machines/q958/rollout.nix
   docs:
-    - docs/adr/027-kernel-slim-module-policy.md
+    - docs/adr/2027-kernel-slim-module-policy.md
     - docs/adr/028-systemd-service-isolation.md
-    - docs/adr/008-nftables-l4-hardening.md
+    - docs/adr/2008-nftables-l4-hardening.md
     - docs/guides/GUIDE-kernel-hardening.md
   tags:
     - adr
@@ -24,7 +24,7 @@ meta:
     - hardening
 ---
 
-# ADR-026: Kernel-Härtung — sysctl, Boot-Parameter, Mount-Flags {#adr-026}
+# ADR-2026: Kernel-Härtung — sysctl, Boot-Parameter, Mount-Flags {#adr-2026}
 
 | Feld | Wert |
 |------|------|
@@ -208,7 +208,7 @@ cat /sys/kernel/security/lockdown         # → confidentiality
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-027 — Kernel-Slim Modul-Blacklisting](027-kernel-slim-module-policy.md) — welche Module gar nicht erst geladen werden
+- [ADR-2027 — Kernel-Slim Modul-Blacklisting](2027-kernel-slim-module-policy.md) — welche Module gar nicht erst geladen werden
 - [ADR-028 — Systemd Service Isolation](028-systemd-service-isolation.md) — Sandbox auf Anwendungsebene
-- [ADR-008 — nftables L4-Härtung](008-nftables-l4-hardening.md) — Netzwerk-Härtung als komplementäre Schicht
+- [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — Netzwerk-Härtung als komplementäre Schicht
 - [GUIDE-kernel-hardening.md](../guides/GUIDE-kernel-hardening.md) — Betriebsguide mit Diagnose-Checklisten

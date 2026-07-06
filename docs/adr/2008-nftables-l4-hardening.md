@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-008 nftables L4-Härtung — KB-Synthese, skuid-Segmentierung, CrowdSec/Fail2ban-Integration
+  purpose: ADR-2008 nftables L4-Härtung — KB-Synthese, skuid-Segmentierung, CrowdSec/Fail2ban-Integration
   status: accepted
   date: 2026-06-17
   error_pattern: "nft.*error|Error in line.*nftables|nftables.*failed to load|ruleset.*error"
@@ -14,9 +14,9 @@ meta:
   docs:
     - docs/adr/README.md
     - docs/guides/GUIDE-nftables-hardening.md
-    - docs/adr/001-dns-dot-fail-closed.md
-    - docs/adr/002-ipv6-homelab-v4-only.md
-    - docs/adr/009-vpn-leak-check.md
+    - docs/adr/1001-dns-dot-fail-closed.md
+    - docs/adr/1002-ipv6-homelab-v4-only.md
+    - docs/adr/2009-vpn-leak-check.md
     - docs/adr/011-unified-port-uid-schema.md
   tags:
     - adr
@@ -27,7 +27,7 @@ meta:
     - skuid
 ---
 
-# ADR-008: nftables L4-Härtung (KB-Synthese) {#adr-008}
+# ADR-2008: nftables L4-Härtung (KB-Synthese) {#adr-2008}
 
 | Feld | Wert |
 |------|------|
@@ -40,9 +40,9 @@ meta:
 
 - KB `GUIDE-Nftables-Firewall-Mastery` und `security-hardening-baseline` liefern bewährte L4-Patterns.
 - Bisher: inline ruleset in `15-firewall.nix`, kein `checkRuleset`, kein Fail2ban-Set, keine skuid-Regeln.
-- Geo/Rate bleiben in **nftables** — Technitium/DNS macht DNS-Adblock, nicht L4 ([ADR-001](001-dns-dot-fail-closed.md)).
+- Geo/Rate bleiben in **nftables** — Technitium/DNS macht DNS-Adblock, nicht L4 ([ADR-1001](1001-dns-dot-fail-closed.md)).
 - skuid-Segmentierung setzt statische UIDs voraus — bereitgestellt durch [ADR-011](011-unified-port-uid-schema.md).
-- v6-Regeln entfallen auf eno1 — [ADR-002](002-ipv6-homelab-v4-only.md) deaktiviert IPv6 auf dem LAN-Interface.
+- v6-Regeln entfallen auf eno1 — [ADR-1002](1002-ipv6-homelab-v4-only.md) deaktiviert IPv6 auf dem LAN-Interface.
 
 ## Entscheidung {#entscheidung}
 
@@ -129,7 +129,7 @@ modules/20-security/     ← Fail2ban → f2b_blocked_ipv4, CrowdSec-Bouncer
 - Fail2ban-Bans landen im gleichen `inet filter` wie CrowdSec/Geo.
 - skuid braucht statische UIDs — Registry ([ADR-011](011-unified-port-uid-schema.md)) ist Pflicht.
 - Jellyfin-Mediathek: RO via `BindReadOnlyPaths` (`jellyfin.nix`), nicht nftables.
-- IPv6 auf eno1 deaktiviert ([ADR-002](002-ipv6-homelab-v4-only.md)) — keine v6-Firewall-Komplexität.
+- IPv6 auf eno1 deaktiviert ([ADR-1002](1002-ipv6-homelab-v4-only.md)) — keine v6-Firewall-Komplexität.
 
 ## Alternativen verworfen {#alternativen}
 
@@ -145,8 +145,8 @@ modules/20-security/     ← Fail2ban → f2b_blocked_ipv4, CrowdSec-Bouncer
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-001 — DNS-over-TLS](001-dns-dot-fail-closed.md) — Geo/Rate in nftables, nicht DNS-Ebene
-- [ADR-002 — IPv6 v4-only](002-ipv6-homelab-v4-only.md) — kein v6-Ruleset auf eno1
-- [ADR-009 — VPN-Leak-Check](009-vpn-leak-check.md) — NetNS-Egress-Regeln ergänzen nftables
+- [ADR-1001 — DNS-over-TLS](1001-dns-dot-fail-closed.md) — Geo/Rate in nftables, nicht DNS-Ebene
+- [ADR-1002 — IPv6 v4-only](1002-ipv6-homelab-v4-only.md) — kein v6-Ruleset auf eno1
+- [ADR-2009 — VPN-Leak-Check](2009-vpn-leak-check.md) — NetNS-Egress-Regeln ergänzen nftables
 - [ADR-011 — Port/UID-Schema](011-unified-port-uid-schema.md) — statische UIDs für skuid-Regeln
 - [GUIDE-nftables-hardening](../guides/GUIDE-nftables-hardening.md) — ausführliche Implementierungsanleitung

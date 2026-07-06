@@ -39,7 +39,7 @@ meta:
 ## Entscheidung {#entscheidung}
 
 1. **Preset:** `lib/critical-systemd.nix` — `Restart=always`, `StartLimitIntervalSec=0`, negativer `OOMScoreAdjust`.
-2. **Anwenden auf:** Caddy, Technitium/DNS ([ADR-001](001-dns-dot-fail-closed.md)), Pocket-ID (Ingress/Identität).
+2. **Anwenden auf:** Caddy, Technitium/DNS ([ADR-1001](1001-dns-dot-fail-closed.md)), Pocket-ID (Ingress/Identität).
 3. **Gatus** prüft Caddy + DNS als kritische Endpoints.
 
 ## Diagnose {#diagnose}
@@ -102,6 +102,6 @@ grep -n "Restart\|StartLimit" /etc/nixos/lib/critical-systemd.nix
 ## Siehe auch {#siehe-auch}
 
 - [ADR-003 — OOM-Isolation](003-oom-cgroup-isolation.md) — cgroup-OOM-Kill der diesen Restart auslöst
-- [ADR-001 — DNS-over-TLS](001-dns-dot-fail-closed.md) — Technitium als kritischer Dienst mit Restart=always
+- [ADR-1001 — DNS-over-TLS](1001-dns-dot-fail-closed.md) — Technitium als kritischer Dienst mit Restart=always
 - [ADR-007 — Dendritische Module](007-dendritic-one-file-per-service.md) — Modulstruktur in der critical-systemd.nix eingebunden wird
 - [GUIDE-observability.md#alerting](../guides/GUIDE-observability.md#alerting) — Alerting auf Restart-Basis, ntfy bei OnFailure

@@ -4,7 +4,7 @@ meta:
   purpose: Betriebsguide Sovereign-Unlock, SSH-Härtung, Secrets
   docs:
     - docs/adr/010-production-ssh-impermanence.md
-    - docs/adr/024-systemd-creds-tpm.md
+    - docs/adr/2024-systemd-creds-tpm.md
     - docs/SECURITY.md
     - modules/20-security.nix
   tags:
@@ -56,7 +56,7 @@ Gitignored, nur auf der Maschine, keine Verschlüsselung nötig (Dev-Werte).
 `my.creds.enable = true` → `LoadCredentialEncrypted=` in Service-Units → `$CREDENTIALS_DIRECTORY/<name>`
 
 Kein Flake-Input, kein Age-Key auf Disk, automatisches Cleanup durch systemd.
-Vollständige Strategie: [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md).
+Vollständige Strategie: [ADR-2024 — systemd-creds + TPM2](../adr/2024-systemd-creds-tpm.md).
 
 #### Credential versiegeln (einmalig pro Secret)
 
@@ -94,7 +94,7 @@ systemd.services.sonarr.serviceConfig = {
 sops-nix / agenix sind für q958 explizit verboten. Begründung und Assertion in:
 
 - [ANTIPATTERNS.md#sops-nix](ANTIPATTERNS.md#sops-nix)
-- [ADR-024](../adr/024-systemd-creds-tpm.md)
+- [ADR-2024](../adr/2024-systemd-creds-tpm.md)
 - `modules/00-core/05-creds.nix` — Build-Fehler wenn sops aktiviert
 
 ## Hardened Core (Stufe 9 / Production) {#hardened-core}
@@ -127,7 +127,7 @@ Mit aktiver nftables-Firewall: `banaction = nftables-f2b-set` — Bans landen im
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-024 — systemd-creds + TPM2](../adr/024-systemd-creds-tpm.md) — Secrets-Strategie ab Stufe 9
+- [ADR-2024 — systemd-creds + TPM2](../adr/2024-systemd-creds-tpm.md) — Secrets-Strategie ab Stufe 9
 - [ADR-010 — Production SSH + Impermanence](../adr/010-production-ssh-impermanence.md) — SSH-Härtung und tmpfs-Root-Entscheidung
 - [GUIDE-nftables-hardening.md](GUIDE-nftables-hardening.md) — L4-Firewall, Fail2ban↔nftables, skuid-Segmentierung
 - [ANTIPATTERNS.md#sops-nix](ANTIPATTERNS.md#sops-nix) — warum kein sops-nix

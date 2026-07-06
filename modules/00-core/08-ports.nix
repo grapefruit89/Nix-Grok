@@ -9,6 +9,13 @@
 #     - ports
 #     - core
 # ---
+# Port-Bereiche (Strategie):
+#   1xxx  — Infra-Dienste (DNS, OIDC, DDNS, Zigbee2MQTT, MQTT)
+#   4xxx  — Observability (Grafana, Loki, Gatus, CrowdSec, Scrutiny, VictoriaMetrics)
+#   5xxx  — Media / *arr-Stack (Jellyfin, Sonarr, Radarr, Readarr, Prowlarr, SABnzbd, ...)
+#   6xxx  — Nutzer-Apps (Vaultwarden, Homepage, Paperless, Filebrowser, Linkwarden, ...)
+#   7xxx  — Admin-Tools (Cockpit, AMP)
+#   Standard-Ports (22, 1883, 6379) behalten ihre kanonischen Werte.
 { lib, ... }:
 {
   options.my.ports = {
@@ -126,11 +133,6 @@
       type = lib.types.port;
       default = 6007;
       description = "Open WebUI port.";
-    };
-    cockpit = lib.mkOption {
-      type = lib.types.port;
-      default = 7003;
-      description = "Cockpit admin port.";
     };
     amp = lib.mkOption {
       type = lib.types.port;

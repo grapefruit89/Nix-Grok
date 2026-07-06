@@ -185,19 +185,6 @@ _: {
       sso = true;
     };
 
-    # ── 70-forge ───────────────────────────────────────────────────────────────
-    semaphore = {
-      id = 7002;
-      transport = "tcp:7002"; # Go HTTP-Server, kein UDS
-      module = "70-forge";
-      sso = true;
-    };
-    cockpit = {
-      id = 7003;
-      transport = "tcp:7003";
-      module = "70-forge";
-      sso = false;
-    };
     amp = {
       id = 7004;
       transport = "tcp:7004";

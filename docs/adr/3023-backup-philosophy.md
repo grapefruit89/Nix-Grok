@@ -1,4 +1,4 @@
-# ADR-023: Backup-Philosophie — Nur Unwiederbringliches sichern
+# ADR-3023: Backup-Philosophie — Nur Unwiederbringliches sichern
 
 **Status:** Accepted  
 **Datum:** 2026-06-30
@@ -80,4 +80,4 @@ Dead Man's Switch: healthcheckUrl → Ping bei Erfolg, /fail bei Fehler
 
 - `modules/30-storage/30-storage.nix` — Implementierung
 - F-009 in `docs/learnings/FINDINGS-REGISTRY.md`
-- [ADR-022](022-no-raid-distance-parity.md) — warum kein lokales RAID
+- [ADR-3022](3022-no-raid-distance-parity.md) — warum kein lokales RAID

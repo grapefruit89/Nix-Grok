@@ -28,7 +28,10 @@
 }:
 let
   factory = import ../../lib/service-factory.nix { inherit lib; };
-  memory = import ../../lib/memory-policy.nix { inherit lib; };
+  memory = import ../../lib/memory-policy.nix {
+    inherit lib;
+    ramGB = config.my.configs.hardware.ramGB;
+  };
   vpnKillSwitchAttrs = import ../../lib/vpn-killswitch.nix {
     inherit lib;
     privadoEnabled = config.my.services.privado-vpn.enable or false;

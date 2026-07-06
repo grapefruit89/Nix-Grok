@@ -14,34 +14,34 @@ meta:
 > Suche einen Abschnitt hier → navigiere direkt per Anker ohne jede Datei zu lesen.
 
 
-## adr/001-dns-dot-fail-closed.md
+## adr/1001-dns-dot-fail-closed.md
 
-- [`#kontext`](adr/001-dns-dot-fail-closed.md#kontext) — Kontext
-- [`#entscheidung`](adr/001-dns-dot-fail-closed.md#entscheidung) — Entscheidung
-  - [`#technitium`](adr/001-dns-dot-fail-closed.md#technitium) — Aktuelle Implementierung (ab 2026-06-28): Technitium
-  - [`#limitation-blocky`](adr/001-dns-dot-fail-closed.md#limitation-blocky) — Limitation vs. Original (Blocky)
-- [`#diagnose`](adr/001-dns-dot-fail-closed.md#diagnose) — Diagnose
-- [`#fix`](adr/001-dns-dot-fail-closed.md#fix) — Fix
-- [`#konsequenzen`](adr/001-dns-dot-fail-closed.md#konsequenzen) — Konsequenzen
-  - [`#positiv`](adr/001-dns-dot-fail-closed.md#positiv) — Positiv
-  - [`#negativ`](adr/001-dns-dot-fail-closed.md#negativ) — Negativ / Trade-offs
-  - [`#implementierung`](adr/001-dns-dot-fail-closed.md#implementierung) — Implementierung
-  - [`#verifikation`](adr/001-dns-dot-fail-closed.md#verifikation) — Verifikation
-- [`#alternativen`](adr/001-dns-dot-fail-closed.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/001-dns-dot-fail-closed.md#siehe-auch) — Siehe auch
+- [`#kontext`](adr/1001-dns-dot-fail-closed.md#kontext) — Kontext
+- [`#entscheidung`](adr/1001-dns-dot-fail-closed.md#entscheidung) — Entscheidung
+  - [`#technitium`](adr/1001-dns-dot-fail-closed.md#technitium) — Aktuelle Implementierung (ab 2026-06-28): Technitium
+  - [`#limitation-blocky`](adr/1001-dns-dot-fail-closed.md#limitation-blocky) — Limitation vs. Original (Blocky)
+- [`#diagnose`](adr/1001-dns-dot-fail-closed.md#diagnose) — Diagnose
+- [`#fix`](adr/1001-dns-dot-fail-closed.md#fix) — Fix
+- [`#konsequenzen`](adr/1001-dns-dot-fail-closed.md#konsequenzen) — Konsequenzen
+  - [`#positiv`](adr/1001-dns-dot-fail-closed.md#positiv) — Positiv
+  - [`#negativ`](adr/1001-dns-dot-fail-closed.md#negativ) — Negativ / Trade-offs
+  - [`#implementierung`](adr/1001-dns-dot-fail-closed.md#implementierung) — Implementierung
+  - [`#verifikation`](adr/1001-dns-dot-fail-closed.md#verifikation) — Verifikation
+- [`#alternativen`](adr/1001-dns-dot-fail-closed.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/1001-dns-dot-fail-closed.md#siehe-auch) — Siehe auch
 
-## adr/002-ipv6-homelab-v4-only.md
+## adr/1002-ipv6-homelab-v4-only.md
 
-- [`#kontext`](adr/002-ipv6-homelab-v4-only.md#kontext) — Kontext
-- [`#entscheidung`](adr/002-ipv6-homelab-v4-only.md#entscheidung) — Entscheidung
-- [`#konsequenzen`](adr/002-ipv6-homelab-v4-only.md#konsequenzen) — Konsequenzen
-  - [`#positiv`](adr/002-ipv6-homelab-v4-only.md#positiv) — Positiv
-  - [`#negativ`](adr/002-ipv6-homelab-v4-only.md#negativ) — Negativ / Trade-offs
-  - [`#reaktivierung`](adr/002-ipv6-homelab-v4-only.md#reaktivierung) — Wieder aktivieren (Checkliste)
-  - [`#implementierung`](adr/002-ipv6-homelab-v4-only.md#implementierung) — Implementierung
-  - [`#verifikation`](adr/002-ipv6-homelab-v4-only.md#verifikation) — Verifikation
-- [`#alternativen`](adr/002-ipv6-homelab-v4-only.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/002-ipv6-homelab-v4-only.md#siehe-auch) — Siehe auch
+- [`#kontext`](adr/1002-ipv6-homelab-v4-only.md#kontext) — Kontext
+- [`#entscheidung`](adr/1002-ipv6-homelab-v4-only.md#entscheidung) — Entscheidung
+- [`#konsequenzen`](adr/1002-ipv6-homelab-v4-only.md#konsequenzen) — Konsequenzen
+  - [`#positiv`](adr/1002-ipv6-homelab-v4-only.md#positiv) — Positiv
+  - [`#negativ`](adr/1002-ipv6-homelab-v4-only.md#negativ) — Negativ / Trade-offs
+  - [`#reaktivierung`](adr/1002-ipv6-homelab-v4-only.md#reaktivierung) — Wieder aktivieren (Checkliste)
+  - [`#implementierung`](adr/1002-ipv6-homelab-v4-only.md#implementierung) — Implementierung
+  - [`#verifikation`](adr/1002-ipv6-homelab-v4-only.md#verifikation) — Verifikation
+- [`#alternativen`](adr/1002-ipv6-homelab-v4-only.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/1002-ipv6-homelab-v4-only.md#siehe-auch) — Siehe auch
 
 ## adr/003-oom-cgroup-isolation.md
 
@@ -59,17 +59,17 @@ meta:
 - [`#alternativen`](adr/003-oom-cgroup-isolation.md#alternativen) — Alternativen verworfen
 - [`#siehe-auch`](adr/003-oom-cgroup-isolation.md#siehe-auch) — Siehe auch
 
-## adr/004-unix-socket-upstreams.md
+## adr/1004-unix-socket-upstreams.md
 
-- [`#kontext`](adr/004-unix-socket-upstreams.md#kontext) — Kontext
-- [`#entscheidung`](adr/004-unix-socket-upstreams.md#entscheidung) — Entscheidung
-  - [`#tcp-ausnahmen`](adr/004-unix-socket-upstreams.md#tcp-ausnahmen) — TCP-Ausnahmen
-- [`#konsequenzen`](adr/004-unix-socket-upstreams.md#konsequenzen) — Konsequenzen
-  - [`#positiv`](adr/004-unix-socket-upstreams.md#positiv) — Positiv
-  - [`#negativ`](adr/004-unix-socket-upstreams.md#negativ) — Negativ
-  - [`#implementierung`](adr/004-unix-socket-upstreams.md#implementierung) — Implementierung
-- [`#alternativen`](adr/004-unix-socket-upstreams.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/004-unix-socket-upstreams.md#siehe-auch) — Siehe auch
+- [`#kontext`](adr/1004-unix-socket-upstreams.md#kontext) — Kontext
+- [`#entscheidung`](adr/1004-unix-socket-upstreams.md#entscheidung) — Entscheidung
+  - [`#tcp-ausnahmen`](adr/1004-unix-socket-upstreams.md#tcp-ausnahmen) — TCP-Ausnahmen
+- [`#konsequenzen`](adr/1004-unix-socket-upstreams.md#konsequenzen) — Konsequenzen
+  - [`#positiv`](adr/1004-unix-socket-upstreams.md#positiv) — Positiv
+  - [`#negativ`](adr/1004-unix-socket-upstreams.md#negativ) — Negativ
+  - [`#implementierung`](adr/1004-unix-socket-upstreams.md#implementierung) — Implementierung
+- [`#alternativen`](adr/1004-unix-socket-upstreams.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/1004-unix-socket-upstreams.md#siehe-auch) — Siehe auch
 
 ## adr/005-critical-systemd-restart.md
 
@@ -84,17 +84,17 @@ meta:
 - [`#alternativen`](adr/005-critical-systemd-restart.md#alternativen) — Alternativen verworfen
 - [`#siehe-auch`](adr/005-critical-systemd-restart.md#siehe-auch) — Siehe auch
 
-## adr/006-sops-migration-path.md
+## adr/2006-sops-migration-path.md
 
-- [`#kontext`](adr/006-sops-migration-path.md#kontext) — Kontext
-- [`#entscheidung`](adr/006-sops-migration-path.md#entscheidung) — Entscheidung
-  - [`#migrationspfad`](adr/006-sops-migration-path.md#migrationspfad) — Migrationspfad
-- [`#konsequenzen`](adr/006-sops-migration-path.md#konsequenzen) — Konsequenzen
-  - [`#positiv`](adr/006-sops-migration-path.md#positiv) — Positiv
-  - [`#negativ`](adr/006-sops-migration-path.md#negativ) — Negativ
-  - [`#implementierung`](adr/006-sops-migration-path.md#implementierung) — Implementierung
-- [`#alternativen`](adr/006-sops-migration-path.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/006-sops-migration-path.md#siehe-auch) — Siehe auch
+- [`#kontext`](adr/2006-sops-migration-path.md#kontext) — Kontext
+- [`#entscheidung`](adr/2006-sops-migration-path.md#entscheidung) — Entscheidung
+  - [`#migrationspfad`](adr/2006-sops-migration-path.md#migrationspfad) — Migrationspfad
+- [`#konsequenzen`](adr/2006-sops-migration-path.md#konsequenzen) — Konsequenzen
+  - [`#positiv`](adr/2006-sops-migration-path.md#positiv) — Positiv
+  - [`#negativ`](adr/2006-sops-migration-path.md#negativ) — Negativ
+  - [`#implementierung`](adr/2006-sops-migration-path.md#implementierung) — Implementierung
+- [`#alternativen`](adr/2006-sops-migration-path.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/2006-sops-migration-path.md#siehe-auch) — Siehe auch
 
 ## adr/007-dendritic-one-file-per-service.md
 
@@ -105,30 +105,30 @@ meta:
 - [`#alternativen`](adr/007-dendritic-one-file-per-service.md#alternativen) — Alternativen verworfen
 - [`#siehe-auch`](adr/007-dendritic-one-file-per-service.md#siehe-auch) — Siehe auch
 
-## adr/008-nftables-l4-hardening.md
+## adr/2008-nftables-l4-hardening.md
 
-- [`#kontext`](adr/008-nftables-l4-hardening.md#kontext) — Kontext
-- [`#entscheidung`](adr/008-nftables-l4-hardening.md#entscheidung) — Entscheidung
-  - [`#hohe-prioritaet`](adr/008-nftables-l4-hardening.md#hohe-prioritaet) — Hohe Priorität (Stufe 8, implementiert)
-  - [`#skuid-segmentierung`](adr/008-nftables-l4-hardening.md#skuid-segmentierung) — Mittlere Priorität (Stufe 8+, skuid-Segmentierung)
-  - [`#zurueckgestellt`](adr/008-nftables-l4-hardening.md#zurueckgestellt) — Bewusst zurückgestellt
-- [`#diagnose`](adr/008-nftables-l4-hardening.md#diagnose) — Diagnose
-- [`#fix`](adr/008-nftables-l4-hardening.md#fix) — Fix
-- [`#architektur`](adr/008-nftables-l4-hardening.md#architektur) — Architektur
-- [`#konsequenzen`](adr/008-nftables-l4-hardening.md#konsequenzen) — Konsequenzen
-- [`#alternativen`](adr/008-nftables-l4-hardening.md#alternativen) — Alternativen verworfen
-- [`#changelog`](adr/008-nftables-l4-hardening.md#changelog) — Changelog
-- [`#siehe-auch`](adr/008-nftables-l4-hardening.md#siehe-auch) — Siehe auch
+- [`#kontext`](adr/2008-nftables-l4-hardening.md#kontext) — Kontext
+- [`#entscheidung`](adr/2008-nftables-l4-hardening.md#entscheidung) — Entscheidung
+  - [`#hohe-prioritaet`](adr/2008-nftables-l4-hardening.md#hohe-prioritaet) — Hohe Priorität (Stufe 8, implementiert)
+  - [`#skuid-segmentierung`](adr/2008-nftables-l4-hardening.md#skuid-segmentierung) — Mittlere Priorität (Stufe 8+, skuid-Segmentierung)
+  - [`#zurueckgestellt`](adr/2008-nftables-l4-hardening.md#zurueckgestellt) — Bewusst zurückgestellt
+- [`#diagnose`](adr/2008-nftables-l4-hardening.md#diagnose) — Diagnose
+- [`#fix`](adr/2008-nftables-l4-hardening.md#fix) — Fix
+- [`#architektur`](adr/2008-nftables-l4-hardening.md#architektur) — Architektur
+- [`#konsequenzen`](adr/2008-nftables-l4-hardening.md#konsequenzen) — Konsequenzen
+- [`#alternativen`](adr/2008-nftables-l4-hardening.md#alternativen) — Alternativen verworfen
+- [`#changelog`](adr/2008-nftables-l4-hardening.md#changelog) — Changelog
+- [`#siehe-auch`](adr/2008-nftables-l4-hardening.md#siehe-auch) — Siehe auch
 
-## adr/009-vpn-leak-check.md
+## adr/2009-vpn-leak-check.md
 
-- [`#kontext`](adr/009-vpn-leak-check.md#kontext) — Kontext
-- [`#entscheidung`](adr/009-vpn-leak-check.md#entscheidung) — Entscheidung
-- [`#diagnose`](adr/009-vpn-leak-check.md#diagnose) — Diagnose
-- [`#fix`](adr/009-vpn-leak-check.md#fix) — Fix
-- [`#konsequenzen`](adr/009-vpn-leak-check.md#konsequenzen) — Konsequenzen
-- [`#alternativen`](adr/009-vpn-leak-check.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/009-vpn-leak-check.md#siehe-auch) — Siehe auch
+- [`#kontext`](adr/2009-vpn-leak-check.md#kontext) — Kontext
+- [`#entscheidung`](adr/2009-vpn-leak-check.md#entscheidung) — Entscheidung
+- [`#diagnose`](adr/2009-vpn-leak-check.md#diagnose) — Diagnose
+- [`#fix`](adr/2009-vpn-leak-check.md#fix) — Fix
+- [`#konsequenzen`](adr/2009-vpn-leak-check.md#konsequenzen) — Konsequenzen
+- [`#alternativen`](adr/2009-vpn-leak-check.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/2009-vpn-leak-check.md#siehe-auch) — Siehe auch
 
 ## adr/010-production-ssh-impermanence.md
 
@@ -184,16 +184,16 @@ meta:
 - [`#alternativen`](adr/013-flake-portability.md#alternativen) — Alternativen verworfen
 - [`#siehe-auch`](adr/013-flake-portability.md#siehe-auch) — Siehe auch
 
-## adr/014-caddy-security-headers-trusted-proxies.md
+## adr/1014-caddy-security-headers-trusted-proxies.md
 
-- [`#status`](adr/014-caddy-security-headers-trusted-proxies.md#status) — Status
-- [`#kontext`](adr/014-caddy-security-headers-trusted-proxies.md#kontext) — Kontext
-- [`#entscheidung`](adr/014-caddy-security-headers-trusted-proxies.md#entscheidung) — Entscheidung
-  - [`#snippets`](adr/014-caddy-security-headers-trusted-proxies.md#snippets) — `lib/caddy-snippets.nix`
-  - [`#network-config`](adr/014-caddy-security-headers-trusted-proxies.md#network-config) — `modules/10-network/11-network.nix`
-- [`#konsequenzen`](adr/014-caddy-security-headers-trusted-proxies.md#konsequenzen) — Konsequenzen
-- [`#alternativen`](adr/014-caddy-security-headers-trusted-proxies.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/014-caddy-security-headers-trusted-proxies.md#siehe-auch) — Siehe auch
+- [`#status`](adr/1014-caddy-security-headers-trusted-proxies.md#status) — Status
+- [`#kontext`](adr/1014-caddy-security-headers-trusted-proxies.md#kontext) — Kontext
+- [`#entscheidung`](adr/1014-caddy-security-headers-trusted-proxies.md#entscheidung) — Entscheidung
+  - [`#snippets`](adr/1014-caddy-security-headers-trusted-proxies.md#snippets) — `lib/caddy-snippets.nix`
+  - [`#network-config`](adr/1014-caddy-security-headers-trusted-proxies.md#network-config) — `modules/10-network/11-network.nix`
+- [`#konsequenzen`](adr/1014-caddy-security-headers-trusted-proxies.md#konsequenzen) — Konsequenzen
+- [`#alternativen`](adr/1014-caddy-security-headers-trusted-proxies.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/1014-caddy-security-headers-trusted-proxies.md#siehe-auch) — Siehe auch
 
 ## adr/015-cpu-power-profiles-daemon-thermald.md
 
@@ -209,48 +209,48 @@ meta:
 - [`#alternativen`](adr/015-cpu-power-profiles-daemon-thermald.md#alternativen) — Alternativen verworfen
 - [`#siehe-auch`](adr/015-cpu-power-profiles-daemon-thermald.md#siehe-auch) — Siehe auch
 
-## adr/016-caddy-security-headers-coop-scanners.md
+## adr/1016-caddy-security-headers-coop-scanners.md
 
-- [`#status`](adr/016-caddy-security-headers-coop-scanners.md#status) — Status
-- [`#kontext`](adr/016-caddy-security-headers-coop-scanners.md#kontext) — Kontext
-  - [`#problem-server-header`](adr/016-caddy-security-headers-coop-scanners.md#problem-server-header) — Problem 1: Server-Header gibt Caddy-Version preis
-  - [`#problem-coop`](adr/016-caddy-security-headers-coop-scanners.md#problem-coop) — Problem 2: Cross-Origin-Opener-Policy fehlte
-  - [`#problem-scanner`](adr/016-caddy-security-headers-coop-scanners.md#problem-scanner) — Problem 3: Keine Scanner-Blockierung
-- [`#entscheidung`](adr/016-caddy-security-headers-coop-scanners.md#entscheidung) — Entscheidung
-  - [`#block-scanners-usage`](adr/016-caddy-security-headers-coop-scanners.md#block-scanners-usage) — Verwendung von `block_scanners`
-- [`#konsequenzen`](adr/016-caddy-security-headers-coop-scanners.md#konsequenzen) — Konsequenzen
-- [`#alternativen`](adr/016-caddy-security-headers-coop-scanners.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/016-caddy-security-headers-coop-scanners.md#siehe-auch) — Siehe auch
+- [`#status`](adr/1016-caddy-security-headers-coop-scanners.md#status) — Status
+- [`#kontext`](adr/1016-caddy-security-headers-coop-scanners.md#kontext) — Kontext
+  - [`#problem-server-header`](adr/1016-caddy-security-headers-coop-scanners.md#problem-server-header) — Problem 1: Server-Header gibt Caddy-Version preis
+  - [`#problem-coop`](adr/1016-caddy-security-headers-coop-scanners.md#problem-coop) — Problem 2: Cross-Origin-Opener-Policy fehlte
+  - [`#problem-scanner`](adr/1016-caddy-security-headers-coop-scanners.md#problem-scanner) — Problem 3: Keine Scanner-Blockierung
+- [`#entscheidung`](adr/1016-caddy-security-headers-coop-scanners.md#entscheidung) — Entscheidung
+  - [`#block-scanners-usage`](adr/1016-caddy-security-headers-coop-scanners.md#block-scanners-usage) — Verwendung von `block_scanners`
+- [`#konsequenzen`](adr/1016-caddy-security-headers-coop-scanners.md#konsequenzen) — Konsequenzen
+- [`#alternativen`](adr/1016-caddy-security-headers-coop-scanners.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/1016-caddy-security-headers-coop-scanners.md#siehe-auch) — Siehe auch
 
-## adr/017-caddy-health-checks-error-fallback.md
+## adr/1017-caddy-health-checks-error-fallback.md
 
-- [`#status`](adr/017-caddy-health-checks-error-fallback.md#status) — Status
-- [`#kontext`](adr/017-caddy-health-checks-error-fallback.md#kontext) — Kontext
-  - [`#problem-503`](adr/017-caddy-health-checks-error-fallback.md#problem-503) — Problem 1: Keine 503-Fallback-Seite
-  - [`#problem-health-checks`](adr/017-caddy-health-checks-error-fallback.md#problem-health-checks) — Problem 2: Aktive Upstream-Health-Checks nicht praktikabel
-- [`#entscheidung`](adr/017-caddy-health-checks-error-fallback.md#entscheidung) — Entscheidung
-  - [`#upstream-errors`](adr/017-caddy-health-checks-error-fallback.md#upstream-errors) — Lösung: `(upstream_errors)` Snippet
-  - [`#handle-errors-begruendung`](adr/017-caddy-health-checks-error-fallback.md#handle-errors-begruendung) — Warum `handle_errors` statt `respond @unhealthy`
-- [`#diagnose`](adr/017-caddy-health-checks-error-fallback.md#diagnose) — Diagnose
-- [`#fix`](adr/017-caddy-health-checks-error-fallback.md#fix) — Fix
-- [`#konsequenzen`](adr/017-caddy-health-checks-error-fallback.md#konsequenzen) — Konsequenzen
-- [`#verifikation`](adr/017-caddy-health-checks-error-fallback.md#verifikation) — Verifikation
-- [`#alternativen`](adr/017-caddy-health-checks-error-fallback.md#alternativen) — Alternativen verworfen
-- [`#siehe-auch`](adr/017-caddy-health-checks-error-fallback.md#siehe-auch) — Siehe auch
+- [`#status`](adr/1017-caddy-health-checks-error-fallback.md#status) — Status
+- [`#kontext`](adr/1017-caddy-health-checks-error-fallback.md#kontext) — Kontext
+  - [`#problem-503`](adr/1017-caddy-health-checks-error-fallback.md#problem-503) — Problem 1: Keine 503-Fallback-Seite
+  - [`#problem-health-checks`](adr/1017-caddy-health-checks-error-fallback.md#problem-health-checks) — Problem 2: Aktive Upstream-Health-Checks nicht praktikabel
+- [`#entscheidung`](adr/1017-caddy-health-checks-error-fallback.md#entscheidung) — Entscheidung
+  - [`#upstream-errors`](adr/1017-caddy-health-checks-error-fallback.md#upstream-errors) — Lösung: `(upstream_errors)` Snippet
+  - [`#handle-errors-begruendung`](adr/1017-caddy-health-checks-error-fallback.md#handle-errors-begruendung) — Warum `handle_errors` statt `respond @unhealthy`
+- [`#diagnose`](adr/1017-caddy-health-checks-error-fallback.md#diagnose) — Diagnose
+- [`#fix`](adr/1017-caddy-health-checks-error-fallback.md#fix) — Fix
+- [`#konsequenzen`](adr/1017-caddy-health-checks-error-fallback.md#konsequenzen) — Konsequenzen
+- [`#verifikation`](adr/1017-caddy-health-checks-error-fallback.md#verifikation) — Verifikation
+- [`#alternativen`](adr/1017-caddy-health-checks-error-fallback.md#alternativen) — Alternativen verworfen
+- [`#siehe-auch`](adr/1017-caddy-health-checks-error-fallback.md#siehe-auch) — Siehe auch
 
-## adr/018-caddy-dual-log-dsgvo.md
+## adr/1018-caddy-dual-log-dsgvo.md
 
-- [`#status`](adr/018-caddy-dual-log-dsgvo.md#status) — Status
-- [`#kontext`](adr/018-caddy-dual-log-dsgvo.md#kontext) — Kontext
-- [`#entscheidung`](adr/018-caddy-dual-log-dsgvo.md#entscheidung) — Entscheidung
-  - [`#architektur`](adr/018-caddy-dual-log-dsgvo.md#architektur) — Architektur
-  - [`#umsetzung`](adr/018-caddy-dual-log-dsgvo.md#umsetzung) — Umsetzung
-  - [`#dsgvo-felder`](adr/018-caddy-dual-log-dsgvo.md#dsgvo-felder) — DSGVO-Felder maskiert
-- [`#diagnose`](adr/018-caddy-dual-log-dsgvo.md#diagnose) — Diagnose
-- [`#fix`](adr/018-caddy-dual-log-dsgvo.md#fix) — Fix
-- [`#alternativen`](adr/018-caddy-dual-log-dsgvo.md#alternativen) — Alternativen verworfen
-- [`#konsequenzen`](adr/018-caddy-dual-log-dsgvo.md#konsequenzen) — Konsequenzen
-- [`#siehe-auch`](adr/018-caddy-dual-log-dsgvo.md#siehe-auch) — Siehe auch
+- [`#status`](adr/1018-caddy-dual-log-dsgvo.md#status) — Status
+- [`#kontext`](adr/1018-caddy-dual-log-dsgvo.md#kontext) — Kontext
+- [`#entscheidung`](adr/1018-caddy-dual-log-dsgvo.md#entscheidung) — Entscheidung
+  - [`#architektur`](adr/1018-caddy-dual-log-dsgvo.md#architektur) — Architektur
+  - [`#umsetzung`](adr/1018-caddy-dual-log-dsgvo.md#umsetzung) — Umsetzung
+  - [`#dsgvo-felder`](adr/1018-caddy-dual-log-dsgvo.md#dsgvo-felder) — DSGVO-Felder maskiert
+- [`#diagnose`](adr/1018-caddy-dual-log-dsgvo.md#diagnose) — Diagnose
+- [`#fix`](adr/1018-caddy-dual-log-dsgvo.md#fix) — Fix
+- [`#alternativen`](adr/1018-caddy-dual-log-dsgvo.md#alternativen) — Alternativen verworfen
+- [`#konsequenzen`](adr/1018-caddy-dual-log-dsgvo.md#konsequenzen) — Konsequenzen
+- [`#siehe-auch`](adr/1018-caddy-dual-log-dsgvo.md#siehe-auch) — Siehe auch
 
 ## adr/CLAUDE-GUIDE.md
 

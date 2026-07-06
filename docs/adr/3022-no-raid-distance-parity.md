@@ -1,4 +1,4 @@
-# ADR-022: Keine lokale Redundanz — Geografische Distanz statt RAID
+# ADR-3022: Keine lokale Redundanz — Geografische Distanz statt RAID
 
 **Status:** Accepted  
 **Datum:** 2026-06-30  

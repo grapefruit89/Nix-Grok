@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: ADR-024 systemd-creds + TPM2 als Secrets-Strategie — ersetzt sops-nix
+  purpose: ADR-2024 systemd-creds + TPM2 als Secrets-Strategie — ersetzt sops-nix
   status: accepted
   date: 2026-07-05
   betrifft:
@@ -9,7 +9,7 @@ meta:
     - machines/q958/rollout.nix
     - flake.nix
   docs:
-    - docs/adr/006-sops-migration-path.md
+    - docs/adr/2006-sops-migration-path.md
     - docs/guides/ANTIPATTERNS.md
     - docs/guides/GUIDE-security-secrets.md
   tags:
@@ -19,18 +19,18 @@ meta:
     - tpm2
 ---
 
-# ADR-024: systemd-creds + TPM2 statt sops-nix {#adr-024}
+# ADR-2024: systemd-creds + TPM2 statt sops-nix {#adr-2024}
 
 | Feld | Wert |
 |------|------|
 | **Status** | accepted |
 | **Datum** | 2026-07-05 |
-| **Ersetzt** | ADR-006, ADR-021 |
+| **Ersetzt** | ADR-2006, ADR-2021 |
 | **Host** | q958 |
 
 ## Kontext {#kontext}
 
-Die ursprüngliche Planung (ADR-006) sah sops-nix ab Stufe 9 vor. Nach Analyse des
+Die ursprüngliche Planung (ADR-2006) sah sops-nix ab Stufe 9 vor. Nach Analyse des
 konkreten Nutzerprofils (single-host, alle API-Keys beim Anbieter rotierbar, kein
 Multi-Host-Repo-Sharing) stellt sich sops-nix als Anti-Pattern heraus:
 
@@ -42,7 +42,7 @@ Multi-Host-Repo-Sharing) stellt sich sops-nix als Anti-Pattern heraus:
   Nix-Evaluierung und können im Store landen.
 - **Flake-Input-Overhead**: sops-nix als Flake-Input + `.sops.yaml` + creation rules für
   null echter Mehrwert.
-- **Race-Condition bei Impermanence**: ADR-021 dokumentiert die Boot-Timing-Komplexität,
+- **Race-Condition bei Impermanence**: ADR-2021 dokumentiert die Boot-Timing-Komplexität,
   die durch sops entsteht — entfällt komplett bei systemd-creds.
 
 TPM ist auf q958 vollständig verfügbar (`systemd-analyze has-tpm2` → yes, alle Schichten).
@@ -153,8 +153,8 @@ TPM (optional, später):
 
 ## Siehe auch {#siehe-auch}
 
-- [ADR-006 — SOPS-Migration](006-sops-migration-path.md) — Superseded by this ADR
-- [ADR-021 — SOPS Boot-Timing](021-sops-impermanence-boot-timing.md) — Withdrawn (entfällt)
+- [ADR-2006 — SOPS-Migration](2006-sops-migration-path.md) — Superseded by this ADR
+- [ADR-2021 — SOPS Boot-Timing](2021-sops-impermanence-boot-timing.md) — Withdrawn (entfällt)
 - [ANTIPATTERNS.md#sops-nix](../guides/ANTIPATTERNS.md#sops-nix) — sops-nix als Anti-Pattern
 - [GUIDE-security-secrets.md](../guides/GUIDE-security-secrets.md) — Betriebsguide aktualisiert
 - `modules/00-core/05-creds.nix` — NixOS-Modul

@@ -24,7 +24,6 @@ let
         scrutiny = config.my.disk-health.enable or false;
         grafana = config.services.grafana.enable or false;
         sabnzbd = mySvc.sabnzbd.enable or false;
-        cockpit = mySvc.cockpit.enable or false;
         technitium-dns-server = mySvc.technitium-dns-server.enable or false;
         ddns-updater = mySvc.ddns-updater.enable or false;
         pocket-id = mySvc.pocket-id.enable or false;
