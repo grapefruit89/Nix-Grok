@@ -76,6 +76,7 @@ in
     pocket-id.enable = erstAb 2; # /var/lib/secrets/pocket-id.env (secrets-provision)
     oauth2-proxy.enable = erstAb 5; # OIDC Forward-Auth via Pocket-ID — ClientID+Secret in profile.local.nix
     privado-vpn.enable = erstAb 6; # Usenet: SABnzbd + Prowlarr — Key in profile.local.nix
+    usenet-confinement.enable = erstAb 6; # VPN-Sandbox: SABnzbd + Prowlarr — BindsTo privado, DNS-Isolation
 
     storage.enable = if p.storage.mergerfsEnable then erstAb 3 else lib.mkForce false;
     storage-automount.enable = erstAb 3;

@@ -16,6 +16,7 @@
     ./54-audiobookshelf.nix
     ./55-navidrome.nix
     ./56-arr-sync
+    ./57-usenet-confinement
   ];
 
   # Centralized options declaration for domain 50
