@@ -57,7 +57,7 @@ let
   skuidUsenetGuard =
     if cfg.skuidSegmentation.enable then
       ''
-        meta skuid { ${toString uids.prowlarr}, ${toString uids.sabnzbd} } oifname != "lo" oifname != "wt0" oifname != "privado" oifname != "veth-usenet" oifname != "veth-usenet-br" oifname != "usenet-br" ip daddr != { ${lanCidrList}, 192.168.15.0/24 } drop comment "usenet UIDs egress"
+        meta skuid { ${toString uids.prowlarr}, ${toString uids.sabnzbd} } oifname != { "lo", "privado" } drop comment "usenet VPN-only egress"
       ''
     else
       "";
@@ -97,12 +97,6 @@ let
       ''
     else
       "";
-
-  vpnBridgeAccepts = lib.optionalString config.my.services.vpn-confinement.enable (
-    lib.concatMapStrings (name: ''
-      iifname "${name}-br" accept comment "VPN namespace bridge → host"
-    '') (lib.attrNames config.my.services.vpn-confinement.namespaces)
-  );
 
   rawNotrack =
     if cfg.netbirdNotrack then
@@ -186,7 +180,6 @@ lib.concatStringsSep "\n" [
         ip saddr @f2b_blocked_ipv4 drop comment "Fail2ban"
         ${ipv6Crowdsec}
         ${ipv6LanDrop}
-        ${vpnBridgeAccepts}
         return
       }
 
