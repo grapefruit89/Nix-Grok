@@ -114,7 +114,7 @@ let
       description = "Usenet (VPN-confined)";
     };
     technitium-dns-server = {
-      port = ports.technitium-dns;
+      port = ports.blocky;
       zone = "admin-hangar";
       subdomain = "dns";
       description = "Technitium DNS Server";

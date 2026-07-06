@@ -62,7 +62,7 @@ in
         resolvedDns = lib.concatStringsSep " " (map (s: "${s.ip}#${s.hostname}") dot);
         # Technitium-API-Format: "IP:853,IP:853,..."
         dotServers = lib.concatStringsSep "," (map (s: "${s.ip}:853") dot);
-        webPort = config.my.ports."technitium-dns";
+        webPort = config.my.ports."blocky";
         domain = config.my.configs.identity.domain;
         lanIp = config.my.configs.server.lanIP;
         splitHorizonEnabled = config.my.services.technitium-dns-server.splitHorizon.enable;

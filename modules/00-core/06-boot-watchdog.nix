@@ -47,9 +47,9 @@ in
       type = lib.types.bool;
       default = config.services.caddy.enable or false;
     };
-    requireTechnitium = lib.mkOption {
+    requireBlocky = lib.mkOption {
       type = lib.types.bool;
-      default = config.my.services.technitium-dns-server.enable or false;
+      default = config.my.services.blocky.enable or false;
     };
   };
 
@@ -67,7 +67,7 @@ in
       };
       script = ''
         set -euo pipefail
-        ${lib.optionalString cfg.requireTechnitium (serviceActive "technitium-dns-server.service")}
+        ${lib.optionalString cfg.requireBlocky (serviceActive "blocky.service")}
         ${lib.optionalString cfg.requirePostgresql (serviceActive "postgresql.service")}
         ${lib.optionalString cfg.requireCaddy (serviceActive "caddy.service")}
         echo "[BOOT-WATCHDOG] OK: kritische Dienste aktiv"

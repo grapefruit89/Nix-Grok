@@ -19,10 +19,10 @@
 { lib, ... }:
 {
   options.my.ports = {
-    technitium-dns = lib.mkOption {
+    blocky = lib.mkOption {
       type = lib.types.port;
       default = 1002;
-      description = "Technitium DNS Server web UI port (1002).";
+      description = "Blocky DNS HTTP API + Prometheus metrics port (1002).";
     };
     valkey = lib.mkOption {
       type = lib.types.port;
