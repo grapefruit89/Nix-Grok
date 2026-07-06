@@ -2,12 +2,12 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: SABnzbd Usenet mit VPN-Kill-Switch
+#   purpose: SABnzbd Usenet — VPN-Sandbox via 57-usenet-confinement
 #   docs:
 #     - docs/memory_oom.md
+#     - docs/adr/5031-usenet-vpn-sandbox.md
 #   lib:
 #     - lib/memory-policy.nix
-#     - lib/vpn-killswitch.nix
 #   services:
 #     - sabnzbd
 #   tags:
@@ -24,17 +24,10 @@ let
     inherit lib;
     ramGB = config.my.configs.hardware.ramGB;
   };
-  vpnConn = import ../../lib/vpn-connection.nix { inherit lib; };
   cfgSabnzbd = config.my.services.sabnzbd;
-  vpnCfg = config.my.services.vpn-confinement;
   portSabnzbd = config.my.ports.sabnzbd;
   uids = config.my.users.registry;
   gids = config.my.groups.registry;
-  sabInVpn = vpnConn.isVpnConfined vpnCfg "sabnzbd";
-  vpnKillSwitch = import ../../lib/vpn-killswitch.nix {
-    inherit lib;
-    privadoEnabled = config.my.services.privado-vpn.enable or false;
-  };
 in
 {
   config = lib.mkIf cfgSabnzbd.enable {
@@ -48,14 +41,12 @@ in
       settings = {
         misc = {
           port = portSabnzbd;
-          host = if sabInVpn then "0.0.0.0" else "127.0.0.1";
-          # Sprache aus Nix SSoT — arr-sync-locale überschreibt ini bei Abweichung
+          host = "127.0.0.1";
           language = config.my.configs.locale.language;
         };
       };
     };
 
-    # GID/UID und Gruppen-Anpassung
     users = {
       groups = {
         media = { };
@@ -67,31 +58,27 @@ in
       };
     };
 
-    systemd.services.sabnzbd = lib.mkMerge [
-      (lib.mkIf (!(config.my.services.vpn-confinement.enable or false)) vpnKillSwitch)
+    systemd.services.sabnzbd.serviceConfig = lib.mkMerge [
+      (memory.sabnzbd { })
       {
-        serviceConfig = lib.mkMerge [
-          (memory.sabnzbd { })
-          {
-            ProtectSystem = lib.mkForce "strict";
-            ProtectHome = lib.mkForce true;
-            PrivateTmp = lib.mkForce true;
-            PrivateDevices = lib.mkForce true;
-            NoNewPrivileges = lib.mkForce true;
-            UMask = "0002";
-            RuntimeDirectory = "sabnzbd-tmp";
-            RuntimeDirectoryMode = "0700";
-            ReadWritePaths = [
-              "/var/lib/sabnzbd"
-              "/data/downloads"
-              "/run/sabnzbd-tmp"
-            ];
-          }
+        ProtectSystem = lib.mkForce "strict";
+        ProtectHome = lib.mkForce true;
+        PrivateTmp = lib.mkForce true;
+        PrivateDevices = lib.mkForce true;
+        NoNewPrivileges = lib.mkForce true;
+        UMask = "0002";
+        RuntimeDirectory = "sabnzbd-tmp";
+        RuntimeDirectoryMode = "0700";
+        ReadWritePaths = [
+          "/var/lib/sabnzbd"
+          "/data/downloads"
+          "/run/sabnzbd-tmp"
         ];
-        environment = {
-          SABNZBD__MISC__TEMP_DIR = "/run/sabnzbd-tmp";
-        };
       }
     ];
+
+    systemd.services.sabnzbd.environment = {
+      SABNZBD__MISC__TEMP_DIR = "/run/sabnzbd-tmp";
+    };
   };
 }
