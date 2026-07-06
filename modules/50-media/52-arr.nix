@@ -27,9 +27,6 @@ let
   uids = config.my.users.registry;
   gids = config.my.groups.registry;
   arrHelper = import ./arr-helper.nix { inherit config lib; };
-  vpnConn = import ../../lib/vpn-connection.nix { inherit lib; };
-  vpnCfg = config.my.services.vpn-confinement;
-  prowlarrUpstream = vpnConn.connectionAddress vpnCfg "prowlarr";
 
   arrApps = {
     sonarr = {
@@ -64,8 +61,6 @@ let
       uid = uids.prowlarr;
       gid = gids.prowlarr;
       metadataDir = "/mnt/fast_pool/metadata/prowlarr";
-      useVpnKillSwitch = true;
-      upstreamHost = prowlarrUpstream;
       extraEnv = {
         PROWLARR__UPDATE__BRANCH = "master";
       };

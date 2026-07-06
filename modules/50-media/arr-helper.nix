@@ -32,10 +32,6 @@ let
     inherit lib;
     ramGB = config.my.configs.hardware.ramGB;
   };
-  vpnKillSwitchAttrs = import ../../lib/vpn-killswitch.nix {
-    inherit lib;
-    privadoEnabled = config.my.services.privado-vpn.enable or false;
-  };
 in
 {
   mkArrService =
@@ -45,7 +41,6 @@ in
       dataDir,
       uid,
       gid,
-      useVpnKillSwitch ? false,
       metadataDir ? null,
       upstreamHost ? "127.0.0.1",
       extraEnv ? { },
@@ -59,7 +54,6 @@ in
           enable = true;
           openFirewall = false;
           inherit dataDir;
-          # Port explizit setzen — Override des NixOS-Defaults via APPNAME__SERVER__PORT env-var
           settings.server.port = port;
         };
 
@@ -76,7 +70,6 @@ in
 
       {
         systemd.services.${name}.environment = {
-          # Upstream setzt UPDATE__MECHANISM bereits korrekt auf "external"
           "${nameUpper}__AUTH__METHOD" = lib.mkForce "External";
           "${nameUpper}__LOG__LEVEL" = lib.mkDefault "info";
         }
@@ -98,7 +91,6 @@ in
         memoryPolicy = memory.arr { };
         extraSystemd = {
           UMask = lib.mkForce "0002";
-          # APPNAME__AUTH__APIKEY etc. — via media-secrets.nix provisioned
           EnvironmentFile = [ "/var/lib/secrets/${name}.env" ];
           BindPaths = lib.mkIf (metadataDir != null) [
             "${metadataDir}:/var/lib/${name}/MediaCover"
@@ -111,10 +103,6 @@ in
           "d ${metadataDir} 0775 ${name} media -"
           "d /var/lib/${name}/MediaCover 0755 ${name} ${name} -"
         ];
-      })
-
-      (lib.mkIf (useVpnKillSwitch && !(config.my.services.vpn-confinement.enable or false)) {
-        systemd.services.${name} = vpnKillSwitchAttrs;
       })
     ];
 }
