@@ -70,7 +70,7 @@ in
     blockCleartextDns = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Port 53 (unverschlüsseltes DNS) outbound sperren — nur DoT via systemd-resolved erlaubt. Loopback (127.0.0.0/8) bleibt offen für Technitium.";
+      description = "Port 53 (unverschlüsseltes DNS) outbound sperren — nur DoT via systemd-resolved erlaubt. Loopback (127.0.0.0/8) bleibt offen für Blocky.";
     };
 
     webRateLimit = lib.mkOption {

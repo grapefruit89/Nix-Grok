@@ -76,7 +76,7 @@ in
       ];
     };
     dns = {
-      # Single Source of Truth fuer resolved (IP#hostname) + Technitium API (IP:853)
+      # Single Source of Truth fuer resolved (IP#hostname) + Blocky-Forwarder (IP:853)
       # Reihenfolge: schnellste zuerst, geografisch und organisatorisch diversifiziert
       bootstrap = [
         {

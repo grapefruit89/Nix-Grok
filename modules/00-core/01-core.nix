@@ -166,7 +166,7 @@ in
               hostname = "dns.quad9.net";
             }
           ];
-          description = "DoT-Nameserver — Single Source of Truth für resolved + Technitium-Forwarder. Niemals Klartext-IP.";
+          description = "DoT-Nameserver — Single Source of Truth für resolved + Blocky-Forwarder. Niemals Klartext-IP.";
         };
         ipv6 = {
           disableOnInterfaces = lib.mkOption {
