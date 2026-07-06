@@ -299,7 +299,10 @@ in
         "10.0.0.0/8"
         "172.16.0.0/12"
       ];
-      allowedCountries = [ ]; # AT + LT später ergänzen
+      allowedCountries = [
+        "at"
+        "lt"
+      ];
       allowLanDns = true;
       netbirdNotrack = true;
     };
