@@ -121,9 +121,10 @@ lib.concatStringsSep "\n" [
   rawNotrack
   ''
     table inet filter {
-      set geoip_blocked {
+      set geoip_allowed {
         type ipv4_addr
         flags interval
+        auto-merge
       }
 
       set crowdsec_blocked_ipv4 {
@@ -166,6 +167,7 @@ lib.concatStringsSep "\n" [
         type filter hook input priority filter; policy drop;
         jump in_trusted
         jump in_lan
+        ip saddr != @geoip_allowed drop comment "geo-whitelist: nur DE/AT/LT erlaubt"
         jump in_wan
         limit rate 5/second log prefix "nftables-dropped: "
       }
@@ -180,7 +182,6 @@ lib.concatStringsSep "\n" [
         tcp flags & (fin|syn|rst|psh|ack) == 0 drop comment "NULL scan"
         tcp flags & (fin|syn|rst|psh|ack) == fin drop comment "FIN scan"
         tcp flags & (fin|psh|urg) == (fin|psh|urg) drop comment "XMAS scan"
-        ip saddr @geoip_blocked drop comment "Geo blocklist"
         ip saddr @crowdsec_blocked_ipv4 drop comment "CrowdSec IPv4"
         ip saddr @f2b_blocked_ipv4 drop comment "Fail2ban"
         ${ipv6Crowdsec}

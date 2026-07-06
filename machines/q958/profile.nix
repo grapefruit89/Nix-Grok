@@ -299,14 +299,7 @@ in
         "10.0.0.0/8"
         "172.16.0.0/12"
       ];
-      blockedCountries = [
-        "cn"
-        "ru"
-        "kp"
-        "ir"
-        "sy"
-        "vn"
-      ];
+      allowedCountries = [ ]; # AT + LT später ergänzen
       allowLanDns = true;
       netbirdNotrack = true;
     };

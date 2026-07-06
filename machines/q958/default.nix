@@ -150,7 +150,7 @@ in
       };
       firewall = {
         lanCidrs = p.security.firewall.lanCidrs;
-        blockedCountries = p.security.firewall.blockedCountries;
+        allowedCountries = p.security.firewall.allowedCountries;
         allowLanDns = p.security.firewall.allowLanDns;
         lanInterface = p.network.lan.interface;
         netbirdNotrack = p.security.firewall.netbirdNotrack;
