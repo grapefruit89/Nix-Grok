@@ -177,12 +177,12 @@ in
     };
 
     systemd.timers.nftables-geoip-update = lib.mkIf cfg.geoipAutoUpdate.enable {
-      description = "Wöchentlicher GeoIP-Whitelist-Refresh (DE+AT+LT → geoip_allowed)";
+      description = "Monatlicher GeoIP-Whitelist-Refresh (DE+AT+LT → geoip_allowed)";
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "30s";
-        OnUnitActiveSec = "7d";
-        RandomizedDelaySec = "1h";
+        OnUnitActiveSec = "30d";
+        RandomizedDelaySec = "6h";
       };
     };
   };
