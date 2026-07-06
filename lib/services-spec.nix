@@ -113,11 +113,11 @@ let
       subdomain = "sabnzbd";
       description = "Usenet (VPN-confined)";
     };
-    technitium-dns-server = {
+    blocky = {
       port = ports.blocky;
       zone = "admin-hangar";
       subdomain = "dns";
-      description = "Technitium DNS Server";
+      description = "Blocky DNS (ad-blocking, split-horizon)";
     };
     ddns-updater = {
       port = ports.ddns-updater;

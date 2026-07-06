@@ -25,7 +25,7 @@ _: {
       module = "10-network";
       sso = true;
     };
-    technitium-dns = {
+    blocky = {
       id = 1002;
       transport = "tcp:1002";
       module = "10-network";

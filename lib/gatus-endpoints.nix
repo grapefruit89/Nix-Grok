@@ -106,7 +106,7 @@ let
       port = 443;
     })
     (mkDns {
-      name = "technitium-dns";
+      name = "blocky-dns";
       group = "critical";
       queryName = "cloudflare.com";
     })
