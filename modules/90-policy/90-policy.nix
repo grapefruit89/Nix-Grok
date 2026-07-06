@@ -56,7 +56,7 @@ in
         assertion =
           config.my.services.usenet-confinement.enable
           -> config.my.security.firewall.skuidSegmentation.enable;
-        message = "POLICY: VPN-Confinement ohne skuid-Segmentation — Usenet-UIDs können Firewall umgehen.";
+        message = "POLICY: Usenet-Confinement ohne skuid-Segmentation — Usenet-UIDs können Firewall umgehen.";
       }
     ];
 

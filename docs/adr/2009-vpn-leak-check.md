@@ -2,7 +2,7 @@
 meta:
   role: doc
   purpose: ADR-2009 VPN-NetNS-Leak-Check per systemd-Timer — SABnzbd + Prowlarr Egress-Verifikation
-  status: accepted
+  status: superseded
   date: 2026-06-17
   error_pattern: "vpn.leak.check.*failed|IP.*match.*host|sabnzbd.*stopped.*leak|prowlarr.*stopped.*leak"
   quick_fix: "systemctl status vpn-leak-check; ip -n vpn-netns addr show"
@@ -25,7 +25,7 @@ meta:
 
 | Feld | Wert |
 |------|------|
-| **Status** | accepted |
+| **Status** | superseded by [ADR-5031](5031-usenet-vpn-sandbox.md) |
 | **Datum** | 2026-06-17 |
 | **Host** | q958 |
 | **Quelle** | nix-hermes ADR-10-VPN (Synthese) |
