@@ -105,7 +105,7 @@ in
           ${lib.optionalString splitHorizonEnabled ''
             # ── Split-Horizon Zone: prüfe ob bereits vorhanden (API-State) ─────
             ZONE_EXISTS=$($CURL -sf "$API/api/zones/list?token=$TOKEN" 2>/dev/null | \
-              $JQ -r \'.response.zones[]? | select(.name == "${domain}") | .name\' 2>/dev/null || echo "")
+              $JQ -r '.response.zones[]? | select(.name == "${domain}") | .name' 2>/dev/null || echo "")
 
             if [ -z "$ZONE_EXISTS" ]; then
               echo "technitium-dns-configure: Split-Horizon Zone ${domain} anlegen..."
