@@ -18,7 +18,7 @@
 }:
 let
   cfg = config.my.security.kernel-hardening;
-  vpnNeedsForward = config.my.services.vpn-confinement.enable or false;
+  vpnNeedsForward = false;
 in
 {
   options.my.security.kernel-hardening = {
@@ -102,7 +102,7 @@ in
     ];
 
     boot.kernel.sysctl = {
-      # Network baseline (ip_forward left to vpn-confinement when VPN active)
+      # Network baseline (ip_forward not needed: usenet-confinement uses RestrictNetworkInterfaces)
       "net.ipv6.conf.all.disable_ipv6" = lib.mkIf cfg.disableIpv6Stack 1;
       "net.ipv4.conf.all.accept_source_route" = 0;
       "net.ipv4.conf.default.accept_source_route" = 0;

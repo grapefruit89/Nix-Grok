@@ -117,12 +117,6 @@ in
   my.boot-watchdog.enable = erstAb 5;
   my.disk-health.enable = erstAb 3;
   my.disk-health.hdIdle.enable = erstAb 3;
-
-  my.services.vpn-confinement = {
-    enable = erstAb 6;
-    leakCheck.enable = erstAb 6;
-  };
-
   my.media.sync = {
     # locale, downloadClients, prowlarr auto-aktiviert via mkDefault true in den Modulen
     prowlarr = {

@@ -108,24 +108,6 @@ in
 
     ports.ssh = p.network.sshPort;
 
-    services.vpn-confinement = {
-      namespaces.usenet = {
-        wgConf = "/var/lib/secrets/privado.netns.conf";
-        address = p.network.privado.address;
-        dns = p.network.privado.dns;
-        killSwitch = true;
-        healthcheck.enable = false;
-        accessibleFrom = [
-          "192.168.15.0/24"
-          "${p.network.lan.ip}/32"
-        ];
-        services = [
-          "sabnzbd"
-          "prowlarr"
-        ];
-      };
-    };
-
     core.nix-tuning = {
       maxJobs = p.nix.maxJobs;
       cores = p.nix.cores;

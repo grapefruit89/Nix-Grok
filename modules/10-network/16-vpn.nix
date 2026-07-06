@@ -115,54 +115,51 @@ in
     })
 
     # ── PRIVADO VPN WIREGUARD CLIENT ──────────────────────────────────────────
-    (lib.mkIf
-      (config.my.services.privado-vpn.enable && !(config.my.services.vpn-confinement.enable or false))
-      {
-        networking.wg-quick.interfaces.privado =
-          let
-            ip = pkgs.iproute2;
-            vpnTable = "51820";
-            # Prowlarr + SABnzbd — nur Registry-UIDs über privado (Split-Tunnel)
-            vpnUids = [
-              config.my.users.registry.prowlarr
-              config.my.users.registry.sabnzbd
-            ];
-            uidRules = lib.concatMapStringsSep "\n" (
-              uid:
-              "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
-            ) vpnUids;
-            uidRulesDown = lib.concatMapStringsSep "\n" (
-              uid:
-              "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
-            ) vpnUids;
-          in
-          {
-            autostart = true;
-            address = [ config.my.services.privado-vpn.ipAddress ];
-            # Split-Tunnel (table=off): kein resolv.conf via wg-quick — vermeidet resolvconf-Signatur-Konflikt
-            dns = [ ];
-            privateKeyFile = config.my.services.privado-vpn.privateKeyFile;
-            table = "off";
+    (lib.mkIf config.my.services.privado-vpn.enable {
+      networking.wg-quick.interfaces.privado =
+        let
+          ip = pkgs.iproute2;
+          vpnTable = "51820";
+          # Prowlarr + SABnzbd — nur Registry-UIDs über privado (Split-Tunnel)
+          vpnUids = [
+            config.my.users.registry.prowlarr
+            config.my.users.registry.sabnzbd
+          ];
+          uidRules = lib.concatMapStringsSep "\n" (
+            uid:
+            "${ip}/bin/ip rule add uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid}"
+          ) vpnUids;
+          uidRulesDown = lib.concatMapStringsSep "\n" (
+            uid:
+            "${ip}/bin/ip rule del uidrange ${toString uid}-${toString uid} lookup ${vpnTable} priority 9${toString uid} || true"
+          ) vpnUids;
+        in
+        {
+          autostart = true;
+          address = [ config.my.services.privado-vpn.ipAddress ];
+          # Split-Tunnel (table=off): kein resolv.conf via wg-quick — vermeidet resolvconf-Signatur-Konflikt
+          dns = [ ];
+          privateKeyFile = config.my.services.privado-vpn.privateKeyFile;
+          table = "off";
 
-            postUp = ''
-              ${ip}/bin/ip route add default dev privado table ${vpnTable}
-              ${uidRules}
-            '';
-            preDown = ''
-              ${uidRulesDown}
-              ${ip}/bin/ip route flush table ${vpnTable} || true
-            '';
+          postUp = ''
+            ${ip}/bin/ip route add default dev privado table ${vpnTable}
+            ${uidRules}
+          '';
+          preDown = ''
+            ${uidRulesDown}
+            ${ip}/bin/ip route flush table ${vpnTable} || true
+          '';
 
-            peers = [
-              {
-                publicKey = config.my.services.privado-vpn.publicKey;
-                endpoint = config.my.services.privado-vpn.endpoint;
-                allowedIPs = [ "0.0.0.0/0" ];
-                persistentKeepalive = 25;
-              }
-            ];
-          };
-      }
-    )
+          peers = [
+            {
+              publicKey = config.my.services.privado-vpn.publicKey;
+              endpoint = config.my.services.privado-vpn.endpoint;
+              allowedIPs = [ "0.0.0.0/0" ];
+              persistentKeepalive = 25;
+            }
+          ];
+        };
+    })
   ];
 }

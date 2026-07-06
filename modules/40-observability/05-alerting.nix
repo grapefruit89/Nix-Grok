@@ -70,13 +70,12 @@ in
         };
       };
 
-      sabnzbd.serviceConfig.OnFailure = lib.mkIf (config.my.services.vpn-confinement.enable or false) (
+      sabnzbd.serviceConfig.OnFailure = lib.mkIf (config.my.services.usenet-confinement.enable or false) (
         lib.mkDefault [ "alerting-onfailure.service" ]
       );
 
-      prowlarr.serviceConfig.OnFailure = lib.mkIf (config.my.services.vpn-confinement.enable or false) (
-        lib.mkDefault [ "alerting-onfailure.service" ]
-      );
+      prowlarr.serviceConfig.OnFailure = lib.mkIf (config.my.services.usenet-confinement.enable or false
+      ) (lib.mkDefault [ "alerting-onfailure.service" ]);
 
       restic-backups-tier-a-sovereign.serviceConfig.OnFailure =
         lib.mkIf (config.my.services.restic-backup.enable or false)

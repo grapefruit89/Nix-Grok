@@ -9,11 +9,9 @@ let
   cfgSync = config.my.media.sync.prowlarr;
   ports = config.my.ports;
 
-  vpnConn = import ../../../lib/vpn-connection.nix { inherit lib; };
-  vpnCfg = config.my.services.vpn-confinement;
-  prowlarrHost = vpnConn.connectionAddress vpnCfg "prowlarr";
-  hostBridgeAddr = vpnConn.hostBridgeAddress vpnCfg "prowlarr";
-  prowlarrInVpn = vpnConn.isVpnConfined vpnCfg "prowlarr";
+  prowlarrHost = "127.0.0.1";
+  hostBridgeAddr = "127.0.0.1";
+  prowlarrInVpn = false;
 
   # Arr-Applications die automatisch in Prowlarr registriert werden.
   autoApps = lib.filterAttrs (_: v: v.enabled) {
@@ -224,7 +222,7 @@ in
             fi
             [ "$i" -eq 30 ] && {
               echo "Prowlarr nicht erreichbar nach 60s — Sync übersprungen."
-              echo "Tipp: VPN aktiv? Prowlarr läuft? (vpn-confinement: ${lib.boolToString prowlarrInVpn})"
+              echo "Tipp: VPN aktiv? Prowlarr läuft? (usenet-confinement: ${lib.boolToString prowlarrInVpn})"
               exit 0
             }
             sleep 2

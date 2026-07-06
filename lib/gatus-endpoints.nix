@@ -15,14 +15,11 @@ let
   ports = config.my.ports;
   sshPort = ports.ssh or 22;
   svc = config.my.services;
-  vpnConn = import ./vpn-connection.nix { inherit lib; };
-  vpnCfg = config.my.services.vpn-confinement;
   gatusPort = config.my.services.gatus.port or ports.gatus;
 
   local = "127.0.0.1";
 
-  mediaHost =
-    name: if vpnConn.isVpnConfined vpnCfg name then vpnConn.connectionAddress vpnCfg name else local;
+  mediaHost = _name: local;
 
   mkHttp =
     {

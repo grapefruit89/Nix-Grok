@@ -9,11 +9,9 @@ let
   cfgSabnzbd = config.my.services.sabnzbd;
   ports = config.my.ports;
 
-  vpnConn = import ../../../lib/vpn-connection.nix { inherit lib; };
-  vpnCfg = config.my.services.vpn-confinement;
-  sabHost = vpnConn.connectionAddress vpnCfg "sabnzbd";
+  sabHost = "127.0.0.1";
   sabPort = ports.sabnzbd;
-  hostBridgeAddr = vpnConn.hostBridgeAddress vpnCfg "sabnzbd";
+  hostBridgeAddr = "127.0.0.1";
 
   # Arr-Services die einen Download-Client brauchen.
   # Jeder Eintrag: Service-Name → { port, apiVersion, category }

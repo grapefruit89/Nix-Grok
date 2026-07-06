@@ -16,24 +16,11 @@
 {
   lib,
   caddy,
-  vpnConn ? null,
 }:
 let
   inherit (caddy) streamingBackend;
 
-  vpnUpstream =
-    name: entry:
-    if vpnConn == null then
-      mkUpstream entry
-    else if
-      lib.elem name [
-        "sabnzbd"
-        "prowlarr"
-      ]
-    then
-      "${vpnConn.connectionAddress vpnConn.cfg name}:${toString entry.port}"
-    else
-      mkUpstream entry;
+  vpnUpstream = _name: entry: mkUpstream entry;
 
   mkUpstream =
     entry:
