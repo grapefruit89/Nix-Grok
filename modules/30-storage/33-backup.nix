@@ -73,9 +73,6 @@ in
           # ── Nutzerdaten (Fortschritt, Lesezeichen) ────────────────────────
           "${cfgImp.persistMountPoint}/var/lib/audiobookshelf"
 
-          # ── Netzwerk-Konfiguration (nicht deklarativ in NixOS-Modul) ─────
-          "${cfgImp.persistMountPoint}/var/lib/technitium-dns-server"
-
           # ── Observability-Dashboards ──────────────────────────────────────
           "${cfgImp.persistMountPoint}/var/lib/grafana"
 
@@ -119,7 +116,7 @@ in
           systemctl stop \
             paperless-web paperless-scheduler paperless-task-queue \
             home-assistant linkwarden vaultwarden zigbee2mqtt \
-            audiobookshelf technitium-dns-server || true
+            audiobookshelf blocky || true
           systemctl stop mosquitto postgresql || true
         '';
 
@@ -130,7 +127,7 @@ in
           systemctl start \
             paperless-web paperless-scheduler paperless-task-queue \
             home-assistant linkwarden vaultwarden zigbee2mqtt \
-            audiobookshelf technitium-dns-server || true
+            audiobookshelf blocky || true
         '';
       };
 

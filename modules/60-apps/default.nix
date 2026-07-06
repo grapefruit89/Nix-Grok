@@ -131,15 +131,15 @@ in
   # Caddy .enable nur in machines/<host>/rollout.nix — hier nur Hardening
   config = lib.mkIf config.services.caddy.enable {
     systemd.services.caddy = {
-      # Technitium → Caddy (ACME-DNS). PostgreSQL → Caddy via boot-watchdog (Linkwarden)
+      # Blocky → Caddy (ACME-DNS). PostgreSQL → Caddy via boot-watchdog (Linkwarden)
       after = lib.mkAfter (
-        lib.optional config.my.services.technitium-dns-server.enable "technitium-dns-server.service"
+        lib.optional config.my.services.blocky.enable "blocky.service"
         ++ lib.optional (config.my.services.linkwarden.enable or false) "postgresql.service"
         ++ [ "network-online.target" ]
       );
-      wants =
-        lib.optional config.my.services.technitium-dns-server.enable "technitium-dns-server.service"
-        ++ [ "network-online.target" ];
+      wants = lib.optional config.my.services.blocky.enable "blocky.service" ++ [
+        "network-online.target"
+      ];
       wantedBy = [ "multi-user.target" ];
     };
 

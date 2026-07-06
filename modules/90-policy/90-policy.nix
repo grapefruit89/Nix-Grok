@@ -39,10 +39,8 @@ in
     # --------------------------------------------------------------------------
     assertions = [
       {
-        assertion =
-          config.my.security.firewall.enable
-          -> (config.my.services.blocky.enable || config.my.services.technitium-dns-server.enable);
-        message = "POLICY: Firewall aktiviert, aber kein DNS-Resolver (Blocky/Technitium) — DNS-Leck möglich.";
+        assertion = config.my.security.firewall.enable -> config.my.services.blocky.enable;
+        message = "POLICY: Firewall aktiviert, aber kein DNS-Resolver (Blocky) — DNS-Leck möglich.";
       }
       {
         assertion = config.my.security.firewall.enable -> config.my.security.fail2ban.enable;
