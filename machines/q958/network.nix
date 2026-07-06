@@ -2,9 +2,9 @@
 # meta:
 #   layer: 2
 #   role: machine
-#   purpose: Verdrahtung Netzwerk — Technitium, Netbird, Pocket-ID, Privado
+#   purpose: Verdrahtung Netzwerk — Blocky, Netbird, Pocket-ID, Privado
 #   services:
-#     - technitium-dns-server
+#     - blocky
 #     - netbird
 #     - pocket-id
 #   tags:
@@ -33,8 +33,6 @@ in
 
   my.security.firewall.ipv6 = p.network.ipv6.firewall;
 
-  my.services.technitium-dns-server.splitHorizon.enable = true;
-
   my.services = {
     netbird.domain = "netbird.${config.my.configs.identity.domain}";
     netbird.setupKeyFile = secretPath "netbirdSetupKey";
@@ -48,9 +46,9 @@ in
     };
   };
 
-  # Technitium DNS für LAN — nur auf eno1, nicht WAN-weit (vor nftables Stufe 8)
+  # Blocky DNS für LAN — nur auf eno1, nicht WAN-weit (vor nftables Stufe 8)
   networking.firewall.interfaces.${lan.interface} =
-    lib.mkIf (config.my.services.technitium-dns-server.enable && !config.my.security.firewall.enable)
+    lib.mkIf (config.my.services.blocky.enable && !config.my.security.firewall.enable)
       {
         allowedUDPPorts = [ 53 ];
         allowedTCPPorts = [ 53 ];

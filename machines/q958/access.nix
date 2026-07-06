@@ -131,9 +131,8 @@ in
       message = "ACCESS: Firewall aktiv → Port ${toString p.network.sshPort} muss erlaubt sein.";
     }
     {
-      assertion =
-        !(config.my.services.technitium-dns-server.enable or false) || lan.dns == [ "127.0.0.1" ];
-      message = "ACCESS: Technitium aktiv → LAN-DNS muss 127.0.0.1 sein.";
+      assertion = !(config.my.services.blocky.enable or false) || lan.dns == [ "127.0.0.1" ];
+      message = "ACCESS: Blocky aktiv → LAN-DNS muss 127.0.0.1 sein.";
     }
     {
       assertion = (config.services.getty.autologinUser or "") == "root";

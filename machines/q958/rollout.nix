@@ -69,7 +69,7 @@ in
   my.impermanence.enable = erstAb 9;
 
   my.services = {
-    technitium-dns-server.enable = erstAb 2;
+    blocky.enable = erstAb 2;
     valkey.enable = erstAb 2;
     postgresql.enable = lib.mkForce false;
     netbird.enable = erstAb 2;
