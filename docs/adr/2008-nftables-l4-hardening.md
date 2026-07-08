@@ -40,7 +40,7 @@ meta:
 
 - KB `GUIDE-Nftables-Firewall-Mastery` und `security-hardening-baseline` liefern bewährte L4-Patterns.
 - Bisher: inline ruleset in `15-firewall.nix`, kein `checkRuleset`, kein Fail2ban-Set, keine skuid-Regeln.
-- Geo/Rate bleiben in **nftables** — Technitium/DNS macht DNS-Adblock, nicht L4 ([ADR-1001](1001-dns-dot-fail-closed.md)).
+- Geo/Rate bleiben in **nftables** — Blocky/DNS macht DNS-Adblock, nicht L4 ([ADR-1001](1001-dns-dot-fail-closed.md)).
 - skuid-Segmentierung setzt statische UIDs voraus — bereitgestellt durch [ADR-011](011-unified-port-uid-schema.md).
 - v6-Regeln entfallen auf eno1 — [ADR-1002](1002-ipv6-homelab-v4-only.md) deaktiviert IPv6 auf dem LAN-Interface.
 
