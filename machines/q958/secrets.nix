@@ -236,8 +236,12 @@ let
         if [ -n "${oauth2ClientId}" ] && [ -n "${oauth2ClientSecret}" ]; then
           printf 'OAUTH2_PROXY_CLIENT_ID=%s\nOAUTH2_PROXY_CLIENT_SECRET=%s\n' \
             "${oauth2ClientId}" "${oauth2ClientSecret}" > ${secretsDir}/oauth2-proxy.env
-          chmod 600 ${secretsDir}/oauth2-proxy.env
+        elif [ ! -f ${secretsDir}/oauth2-proxy.env ]; then
+          # Placeholder damit oauth2-proxy starten kann — wird durch echte Credentials ersetzt
+          printf 'OAUTH2_PROXY_CLIENT_ID=setup-pending\nOAUTH2_PROXY_CLIENT_SECRET=setup-pending\n' \
+            > ${secretsDir}/oauth2-proxy.env
         fi
+        chmod 600 ${secretsDir}/oauth2-proxy.env
         # Cookie-Secret — einmalig generiert, nie überschrieben
         if [ ! -f ${secretsDir}/oauth2-proxy-cookie-secret ]; then
           ${pkgs.openssl}/bin/openssl rand -base64 32 > ${secretsDir}/oauth2-proxy-cookie-secret

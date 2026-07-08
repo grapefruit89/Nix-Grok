@@ -82,6 +82,15 @@
       obscuredPass = ""; # Ausgabe von: rclone obscure <passwort>
     };
 
+    # ── oauth2-proxy SSO-Proxy (Pocket-ID OIDC-Client) ───────────────────────
+    # 1. https://auth.<domain> → Applications → New
+    # 2. Callback URL: https://oauth.<domain>/oauth2/callback
+    # 3. clientId + clientSecret eintragen → nixos-rebuild switch
+    oauth2proxy = {
+      clientId = "";     # leer = Placeholder (Service startet, Auth schlägt fehl)
+      clientSecret = ""; # leer = Placeholder
+    };
+
     oidc = {
       # Pocket-ID → Applications → New → Callback-URL prüfen
       jellyfin  = { clientId = ""; clientSecret = ""; };
