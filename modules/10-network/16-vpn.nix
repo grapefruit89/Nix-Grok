@@ -67,11 +67,11 @@ in
     (lib.mkIf cfgNetbird.enable {
       services.netbird.server = {
         enable = true;
-        domain = cfgNetbird.domain;
+        inherit (cfgNetbird) domain;
         enableNginx = false;
         management = {
           enableNginx = false;
-          domain = cfgNetbird.domain;
+          inherit (cfgNetbird) domain;
           turnDomain = cfgNetbird.domain;
           # Lokal: pocket-id Port 1001 direkt — hairpin NAT über externe IP nicht möglich
           oidcConfigEndpoint = "http://127.0.0.1:1001/.well-known/openid-configuration";
@@ -94,7 +94,7 @@ in
         openFirewall = true;
         login = {
           enable = true;
-          setupKeyFile = cfgNetbird.setupKeyFile;
+          inherit (cfgNetbird) setupKeyFile;
         };
       };
 

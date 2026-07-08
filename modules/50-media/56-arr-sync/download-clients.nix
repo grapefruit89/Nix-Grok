@@ -45,9 +45,9 @@ let
   targetsJson = builtins.toJSON (
     lib.mapAttrsToList (name: t: {
       inherit name;
-      port = t.port;
-      apiVersion = t.apiVersion;
-      category = t.category;
+      inherit (t) port;
+      inherit (t) apiVersion;
+      inherit (t) category;
       apiKeyFile = "/var/lib/secrets/${name}_api_key";
     }) arrTargets
   );

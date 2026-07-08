@@ -47,9 +47,9 @@ let
   appsJson = builtins.toJSON (
     lib.mapAttrsToList (name: app: {
       inherit name;
-      port = app.port;
-      host = app.host;
-      apiVersion = app.apiVersion;
+      inherit (app) port;
+      inherit (app) host;
+      inherit (app) apiVersion;
       apiKeyFile = "/var/lib/secrets/${name}_api_key";
     }) autoApps
   );

@@ -49,7 +49,7 @@ in
 
     services.pocket-id = {
       enable = true;
-      dataDir = cfgPocketId.dataDir;
+      inherit (cfgPocketId) dataDir;
       settings = {
         PORT = toString cfgPocketId.port;
         APP_URL = "https://auth.${domain}"; # OIDC-Issuer + Frontend-URL (nicht PUBLIC_URL)

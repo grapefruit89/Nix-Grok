@@ -56,8 +56,8 @@
     in
     {
       packages.${system} = {
-        grok-cli = grok-cli;
-        secrets-portal = secrets-portal;
+        inherit grok-cli;
+        inherit secrets-portal;
         # Lokale Optionsreferenz: `nix build .#docs && cat result`
         # Generiert JSON-Dokumentation aller my.* Optionen aus dem evaluierten q958-System.
         # Benötigt profile.local.nix (secrets). Nur auf dem Host sinnvoll nutzbar.

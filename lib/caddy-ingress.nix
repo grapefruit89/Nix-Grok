@@ -20,7 +20,7 @@
 let
   inherit (caddy) streamingBackend;
 
-  vpnUpstream = _name: entry: mkUpstream entry;
+  vpnUpstream = _name: mkUpstream;
 
   mkUpstream =
     entry:
