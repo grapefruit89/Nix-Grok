@@ -57,8 +57,7 @@ case "${1:-dry}" in
       echo ""
       echo "✓ Dry-build erfolgreich — Flag gesetzt: $FLAG_FILE"
       echo ""
-      echo "  Switch starten (SSH-sicher via systemd-run):"
-      echo "  sudo scripts/nixos-rebuild-safe.sh switch"
+      echo "  Switch starten mit: sudo scripts/nixos-rebuild-safe.sh switch"
     else
       echo "" >&2
       echo "✗ Dry-build FEHLGESCHLAGEN — switch ist nicht freigegeben" >&2
@@ -90,11 +89,24 @@ case "${1:-dry}" in
       echo ""
       echo "✓ Dry-build erfolgreich — starte nixos-rebuild $ACTION …"
       echo ""
+      REBUILD_EXIT=0
       if [ "$ACTION" = "switch" ]; then
-        nixos-rebuild switch --flake "$FLAKE" --impure 2>&1 | tee /tmp/nixos-switch.log
+        nixos-rebuild switch --flake "$FLAKE" --impure 2>&1 | tee /tmp/nixos-switch.log || REBUILD_EXIT=$?
       else
-        nixos-rebuild test --flake "$FLAKE" --impure 2>&1 | tee /tmp/nixos-test.log
+        nixos-rebuild test --flake "$FLAKE" --impure 2>&1 | tee /tmp/nixos-test.log || REBUILD_EXIT=$?
       fi
+      if [ "$REBUILD_EXIT" -ne 0 ]; then
+        echo "" >&2
+        echo "✗ nixos-rebuild $ACTION fehlgeschlagen (exit $REBUILD_EXIT)" >&2
+        echo "" >&2
+        echo "  Fehlgeschlagene Units:" >&2
+        systemctl list-units --state=failed --no-pager --no-legend 2>/dev/null | sed 's/^/    /' >&2 || true
+        echo "" >&2
+        echo "  Details: journalctl -u <unit> -n 30 --no-pager" >&2
+        exit "$REBUILD_EXIT"
+      fi
+      echo ""
+      echo "✓ $ACTION erfolgreich — keine fehlgeschlagenen Units"
     else
       echo "" >&2
       echo "✗ Dry-build FEHLGESCHLAGEN — $ACTION nicht freigegeben" >&2

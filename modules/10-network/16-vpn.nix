@@ -67,11 +67,11 @@ in
     (lib.mkIf cfgNetbird.enable {
       services.netbird.server = {
         enable = true;
-        inherit (cfgNetbird) domain;
+        domain = cfgNetbird.domain;
         enableNginx = false;
         management = {
           enableNginx = false;
-          inherit (cfgNetbird) domain;
+          domain = cfgNetbird.domain;
           turnDomain = cfgNetbird.domain;
           # Lokal: pocket-id Port 1001 direkt — hairpin NAT über externe IP nicht möglich
           oidcConfigEndpoint = "http://127.0.0.1:1001/.well-known/openid-configuration";
@@ -94,7 +94,7 @@ in
         openFirewall = true;
         login = {
           enable = true;
-          inherit (cfgNetbird) setupKeyFile;
+          setupKeyFile = cfgNetbird.setupKeyFile;
         };
       };
 
@@ -165,6 +165,15 @@ in
       # wantedBy = ["network-online.target"] hinzu (unconditional wenn systemd.network.enable).
       # Ohne diesen Fix: 2min Timeout bei jedem nixos-rebuild switch. (→ ADR-2030)
       systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
+
+      # Regression-Schutz: Assertion schlägt beim dry-build fehl wenn wantedBy nicht leer ist.
+      # Fängt nixpkgs-Updates oder versehentliches Entfernen des mkForce [] sofort ab.
+      assertions = [
+        {
+          assertion = config.systemd.services."systemd-networkd-wait-online".wantedBy == [ ];
+          message = "[ADR-2030] systemd-networkd-wait-online.wantedBy ist nicht leer — nixos-rebuild switch würde 2min blockieren. Fix: mkForce [] in modules/10-network/16-vpn.nix prüfen.";
+        }
+      ];
     })
   ];
 }

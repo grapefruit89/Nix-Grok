@@ -52,15 +52,5 @@ in
     };
 
     systemd.services.plymouth-quit-wait.enable = lib.mkForce false;
-
-    # Headless-Server: systemd-networkd-wait-online blockiert jeden nixos-rebuild switch
-    # für 2 Minuten (→ exit code 4). Root Cause (nixpkgs networkd.nix):
-    #   networking.wg-quick.interfaces.privado setzt automatisch ignoredInterfaces = ["privado"]
-    #   UND das networkd-Modul setzt wantedBy = ["network-online.target"] unconditional —
-    #   unabhängig von systemd.network.wait-online.enable.
-    # Fix: enable=false unterdrückt die Unit-Config; mkForce [] entfernt das WantedBy-Symlink.
-    # Beide Zeilen sind nötig — allein reicht keine. (→ ADR-2030)
-    systemd.network.wait-online.enable = false;
-    systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
   };
 }
