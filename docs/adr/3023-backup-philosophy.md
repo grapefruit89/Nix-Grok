@@ -26,7 +26,7 @@ Deklarative Konfiguration, unwiederbringliche Anwendungsdaten, und regenerierbar
 | `/var/lib/hass` | Home-Assistant-Automatisierungen, Historie | home-assistant |
 | `/var/lib/zigbee2mqtt` | Zigbee-Pairings, Device-Config | zigbee2mqtt |
 | `/var/lib/audiobookshelf` | Hörbuch-Fortschritt, Lesezeichen, Playlists | audiobookshelf |
-| `/var/lib/technitium-dns-server` | DNS-Zonen, Blocklists-Konfiguration | technitium |
+| `/home/moritz/blocky-allowlist.txt` | DNS-Allowlist (Blocky) — deklarativ, kein State | blocky |
 | `/var/lib/grafana` | Selbst erstellte Dashboards | grafana |
 
 ### Was explizit NICHT gesichert wird

@@ -36,7 +36,7 @@ meta:
 - Fritzbox-LAN ist **IPv4-praktisch** (`192.168.2.0/24`); IPv6 auf `eno1` bringt Komplexität ohne Nutzen.
 - Geo-Blocklist (`modules/15-firewall.nix`) und CrowdSec-Integration sind **v4-fokussiert** ([ADR-2008](2008-nftables-l4-hardening.md)).
 - nftables mit parallelen v4/v6-Regeln erhöht Fehlerrisiko (z. B. `ip6` vs `meta nfproto ipv6`).
-- DNS: Technitium soll konsistent **nur v4** zum WAN und **keine AAAA** ins LAN liefern ([ADR-1001](1001-dns-dot-fail-closed.md)).
+- DNS: Blocky soll konsistent **nur v4** zum WAN und **keine AAAA** ins LAN liefern ([ADR-1001](1001-dns-dot-fail-closed.md)).
 - **Tailscale** Mesh-VPN darf nicht gebrochen werden.
 
 ## Entscheidung {#entscheidung}
@@ -46,8 +46,8 @@ meta:
 3. **systemd-networkd** (`access.nix`): `IPv6AcceptRA = no` auf LAN.
 4. **nftables** ([ADR-2008](2008-nftables-l4-hardening.md)): kein `crowdsec_blocked_ipv6`; Drop-Regel für `meta nfproto ipv6` auf `iifname eno1`.
 5. **CrowdSec bouncer:** `nftables.ipv6.enabled = false`.
-6. **Technitium/DNS:** `connectIPVersion = v4`, `filtering.queryTypes = [ "AAAA" ]`, Sandbox ohne `AF_INET6`.
-7. **Assertion:** `ipv6.firewall == false` wenn Technitium/DNS aktiv.
+6. **Blocky/DNS:** Upstreams sind reine IPv4-Adressen, kein AAAA-Lookup nötig. Sandbox ohne `AF_INET6`.
+7. **Assertion:** `ipv6.firewall == false` wenn Blocky/DNS aktiv.
 8. **Ausnahme:** `tailscale0` — IPv6 **nicht** abschalten.
 
 ## Konsequenzen {#konsequenzen}
@@ -61,7 +61,7 @@ meta:
 ### Negativ / Trade-offs {#negativ}
 
 - Kein natives IPv6 im LAN — spätere Aktivierung braucht koordinierten Rollout (siehe unten).
-- Dual-Stack-Clients im LAN bekommen keine AAAA von Technitium.
+- Dual-Stack-Clients im LAN bekommen keine AAAA von Blocky.
 - Manche Tools erwarten v6 — müssen über v4 oder Tailscale.
 
 ### Wieder aktivieren (Checkliste) {#reaktivierung}

@@ -58,7 +58,7 @@ grep -E "60[0-9]{2}" /etc/nixos/lib/uid-registry.nix /etc/nixos/modules/00-core/
 
 | Ordner | Präfix | Belegte Beispiele |
 |--------|--------|-------------------|
-| `10-network` | `10xx` | pocket-id=1001, technitium=1002 |
+| `10-network` | `10xx` | pocket-id=1001, blocky=1002 |
 | `40-observability` | `40xx` | grafana=4001, loki=4002, gatus=4003 |
 | `50-media` | `50xx` | jellyfin=5001, sonarr=5003, sabnzbd=5007 |
 | `60-apps` | `60xx` | vaultwarden=6001, homepage=6002, paperless=6003 |
@@ -363,7 +363,7 @@ tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&
 - [ ] Nach Switch: Kritische Services prüfen:
 
 ```bash
-systemctl status caddy technitium pocket-id --no-pager
+systemctl status caddy blocky pocket-id --no-pager
 systemctl list-units --state=failed
 ```
 

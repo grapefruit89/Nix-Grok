@@ -6,7 +6,7 @@ meta:
   date: 2026-06-17
   error_pattern: "Start request repeated too quickly|entered failed state|failed.*StartLimitHit"
   quick_fix: "systemctl reset-failed <service> && systemctl start <service>"
-  services: [caddy, technitium, pocket-id]
+  services: [caddy, blocky, pocket-id]
   betrifft:
     - lib/critical-systemd.nix
     - modules/10-network/11-network.nix
@@ -32,14 +32,14 @@ meta:
 
 ## Kontext {#kontext}
 
-- Caddy, Technitium/DNS und Pocket-ID machen das Homelab sofort unbenutzbar wenn sie ausfallen.
+- Caddy, Blocky/DNS und Pocket-ID machen das Homelab sofort unbenutzbar wenn sie ausfallen.
 - cgroup-OOM ([ADR-003](003-oom-cgroup-isolation.md)) kann einzelne Dienste killen — sie müssen danach zuverlässig zurückkommen.
 - Standard-`Restart=on-failure` mit StartLimit kann nach wiederholten Crashes stoppen.
 
 ## Entscheidung {#entscheidung}
 
 1. **Preset:** `lib/critical-systemd.nix` — `Restart=always`, `StartLimitIntervalSec=0`, negativer `OOMScoreAdjust`.
-2. **Anwenden auf:** Caddy, Technitium/DNS ([ADR-1001](1001-dns-dot-fail-closed.md)), Pocket-ID (Ingress/Identität).
+2. **Anwenden auf:** Caddy, Blocky/DNS ([ADR-1001](1001-dns-dot-fail-closed.md)), Pocket-ID (Ingress/Identität).
 3. **Gatus** prüft Caddy + DNS als kritische Endpoints.
 
 ## Diagnose {#diagnose}
@@ -102,6 +102,6 @@ grep -n "Restart\|StartLimit" /etc/nixos/lib/critical-systemd.nix
 ## Siehe auch {#siehe-auch}
 
 - [ADR-003 — OOM-Isolation](003-oom-cgroup-isolation.md) — cgroup-OOM-Kill der diesen Restart auslöst
-- [ADR-1001 — DNS-over-TLS](1001-dns-dot-fail-closed.md) — Technitium als kritischer Dienst mit Restart=always
+- [ADR-1001 — DNS-over-TLS](1001-dns-dot-fail-closed.md) — Blocky als kritischer LAN-DNS mit Restart=always
 - [ADR-007 — Dendritische Module](007-dendritic-one-file-per-service.md) — Modulstruktur in der critical-systemd.nix eingebunden wird
 - [GUIDE-observability.md#alerting](../guides/GUIDE-observability.md#alerting) — Alerting auf Restart-Basis, ntfy bei OnFailure

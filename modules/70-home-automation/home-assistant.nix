@@ -27,7 +27,8 @@ let
     from pathlib import Path
 
     STORAGE = Path("${cfg.stateDir}/.storage/core.config_entries")
-    PASSWORD_FILE = Path("/var/lib/secrets/homeassistant_mqtt_password")
+    _creds = os.environ.get("CREDENTIALS_DIRECTORY", "")
+    PASSWORD_FILE = Path(_creds) / "homeassistant_mqtt_password" if _creds else Path("/var/lib/secrets/homeassistant_mqtt_password")
     ENTRY_ID = "q958mqttmosquitto001"
     MQTT_PORT = ${toString mqttPort}
 
@@ -67,6 +68,68 @@ let
         doc = json.loads(STORAGE.read_text())
         entries = doc.setdefault("data", {}).setdefault("entries", [])
         entries = [e for e in entries if e.get("entry_id") != ENTRY_ID and e.get("domain") != "mqtt"]
+        entries.append(entry)
+        doc["data"]["entries"] = entries
+    else:
+        doc = {
+            "version": 1,
+            "minor_version": 1,
+            "key": "core.config_entries",
+            "data": {"entries": [entry]},
+        }
+
+    STORAGE.write_text(json.dumps(doc, indent=2) + "\n")
+    import grp, pwd
+    uid = pwd.getpwnam("${cfg.user}").pw_uid
+    gid = grp.getgrnam("${cfg.group}").gr_gid
+    os.chown(STORAGE, uid, gid)
+    os.chmod(STORAGE, 0o600)
+    os.chown(STORAGE.parent, uid, gid)
+  '';
+
+  hassSmLightProvision = pkgs.writeScript "home-assistant-smlight-provision" ''
+    #!${pkgs.python3}/bin/python3
+    import json, os, time, urllib.request
+    from pathlib import Path
+
+    STORAGE = Path("${cfg.stateDir}/.storage/core.config_entries")
+    SMLIGHT_HOST = "${cfg.smlightHost}"
+    ENTRY_ID = "q958smlightslzb001"
+
+    try:
+        with urllib.request.urlopen("http://" + SMLIGHT_HOST + "/ha_info", timeout=5) as r:
+            info = json.loads(r.read())["Info"]
+    except Exception as e:
+        print("SMLIGHT at " + SMLIGHT_HOST + " unreachable: " + str(e) + " — skipping")
+        raise SystemExit(0)
+
+    mac = info["MAC"].lower()
+    hostname = info.get("hostname", "SLZB-06M")
+    now = time.strftime("%Y-%m-%dT%H:%M:%S.000000+00:00")
+    entry = {
+        "created_at": now,
+        "data": {"host": SMLIGHT_HOST},
+        "disabled_by": None,
+        "discovery_keys": {},
+        "domain": "smlight",
+        "entry_id": ENTRY_ID,
+        "minor_version": 1,
+        "modified_at": now,
+        "options": {},
+        "pref_disable_new_entities": False,
+        "pref_disable_polling": False,
+        "source": "user",
+        "subentries": [],
+        "title": hostname,
+        "unique_id": mac,
+        "version": 1,
+    }
+
+    STORAGE.parent.mkdir(parents=True, exist_ok=True)
+    if STORAGE.exists():
+        doc = json.loads(STORAGE.read_text())
+        entries = doc.setdefault("data", {}).setdefault("entries", [])
+        entries = [e for e in entries if e.get("entry_id") != ENTRY_ID and e.get("domain") != "smlight"]
         entries.append(entry)
         doc["data"]["entries"] = entries
     else:
@@ -139,6 +202,11 @@ in
       default = [ ];
       description = "Extra components to load.";
     };
+    smlightHost = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "SMLIGHT device IP/hostname for declarative HA integration provisioning.";
+    };
     trustedProxies = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
@@ -189,9 +257,23 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStart = hassMqttProvision;
+        LoadCredential = [
+          "homeassistant_mqtt_password:/var/lib/credstore.encrypted/homeassistant_mqtt_password.cred"
+        ];
       };
       after = [ "q958-secrets-provision.service" ];
       wants = [ "q958-secrets-provision.service" ];
+      before = [ "home-assistant.service" ];
+      wantedBy = [ "multi-user.target" ];
+    };
+
+    systemd.services.home-assistant-smlight-provision = lib.mkIf (cfg.smlightHost != "") {
+      description = "Provision Home Assistant SMLIGHT config entry (.storage)";
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = hassSmLightProvision;
+      };
       before = [ "home-assistant.service" ];
       wantedBy = [ "multi-user.target" ];
     };
@@ -214,14 +296,18 @@ in
           ++ (lib.optional cfg.bluetooth "/dev/rfkill rw")
           ++ [ "/dev/dri/renderD128 rw" ];
       };
-      after = lib.mkAfter [
-        "q958-secrets-provision.service"
-        "home-assistant-mqtt-provision.service"
-      ];
+      after = lib.mkAfter (
+        [
+          "q958-secrets-provision.service"
+          "home-assistant-mqtt-provision.service"
+        ]
+        ++ lib.optional (cfg.smlightHost != "") "home-assistant-smlight-provision.service"
+      );
       wants = [
         "q958-secrets-provision.service"
         "home-assistant-mqtt-provision.service"
-      ];
+      ]
+      ++ lib.optional (cfg.smlightHost != "") "home-assistant-smlight-provision.service";
     };
 
     systemd.tmpfiles.rules = [

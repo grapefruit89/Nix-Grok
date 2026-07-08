@@ -28,16 +28,16 @@ in
       enable = true;
       settings = {
         ports = {
-          dns = 53;
+          # Nur LAN-Interface — systemd-resolved belegt 127.0.0.53:53
+          dns = "${config.my.configs.server.lanIP}:53";
           http = config.my.ports.blocky;
         };
 
         upstreams.groups.default = map (s: "tcp-tls:${s.ip}:853") dot;
 
-        bootstrapDns = [
-          "1.1.1.1"
-          "9.9.9.9"
-        ];
+        # Kein bootstrapDns — Upstreams sind IPs, kein Hostname-Lookup nötig.
+        # Go's HTTP-Client nutzt den OS-Resolver (systemd-resolved) mit Happy Eyeballs,
+        # der auf IPv4 zurückfällt wenn IPv6 deaktiviert ist.
 
         customDNS = {
           mapping = {
@@ -49,14 +49,12 @@ in
         blocking = {
           blackLists.ads = [
             "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/multi.txt"
-            "https://dbl.oisd.nl/"
           ];
           whiteLists.ads = [ "/home/moritz/blocky-allowlist.txt" ];
           clientGroupsBlock.default = [ "ads" ];
           refreshPeriod = "24h";
           downloadAttempts = 3;
           downloadCooldown = "2s";
-          failOnDnsError = false;
         };
 
         log = {
@@ -71,7 +69,7 @@ in
       };
     };
 
-    # Allowlist liegt in /home/moritz — world-readable (644) via tmpfiles
+    # Allowlist in /home/moritz — ProtectHome auf read-only damit der Service lesen kann
     systemd.tmpfiles.rules = [
       "f /home/moritz/blocky-allowlist.txt 0644 moritz users -"
     ];
@@ -81,6 +79,8 @@ in
       wants = [ "network-online.target" ];
       serviceConfig = {
         OOMScoreAdjust = lib.mkDefault (-300);
+        # ProtectHome=true (Default) würde /home verstecken — read-only erlaubt Lesen
+        ProtectHome = lib.mkForce "read-only";
       };
     };
   };

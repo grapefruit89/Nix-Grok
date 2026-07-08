@@ -16,7 +16,7 @@
 let
   zones = [
     "loopback"
-    "admin-hangar"
+    "internal"
     "family-pocketid"
     "public"
   ];
@@ -88,40 +88,40 @@ let
       description = "Loki ingest";
     };
 
-    # --- admin-hangar (private_admin / LAN + Netbird) ---
+    # --- internal (private_admin + SSO / LAN + Netbird) ---
     gatus = {
       port = ports.gatus;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "gatus";
       description = "Health Dashboard";
     };
     scrutiny = {
       port = ports.scrutiny;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "scrutiny";
       description = "SMART Disk Health";
     };
     grafana = {
       socket = "/run/grafana/grafana.sock";
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "grafana";
       description = "Metrics UI";
     };
     sabnzbd = {
       port = ports.sabnzbd;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "sabnzbd";
       description = "Usenet (VPN-confined)";
     };
     blocky = {
       port = ports.blocky;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "dns";
       description = "Blocky DNS (ad-blocking, split-horizon)";
     };
     ddns-updater = {
       port = ports.ddns-updater;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "ddns";
       description = "Cloudflare DDNS";
     };
@@ -147,25 +147,25 @@ let
     };
     sonarr = {
       port = ports.sonarr;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "sonarr";
       description = "TV";
     };
     radarr = {
       port = ports.radarr;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "radarr";
       description = "Movies";
     };
     readarr = {
       port = ports.readarr;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "readarr";
       description = "Books";
     };
     prowlarr = {
       port = ports.prowlarr;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "prowlarr";
       description = "Indexers";
     };
@@ -183,14 +183,14 @@ let
     };
     lidarr = {
       port = ports.lidarr;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "lidarr";
       description = "Music Downloader (Companion zu Navidrome)";
     };
     vaultwarden = {
 
       port = ports.vaultwarden;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "vault";
       description = "Passwords";
     };

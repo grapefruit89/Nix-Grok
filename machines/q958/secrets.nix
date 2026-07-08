@@ -129,7 +129,7 @@ let
         chmod 600 ${secretsDir}/homeassistant_mqtt_password
 
         cat > ${secretsDir}/zigbee2mqtt.env <<Z2MEOF
-    MQTT_PASSWORD=${zigbeeMqttPassword}
+    ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD=${zigbeeMqttPassword}
     Z2MEOF
         chmod 600 ${secretsDir}/zigbee2mqtt.env
 

@@ -14,7 +14,7 @@ impermanence-ready, Unix-Socket-first, strikt No-Legacy.
 - OS: NixOS 25.11 (unstable) — Flake-basiert
 - Ingress: Caddy mit UDS-Upstreams und SSO via Pocket-ID
 - Auth: Pocket-ID (Passkey-first, kein Passwort)
-- DNS: Technitium (DoT fail-closed)
+- DNS: Blocky (LAN, ad-blocking) + resolved DoT (Host, fail-closed)
 - Netz: nftables, Netbird-VPN, skuid-Segmentierung
 - Storage: ext4 persist + MergerFS (Tier B/C)
 - Secrets: SOPS + age (ab Stufe 9)
@@ -56,7 +56,7 @@ docs/
 ## Kern-Entscheidungen (ADRs nach Thema)
 
 ### Netzwerk & DNS
-- [ADR-1001](adr/1001-dns-dot-fail-closed.md) — DNS-over-TLS fail-closed (Technitium)
+- [ADR-1001](adr/1001-dns-dot-fail-closed.md) — DNS-over-TLS fail-closed (Blocky + resolved)
 - [ADR-1002](adr/1002-ipv6-homelab-v4-only.md) — IPv4-only Homelab
 
 ### Storage

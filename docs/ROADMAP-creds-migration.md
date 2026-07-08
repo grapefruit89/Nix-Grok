@@ -6,7 +6,7 @@ Zwei unabhängige Änderungen, die einzeln deployed werden können:
 
 **A) Zone-Restrukturierung:** Dienste die nur intern gebraucht werden (sonarr, radarr, 
 prowlarr, lidarr, readarr, vaultwarden) sind aktuell in `family-pocketid` (WAN mit SSO).
-Sie müssen zu `admin-hangar` (LAN/Netbird-only via `private_admin` Snippet) verschoben werden.
+Sie müssen zu `internal` (LAN/Netbird-only via `private_admin` Snippet) verschoben werden.
 
 **B) systemd-creds Migration:** Aktuell werden alle 34 Secrets als Klartext in 
 `/var/lib/secrets/` gespeichert — erzeugt von `secrets.nix` + `media-secrets.nix`, 
@@ -30,21 +30,21 @@ TPM-Versiegelung folgt als Schritt 2 (ein Flip: `useTpm = true`).
 
 ### Datei: `/etc/nixos/lib/services-spec.nix`
 
-**Definitiv zu `admin-hangar` (LAN/Netbird-only):**
+**Definitiv zu `internal` (LAN/Netbird-only):**
 
 | Service | Aktuell | Neu |
 |---------|---------|-----|
-| sonarr | family-pocketid | admin-hangar |
-| radarr | family-pocketid | admin-hangar |
-| prowlarr | family-pocketid | admin-hangar |
-| lidarr | family-pocketid | admin-hangar |
-| readarr | family-pocketid | admin-hangar |
-| vaultwarden | family-pocketid | admin-hangar |
+| sonarr | family-pocketid | internal |
+| radarr | family-pocketid | internal |
+| prowlarr | family-pocketid | internal |
+| lidarr | family-pocketid | internal |
+| readarr | family-pocketid | internal |
+| vaultwarden | family-pocketid | internal |
 
 **⚠️ TBD — User muss entscheiden (hat "Ausnahmen gibt es" angegeben):**
 
 homepage, filebrowser, open-webui, paperless, linkwarden, home-assistant, zigbee-stack, amp.  
-→ Vorschlag: alle zu admin-hangar, bis User Ausnahmen benennt. Kein Risk: mit Netbird 
+→ Vorschlag: alle zu internal, bis User Ausnahmen benennt. Kein Risk: mit Netbird 
   aus dem Netz erreichbar.
 
 **Bleibt WAN (family-pocketid):**
@@ -59,7 +59,7 @@ passiert automatisch über `caddy-ingress.nix`'s `genZoneVhost`.
 # vorher:
 sonarr = { port = ports.sonarr; zone = "family-pocketid"; ... };
 # nachher:
-sonarr = { port = ports.sonarr; zone = "admin-hangar"; ... };
+sonarr = { port = ports.sonarr; zone = "internal"; ... };
 ```
 
 ### Verification A

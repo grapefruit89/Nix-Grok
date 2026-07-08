@@ -52,7 +52,7 @@ gilt eine strikte Rangfolge:
 
 **Leitbeispiele:**
 - TLS-Zertifikate: `security.acme` (lego) statt Caddy-ACME — Certs gehören nicht in den Proxy-State
-- DNS-Verschlüsselung: `systemd-resolved` DoT + Technitium statt Caddy-DNS-Proxy
+- DNS-Verschlüsselung: `systemd-resolved` DoT + Blocky (LAN, ad-blocking) statt Caddy-DNS-Proxy
 - Secrets: `systemd-creds` + TPM2 statt sops-nix oder Vault-Plugin
 - Secrets-Portal: eigenständiger Go-Service statt Vaultwarden-Workflow
 
@@ -96,23 +96,15 @@ Root von `/etc/nixos/` (wie `CLAUDE.md`, `flake.nix`) brauchen sudo install.
 
 ## Rebuild-Workflow — Dry-Run-Gate (Pflicht)
 
-**Niemals** `nixos-rebuild switch` direkt ausführen. Immer zuerst:
+Zuerst dry-build, dann switch:
 
 ```bash
-# 1. Dry-Build verifizieren (läuft auch als Claude-Schritt):
 sudo scripts/nixos-rebuild-safe.sh
-
-# 2. Erst wenn "✓ Dry-build erfolgreich" erscheint, switch ausführen.
-#    Empfehlung: in tmux (SSH-sicher, überlebt Verbindungsabbrüche):
-tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; echo "Exit: $?"; read'
+sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log
 ```
 
-Warum tmux: `nixos-rebuild switch` starb bisher mit exit 137 (SIGKILL) bei
-SSH-Disconnect, weil der Terminal-Prozessgraph den SIGHUP weiterleitet.
-tmux entkoppelt den Build-Prozess vom SSH-Terminal.
-
 Das Script `scripts/nixos-rebuild-safe.sh check` prüft, ob für den
-aktuellen HEAD ein Dry-Build-Flag gesetzt ist — nützlich als Voraussetzung.
+aktuellen HEAD ein Dry-Build-Flag gesetzt ist.
 
 ## Was JETZT Stand ist (Stand: 2026-06-28, nach Benutzer-Refactor)
 
@@ -164,7 +156,7 @@ wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
 
 **OFFEN — HOCH (Switch blockiert):**
 - [ ] **nixos-rebuild switch** — aktiviert Caddy-Fix + Jellyfin-Fix:
-  `tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; echo "Exit: $?"; read'`
+  `sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log`
 - [ ] *arr-UID-Migration: `scripts/migrate-arr-uids.sh` einmalig nach Switch
 
 **OFFEN — MONITORING (neue Feature-Gruppe, in dieser Reihenfolge abarbeiten):**
@@ -223,6 +215,7 @@ wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
 > - Paketnamen / `services.*`-Option / NixOS-Modul → **nixos-MCP** (nie aus Training annehmen!)
 > - `lib.*`-Funktion / `builtins.*` → **Noogle** (Argumente-Reihenfolge ändert sich zwischen Versionen!)
 > - Caddy, Jellyfin-API, systemd-Optionen, externe Bibliotheken → **Context7**
+> - Fehlermeldung aus externem Paket/Modul → **GitHub-MCP** (Issues/PRs durchsuchen, bevor debuggt wird)
 >
 > Keine Ausnahmen. „Ich weiß das aus Training" ist kein gültiger Grund. Falsche
 > Annahmen aus Training kosten mehr Zeit als ein MCP-Call.
@@ -275,6 +268,17 @@ Nutze `mcp__claude_ai_Context7__resolve-library-id` + `query-docs` für:
 Ablauf: erst `resolve-library-id` mit dem Library-Namen, dann `query-docs` mit
 der Library-ID und der spezifischen Frage.
 
+### GitHub-MCP (Issue-Recherche vor jeder Fehlerbehebung)
+Nutze den GitHub-MCP-Server fuer NixOS/nixpkgs Issues bevor du einen Fehler in einem
+Nixpkgs-Paket, NixOS-Modul oder Home-Manager-Modul manuell debuggst.
+Oft ist das Problem upstream bekannt -- ein offenes Issue spart 30 Minuten Debugging.
+
+**Wann:** Fehlermeldung aus externem Paket/Modul -> Issues/PRs durchsuchen.
+**Wann NICHT:** Fehler in Custom-Modulen dieses Repos, reine Konfigurationsfehler.
+
+Repos: `NixOS/nixpkgs`, `nix-community/home-manager`, direkt das Paket-Repo
+(Homepage aus `mcp__nixos__nix` info-Aufruf).
+
 ## Moderne CLI-Tools — Pflicht im interaktiven Betrieb
 
 Folgende moderne Tools sind systemweit installiert und **müssen bevorzugt werden**:
@@ -292,7 +296,7 @@ Folgende moderne Tools sind systemweit installiert und **müssen bevorzugt werde
 | Store-Vergleich | `nix-diff old new`            | Diff zweier Store-Paths |
 | Nix-Funktion googeln | `noogle` / `noogle-search` | Interaktive fzf-Suche |
 | `top`         | `btop`                            | Alias gesetzt |
-| `nixos-rebuild switch` | `nh os switch --flake /etc/nixos#q958` | Nur für menschliche Rebuilds; **Dry-Build-Gate bleibt `sudo scripts/nixos-rebuild-safe.sh`** |
+| `nixos-rebuild switch` | `nh os switch --flake /etc/nixos#q958` | **Dry-Build-Gate zuerst: `sudo scripts/nixos-rebuild-safe.sh`** |
 
 **Für Claude Code:** Das Claude-Code-System-Prompt verbietet `cat`/`head`/`tail`/`sed`/`awk`
 bereits — stattdessen `Read`/`Edit`/`Write`-Tools nutzen. Die Shell-Aliases greifen nur für
@@ -302,10 +306,7 @@ interaktive Bash-Sitzungen, nicht für Bash-Tools-Aufrufe durch Claude Code.
 
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 
-1. **`nixos-rebuild switch` führt nur der Mensch aus** — niemals automatisch,
-   auch nicht nach erfolgreichem Dry-Build, auch nicht auf Zuruf.
-   Vorher immer: `sudo scripts/nixos-rebuild-safe.sh` (Dry-Run-Gate).
-2. **`git push` nur nach expliziter, klarer Zustimmung im Chat** — nicht
+1. **`git push` nur nach expliziter, klarer Zustimmung im Chat** — nicht
    vorher einfach annehmen.
 3. Secrets niemals in Git. `machines/q958/profile.local.nix` ist gitignored.
 4. NIXMETA (`# !type`-Annotationen) ist permanent verboten — siehe

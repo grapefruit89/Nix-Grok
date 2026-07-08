@@ -79,6 +79,22 @@ Ideen und Patterns kommen von außen — als Inspiration, nicht als Dependency.
 
 ---
 
+## Home Automation
+
+| Ressource | URL | Zweck |
+|-----------|-----|-------|
+| Home Assistant | https://www.home-assistant.io/ | Offizielle Projektseite |
+| HA Docs | https://www.home-assistant.io/docs/ | Vollständige Dokumentation |
+| HA GitHub | https://github.com/home-assistant | Org-Übersicht |
+| HA Core Issues | https://github.com/home-assistant/core/issues?q=is%3Aissue%20state%3Aopen | Bug-Tracker |
+| SMLIGHT HA Integration | https://www.home-assistant.io/integrations/smlight/ | HA-Doku für SLZB-06 |
+| SMLIGHT HA Quellcode | https://github.com/home-assistant/core/tree/dev/homeassistant/components/smlight | config_flow, manifest |
+| SLZB-06M Manual | https://smlight.tech/manual/slzb-06/guide/getting-started/ | Firmware, Getting Started |
+| SLZB-06M GitHub Manual | https://github.com/smlight-dev/slzb-06-manual | Vollständiges Manual als Git |
+| SLZB-06M lokal | http://192.168.2.46/ | Web-UI des Geräts (LAN) |
+
+---
+
 ## Nicht-Abhängigkeiten (bewusste Lücken)
 
 Diese Flake-Inputs wurden geprüft und **bewusst nicht aufgenommen:**
@@ -110,5 +126,5 @@ Drei Vorgänger-Repos wurden analysiert. Einmal gewonnenes Wissen wurde in ADRs 
 
 Eine externe KI-Analyse beschrieb `build_db.js`, `nixos_docs.db` und `mcp_config.json` als implementiert in `nix-hermes`. **Das ist falsch** — diese Artefakte existieren nicht im Repo. `LLM_FIRST_INSTRUCTIONS.md` beschreibt nur eine Bauanleitung für eine KI. Nix-Grok hat mit `nixos_docs.sqlite` + FTS5 + MCP-Server diese Architektur bereits produktiv übertroffen.
 
-*Letzte Aktualisierung: 2026-06-30*  
+*Letzte Aktualisierung: 2026-07-07*  
 *Nächste Review: Bei neuem Flake-Input oder Architektur-Entscheidung*

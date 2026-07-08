@@ -12,6 +12,8 @@ let
     gui = "X11/Wayland verboten auf Headless-Server — Desktop-Pakete fressen RAM + vergrößern Attack Surface (ADR-020).";
     semaphore = "Semaphore/Ansible verboten — imperatives Infrastruktur-Management widerspricht dem deklarativen NixOS-Mindset. NixOS ist die einzige Wahrheitsquelle (ADR-034).";
     cockpit = "Cockpit entfernt — Angriffsfläche überwiegt Nutzen für Ein-Personen-Homelab (ADR-033). SSH + nixos-rebuild ist die einzige Admin-Schnittstelle.";
+    n8n = "n8n verboten — Workflow-Automatisierung gehört in NixOS-Module + systemd-Services, nicht in einen Workflow-Engine-Daemon (ADR-034).";
+    forgejo = "Forgejo/Gitea verboten — kein Self-Hosted Git auf q958. GitHub ist ausreichend; Self-Hosted Git erhöht Attack Surface ohne Nutzen (ADR-034).";
 
     # Formatter-Policy
     fmtBanned = "Verbotener Nix-Formatter — ausschließlich nixfmt (RFC-Style) + statix + deadnix.";
@@ -40,6 +42,9 @@ in
     ) "[POL-FT-008] KDE Plasma: ${reasons.gui}")
     (must (!(config.services.semaphore.enable or false)) "[POL-FT-009] Semaphore: ${reasons.semaphore}")
     (must (!(config.services.cockpit.enable or false)) "[POL-FT-010] Cockpit: ${reasons.cockpit}")
+    (must (!(config.services.n8n.enable or false)) "[POL-FT-011] n8n: ${reasons.n8n}")
+    (must (!(config.services.forgejo.enable or false)) "[POL-FT-012] Forgejo: ${reasons.forgejo}")
+    (must (!(config.services.gitea.enable or false)) "[POL-FT-012] Gitea: ${reasons.forgejo}")
   ];
 
   # Wenn nftables-Firewall-Stack aktiv

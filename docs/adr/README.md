@@ -35,7 +35,7 @@ meta:
 
 | ADR | Titel | Status | Datum |
 |-----|-------|--------|-------|
-| [1001](1001-dns-dot-fail-closed.md) | DNS-over-TLS, fail-closed (Blocky→Technitium) | accepted | 2026-06-17 |
+| [1001](1001-dns-dot-fail-closed.md) | DNS-over-TLS, fail-closed (Blocky, resolved→DoT direkt) | accepted | 2026-06-17 |
 | [1002](1002-ipv6-homelab-v4-only.md) | IPv6 Homelab ad acta (v4-only LAN) | accepted | 2026-06-17 |
 | [1004](1004-unix-socket-upstreams.md) | Unix-Socket-Upstreams für Caddy | accepted | 2026-06-17 |
 | [1014](1014-caddy-security-headers-trusted-proxies.md) | Caddy Security-Härtung — Headers + trusted_proxies | accepted | 2026-06-29 |
@@ -44,7 +44,8 @@ meta:
 | [1018](1018-caddy-dual-log-dsgvo.md) | Caddy Dual-Log — DSGVO + journald für CrowdSec | accepted | 2026-06-29 |
 | [1019](1019-uds-first-philosophy.md) | Unix-Domain-Sockets als primäres IPC-Protokoll | accepted | 2026-06-30 |
 | [1025](1025-pocket-id-oidc-provider.md) | Pocket-ID als OIDC/Passkey Provider | accepted | 2026-07-05 |
-| [1031](1031-caddy-zones-konzept.md) | Caddy-Zonen-Konzept — admin-hangar / family-pocketid / public | accepted | 2026-07-05 |
+| [1031](1031-caddy-zones-konzept.md) | Caddy-Zonen-Konzept — internal / family-pocketid / public | accepted | 2026-07-05 |
+| [1032](1032-internal-zone-sso.md) | internal Zone — Umbenennung admin-hangar + SSO-Overlay | accepted | 2026-07-08 |
 
 ### 20-security — Härtung, Secrets, Firewall
 
@@ -105,10 +106,11 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-06-17 | ADR 007–008 (Dendritic, nftables KB) |
 | 2026-06-17 | ADR 009–010 (nix-hermes Audit: VPN leak, Production-Modus) |
 | 2026-06-27 | ADR 011 (Unified Port=UID=FolderPrefix, Server-Map) |
-| 2026-06-28 | ADR 001 aktualisiert (Blocky→Technitium+API-DoT-Configure); ADR 012 (Moderne CLI-Tools) |
+| 2026-06-28 | ADR 001 aktualisiert (resolved→DoT direkt, split0 entfernt); ADR 012 (Moderne CLI-Tools) |
 | 2026-06-29 | ADR 013–017: Flake-Portabilität, Caddy Security-Härtung I+II, CPU power-profiles-daemon+thermald, Caddy Health Checks |
 | 2026-07-05 | ADR 018–020 (Caddy Dual-Log, UDS-First, Legacy-Stack) nachgetragen; ADR 021 withdrawn; ADR 022–023 (RAID, Backup); ADR 024 (systemd-creds); ADR 025 (Pocket-ID OIDC) |
 | 2026-07-05 | ADR 026–028 (Kernel-Härtung, Kernel-Slim, Systemd-Isolation); ADR 029 (mTLS proposed); ADR 030 (Media-Stack Inventory) |
-| 2026-07-05 | ADR 031 (Caddy-Zonen-Konzept: admin-hangar / family-pocketid / public) |
+| 2026-07-05 | ADR 1031 (Caddy-Zonen-Konzept: admin-hangar / family-pocketid / public) |
 | 2026-07-06 | ADR 032 (OS-native-first Prinzip: lego/security.acme, systemd-creds, DoT als Referenzarchitektur) |
 | 2026-07-06 | ADR-Nummerierung auf 4-stellig umgestellt: domänen-spezifische ADRs erhalten Präfix (1xxx/2xxx/3xxx/5xxx); querschneidende ADRs bleiben 3-stellig |
+| 2026-07-08 | ADR 1031 aktualisiert (admin-hangar → internal); ADR 1032 (internal Zone + SSO-Overlay) |

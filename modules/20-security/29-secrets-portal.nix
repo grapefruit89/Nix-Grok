@@ -19,7 +19,7 @@
 # SICHERHEITSMODELL:
 # Phase 1 (aktuell): Läuft als root — erforderlich da systemd-creds encrypt
 #   den host-key aus /var/lib/systemd/credential.secret liest (nur root-lesbar).
-#   Mitigation: Unix Socket (kein TCP), nur Caddy darf verbinden (admin-hangar Zone).
+#   Mitigation: Unix Socket (kein TCP), nur Caddy darf verbinden (internal Zone).
 #
 # Phase 2 (TODO): Privilege-Separation via zweitem systemd-Service:
 #   HTTP-Frontend als User secrets-portal (UID 2029, unprivilegiert, socket-facing)

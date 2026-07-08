@@ -58,10 +58,10 @@ in
         };
 
         users.groups.${name} = {
-          gid = lib.mkDefault gid;
+          gid = lib.mkForce gid;
         };
         users.users.${name} = {
-          uid = lib.mkDefault uid;
+          uid = lib.mkForce uid;
           group = name;
           isSystemUser = true;
           extraGroups = [ "media" ];

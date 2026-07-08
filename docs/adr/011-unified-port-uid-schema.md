@@ -53,7 +53,7 @@ meta:
 
 | Ordner | Präfix | Beispiele |
 |--------|--------|-----------|
-| `10-network` | `10xx` | pocket-id=1001, technitium=1002, ddns=1003, zigbee=1004 |
+| `10-network` | `10xx` | pocket-id=1001, blocky=1002, ddns=1003, zigbee=1004 |
 | `40-observability` | `40xx` | grafana=4001, loki=4002, gatus=4003, crowdsec=4004, scrutiny=4005 |
 | `50-media` | `50xx` | jellyfin=5001, sonarr=5003, radarr=5004, readarr=5005, prowlarr=5006, sabnzbd=5007 |
 | `60-apps` | `60xx` | vaultwarden=6001, homepage=6002, paperless=6003, linkwarden=6006, open-webui=6007 |

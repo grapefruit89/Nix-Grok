@@ -107,9 +107,11 @@ let
       upstream,
       subdomain,
     }:
-    if zone == "admin-hangar" then
+    if zone == "internal" then
       ''
         import private_admin
+        import sso_auth
+        import sso_redirect
         import security_headers
         import upstream_errors
         reverse_proxy ${upstream}

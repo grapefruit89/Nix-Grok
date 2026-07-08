@@ -56,6 +56,14 @@ in
   networking.hostName = p.system.hostName;
 
   my = {
+    creds.keys = [
+      "homeassistant_mqtt_password"
+      "grafana_secret_key"
+      "zigbee2mqtt.env"
+      "pocket-id.env"
+      "vaultwarden.env"
+    ];
+
     core = {
       boot-safeguard.enable = true;
       # 1 GB ESP (NIXBOOT): 15 Generationen × ~50 MB worst-case = 750 MB + 77 MB belegt → 827 MB < 1 GB.
@@ -150,6 +158,8 @@ in
       home-assistant = {
         port = p.iot.homeAssistant.port;
         zigbeeDevice = zigbeeSocket;
+        extraComponents = [ "smlight" ];
+        smlightHost = "SLZB-06M.local";
       };
       zigbee-stack = {
         mqttPort = p.iot.zigbeeStack.mqttPort;
@@ -159,6 +169,8 @@ in
       };
     };
   };
+
+  networking.extraHosts = "${p.iot.zigbeeCoordinator.host} SLZB-06M.local";
 
   boot = {
     loader = {

@@ -25,6 +25,8 @@ let
   user = config.my.configs.identity.user;
   userHome = "/home/${user}";
   context7Key = "${userHome}/.config/context7/api_key";
+  githubMcpToken = "${userHome}/.config/github-mcp/token";
+  braveSearchApiKey = "${userHome}/.config/brave-search/api_key";
 
   # Wrapper fuer Claude Code (laeuft als moritz-User)
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
@@ -38,6 +40,72 @@ let
     exec ${pkgs.context7-mcp}/bin/context7-mcp
   '';
 
+  githubMcpWrapper = pkgs.writeShellScript "github-mcp" ''
+    set -euo pipefail
+    TOKEN_FILE="${githubMcpToken}"
+    if [ ! -s "$TOKEN_FILE" ]; then
+      echo "GitHub MCP token fehlt. Bitte: set-github-mcp-token" >&2
+      exit 1
+    fi
+    export GITHUB_PERSONAL_ACCESS_TOKEN="$(<"$TOKEN_FILE")"
+    exec ${pkgs.github-mcp-server}/bin/github-mcp-server stdio
+  '';
+
+  braveSearchMcpWrapper = pkgs.writeShellScript "brave-search-mcp" ''
+    set -euo pipefail
+    KEY_FILE="${braveSearchApiKey}"
+    if [ ! -s "$KEY_FILE" ]; then
+      echo "Brave Search API Key fehlt. Bitte: set-brave-search-api-key" >&2
+      exit 1
+    fi
+    export BRAVE_API_KEY="$(<"$KEY_FILE")"
+    exec ${pkgs.nodejs_22}/bin/npx -y @modelcontextprotocol/server-brave-search
+  '';
+
+  setGithubMcpToken = pkgs.writeShellScript "set-github-mcp-token" ''
+    set -euo pipefail
+    TOKEN_FILE="${githubMcpToken}"
+    mkdir -p "$(dirname "$TOKEN_FILE")"
+    chmod 700 "$(dirname "$TOKEN_FILE")"
+    if [ -t 0 ]; then
+      read -r -s -p "GitHub PAT (Eingabe unsichtbar): " _token </dev/tty
+      echo "" >/dev/tty
+    else
+      IFS= read -r _token
+    fi
+    if [ -z "$_token" ]; then
+      echo "Abgebrochen: leerer Token." >&2
+      exit 1
+    fi
+    umask 077
+    printf '%s' "$_token" > "$TOKEN_FILE"
+    chmod 600 "$TOKEN_FILE"
+    unset _token
+    echo "Gespeichert: $TOKEN_FILE (chmod 600)"
+  '';
+
+  setBraveSearchApiKey = pkgs.writeShellScript "set-brave-search-api-key" ''
+    set -euo pipefail
+    KEY_FILE="${braveSearchApiKey}"
+    mkdir -p "$(dirname "$KEY_FILE")"
+    chmod 700 "$(dirname "$KEY_FILE")"
+    if [ -t 0 ]; then
+      read -r -s -p "Brave Search API Key (Eingabe unsichtbar): " _key </dev/tty
+      echo "" >/dev/tty
+    else
+      IFS= read -r _key
+    fi
+    if [ -z "$_key" ]; then
+      echo "Abgebrochen: leerer Key." >&2
+      exit 1
+    fi
+    umask 077
+    printf '%s' "$_key" > "$KEY_FILE"
+    chmod 600 "$KEY_FILE"
+    unset _key
+    echo "Gespeichert: $KEY_FILE (chmod 600)"
+  '';
+
   nixosMcpBin = "${pkgs.mcp-nixos}/bin/mcp-nixos";
 
   # JSON fuer ~/.claude/settings.json — store-pfade, immer verfuegbar
@@ -47,6 +115,12 @@ let
     };
     nixos = {
       command = nixosMcpBin;
+    };
+    github = {
+      command = "${githubMcpWrapper}";
+    };
+    "brave-search" = {
+      command = "${braveSearchMcpWrapper}";
     };
   };
 
@@ -74,6 +148,16 @@ in
           home.activation.claudeCodeMcpServers = lib.hm.dag.entryAfter [
             "writeBoundary"
           ] claudeCodeActivation;
+
+          home.file.".local/bin/set-github-mcp-token" = {
+            source = setGithubMcpToken;
+            executable = true;
+          };
+
+          home.file.".local/bin/set-brave-search-api-key" = {
+            source = setBraveSearchApiKey;
+            executable = true;
+          };
         };
     })
 

@@ -50,10 +50,10 @@ in
     users = {
       groups = {
         media = { };
-        sabnzbd.gid = lib.mkDefault gids.sabnzbd;
+        sabnzbd.gid = lib.mkForce gids.sabnzbd;
       };
       users.sabnzbd = {
-        uid = lib.mkDefault uids.sabnzbd;
+        uid = lib.mkForce uids.sabnzbd;
         extraGroups = [ "media" ];
       };
     };

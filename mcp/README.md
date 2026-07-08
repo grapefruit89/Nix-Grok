@@ -2,53 +2,54 @@
 
 ## Aktive Server
 
-| Server | Nixpkgs-Paket | Zweck | Credentials |
+| Server | Paket | Zweck | Credentials |
 |---|---|---|---|
-| `context7` | `pkgs.context7-mcp` (3.0.0) | Aktuelle Library-Doku/Code-Beispiele | `~/.config/context7/api_key` (moritz) |
-| `mcp-nixos` | `pkgs.mcp-nixos` (2.4.3) | NixOS-Pakete/Optionen/HM ohne Halluzinationen | keine |
+| `context7` | `pkgs.context7-mcp` | Aktuelle Library-Doku/Code-Beispiele | `~/.config/context7/api_key` |
+| `mcp-nixos` | `pkgs.mcp-nixos` | NixOS-Pakete/Optionen/HM ohne Halluzinationen | keine |
+| `github` | `pkgs.github-mcp-server` | Issues/PRs/Code-Suche auf GitHub | `~/.config/github-mcp/token` |
+| `brave-search` | `npx @modelcontextprotocol/server-brave-search` | Web-Suche via Brave API | `~/.config/brave-search/api_key` |
 
-Beide Pakete kommen aus nixpkgs -- kein `npx`, kein Netzwerkzugriff beim Start.
+**Hinweis brave-search:** Kein Nixpkgs-Paket -- verwendet `npx` (`pkgs.nodejs_22`).
+Abweichung vom "kein npx"-Prinzip; geflaggert bis ein nativer Nixpkgs-Wrapper existiert.
 
 ## Wo die Server aktiv sind
 
-| Scope | Datei / Mechanismus |
-|---|---|
-| **Claude Code global** | `~/.claude/settings.json` via `home.activation.claudeCodeMcpServers` in `users/moritz/home.nix` |
-| **Claude Code Projekt** | `/etc/nixos/.mcp.json` via `systemd.services.mcp-config-provision` (this module); nur aktiv wenn `claude` aus `/etc/nixos` gestartet wird |
-| **Hermes** | `services.hermes-agent.settings.mcp_servers` in `modules/60-apps/hermes.nix`; `CONTEXT7_API_KEY` kommt aus `/var/lib/hermes/env` |
+| Scope | Datei / Mechanismus | Status |
+|---|---|---|
+| **Claude Code global** | `~/.claude/settings.json` via `home.activation.claudeCodeMcpServers` in `users/moritz/home.nix` | **aktiv** |
+| **Claude Code Projekt** | `/etc/nixos/.mcp.json` via `systemd.services.mcp-config-provision` (dieses Modul) | **nicht verdrahtet** -- `mcp/default.nix` wird noch nicht importiert |
+| **Hermes** | `services.hermes-agent.settings.mcp_servers` in `modules/60-apps/hermes.nix` | aktiv (context7, nixos) |
 
-### Context7-Key setzen
+### Credentials setzen
 
 ```bash
-set-context7-api-key   # schreibt ~/.config/context7/api_key (moritz)
-                       # kopiert optional nach /var/lib/secrets/context7.env
-                       # hermes-env-provision liest von dort nach /var/lib/hermes/env
+set-context7-api-key        # ~/.config/context7/api_key
+set-github-mcp-token        # ~/.config/github-mcp/token
+set-brave-search-api-key    # ~/.config/brave-search/api_key
 ```
 
-## Architektur: Zwei Ebenen
+## Architektur: Global-Scope via home.activation
 
-**Projekt-Scope** (`/etc/nixos/.mcp.json`): Erzeugt durch `mcp-servers-nix.lib.mkConfig`
-in `flake.nix`. Greift nur wenn `claude` aus `/etc/nixos` gestartet wird.
+**Global-Scope** (`~/.claude/settings.json`): `home.activation.claudeCodeMcpServers`
+in `users/moritz/home.nix` merged nach jedem `nixos-rebuild switch` die `mcpServers`-
+Sektion per `jq`. Greift in jeder Claude-Code-Session.
 
-**Global-Scope** (`~/.claude/settings.json`): Gesetzt durch `home.activation` in
-`users/moritz/home.nix`. Greift in jeder Claude-Code-Session.
-
-Beide Scopes zeigen auf dieselben Binaries aus dem Nix-Store.
+**Projekt-Scope** (`/etc/nixos/.mcp.json`): Noch nicht aktiv. `mcp/default.nix`
+existiert, ist aber nirgendwo importiert und `mcp-config-provision.service` laeuft nicht.
+Aktivieren: In `flake.nix` als NixOS-Modul einbinden.
 
 ## Neuen Server hinzufuegen
 
 1. `nix search nixpkgs mcp-server` -- oft ist das Paket direkt verfuegbar
 2. In `users/moritz/home.nix`:
-   - Wrapper oder direkten Store-Pfad im `let`-Block definieren
-   - In `claudeCodeMcpServers` activation: neuen Eintrag in das `jq -n '{...}'` einbauen
-3. Fuer Projekt-Scope: in `flake.nix` im `mcpConfigFile`-Block erganzen
-4. Secrets nie inline -- Datei unter `/var/lib/secrets/` oder `~/.config/<name>/api_key`
-5. `nixos-rebuild dry-build --impure` pruefen, dann `switch`
+   - Wrapper-Script im `let`-Block definieren (liest Secret aus `~/.config/<name>/api_key`)
+   - `home.file.".local/bin/<name>"` Eintrag hinzufuegen
+   - In `claudeCodeMcpServers` activation: `--arg name ...` und JSON-Eintrag ergaenzen
+   - Setup-Script `set-<name>-token` analog zu `set-github-mcp-token`
+3. Secrets nie inline in settings.json oder Git -- nur in `~/.config/<name>/api_key`
+4. `sudo scripts/nixos-rebuild-safe.sh` (dry-build), dann switch
 
 ## Kandidaten fuer spaeter
 
-- **GitHub MCP** (`pkgs.github-mcp-server`, v1.0.5): Benoetigt `GITHUB_PERSONAL_ACCESS_TOKEN`.
-  Sinnvoll wenn Issues/PRs regelmaessig im Chat bearbeitet werden.
-- **Filesystem MCP**: Fuer Claude Code redundant (native Read/Write/Edit-Tools).
-  Fuer Agenten ohne native Datei-Tools potenziell nuetzlich.
 - **Sequential Thinking**: Marginaler Mehrwert fuer moderne Modelle.
+- **Filesystem MCP**: Fuer Claude Code redundant (native Read/Write/Edit-Tools).

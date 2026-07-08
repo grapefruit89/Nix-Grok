@@ -455,7 +455,7 @@ sudo git -C /etc/nixos commit -m "refactor: remove Technitium from 11-network.ni
 # ALT:
     technitium-dns-server = {
       port = ports.technitium-dns;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "dns";
       description = "Technitium DNS Server";
     };
@@ -463,7 +463,7 @@ sudo git -C /etc/nixos commit -m "refactor: remove Technitium from 11-network.ni
 # NEU:
     blocky = {
       port = ports.blocky;
-      zone = "admin-hangar";
+      zone = "internal";
       subdomain = "dns";
       description = "Blocky DNS (ad-blocking, split-horizon)";
     };

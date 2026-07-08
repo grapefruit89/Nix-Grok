@@ -60,9 +60,9 @@ meta:
 | Service | ID | UID | Transport | SSO | Modul |
 |---------|:--:|:---:|-----------|:---:|-------|
 | [pocket-id](../../modules/10-network/11-network.nix) | 1001 | — | `⚠️ TCP-W :1001` → Ziel: `🎯 UDS /run/pocket-id/pocket-id.sock` | ja | OIDC-Provider |
-| technitium-dns | 1002 | — | `🔵 TCP-L :1002` | nein | Web-UI (Port 53 ext.) |
+| blocky | 1002 | — | `🔵 TCP-L :1002 (HTTP/Metrics)` | nein | LAN-DNS + Ad-Blocking |
 | ddns-updater | 1003 | — | `🔵 TCP-L :1003` | nein | Cloudflare DDNS |
-| blocky/DNS | — | — | `🌐 ext :53` | nein | IANA-Standard |
+| blocky/DNS | — | — | `🌐 ext :53` | nein | IANA-Standard (LAN-Clients) |
 | mqtt (mosquitto) | — | — | `🌐 ext :1883` | nein | IoT, IANA |
 
 > **pocket-id** lauscht derzeit auf `*:1001` (alle Interfaces). Da Caddy der einzige legitime Client ist,

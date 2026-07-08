@@ -152,7 +152,7 @@ in
   my.ports.ssh =
     if stufe >= 9 then lib.mkForce p.network.productionSshPort else lib.mkForce p.network.sshPort;
 
-  my.creds.enable = erstAb 9; # systemd-creds (host key → useTpm = true für TPM)
+  my.creds.enable = erstAb 8; # systemd-creds (host key → useTpm = true für TPM)
 
   my.services.ddns-updater.enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;
   my.services.dns-guard.enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;

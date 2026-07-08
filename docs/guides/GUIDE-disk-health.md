@@ -27,7 +27,7 @@ Rollout: Stufe 3+ (`my.disk-health.enable` in `rollout.nix`).
 
 ## UI {#ui}
 
-- Scrutiny: `https://scrutiny.<domain>` (admin-hangar / Tailscale)
+- Scrutiny: `https://scrutiny.<domain>` (internal / Tailscale)
 - Lokal: `http://127.0.0.1:4005/health`
 
 ## Checks (Gatus) {#gatus-checks}
