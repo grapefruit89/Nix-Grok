@@ -1,14 +1,12 @@
 # ---
-# id: "nixmeta-ban"
-# domain: "00"
-# status: "active"
-# layer: 4
-# purpose: "Build-Time-Assertion: NIXMETA (# !type Marker) ist permanent verboten"
-# provides: []
-# requires: []
-# ports: []
-# state_dir: null
-# tags: ["security", "hygiene", "meta"]
+# meta:
+#   layer: 3
+#   role: module
+#   purpose: Build-Time-Assertion — NIXMETA (# !type Marker) permanent verboten
+#   tags:
+#     - security
+#     - hygiene
+#     - meta
 # ---
 { lib, ... }:
 let

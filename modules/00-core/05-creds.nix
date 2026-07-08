@@ -1,3 +1,16 @@
+# ---
+# meta:
+#   layer: 3
+#   role: module
+#   purpose: systemd-creds Credential-Store + sops-nix-Verbot (Assertion)
+#   docs:
+#     - docs/adr/2024-systemd-creds-tpm.md
+#     - docs/guides/ANTIPATTERNS.md
+#   tags:
+#     - security
+#     - credentials
+#     - systemd-creds
+# ---
 {
   config,
   lib,

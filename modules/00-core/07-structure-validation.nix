@@ -1,3 +1,12 @@
+# ---
+# meta:
+#   layer: 3
+#   role: module
+#   purpose: Build-Time-Assertions — modules/-Verzeichnisstruktur und default.nix-Vollständigkeit
+#   tags:
+#     - structure
+#     - validation
+# ---
 { lib, ... }:
 let
   # ../ von modules/00-core/ aus → modules/
