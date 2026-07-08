@@ -50,21 +50,23 @@ in
         default = "90day";
         description = "Maximale Journal-Retention (MaxRetentionSec). 90 Tage für Incident-Analyse; auf Impermanence irrelevant.";
       };
-      nix-tuning.enable = lib.mkEnableOption "Nix store performance tuning and GC";
-      nix-tuning.maxJobs = lib.mkOption {
-        type = lib.types.nullOr lib.types.int;
-        default = null;
-        description = "Parallele Nix-Jobs (null = RAM-basiert). q958/i3-9100: 4.";
-      };
-      nix-tuning.cores = lib.mkOption {
-        type = lib.types.nullOr lib.types.int;
-        default = null;
-        description = "Kerne pro Job (0 = alle). null = RAM-basiert.";
-      };
-      nix-tuning.daemonLowPriority = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "true = nix-daemon idle (schont Dienste). false = volle Build-Power.";
+      nix-tuning = {
+        enable = lib.mkEnableOption "Nix store performance tuning and GC";
+        maxJobs = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Parallele Nix-Jobs (null = RAM-basiert). q958/i3-9100: 4.";
+        };
+        cores = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Kerne pro Job (0 = alle). null = RAM-basiert.";
+        };
+        daemonLowPriority = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "true = nix-daemon idle (schont Dienste). false = volle Build-Power.";
+        };
       };
       zram-swap.enable = lib.mkEnableOption "Aggressive komprimierter ZRAM RAM-swap";
       # kernel-slim Option lebt jetzt nur noch in modules/20-security/25-kernel-policy.nix (Duplikat entfernt)

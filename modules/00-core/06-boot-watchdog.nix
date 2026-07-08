@@ -19,15 +19,12 @@
 }:
 let
   cfg = config.my.boot-watchdog;
+  # Reiner Health-Check — kein manueller Restart, kein sleep.
+  # Restart-Policies gehören in das jeweilige Service-Modul (wie postgresql unten).
   serviceActive = name: ''
     if ! ${pkgs.systemd}/bin/systemctl is-active --quiet ${name}; then
-      echo "[BOOT-WATCHDOG] ${name} nicht aktiv — Restart"
-      ${pkgs.systemd}/bin/systemctl restart ${name} || true
-      sleep 5
-      if ! ${pkgs.systemd}/bin/systemctl is-active --quiet ${name}; then
-        echo "[BOOT-WATCHDOG] FEHLER: ${name} nach Restart weiterhin down"
-        exit 1
-      fi
+      echo "[BOOT-WATCHDOG] FEHLER: ${name} nicht aktiv"
+      exit 1
     fi
   '';
 in
@@ -72,6 +69,7 @@ in
         ${lib.optionalString cfg.requireCaddy (serviceActive "caddy.service")}
         echo "[BOOT-WATCHDOG] OK: kritische Dienste aktiv"
       '';
+      path = [ pkgs.systemd ];
     };
 
     systemd.timers.boot-watchdog = {
@@ -82,8 +80,6 @@ in
         AccuracySec = "30s";
       };
     };
-
-    systemd.services.boot-watchdog.path = [ pkgs.systemd ];
 
     # PostgreSQL: Restart=always ohne OOM-Konflikt mit memory.postgres (-800)
     systemd.services.postgresql = lib.mkIf (config.services.postgresql.enable or false) {
@@ -96,10 +92,30 @@ in
       };
     };
 
-    # Caddy hängt an PostgreSQL wenn Linkwarden aktiv (einziger echter PostgreSQL-Nutzer)
-    systemd.services.caddy = lib.mkIf (config.my.services.linkwarden.enable or false) {
-      requires = [ "postgresql.service" ];
-      after = [ "postgresql.service" ];
+    # Caddy: PostgreSQL-Abhängigkeit (Linkwarden) + Restart-Policy (wenn watchdog überwacht)
+    systemd.services.caddy = lib.mkMerge [
+      (lib.mkIf (config.my.services.linkwarden.enable or false) {
+        requires = [ "postgresql.service" ];
+        after = [ "postgresql.service" ];
+      })
+      (lib.mkIf cfg.requireCaddy {
+        serviceConfig = {
+          Restart = lib.mkDefault "on-failure";
+          RestartSec = lib.mkDefault "5s";
+          StartLimitIntervalSec = lib.mkDefault 0;
+          StartLimitBurst = lib.mkDefault 0;
+        };
+      })
+    ];
+
+    # Blocky: Restart-Policy — watchdog prüft, systemd erholt sich selbst
+    systemd.services.blocky = lib.mkIf cfg.requireBlocky {
+      serviceConfig = {
+        Restart = lib.mkDefault "on-failure";
+        RestartSec = lib.mkDefault "5s";
+        StartLimitIntervalSec = lib.mkDefault 0;
+        StartLimitBurst = lib.mkDefault 0;
+      };
     };
   };
 }
