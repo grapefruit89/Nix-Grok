@@ -8,6 +8,7 @@
   ...
 }:
 let
+  asserts = import ../../lib/assertions.nix { inherit lib; };
   caddySnippets = import ../../lib/caddy-snippets.nix {
     pocketIdPort =
       if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id else null;
@@ -66,30 +67,50 @@ in
       );
 
       assertions = [
-        {
+        (asserts.mkAssert {
+          code = "DNS-001";
+          was = "services.resolved.enable ist nicht gesetzt — systemd-resolved ist inaktiv";
+          warum = "ADR-003: Alle DNS-Anfragen über DoT (Cloudflare 1.1.1.1#one.one.one.one). Nur resolved implementiert DNSOverTLS=yes systemweit. dnsmasq/bind sind verboten (lib/forbidden-tech.nix).";
+          beheben = "services.resolved.enable = true; setzen. networking.nameservers = []; sicherstellen.";
           assertion = config.services.resolved.enable or false;
-          message = "DNS: systemd-resolved muss aktiv sein (direkt DoT ohne Blocky-Umweg).";
-        }
-        {
+        })
+        (asserts.mkAssert {
+          code = "DNS-002";
+          was = "services.resolved.settings.Resolve.DNSOverTLS ist nicht 'yes' (strict mode)";
+          warum = "ADR-003: 'opportunistic' erlaubt Plaintext-Fallback wenn DoT fehlschlägt — hebt die Sicherheitsgarantie auf. 'yes' lehnt jede unverschlüsselte Antwort ab.";
+          beheben = "services.resolved.settings.Resolve.DNSOverTLS = \"yes\"; — kein Wert außer 'yes' ist zulässig.";
           assertion = (config.services.resolved.settings.Resolve.DNSOverTLS or "no") == "yes";
-          message = "DNS-POLICY: DNSOverTLS muss 'yes' (strict) sein — Host-DNS geht direkt an DoT-Upstreams, kein Plaintext-Fallback erlaubt!";
-        }
-        {
+        })
+        (asserts.mkAssert {
+          code = "DNS-003";
+          was = "services.resolved.settings.Resolve.DNS zeigt auf 127.0.0.1 (Blocky/lokaler Forwarder)";
+          warum = "Blocky lief früher als lokaler DNS-Forwarder, wurde durch direkte DoT-Verbindung ersetzt (ADR-003). Ein lokaler Forwarder auf 127.0.0.1 würde DoT umgehen.";
+          beheben = "DNS auf DoT-Upstream setzen, z.B. '1.1.1.1#one.one.one.one 1.0.0.1#one.one.one.one'. Wert in modules/10-network/11-network.nix → dnsBootstrap.";
           assertion = (config.services.resolved.settings.Resolve.DNS or "") != "127.0.0.1";
-          message = "DNS-POLICY: resolved darf nicht 127.0.0.1 (Blocky) als primary DNS nutzen — direkt DoT verwenden!";
-        }
-        {
+        })
+        (asserts.mkAssert {
+          code = "DNS-004";
+          was = "networking.nameservers ist nicht leer";
+          warum = "networking.nameservers schreibt /etc/resolv.conf direkt und umgeht resolved komplett — DoT-Garantie entfällt für alle Prozesse die /etc/resolv.conf nutzen.";
+          beheben = "networking.nameservers = []; — /etc/resolv.conf wird von resolved verwaltet (127.0.0.53).";
           assertion = config.networking.nameservers == [ ];
-          message = "DNS-POLICY: networking.nameservers muss leer sein — externe Einträge würden /etc/resolv.conf überschreiben und DoT umgehen!";
-        }
-        {
+        })
+        (asserts.mkAssert {
+          code = "IPv6-001";
+          was = "my.configs.network.ipv6.firewall ist nicht false";
+          warum = "q958 ist v4-only Homelab. IPv6-Firewall-Regeln für ungetestetes Protokoll erhöhen Angriffsfläche und Komplexität ohne Nutzen.";
+          beheben = "my.configs.network.ipv6.firewall = false; in machines/q958/network.nix setzen.";
+          umgehung = "Wenn IPv6 gewünscht: networking.enableIPv6 = true + vollständige nftables ip6-Tabelle schreiben.";
           assertion = config.my.configs.network.ipv6.firewall == false;
-          message = "IPv6: Homelab-v4-only — my.configs.network.ipv6.firewall muss false sein.";
-        }
-        {
+        })
+        (asserts.mkAssert {
+          code = "IPv6-002";
+          was = "networking.enableIPv6 ist nicht explizit deaktiviert";
+          warum = "Ohne enableIPv6 = false weist der Kernel IPv6-Adressen zu — auch wenn keine Firewall-Regeln dafür existieren. Kernel-Ebene muss IPv6 komplett abschalten.";
+          beheben = "networking.enableIPv6 = false; — schaltet IPv6 kernel-seitig ab (sysctl net.ipv6.conf.all.disable_ipv6=1).";
+          umgehung = "Wenn IPv6 gewünscht: IPv6-001 lösen, vollständige nftables ip6-Regeln schreiben, dann enableIPv6 = true.";
           assertion = !(config.networking.enableIPv6 or true);
-          message = "IPv6: networking.enableIPv6 muss false sein — Kernel-Ebene muss IPv6 deaktivieren.";
-        }
+        })
       ];
     }
 

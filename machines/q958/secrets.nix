@@ -242,9 +242,11 @@ let
             > ${secretsDir}/oauth2-proxy.env
         fi
         chmod 600 ${secretsDir}/oauth2-proxy.env
-        # Cookie-Secret — einmalig generiert, nie überschrieben
-        if [ ! -f ${secretsDir}/oauth2-proxy-cookie-secret ]; then
-          ${pkgs.openssl}/bin/openssl rand -base64 32 > ${secretsDir}/oauth2-proxy-cookie-secret
+        # Cookie-Secret — einmalig generiert, nie überschrieben.
+        # Muss exakt 32 Bytes sein (AES-256). openssl rand -base64 24 → 32 Chars, kein Newline.
+        if [ ! -f ${secretsDir}/oauth2-proxy-cookie-secret ] || \
+           [ "$(wc -c < ${secretsDir}/oauth2-proxy-cookie-secret)" != "32" ]; then
+          ${pkgs.openssl}/bin/openssl rand -base64 24 | tr -d '\n' > ${secretsDir}/oauth2-proxy-cookie-secret
           chmod 600 ${secretsDir}/oauth2-proxy-cookie-secret
         fi
 

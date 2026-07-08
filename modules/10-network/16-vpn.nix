@@ -160,6 +160,11 @@ in
             }
           ];
         };
+
+      # wg-quick setzt ignoredInterfaces = ["privado"] → networkd.nix fügt trotzdem
+      # wantedBy = ["network-online.target"] hinzu (unconditional wenn systemd.network.enable).
+      # Ohne diesen Fix: 2min Timeout bei jedem nixos-rebuild switch. (→ ADR-2030)
+      systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
     })
   ];
 }

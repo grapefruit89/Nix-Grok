@@ -119,6 +119,45 @@ Dienste ohne SSO (Pocket-ID, API-Endpoints): direkt `reverse_proxy`.
 **Niemals** `import sso_auth` auf dem Pocket-ID-vHost selbst (`auth.<domain>`).
 Sonst: OAuth2-Proxy → Pocket-ID → OAuth2-Proxy → ∞
 
+### Erstinbetriebnahme oauth2-proxy {#oauth2-proxy-setup}
+
+```
+1. Pocket-ID Admin-Setup (falls neu):
+   https://auth.<domain> → Passkey registrieren
+
+2. OIDC Client in Pocket-ID anlegen:
+   Applications → New Application
+   Name: "oauth2-proxy"
+   Redirect URI: https://oauth.<domain>/oauth2/callback
+   → Client-ID + Client-Secret notieren
+
+3. profile.local.nix:
+   secrets.devKeys.oauth2proxy = {
+     clientId = "<client-id>";
+     clientSecret = "<client-secret>";
+   };
+
+4. nixos-rebuild switch → secrets.nix schreibt oauth2-proxy.env
+
+5. Pocket-ID neu starten (APP_URL muss korrekt gesetzt sein):
+   sudo systemctl restart pocket-id
+
+6. oauth2-proxy starten:
+   sudo systemctl reset-failed oauth2-proxy && sudo systemctl start oauth2-proxy
+```
+
+### Bekannte Fallstricke (oauth2-proxy 7.x) {#oauth2-proxy-fallstricke}
+
+| Fehler | Ursache | Fix |
+|--------|---------|-----|
+| `unknown flag: --http_address` | Underscore-Flags in 7.x entfernt | NixOS-Option verwenden, nicht extraConfig |
+| `cookie_secret must be 16/24/32 bytes` | `openssl rand -base64 32` → 45 Bytes | `openssl rand -base64 24 \| tr -d '\n'` → 32 Bytes |
+| `x509: certificate signed by unknown authority` | minica-Cert, Go-Trust-Store kennt es nicht | `extraConfig."ssl-insecure-skip-verify" = "true"` (Dev) |
+| `issuer did not match` / `got "http://localhost"` | Pocket-ID braucht `APP_URL`, nicht `PUBLIC_URL` | `services.pocket-id.settings.APP_URL = "https://auth.${domain}"` |
+| `start-limit-hit` | Zu viele schnelle Fehlstarts | `systemctl reset-failed oauth2-proxy && systemctl start oauth2-proxy` |
+
+Vollständige Bug-Dokumentation: [ADR-1033 — oauth2-proxy](../adr/1033-oauth2-proxy-forward-auth.md)
+
 ---
 
 ## Jellyfin Client-Split {#jellyfin-split}
@@ -269,12 +308,15 @@ journalctl -u caddy | grep forward_auth
 | Jellyfin Apps blockiert | Fehlender `@jellyfin_client`-Matcher | Matcher für `X-Emby-Authorization` prüfen |
 | Jellyseerr "Unauthorized" | Jellyfin-Auth-Verbindung getrennt | Jellyfin-URL in Jellyseerr Settings prüfen |
 | `ENCRYPTION_KEY not set` | pocket-id.env nicht geladen | `systemctl cat pocket-id` → EnvironmentFile prüfen |
+| `unknown flag: --http_address` | oauth2-proxy 7.x: kein Underscore | NixOS-Optionen verwenden ([ADR-1033](../adr/1033-oauth2-proxy-forward-auth.md)) |
+| `issuer did not match` `http://localhost` | Pocket-ID: APP_URL statt PUBLIC_URL | `services.pocket-id.settings.APP_URL = "https://auth.${domain}"` |
 
 ---
 
 ## Siehe auch {#siehe-auch}
 
 - [ADR-1025 — Pocket-ID als OIDC Provider](../adr/1025-pocket-id-oidc-provider.md) — Entscheidung gegen Authentik/Keycloak
+- [ADR-1033 — oauth2-proxy Forward-Auth](../adr/1033-oauth2-proxy-forward-auth.md) — Bugs bei Erstinbetriebnahme, Cookie-Secret, Flag-Format
 - [ADR-1014 — Caddy Security-Härtung](../adr/1014-caddy-security-headers-trusted-proxies.md) — trusted_proxies, Security-Header
 - [ADR-1019 — UDS-First](../adr/1019-uds-first-philosophy.md) — warum Pocket-ID + Jellyseerr über TCP (kein UDS-Support)
 - [GUIDE-security-secrets.md](GUIDE-security-secrets.md) — ENCRYPTION_KEY via systemd-creds (Stufe 9)

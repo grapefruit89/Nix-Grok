@@ -68,7 +68,7 @@ Kritische Variablen:
 | Variable | Wert auf q958 | Notiz |
 |----------|---------------|-------|
 | `PORT` | `1411` | Default, aus Port-Registry |
-| `APP_URL` | `https://auth.<domain>` | Public-facing URL |
+| `APP_URL` | `https://auth.<domain>` | Public-facing URL **und** OIDC Issuer — NixOS: `services.pocket-id.settings.APP_URL` (nicht `PUBLIC_URL`!) |
 | `ENCRYPTION_KEY` | via `secretsFile` / Stufe 9: `LoadCredential` | Pflicht — verschlüsselt OIDC Client Secrets in DB |
 | `ENCRYPTION_KEY_FILE` | Stufe 9: `$CREDENTIALS_DIRECTORY/pocket_id_key` | Für systemd-creds |
 | `TRUST_PROXY` | `true` | Caddy als Reverse Proxy |
@@ -115,8 +115,34 @@ Das Modul `17-pocket-id.nix` setzt:
 - Stufe 9: `ENCRYPTION_KEY` via `LoadCredential` aus systemd-creds (→ ADR-2024)
 - OIDC-Client-Provisioning ist manuell (Web-UI) — kein deklarativer Dateimechanismus
 
+## Debugging: OIDC Issuer mismatch {#app-url-bug}
+
+**Symptom:** oauth2-proxy oder andere OIDC-Clients melden:
+```
+oidc: issuer did not match the issuer returned by provider
+expected "https://auth.<domain>" got "http://localhost"
+```
+
+**Ursache:** `PUBLIC_URL` existiert nicht als Pocket-ID-Konfigurationsvariable.
+Die OIDC Issuer URL wird durch `APP_URL` gesetzt.
+
+**Fix (NixOS):**
+```nix
+services.pocket-id.settings.APP_URL = "https://auth.${domain}";
+# Nicht: environment.extraEnv.PUBLIC_URL = ...
+```
+
+Nach Änderung: `sudo systemctl restart pocket-id`
+
+**Verifikation:**
+```bash
+curl -s https://auth.<domain>/.well-known/openid-configuration | grep '"issuer"'
+# Muss "https://auth.<domain>" ausgeben, nicht "http://localhost"
+```
+
 ## Siehe auch
 
 - [GUIDE-auth-stack.md](../guides/GUIDE-auth-stack.md) — Auth-Matrix, OIDC-Clients, OAuth2-Proxy
+- [ADR-1033 — oauth2-proxy](1033-oauth2-proxy-forward-auth.md) — Forward-Auth Setup + alle oauth2-proxy Bugs
 - [ADR-2024 — systemd-creds](2024-systemd-creds-tpm.md) — wie ENCRYPTION_KEY in Stufe 9 läuft
 - [ADR-1019 — UDS-First](1019-uds-first-philosophy.md) — Pocket-ID über TCP (kein UDS-Support)

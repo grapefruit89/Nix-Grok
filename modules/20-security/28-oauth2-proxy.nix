@@ -30,6 +30,10 @@ in
       clientID = "placeholder";
       keyFile = "/var/lib/secrets/oauth2-proxy.env";
       redirectURL = "https://oauth.${domain}/oauth2/callback";
+      oidcIssuerUrl = "https://auth.${domain}";
+      upstream = "static://202"; # Auth-only Modus: Caddy übernimmt das eigentliche Proxying
+      setXauthrequest = true;
+      # httpAddress default ist bereits "http://127.0.0.1:4180"
       cookie = {
         secretFile = "/var/lib/secrets/oauth2-proxy-cookie-secret";
         domain = ".${domain}";
@@ -37,13 +41,13 @@ in
       };
       email.domains = [ "*" ];
       reverseProxy = true;
+      # Caddy ist der einzige Proxy — nur localhost darf X-Forwarded-* setzen
+      trustedProxyIP = [ "127.0.0.1" ];
       extraConfig = {
-        oidc_issuer_url = "https://auth.${domain}";
-        skip_provider_button = "true";
-        set_xauthrequest = "true";
-        # Auth-only Modus: Caddy übernimmt das eigentliche Proxying
-        upstreams = "static://202";
-        http_address = "127.0.0.1:4180";
+        "skip-provider-button" = "true";
+        # DEV: minica-Zertifikat wird nicht vom Go-Trust-Store erkannt (kein Cloudflare-Token → kein Let's Encrypt).
+        # Entfernen wenn Cloudflare-Token gesetzt und security.acme echte Certs ausgestellt hat.
+        "ssl-insecure-skip-verify" = "true";
       };
     };
 

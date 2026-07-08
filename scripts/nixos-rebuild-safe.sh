@@ -10,18 +10,17 @@
 # ---
 #
 # Warum dieses Script existiert:
-#   nixos-rebuild switch stirbt mit SIGKILL (exit 137) wenn:
-#     (a) OOM: Nix baut zu viele Derivations parallel
-#     (b) SSH-Disconnect: Terminal-PG wird gekillt
+#   nixos-rebuild switch kann während des Builds SIGKILL bekommen wenn OOM.
 #   Dieser Gate stellt sicher dass:
-#     1. Ein dry-build vor jedem switch verifiziert wird
-#     2. Die Empfehlung ist, switch in tmux auszuführen (SSH-sicher)
-#     3. Ein Flag-File als Nachweis des erfolgreichen dry-builds gesetzt wird
+#     1. Ein dry-build vor jedem switch verifizierten Build nachweist
+#     2. Ein Flag-File als Nachweis des erfolgreichen dry-builds gesetzt wird
+#   SSH-Disconnect: wait-online-Timeout ist via 16-vpn.nix behoben (→ ADR-2030).
+#   Switch dauert <60s → keine tmux/systemd-run-Kapselung nötig.
 #
 # Usage:
 #   sudo scripts/nixos-rebuild-safe.sh           → dry-build + Flag setzen
 #   sudo scripts/nixos-rebuild-safe.sh check     → prüft ob Flag für HEAD gesetzt ist
-#   sudo scripts/nixos-rebuild-safe.sh switch    → dry-build + switch in tmux (SSH-sicher)
+#   sudo scripts/nixos-rebuild-safe.sh switch    → dry-build + switch (direkt, logged nach /tmp/nixos-switch.log)
 #   sudo scripts/nixos-rebuild-safe.sh test      → dry-build + nixos-rebuild test
 #
 set -euo pipefail
@@ -32,6 +31,19 @@ GIT_HASH=$(git -C /etc/nixos rev-parse HEAD 2>/dev/null || echo "no-git-$(date +
 FLAG_FILE="$FLAG_DIR/ok-$GIT_HASH"
 
 mkdir -p "$FLAG_DIR"
+
+# Nix-Flake sieht nur Git-bekannte Dateien. Neue ungetrackte .nix-Dateien sind
+# für den Flake unsichtbar und verursachen "path does not exist"-Fehler beim Build.
+_untracked=$(git -C /etc/nixos ls-files --others --exclude-standard -- '*.nix' 2>/dev/null)
+if [ -n "$_untracked" ]; then
+  echo "⚠  STOP: Neue .nix-Dateien nicht im Git-Index — für Flake unsichtbar!" >&2
+  echo "$_untracked" | sed 's/^/   ?? /' >&2
+  echo "" >&2
+  echo "   Lösung: sudo git -C /etc/nixos add <datei(en)>" >&2
+  echo "   Danach: sudo scripts/nixos-rebuild-safe.sh" >&2
+  exit 1
+fi
+unset _untracked
 
 case "${1:-dry}" in
 
@@ -45,12 +57,8 @@ case "${1:-dry}" in
       echo ""
       echo "✓ Dry-build erfolgreich — Flag gesetzt: $FLAG_FILE"
       echo ""
-      echo "  Führe jetzt switch aus (in tmux für SSH-Sicherheit):"
-      echo ""
-      echo "  tmux new-session 'sudo nixos-rebuild switch --flake $FLAKE --impure 2>&1 | tee /tmp/nixos-switch.log; echo \"Exit: \$?\"; read'"
-      echo ""
-      echo "  Oder direkt (nur wenn SSH-Verbindung stabil ist):"
-      echo "  sudo nixos-rebuild switch --flake $FLAKE --impure"
+      echo "  Switch starten (SSH-sicher via systemd-run):"
+      echo "  sudo scripts/nixos-rebuild-safe.sh switch"
     else
       echo "" >&2
       echo "✗ Dry-build FEHLGESCHLAGEN — switch ist nicht freigegeben" >&2
@@ -83,7 +91,7 @@ case "${1:-dry}" in
       echo "✓ Dry-build erfolgreich — starte nixos-rebuild $ACTION …"
       echo ""
       if [ "$ACTION" = "switch" ]; then
-        tmux new-session "sudo nixos-rebuild switch --flake $FLAKE --impure 2>&1 | tee /tmp/nixos-switch.log; echo \"Exit: \$?\"; read"
+        nixos-rebuild switch --flake "$FLAKE" --impure 2>&1 | tee /tmp/nixos-switch.log
       else
         nixos-rebuild test --flake "$FLAKE" --impure 2>&1 | tee /tmp/nixos-test.log
       fi

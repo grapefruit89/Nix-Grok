@@ -52,7 +52,7 @@ in
       dataDir = cfgPocketId.dataDir;
       settings = {
         PORT = toString cfgPocketId.port;
-        PUBLIC_URL = "https://auth.${domain}";
+        APP_URL = "https://auth.${domain}"; # OIDC-Issuer + Frontend-URL (nicht PUBLIC_URL)
         RP_ID = "auth.${domain}";
         RP_NAME = "PocketID";
         SESSION_DURATION = "24h";

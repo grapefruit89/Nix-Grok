@@ -22,6 +22,7 @@
 }:
 let
   cfg = config.my.security.firewall;
+  asserts = import ../../lib/assertions.nix { inherit lib; };
   allowedCountryList = lib.concatStringsSep " " cfg.allowedCountries;
   ruleset = import ../../lib/nftables-rules.nix { inherit lib config; };
 in
@@ -116,20 +117,29 @@ in
       inherit ruleset;
     };
 
-    # Sicherheits-Assertions für Firewall-Konfiguration
     assertions = [
-      {
+      (asserts.mkAssert {
+        code = "FIREWALL-001";
+        was = "my.security.firewall.lanCidrs ist leer — kein vertrauenswürdiges Netz definiert";
+        warum = "LAN-CIDRs definieren in nftables welche IPs als 'intern' gelten. Ohne sie haben LAN-Only-Dienste (Grafana, Home Assistant, Proxmox) keine Zugriffsbeschränkung auf private IPs.";
+        beheben = "my.security.firewall.lanCidrs = [\"192.168.x.0/24\"]; — eigenes LAN-Subnetz eintragen. Mehrere CIDRs (LAN + IoT-VLAN) als Liste möglich.";
         assertion = cfg.lanCidrs != [ ];
-        message = "FIREWALL: lanCidrs darf nicht leer sein — mindestens ein vertrauenswürdiges Netz definieren.";
-      }
-      {
+      })
+      (asserts.mkAssert {
+        code = "FIREWALL-002";
+        was = "my.security.firewall.webRateLimit ist leer — kein Rate-Limit für eingehende HTTP/S-Verbindungen";
+        warum = "Ohne Rate-Limit sind Port 443/80 unbegrenzt offen — auch für Connection-Floods. Das Rate-Limit ist die erste Verteidigungslinie vor Caddy/CrowdSec.";
+        beheben = "my.security.firewall.webRateLimit = \"40/minute\"; — Wert je nach erwartetem Traffic anpassen.";
         assertion = cfg.webRateLimit != "";
-        message = "FIREWALL: webRateLimit darf nicht leer sein.";
-      }
-      {
+      })
+      (asserts.mkAssert {
+        code = "FIREWALL-003";
+        was = "my.security.firewall.skuidSegmentation ist aktiv, aber 'prowlarr' fehlt in my.users.registry";
+        warum = "Netzwerk-Segmentierung nach UID erfordert vollständige UID-Registry aller Media-Dienste. Fehlt prowlarr, gilt die nftables skuid-Regel nicht → Segmentierung ist wirkungslos.";
+        beheben = "my.users.registry.prowlarr = { uid = <uid>; gid = <gid>; }; ergänzen — oder skuidSegmentation deaktivieren.";
+        umgehung = "my.security.firewall.skuidSegmentation.enable = false; bis Registry vollständig ist.";
         assertion = !(cfg.skuidSegmentation.enable && !config.my.users.registry ? prowlarr);
-        message = "FIREWALL: skuidSegmentation benötigt UID-Registry (prowlarr/sabnzbd UIDs).";
-      }
+      })
     ];
 
     systemd.services.nftables-geoip-update = lib.mkIf cfg.geoipAutoUpdate.enable {
