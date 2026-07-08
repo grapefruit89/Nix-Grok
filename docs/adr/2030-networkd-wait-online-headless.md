@@ -149,20 +149,42 @@ cat /etc/systemd/system/systemd-networkd-wait-online.service.d/overrides.conf 2>
 
 ## Fix {#fix}
 
-```bash
-# 1. Änderung in 27-hardened-core.nix bereits deployed (systemd.network.wait-online.enable = false;
-#    systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [];)
-
-# 2. Dry-build verifizieren (Closure muss sich ändern!)
-sudo /etc/nixos/scripts/nixos-rebuild-safe.sh
-
-# 3. Switch in tmux
-tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; echo "Exit: $?"; read'
-
-# 4. Verifikation
-ls /etc/systemd/system/network-online.target.wants/ | grep wait-online  # → leer
-systemctl is-active systemd-networkd-wait-online  # → inactive
+```nix
+# modules/10-network/16-vpn.nix — innerhalb lib.mkIf config.my.services.privado-vpn.enable { ... }
+systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
 ```
+
+**Wichtig: Wo der Fix NICHT hingehört (und warum):**
+- `27-hardened-core.nix` ist falsch: dort ist der Block in `lib.mkIf cfg.enable` eingebettet, wobei
+  `cfg.enable = hardened.enable = erstAb 9`. Bei Stufe 8 = `lib.mkIf false {}` → toter Code.
+- `16-vpn.nix` ist korrekt: `privado-vpn.enable = erstAb 6`, bei Stufe 8 aktiv. Ursache und Fix
+  im gleichen Modul → klar und wartbar.
+
+```bash
+# Strukturelle Verifikation OHNE Switch (sicherer als direkter Switch):
+sudo nixos-rebuild build --flake /etc/nixos#q958 --impure
+ls result/etc/systemd/system/network-online.target.wants/
+# Erwartete Ausgabe: leer (Verzeichnis existiert nicht)
+
+# Switch (kein tmux/systemd-run nötig — Switch dauert jetzt <60s):
+nsw
+# oder direkt: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
+
+# Verifikation nach Switch:
+ls /etc/systemd/system/network-online.target.wants/ 2>/dev/null || echo "Verzeichnis fehlt — korrekt"
+```
+
+### Fehlgeschlagene Ansätze beim Rebuild-Script {#script-bugs}
+
+Bei der Suche nach tmux-Alternativen wurden drei Varianten versucht, die alle scheiterten:
+
+| Versuch | Kommando | Fehler |
+|---------|----------|--------|
+| 1 | `systemd-run --wait --pipe nixos-rebuild switch` | `[Errno 2] No such file or directory: 'test'` — nixos-rebuild ruft intern selbst `systemd-run --pipe` auf; nested `--pipe` Units schlagen fehl |
+| 2 | `systemd-run --property=StandardOutput=file:/tmp/...` | Exit 209/STDOUT — systemd kann die Logdatei nicht öffnen wenn als Property angegeben |
+| 3 | `systemd-run sh -c "nixos-rebuild switch > log 2>&1; echo $?"` | 13ms, Silent success — `sh` läuft im systemd-PATH ohne nixos-rebuild; `echo $?` maskiert exit 127 als 0 |
+
+**Lösung:** Kein Wrapper. `nixos-rebuild switch` direkt, ohne systemd-run. `scripts/nixos-rebuild-safe.sh` nutzt jetzt `nixos-rebuild switch ... | tee /tmp/nixos-switch.log` direkt.
 
 ---
 
@@ -186,7 +208,8 @@ systemctl is-active systemd-networkd-wait-online  # → inactive
 
 | Artefakt | Pfad |
 |----------|------|
-| Headless Core Modul | `modules/20-security/27-hardened-core.nix` |
+| **Fix (aktiv)** | `modules/10-network/16-vpn.nix` — innerhalb `privado-vpn.enable` Block |
+| Toter Code (entfernt) | `modules/20-security/27-hardened-core.nix` — war in `mkIf (erstAb 9)` = false |
 | Root Cause (nixpkgs) | `nixos/modules/services/networking/wg-quick.nix` Zeile 457 |
 | Root Cause (nixpkgs) | `nixos/modules/system/boot/networkd.nix` Zeile 4196-4203 |
 
@@ -217,6 +240,8 @@ ls /etc/systemd/system/network-online.target.wants/ | grep -c wait-online
 | Datum | Änderung |
 |-------|----------|
 | 2026-07-08 | Initial — Root Cause im nixpkgs-Source analysiert, 4 Fehlversuche dokumentiert |
+| 2026-07-08 | Fix von 27-hardened-core.nix → 16-vpn.nix verschoben (erstAb-9-Bug) |
+| 2026-07-08 | Rebuild-Script: tmux/systemd-run entfernt — direkter switch nach wait-online-Fix |
 
 ---
 
