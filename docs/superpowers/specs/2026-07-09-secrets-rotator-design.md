@@ -75,7 +75,8 @@ kein Framework. Vanilla JS.
 - Regex läuft live clientseitig beim Tippen
 - Feld färbt sich: grün (Muster passt) / neutral (kein Match)
 - Button ist **immer klickbar**, unabhängig vom Regex-Status
-- Regex ist reines visuelles Feedback — kein Gate, keine Sperre
+- Regex-Match → Button wird **automatisch gedrückt** (auto-submit)
+- Button ist **jederzeit manuell klickbar**, auch ohne Regex-Match
 - Veraltetes Regex-Pattern: UI bleibt funktionsfähig, Backend entscheidet
 
 **Warum kein Disable:** Wenn sich ein Key-Format ändert, bricht ein deaktivierter Button
