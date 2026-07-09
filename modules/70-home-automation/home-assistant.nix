@@ -276,6 +276,8 @@ in
         RemainAfterExit = true;
         ExecStart = hassSmLightProvision;
       };
+      after = [ "home-assistant-mqtt-provision.service" ];
+      wants = [ "home-assistant-mqtt-provision.service" ];
       before = [ "home-assistant.service" ];
       wantedBy = [ "multi-user.target" ];
     };
