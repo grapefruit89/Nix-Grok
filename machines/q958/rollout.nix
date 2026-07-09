@@ -155,7 +155,8 @@ in
   my.creds.enable = erstAb 8; # systemd-creds (host key → useTpm = true für TPM)
 
   my.services.ddns-updater.enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;
-  my.services.dns-guard.enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;
+  my.services.dns-guard.enable =
+    if p.network.ddns.enable && p.domain.nixSubdomain then erstAb 5 else lib.mkForce false;
 
   networking.firewall.allowedTCPPorts = lib.mkIf (stufe < 8) (lib.mkForce [ p.network.sshPort ]);
 

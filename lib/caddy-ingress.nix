@@ -105,24 +105,24 @@ let
     {
       zone,
       upstream,
-      subdomain,
+      ...
     }:
     if zone == "internal" then
       ''
         import private_admin
+        import security_headers
+        import upstream_errors
+        reverse_proxy ${upstream}
+      ''
+    else if zone == "external" then
+      ''
+        import security_headers
         import sso_auth
         import sso_redirect
-        import security_headers
         import upstream_errors
         reverse_proxy ${upstream}
       ''
-    else if zone == "public" then
-      ''
-        import security_headers
-        import upstream_errors
-        reverse_proxy ${upstream}
-      ''
-    else if zone == "family-pocketid" && lib.elem subdomain streamingSubdomains then
+    else if zone == "streaming" then
       ''
         import streamer_headers
         import security_headers
@@ -137,20 +137,8 @@ let
           }
         }
       ''
-    else if zone == "family-pocketid" then
-      ''
-        import security_headers
-        import sso_auth
-        import sso_redirect
-        import upstream_errors
-        reverse_proxy ${upstream}
-      ''
     else
       throw "caddy-ingress: zone '${zone}' hat keinen Ingress";
-
-  streamingSubdomains = [
-    "audiobookshelf"
-  ];
 
   genHostExtra =
     {
@@ -181,7 +169,6 @@ let
       genZoneVhost {
         inherit (entry) zone;
         inherit upstream;
-        inherit (entry) subdomain;
       };
 
   genVirtualHosts =
@@ -209,5 +196,5 @@ let
     lib.listToAttrs (lib.mapAttrsToList mkHost ingress);
 in
 {
-  inherit genVirtualHosts streamingSubdomains;
+  inherit genVirtualHosts;
 }

@@ -92,7 +92,7 @@ in
     configs = {
       identity = {
         user = moritzUser.name;
-        inherit (moritzUser) domain;
+        domain = p.domain.effective;
       };
       hardware = {
         ramGB = p.hardware.ramGB;

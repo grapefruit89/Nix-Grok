@@ -17,8 +17,8 @@ let
   zones = [
     "loopback"
     "internal"
-    "family-pocketid"
-    "public"
+    "external"
+    "streaming"
   ];
 
   specEntryType = lib.types.submodule {
@@ -88,7 +88,7 @@ let
       description = "Loki ingest";
     };
 
-    # --- internal (private_admin + SSO / LAN + Netbird) ---
+    # --- internal (LAN only, private_admin) ---
     gatus = {
       port = ports.gatus;
       zone = "internal";
@@ -125,26 +125,6 @@ let
       subdomain = "ddns";
       description = "Cloudflare DDNS";
     };
-
-    # --- family-pocketid (Pocket-ID forward_auth) ---
-    pocket-id = {
-      port = ports.pocket-id;
-      zone = "family-pocketid";
-      subdomain = "auth";
-      description = "Identity Provider";
-    };
-    jellyfin = {
-      port = ports.jellyfin;
-      zone = "family-pocketid";
-      subdomain = "jellyfin";
-      description = "Media (Client-Split SSO)";
-    };
-    seerr = {
-      port = ports.jellyseerr;
-      zone = "family-pocketid";
-      subdomain = "seerr";
-      description = "Media Requests";
-    };
     sonarr = {
       port = ports.sonarr;
       zone = "internal";
@@ -169,18 +149,6 @@ let
       subdomain = "prowlarr";
       description = "Indexers";
     };
-    audiobookshelf = {
-      port = ports.audiobookshelf;
-      zone = "family-pocketid";
-      subdomain = "audiobookshelf";
-      description = "Audiobooks";
-    };
-    navidrome = {
-      port = ports.navidrome;
-      zone = "family-pocketid";
-      subdomain = "music";
-      description = "Music Server (API bypass für SubSonic-Clients)";
-    };
     lidarr = {
       port = ports.lidarr;
       zone = "internal";
@@ -188,7 +156,6 @@ let
       description = "Music Downloader (Companion zu Navidrome)";
     };
     vaultwarden = {
-
       port = ports.vaultwarden;
       zone = "internal";
       subdomain = "vault";
@@ -196,51 +163,85 @@ let
     };
     homepage = {
       port = ports.homepage;
-      zone = "family-pocketid";
+      zone = "internal";
       subdomain = "dashboard";
       description = "Dashboard";
     };
+
+    # --- external (Internet + LAN, Pocket-ID SSO) ---
+    pocket-id = {
+      port = ports.pocket-id;
+      zone = "external";
+      subdomain = "auth";
+      description = "Identity Provider";
+    };
+    seerr = {
+      port = ports.jellyseerr;
+      zone = "external";
+      subdomain = "seerr";
+      description = "Media Requests";
+    };
     filebrowser = {
       port = ports.filebrowser;
-      zone = "family-pocketid";
+      zone = "external";
       subdomain = "files";
       description = "Files";
     };
     linkwarden = {
       port = ports.linkwarden;
-      zone = "family-pocketid";
+      zone = "external";
       subdomain = "links";
       description = "Bookmarks";
     };
     open-webui = {
       port = ports.open-webui;
-      zone = "family-pocketid";
+      zone = "external";
       subdomain = "ai";
       description = "LLM UI";
     };
     paperless = {
       port = ports.paperless;
-      zone = "family-pocketid";
+      zone = "external";
       subdomain = "paperless";
       description = "Documents";
     };
     home-assistant = {
       port = 8123;
-      zone = "family-pocketid";
+      zone = "external";
       subdomain = "home";
       description = "Home Assistant";
     };
     zigbee-stack = {
       port = ports.zigbee2mqtt;
-      zone = "family-pocketid";
+      zone = "external";
       subdomain = "zigbee";
       description = "Zigbee UI";
     };
     amp = {
       port = ports.amp;
-      zone = "family-pocketid";
+      zone = "external";
       subdomain = "amp";
       description = "Game Server Panel";
+    };
+
+    # --- streaming (Internet + LAN, SSO + flush_interval=-1) ---
+    jellyfin = {
+      port = ports.jellyfin;
+      zone = "streaming";
+      subdomain = "jellyfin";
+      description = "Media";
+    };
+    navidrome = {
+      port = ports.navidrome;
+      zone = "streaming";
+      subdomain = "music";
+      description = "Music Server (API bypass für SubSonic-Clients)";
+    };
+    audiobookshelf = {
+      port = ports.audiobookshelf;
+      zone = "streaming";
+      subdomain = "audiobookshelf";
+      description = "Audiobooks";
     };
   };
 in

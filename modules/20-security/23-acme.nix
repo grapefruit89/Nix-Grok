@@ -39,12 +39,19 @@ in
       certs."${domain}" = {
         domain = "*.${domain}";
         dnsProvider = "cloudflare";
-        # CF_DNS_API_TOKEN=<token> — provisioniert durch machines/q958/secrets.nix
+        # CF_DNS_API_TOKEN + CF_PROPAGATION_TIMEOUT — provisioniert durch secrets.nix
         environmentFile = "/var/lib/secrets/cloudflare_acme_env";
         group = "caddy";
-        # Outbound UDP 53 blockiert (cleartextDnsBlock) — lego kann authoritative NS
-        # nicht direkt pollen. LE validiert selbst; Cloudflare propagiert sofort.
-        dnsPropagationCheck = false;
+        # 127.0.0.53 (systemd-resolved, Loopback) für CF-Apex-Domain-Bestimmung.
+        # Blocky hört nur auf LAN-IP 192.168.2.73 → Firewall blockiert UDP 53
+        # auf non-loopback. Auth-NS direkt (CF) ist ebenfalls geblockt.
+        # propagation-wait=60s: kein DNS-Check, nur statisches Warten.
+        # CF's interne Replikation zur auth-NS dauert <5s — 60s ist safe.
+        dnsResolver = "127.0.0.53:53";
+        extraLegoFlags = [
+          "--dns.propagation-wait"
+          "60s"
+        ];
       };
     };
   };

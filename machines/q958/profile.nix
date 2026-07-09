@@ -29,6 +29,10 @@ let
       import localPath
     else
       throw "profile.local.nix fehlt — cp machines/q958/profile.local.nix.example machines/q958/profile.local.nix";
+  domainCfg = local.domain or { };
+  domainBase = domainCfg.base or "m7c5.de";
+  domainNixSubdomain = domainCfg.nixSubdomain or false;
+  domainEffective = if domainNixSubdomain then "nix.${domainBase}" else domainBase;
 in
 {
   meta = {
@@ -119,8 +123,10 @@ in
       firewall = false;
     };
     ddns = {
-      zone = "m7c5.de";
-      record = "nix";
+      zone = domainBase;
+      record = if domainNixSubdomain then "nix" else "";
+      fqdn = domainEffective;
+      wildcardFqdn = "*.${domainEffective}";
       enable = ((local.secrets.cloudflare or { }).apiToken or "") != "";
     };
   };
@@ -373,4 +379,10 @@ in
         ];
       };
     };
+
+  domain = {
+    base = domainBase;
+    nixSubdomain = domainNixSubdomain;
+    effective = domainEffective;
+  };
 }

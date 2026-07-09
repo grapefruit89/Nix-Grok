@@ -50,8 +50,8 @@ let
   ddnsZone = p.network.ddns.zone;
   oidcJellyfin = local.secrets.oidc.jellyfin or { };
   oidcNavidrome = local.secrets.oidc.navidrome or { };
-  ddnsRecord = p.network.ddns.record;
-  ddnsFqdn = "${ddnsRecord}.${ddnsZone}";
+  ddnsFqdn = p.network.ddns.fqdn;
+  ddnsWildcardFqdn = p.network.ddns.wildcardFqdn;
   oauth2ClientId = (local.secrets.devKeys.oauth2proxy or { }).clientId or "";
   oauth2ClientSecret = (local.secrets.devKeys.oauth2proxy or { }).clientSecret or "";
   googleTtsApiKey = (local.secrets.devKeys.googleTts or { }).apiKey or "";
@@ -193,15 +193,12 @@ let
             --arg token "${cfToken}" \
             --arg zone_id "$ZONE_ID" \
             --arg domain "${ddnsFqdn}" \
+            --arg wildcard "${ddnsWildcardFqdn}" \
             '{
-              settings: [{
-                provider: "cloudflare",
-                zone_identifier: $zone_id,
-                domain: $domain,
-                ttl: 1,
-                token: $token,
-                ip_version: "ipv4"
-              }]
+              settings: [
+                {provider: "cloudflare", zone_identifier: $zone_id, domain: $domain,   ttl: 1, token: $token, ip_version: "ipv4"},
+                {provider: "cloudflare", zone_identifier: $zone_id, domain: $wildcard, ttl: 1, token: $token, ip_version: "ipv4"}
+              ]
             }' > ${secretsDir}/ddns-updater-config.json
           chmod 600 ${secretsDir}/ddns-updater-config.json
           install -d -m 755 -o ddns-updater -g ddns-updater /var/lib/ddns-updater
