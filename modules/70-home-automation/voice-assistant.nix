@@ -11,7 +11,9 @@
 #     - voice
 #     - stt
 #   docs:
+#     - docs/adr/7003-groq-stt-wyoming-bridge.md
 #     - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+#     - docs/guides/GUIDE-home-assistant.md
 # ---
 {
   config,
@@ -109,6 +111,7 @@ let
                                             name="Groq", url="https://groq.com"
                                         ),
                                         installed=True,
+                                        version="1.0.0",
                                         languages=["de", "en"],
                                     )
                                 ],

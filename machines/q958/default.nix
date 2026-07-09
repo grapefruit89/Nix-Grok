@@ -62,6 +62,7 @@ in
       "zigbee2mqtt.env"
       "pocket-id.env"
       "vaultwarden.env"
+      "groq_api_key"
     ];
 
     core = {
@@ -164,6 +165,7 @@ in
         ];
         smlightHost = "SLZB-06M.local";
       };
+      voice-assistant.enable = true;
       zigbee-stack = {
         mqttPort = p.iot.zigbeeStack.mqttPort;
         zigbeePort = p.iot.zigbeeStack.zigbeePort;
