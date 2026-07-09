@@ -147,15 +147,20 @@ GET  /api/rebuild/status    → { secondsRemaining: int }
 
 ## Validation pro Feld
 
-| Feld | Regex (visuell) | Backend-Validation |
-|---|---|---|
-| CF API Token | `^[a-zA-Z0-9_-]{32,}$` | GET /zones (erwartet 200) |
-| Domain base | `^[a-z0-9.-]+\.[a-z]{2,}$` | keiner (Format reicht) |
-| WireGuard Key | `^[A-Za-z0-9+/]{43}=$` | keiner (Base64, 44 Zeichen) |
-| Restic Repo | `^s3:` | keiner (Format reicht) |
-| Restic AWS Key | `^[A-Z0-9]{16,}$` | keiner |
-| Usenet Host | `^[a-z0-9.-]+$` | TCP-Connect Port 563 |
-| TreasureMaps Key | `^[a-zA-Z0-9]{16,}$` | GET /api/v1/indexer (200?) |
+Regel: **Kein Key wird geschrieben ohne erfolgreiche Validation.** Schlägt die
+Validation fehl → kein Write, Fehlermeldung im Toast.
+
+Für Felder ohne testbaren API-Endpunkt ist das Format die einzige mögliche Prüfung —
+dort gilt Regex-Match als hinreichende Validation.
+
+| Feld | Regex (visuell) | Backend-Validation | Write wenn |
+|---|---|---|---|
+| CF API Token | `^[a-zA-Z0-9_-]{32,}$` | curl GET /zones → 200 | API antwortet 200 |
+| Domain base | `^[a-z0-9.-]+\.[a-z]{2,}$` | keiner möglich | Regex match |
+| WireGuard Key | `^[A-Za-z0-9+/]{43}=$` | keiner möglich | Regex match |
+| Restic Repo+Keys | `^s3:` | restic snapshots gegen Bucket | Befehl exit 0 |
+| Usenet Host | `^[a-z0-9.-]+$` | TCP-Connect Port 563 | Connect erfolgreich |
+| TreasureMaps Key | `^[a-zA-Z0-9]{16,}$` | curl GET API → 200 | API antwortet 200 |
 
 ---
 
