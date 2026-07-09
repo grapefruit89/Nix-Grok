@@ -63,6 +63,7 @@ in
       "pocket-id.env"
       "vaultwarden.env"
       "groq_api_key"
+      "google_tts_api_key"
     ];
 
     core = {
@@ -165,7 +166,10 @@ in
         ];
         smlightHost = "SLZB-06M.local";
       };
-      voice-assistant.enable = true;
+      voice-assistant = {
+        enable = true;
+        tts.enable = true;
+      };
       zigbee-stack = {
         mqttPort = p.iot.zigbeeStack.mqttPort;
         zigbeePort = p.iot.zigbeeStack.zigbeePort;

@@ -2,14 +2,16 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Voice Assistant — Groq Whisper STT Wyoming Bridge
+#   purpose: Voice Assistant — Groq STT + Google Cloud TTS (Wyoming Bridges)
 #   services:
 #     - groq-stt-wyoming
+#     - google-tts-wyoming
 #   tags:
 #     - iot
 #     - home-automation
 #     - voice
 #     - stt
+#     - tts
 #   docs:
 #     - docs/adr/7003-groq-stt-wyoming-bridge.md
 #     - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
@@ -23,194 +25,260 @@
 }:
 let
   cfg = config.my.services.voice-assistant;
-
   python = pkgs.python3.withPackages (ps: [ ps.wyoming ]);
 
+  # ─── STT: Groq Whisper ───────────────────────────────────────────────────
   groqSttBridge = pkgs.writeScript "groq-stt-bridge" ''
     #!${python}/bin/python3
-    """Groq Whisper STT Wyoming bridge — antwortet auf Describe und transkribiert Audio."""
-    import asyncio
-    import io
-    import json
-    import os
-    import sys
-    import wave
-    import urllib.request
+    """Groq Whisper STT Wyoming bridge."""
+    import asyncio, io, json, os, sys, wave, urllib.request
     from pathlib import Path
-
-    from wyoming.asr import Transcribe, Transcript
+    from wyoming.asr import Transcript
     from wyoming.audio import AudioChunk, AudioStart, AudioStop
     from wyoming.event import Event
     from wyoming.info import AsrModel, AsrProgram, Attribution, Describe, Info
     from wyoming.server import AsyncEventHandler, AsyncServer
 
     GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
-    MODEL = "whisper-large-v3-turbo"
+    MODEL    = "whisper-large-v3-turbo"
     LANGUAGE = "de"
-    PORT = ${toString cfg.port}
+    PORT     = ${toString cfg.port}
 
-
-    def _multipart(wav_bytes: bytes, api_key: str) -> bytes:
-        """Groq API Multipart-Request senden, Transkript zurückgeben."""
-        boundary = b"----WyomingGroqBridge"
+    def _transcribe(wav: bytes, key: str) -> str:
+        bd = b"----GroqBridge"
         body = (
-            b"--" + boundary + b"\r\n"
-            b'Content-Disposition: form-data; name="file"; filename="audio.wav"\r\n'
-            b"Content-Type: audio/wav\r\n\r\n"
-            + wav_bytes
-            + b"\r\n--" + boundary + b"\r\n"
-            b'Content-Disposition: form-data; name="model"\r\n\r\n'
-            + MODEL.encode() + b"\r\n"
-            b"--" + boundary + b"\r\n"
-            b'Content-Disposition: form-data; name="language"\r\n\r\n'
-            + LANGUAGE.encode() + b"\r\n"
-            b"--" + boundary + b"\r\n"
-            b'Content-Disposition: form-data; name="response_format"\r\n\r\njson\r\n'
-            b"--" + boundary + b"--\r\n"
+            b"--" + bd + b"\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a.wav\"\r\nContent-Type: audio/wav\r\n\r\n"
+            + wav
+            + b"\r\n--" + bd + b"\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\n" + MODEL.encode()
+            + b"\r\n--" + bd + b"\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\n" + LANGUAGE.encode()
+            + b"\r\n--" + bd + b"\r\nContent-Disposition: form-data; name=\"response_format\"\r\n\r\njson"
+            + b"\r\n--" + bd + b"--\r\n"
         )
-        req = urllib.request.Request(
-            GROQ_URL,
-            data=body,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": f"multipart/form-data; boundary={boundary.decode()}",
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read()).get("text", "")
+        req = urllib.request.Request(GROQ_URL, data=body,
+            headers={"Authorization": f"Bearer {key}", "Content-Type": f"multipart/form-data; boundary={bd.decode()}"},
+            method="POST")
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read()).get("text", "")
 
-
-    class GroqSttHandler(AsyncEventHandler):
-        def __init__(self, api_key: str, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._api_key = api_key
+    class SttHandler(AsyncEventHandler):
+        def __init__(self, api_key, *a, **kw):
+            super().__init__(*a, **kw)
+            self._key = api_key
             self._chunks: list[AudioChunk] = []
-            self._rate = 16000
-            self._width = 2
-            self._channels = 1
+            self._rate, self._width, self._channels = 16000, 2, 1
 
         async def handle_event(self, event: Event) -> bool:
             if Describe.is_type(event.type):
-                await self.write_event(
-                    Info(
-                        asr=[
-                            AsrProgram(
-                                name="groq-whisper",
-                                description="Groq Whisper Large v3 Turbo",
-                                attribution=Attribution(
-                                    name="Groq", url="https://groq.com"
-                                ),
-                                installed=True,
-                                version="1.0.0",
-                                models=[
-                                    AsrModel(
-                                        name="whisper-large-v3-turbo",
-                                        description="Groq Whisper Large v3 Turbo (Deutsch)",
-                                        attribution=Attribution(
-                                            name="Groq", url="https://groq.com"
-                                        ),
-                                        installed=True,
-                                        version="1.0.0",
-                                        languages=["de", "en"],
-                                    )
-                                ],
-                            )
-                        ]
-                    ).event()
-                )
+                await self.write_event(Info(asr=[AsrProgram(
+                    name="groq-whisper", description="Groq Whisper Large v3 Turbo",
+                    attribution=Attribution(name="Groq", url="https://groq.com"),
+                    installed=True, version="1.0.0",
+                    models=[AsrModel(
+                        name="whisper-large-v3-turbo",
+                        description="Groq Whisper Large v3 Turbo (Deutsch)",
+                        attribution=Attribution(name="Groq", url="https://groq.com"),
+                        installed=True, version="1.0.0", languages=["de", "en"],
+                    )],
+                )]).event())
                 return True
-
             if AudioStart.is_type(event.type):
-                start = AudioStart.from_event(event)
-                self._rate = start.rate
-                self._width = start.width
-                self._channels = start.channels
+                s = AudioStart.from_event(event)
+                self._rate, self._width, self._channels = s.rate, s.width, s.channels
                 self._chunks = []
                 return True
-
             if AudioChunk.is_type(event.type):
                 self._chunks.append(AudioChunk.from_event(event))
                 return True
-
             if AudioStop.is_type(event.type):
                 text = ""
                 if self._chunks:
-                    wav_io = io.BytesIO()
-                    with wave.open(wav_io, "wb") as wf:
-                        wf.setnchannels(self._channels)
-                        wf.setsampwidth(self._width)
-                        wf.setframerate(self._rate)
-                        for chunk in self._chunks:
-                            wf.writeframes(chunk.audio)
+                    buf = io.BytesIO()
+                    with wave.open(buf, "wb") as wf:
+                        wf.setnchannels(self._channels); wf.setsampwidth(self._width); wf.setframerate(self._rate)
+                        for c in self._chunks: wf.writeframes(c.audio)
                     try:
-                        text = await asyncio.get_event_loop().run_in_executor(
-                            None, _multipart, wav_io.getvalue(), self._api_key
-                        )
-                    except Exception as exc:
-                        print(f"Groq API error: {exc}", file=sys.stderr)
+                        text = await asyncio.get_event_loop().run_in_executor(None, _transcribe, buf.getvalue(), self._key)
+                    except Exception as e:
+                        print(f"Groq error: {e}", file=sys.stderr)
                 await self.write_event(Transcript(text=text).event())
+                return True
+            return True
+
+    async def main():
+        creds = os.environ.get("CREDENTIALS_DIRECTORY")
+        if not creds: print("CREDENTIALS_DIRECTORY not set", file=sys.stderr); sys.exit(1)
+        kf = Path(creds) / "groq_api_key"
+        if not kf.exists(): print("groq_api_key missing", file=sys.stderr); sys.exit(1)
+        key = kf.read_text().strip()
+        server = AsyncServer.from_uri(f"tcp://0.0.0.0:{PORT}")
+        print(f"Groq STT Wyoming bridge on port {PORT}", flush=True)
+        await server.run(lambda *a, **kw: SttHandler(key, *a, **kw))
+
+    asyncio.run(main())
+  '';
+
+  # ─── TTS: Google Cloud Text-to-Speech ────────────────────────────────────
+  googleTtsBridge = pkgs.writeScript "google-tts-bridge" ''
+    #!${python}/bin/python3
+    """Google Cloud TTS Wyoming bridge."""
+    import asyncio, base64, json, os, sys, urllib.request
+    from pathlib import Path
+    from wyoming.audio import AudioChunk, AudioStart, AudioStop
+    from wyoming.event import Event
+    from wyoming.info import Attribution, Describe, Info, TtsProgram, TtsVoice
+    from wyoming.server import AsyncEventHandler, AsyncServer
+    from wyoming.tts import Synthesize
+
+    PORT       = ${toString cfg.tts.port}
+    SAMPLE_RATE = 24000   # Hz — Google TTS LINEAR16 output
+    CHUNK_SIZE  = 4096    # bytes per AudioChunk
+
+    def _synthesize(text: str, voice: str, key: str) -> bytes:
+        # Chirp3-HD benötigt v1beta1, alle anderen v1
+        api = "v1beta1" if "Chirp3" in voice else "v1"
+        url = f"https://texttospeech.googleapis.com/{api}/text:synthesize?key={key}"
+        lang = "-".join(voice.split("-")[:2])   # "de-DE-Chirp3-HD-Aoede" → "de-DE"
+        payload = json.dumps({
+            "input": {"text": text},
+            "voice": {"languageCode": lang, "name": voice},
+            "audioConfig": {"audioEncoding": "LINEAR16", "sampleRateHertz": SAMPLE_RATE},
+        }).encode()
+        req = urllib.request.Request(url, data=payload,
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return base64.b64decode(json.loads(r.read())["audioContent"])
+
+    class TtsHandler(AsyncEventHandler):
+        def __init__(self, api_key, voice, *a, **kw):
+            super().__init__(*a, **kw)
+            self._key   = api_key
+            self._voice = voice
+
+        async def handle_event(self, event: Event) -> bool:
+            if Describe.is_type(event.type):
+                lang = "-".join(self._voice.split("-")[:2])
+                await self.write_event(Info(tts=[TtsProgram(
+                    name="google-tts",
+                    description="Google Cloud Text-to-Speech",
+                    attribution=Attribution(name="Google", url="https://cloud.google.com/text-to-speech"),
+                    installed=True, version="1.0.0",
+                    voices=[TtsVoice(
+                        name=self._voice,
+                        description=f"Google TTS {self._voice}",
+                        attribution=Attribution(name="Google", url="https://cloud.google.com"),
+                        installed=True, version="1.0.0",
+                        languages=[lang.lower().replace("-", "_")],
+                    )],
+                )]).event())
+                return True
+
+            if Synthesize.is_type(event.type):
+                req = Synthesize.from_event(event)
+                try:
+                    pcm = await asyncio.get_event_loop().run_in_executor(
+                        None, _synthesize, req.text, self._voice, self._key)
+                except Exception as e:
+                    print(f"Google TTS error: {e}", file=sys.stderr)
+                    pcm = b""
+                await self.write_event(AudioStart(rate=SAMPLE_RATE, width=2, channels=1).event())
+                for i in range(0, max(len(pcm), 1), CHUNK_SIZE):
+                    await self.write_event(AudioChunk(
+                        rate=SAMPLE_RATE, width=2, channels=1,
+                        audio=pcm[i:i+CHUNK_SIZE]).event())
+                await self.write_event(AudioStop().event())
                 return True
 
             return True
 
-
     async def main():
         creds = os.environ.get("CREDENTIALS_DIRECTORY")
-        if not creds:
-            print("CREDENTIALS_DIRECTORY not set", file=sys.stderr)
-            sys.exit(1)
-        key_file = Path(creds) / "groq_api_key"
-        if not key_file.exists():
-            print("groq_api_key missing in CREDENTIALS_DIRECTORY", file=sys.stderr)
-            sys.exit(1)
-        api_key = key_file.read_text().strip()
-
+        if not creds: print("CREDENTIALS_DIRECTORY not set", file=sys.stderr); sys.exit(1)
+        kf = Path(creds) / "google_tts_api_key"
+        if not kf.exists(): print("google_tts_api_key missing", file=sys.stderr); sys.exit(1)
+        key   = kf.read_text().strip()
+        voice = os.environ.get("GOOGLE_TTS_VOICE", "")
+        if not voice: print("GOOGLE_TTS_VOICE not set", file=sys.stderr); sys.exit(1)
         server = AsyncServer.from_uri(f"tcp://0.0.0.0:{PORT}")
-        print(f"Groq STT Wyoming bridge listening on port {PORT}", flush=True)
-        await server.run(
-            lambda *a, **kw: GroqSttHandler(api_key, *a, **kw)
-        )
-
+        print(f"Google TTS Wyoming bridge on port {PORT} (voice: {voice})", flush=True)
+        await server.run(lambda *a, **kw: TtsHandler(key, voice, *a, **kw))
 
     asyncio.run(main())
   '';
 in
 {
   options.my.services.voice-assistant = {
-    enable = lib.mkEnableOption "Groq STT Wyoming bridge";
+    enable = lib.mkEnableOption "Voice Assistant (Groq STT Wyoming bridge)";
     port = lib.mkOption {
       type = lib.types.port;
       default = 10300;
-      description = "Wyoming STT port — HA entdeckt den Dienst automatisch.";
+      description = "Wyoming STT port.";
     };
-  };
-
-  config = lib.mkIf cfg.enable {
-    systemd.services.groq-stt-wyoming = {
-      description = "Groq Whisper STT Wyoming bridge";
-      after = [
-        "network.target"
-        "q958-secrets-provision.service"
-      ];
-      wants = [ "q958-secrets-provision.service" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = groqSttBridge;
-        LoadCredentialEncrypted = [
-          "groq_api_key:/var/lib/credstore.encrypted/groq_api_key.cred"
-        ];
-        Restart = "on-failure";
-        RestartSec = "5s";
-        DynamicUser = true;
-        PrivateTmp = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        NoNewPrivileges = true;
+    tts = {
+      enable = lib.mkEnableOption "Google Cloud TTS Wyoming bridge";
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 10200;
+        description = "Wyoming TTS port.";
       };
     };
-
-    networking.firewall.allowedTCPPorts = lib.mkIf cfg.enable [ cfg.port ];
   };
+
+  config = lib.mkMerge [
+    (lib.mkIf cfg.enable {
+      systemd.services.groq-stt-wyoming = {
+        description = "Groq Whisper STT Wyoming bridge";
+        after = [
+          "network.target"
+          "q958-secrets-provision.service"
+        ];
+        wants = [ "q958-secrets-provision.service" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = groqSttBridge;
+          LoadCredentialEncrypted = [
+            "groq_api_key:/var/lib/credstore.encrypted/groq_api_key.cred"
+          ];
+          Restart = "on-failure";
+          RestartSec = "5s";
+          DynamicUser = true;
+          PrivateTmp = true;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          NoNewPrivileges = true;
+        };
+      };
+      networking.firewall.allowedTCPPorts = [ cfg.port ];
+    })
+
+    (lib.mkIf (cfg.enable && cfg.tts.enable) {
+      systemd.services.google-tts-wyoming = {
+        description = "Google Cloud TTS Wyoming bridge";
+        after = [
+          "network.target"
+          "q958-secrets-provision.service"
+        ];
+        wants = [ "q958-secrets-provision.service" ];
+        wantedBy = [ "multi-user.target" ];
+        # Startet erst wenn API Key versiegelt vorliegt (nach Credential-Setup)
+        unitConfig.ConditionPathExists = "/var/lib/credstore.encrypted/google_tts_api_key.cred";
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = googleTtsBridge;
+          LoadCredentialEncrypted = [
+            "google_tts_api_key:/var/lib/credstore.encrypted/google_tts_api_key.cred"
+          ];
+          # "-" Prefix: kein Fehler wenn Env-Datei noch nicht existiert
+          EnvironmentFile = [ "-/var/lib/secrets/google-tts.env" ];
+          Restart = "on-failure";
+          RestartSec = "5s";
+          DynamicUser = true;
+          PrivateTmp = true;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          NoNewPrivileges = true;
+        };
+      };
+    })
+  ];
 }

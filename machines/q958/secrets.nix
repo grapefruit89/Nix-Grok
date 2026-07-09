@@ -54,6 +54,8 @@ let
   ddnsFqdn = "${ddnsRecord}.${ddnsZone}";
   oauth2ClientId = (local.secrets.devKeys.oauth2proxy or { }).clientId or "";
   oauth2ClientSecret = (local.secrets.devKeys.oauth2proxy or { }).clientSecret or "";
+  googleTtsApiKey = (local.secrets.devKeys.googleTts or { }).apiKey or "";
+  googleTtsVoice = (local.secrets.devKeys.googleTts or { }).voice or "";
 
   provisionScript = pkgs.writeShellScript "q958-secrets-provision" ''
         set -euo pipefail
@@ -250,6 +252,16 @@ let
           chmod 600 ${secretsDir}/oauth2-proxy-cookie-secret
         fi
 
+        # Google Cloud TTS — API Key versiegeln + Voice-Name in env-Datei
+        # Eintragen in profile.local.nix: secrets.devKeys.googleTts = { apiKey = "AIza..."; voice = "de-DE-Chirp3-HD-Aoede"; };
+        if [ -n "${googleTtsApiKey}" ]; then
+          printf '%s' "${googleTtsApiKey}" | \
+            ${pkgs.systemd}/lib/systemd/systemd-creds encrypt --name=google_tts_api_key - \
+              /var/lib/credstore.encrypted/google_tts_api_key.cred
+          printf 'GOOGLE_TTS_VOICE=%s\n' "${googleTtsVoice}" > ${secretsDir}/google-tts.env
+          chmod 600 ${secretsDir}/google-tts.env
+        fi
+
         # Grok: System-Secret → User-Home wenn Key in context7.env steht
         if [ -f ${secretsDir}/${p.secrets.files.context7} ] && \
            grep -q '^CONTEXT7_API_KEY=.\+' ${secretsDir}/${p.secrets.files.context7} 2>/dev/null; then
@@ -288,6 +300,7 @@ in
       "home-assistant.service"
       "ddns-updater.service"
       "oauth2-proxy.service"
+      "google-tts-wyoming.service"
     ];
   };
 }
