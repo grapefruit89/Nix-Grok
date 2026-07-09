@@ -8,6 +8,9 @@
 #   tags:
 #     - iot
 #     - home-automation
+#   docs:
+#     - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+#     - docs/adr/7002-ha-storage-provisioning.md
 # ---
 {
   config,
@@ -27,13 +30,15 @@ let
     from pathlib import Path
 
     STORAGE = Path("${cfg.stateDir}/.storage/core.config_entries")
-    _creds = os.environ.get("CREDENTIALS_DIRECTORY", "")
-    PASSWORD_FILE = Path(_creds) / "homeassistant_mqtt_password" if _creds else Path("/var/lib/secrets/homeassistant_mqtt_password")
+    _creds = os.environ.get("CREDENTIALS_DIRECTORY")
+    if not _creds:
+        raise SystemExit("CREDENTIALS_DIRECTORY not set — LoadCredentialEncrypted failed to provide the credential")
+    PASSWORD_FILE = Path(_creds) / "homeassistant_mqtt_password"
     ENTRY_ID = "q958mqttmosquitto001"
     MQTT_PORT = ${toString mqttPort}
 
     if not PASSWORD_FILE.exists():
-        raise SystemExit("homeassistant_mqtt_password missing — run q958-secrets-provision")
+        raise SystemExit("homeassistant_mqtt_password missing in CREDENTIALS_DIRECTORY")
 
     password = PASSWORD_FILE.read_text().strip()
     now = time.strftime("%Y-%m-%dT%H:%M:%S.000000+00:00")
@@ -84,9 +89,12 @@ let
     import grp, pwd
     uid = pwd.getpwnam("${cfg.user}").pw_uid
     gid = grp.getgrnam("${cfg.group}").gr_gid
-    os.chown(STORAGE, uid, gid)
-    os.chmod(STORAGE, 0o600)
-    os.chown(STORAGE.parent, uid, gid)
+    try:
+        os.chown(STORAGE, uid, gid)
+        os.chmod(STORAGE, 0o600)
+        os.chown(STORAGE.parent, uid, gid)
+    except OSError as e:
+        raise SystemExit(f"Failed to set permissions on {STORAGE}: {e}")
   '';
 
   hassSmLightProvision = pkgs.writeScript "home-assistant-smlight-provision" ''
@@ -146,9 +154,12 @@ let
     import grp, pwd
     uid = pwd.getpwnam("${cfg.user}").pw_uid
     gid = grp.getgrnam("${cfg.group}").gr_gid
-    os.chown(STORAGE, uid, gid)
-    os.chmod(STORAGE, 0o600)
-    os.chown(STORAGE.parent, uid, gid)
+    try:
+        os.chown(STORAGE, uid, gid)
+        os.chmod(STORAGE, 0o600)
+        os.chown(STORAGE.parent, uid, gid)
+    except OSError as e:
+        raise SystemExit(f"Failed to set permissions on {STORAGE}: {e}")
   '';
 in
 {
@@ -259,7 +270,7 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStart = hassMqttProvision;
-        LoadCredential = [
+        LoadCredentialEncrypted = [
           "homeassistant_mqtt_password:/var/lib/credstore.encrypted/homeassistant_mqtt_password.cred"
         ];
       };

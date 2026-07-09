@@ -73,6 +73,13 @@ meta:
 |-----|-------|--------|-------|
 | [5030](5030-media-stack-factory-hardening.md) | Media-Stack Inventory — was bereits implementiert war | accepted | 2026-07-05 |
 
+### 70-home-automation — Home Assistant, MQTT, IoT
+
+| ADR | Titel | Status | Datum |
+|-----|-------|--------|-------|
+| [7001](7001-loadcredentialencrypted-vs-loadcredential.md) | LoadCredentialEncrypted für systemd-creds in Provision-Services | accepted | 2026-07-09 |
+| [7002](7002-ha-storage-provisioning.md) | HA .storage Provisioning — Muster, Race Conditions, Reihenfolge | accepted | 2026-07-09 |
+
 
 ## Wann neues ADR?
 
@@ -83,7 +90,7 @@ meta:
 ## Dateiname
 
 `NNN-kurz-thema.md` — 3-stellig, querschneidend (00-core)
-`DNNN-kurz-thema.md` — 4-stellig, D = Domänenpräfix (1=10-network, 2=20-security, 3=30-storage, 5=50-media)
+`DNNN-kurz-thema.md` — 4-stellig, D = Domänenpräfix (1=10-network, 2=20-security, 3=30-storage, 5=50-media, 7=70-home-automation)
 
 ## Verknüpfung im Code
 
@@ -114,3 +121,4 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-07-06 | ADR 032 (OS-native-first Prinzip: lego/security.acme, systemd-creds, DoT als Referenzarchitektur) |
 | 2026-07-06 | ADR-Nummerierung auf 4-stellig umgestellt: domänen-spezifische ADRs erhalten Präfix (1xxx/2xxx/3xxx/5xxx); querschneidende ADRs bleiben 3-stellig |
 | 2026-07-08 | ADR 1031 aktualisiert (admin-hangar → internal); ADR 1032 (internal Zone + SSO-Overlay) |
+| 2026-07-09 | ADR 7001–7002 (Home-Automation: LoadCredentialEncrypted, HA .storage Provisioning) |
