@@ -26,6 +26,10 @@
 let
   cfg = config.my.services.voice-assistant;
   python = pkgs.python3.withPackages (ps: [ ps.wyoming ]);
+  edgePython = pkgs.python3.withPackages (ps: [
+    ps.wyoming
+    ps.edge-tts
+  ]);
 
   # ─── STT: Groq Whisper ───────────────────────────────────────────────────
   groqSttBridge = pkgs.writeScript "groq-stt-bridge" ''
@@ -204,6 +208,86 @@ let
 
     asyncio.run(main())
   '';
+
+  # ─── TTS: Microsoft Edge TTS ─────────────────────────────────────────────
+  edgeTtsBridge = pkgs.writeScript "edge-tts-bridge" ''
+    #!${edgePython}/bin/python3
+    """Microsoft Edge TTS Wyoming bridge (kein API Key)."""
+    import asyncio, sys, os
+    from wyoming.audio import AudioChunk, AudioStart, AudioStop
+    from wyoming.event import Event
+    from wyoming.info import Attribution, Describe, Info, TtsProgram, TtsVoice
+    from wyoming.server import AsyncEventHandler, AsyncServer
+    from wyoming.tts import Synthesize
+    import edge_tts
+
+    PORT        = ${toString cfg.edgeTts.port}
+    SAMPLE_RATE = 24000
+    CHUNK_SIZE  = 4096
+
+    async def _synthesize(text: str, voice: str) -> bytes:
+        communicate = edge_tts.Communicate(text, voice)
+        mp3 = b"".join(
+            c["data"] async for c in communicate.stream() if c["type"] == "audio"
+        )
+        proc = await asyncio.create_subprocess_exec(
+            "${pkgs.ffmpeg}/bin/ffmpeg",
+            "-i", "pipe:0", "-f", "s16le", "-ar", str(SAMPLE_RATE), "-ac", "1", "pipe:1",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        pcm, _ = await proc.communicate(mp3)
+        return pcm
+
+    class TtsHandler(AsyncEventHandler):
+        def __init__(self, voice, *a, **kw):
+            super().__init__(*a, **kw)
+            self._voice = voice
+
+        async def handle_event(self, event: Event) -> bool:
+            if Describe.is_type(event.type):
+                lang = self._voice[:5].lower().replace("-", "_")
+                await self.write_event(Info(tts=[TtsProgram(
+                    name="edge-tts",
+                    description="Microsoft Edge Text-to-Speech",
+                    attribution=Attribution(name="Microsoft", url="https://azure.microsoft.com"),
+                    installed=True, version="1.0.0",
+                    voices=[TtsVoice(
+                        name=self._voice,
+                        description=f"Edge TTS {self._voice}",
+                        attribution=Attribution(name="Microsoft", url="https://azure.microsoft.com"),
+                        installed=True, version="1.0.0",
+                        languages=[lang],
+                    )],
+                )]).event())
+                return True
+
+            if Synthesize.is_type(event.type):
+                req = Synthesize.from_event(event)
+                try:
+                    pcm = await _synthesize(req.text, self._voice)
+                except Exception as e:
+                    print(f"Edge TTS error: {e}", file=sys.stderr)
+                    pcm = b""
+                await self.write_event(AudioStart(rate=SAMPLE_RATE, width=2, channels=1).event())
+                for i in range(0, max(len(pcm), 1), CHUNK_SIZE):
+                    await self.write_event(AudioChunk(
+                        rate=SAMPLE_RATE, width=2, channels=1,
+                        audio=pcm[i:i+CHUNK_SIZE]).event())
+                await self.write_event(AudioStop().event())
+                return True
+
+            return True
+
+    async def main():
+        voice = os.environ.get("EDGE_TTS_VOICE", "${cfg.edgeTts.voice}")
+        server = AsyncServer.from_uri(f"tcp://0.0.0.0:{PORT}")
+        print(f"Edge TTS Wyoming bridge on port {PORT} (voice: {voice})", flush=True)
+        await server.run(lambda *a, **kw: TtsHandler(voice, *a, **kw))
+
+    asyncio.run(main())
+  '';
 in
 {
   options.my.services.voice-assistant = {
@@ -219,6 +303,19 @@ in
         type = lib.types.port;
         default = 10200;
         description = "Wyoming TTS port.";
+      };
+    };
+    edgeTts = {
+      enable = lib.mkEnableOption "Microsoft Edge TTS Wyoming bridge (kein API Key)";
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 10201;
+        description = "Wyoming TTS port für Edge TTS.";
+      };
+      voice = lib.mkOption {
+        type = lib.types.str;
+        default = "de-DE-KatjaNeural";
+        description = "Edge TTS Stimme (z. B. de-DE-KatjaNeural, de-DE-ConradNeural).";
       };
     };
   };
@@ -279,6 +376,26 @@ in
           NoNewPrivileges = true;
         };
       };
+    })
+
+    (lib.mkIf (cfg.enable && cfg.edgeTts.enable) {
+      systemd.services.edge-tts-wyoming = {
+        description = "Microsoft Edge TTS Wyoming bridge";
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = edgeTtsBridge;
+          Restart = "on-failure";
+          RestartSec = "5s";
+          DynamicUser = true;
+          PrivateTmp = true;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          NoNewPrivileges = true;
+        };
+      };
+      networking.firewall.allowedTCPPorts = [ cfg.edgeTts.port ];
     })
   ];
 }

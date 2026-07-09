@@ -169,6 +169,7 @@ in
       voice-assistant = {
         enable = true;
         tts.enable = true;
+        edgeTts.enable = true;
       };
       zigbee-stack = {
         mqttPort = p.iot.zigbeeStack.mqttPort;
