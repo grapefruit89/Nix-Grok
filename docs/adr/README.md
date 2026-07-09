@@ -80,6 +80,7 @@ meta:
 | [7001](7001-loadcredentialencrypted-vs-loadcredential.md) | LoadCredentialEncrypted für systemd-creds in Provision-Services | accepted | 2026-07-09 |
 | [7002](7002-ha-storage-provisioning.md) | HA .storage Provisioning — Muster, Race Conditions, Reihenfolge | accepted | 2026-07-09 |
 | [7003](7003-groq-stt-wyoming-bridge.md) | STT via Groq Whisper + Wyoming Bridge (wyoming 1.9.0 Breaking Change) | accepted | 2026-07-09 |
+| [7004](7004-google-tts-wyoming-bridge.md) | TTS via Google Cloud Text-to-Speech + Wyoming Bridge (Preismodell, Circuit Breaker) | accepted | 2026-07-09 |
 
 
 ## Wann neues ADR?
@@ -124,3 +125,4 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-07-08 | ADR 1031 aktualisiert (admin-hangar → internal); ADR 1032 (internal Zone + SSO-Overlay) |
 | 2026-07-09 | ADR 7001–7002 (Home-Automation: LoadCredentialEncrypted, HA .storage Provisioning) |
 | 2026-07-09 | ADR 7003 (Groq STT Wyoming Bridge, wyoming 1.9.0 Breaking Change); GUIDE-home-assistant.md (kompletter HA-Stack) |
+| 2026-07-09 | ADR 7004 (Google Cloud TTS Wyoming Bridge, Preismodell getrennte Free-Tier-Töpfe, Circuit Breaker); GUIDE-home-assistant.md (TTS-Sektion) |
