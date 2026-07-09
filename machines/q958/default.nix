@@ -158,7 +158,10 @@ in
       home-assistant = {
         port = p.iot.homeAssistant.port;
         zigbeeDevice = zigbeeSocket;
-        extraComponents = [ "smlight" ];
+        extraComponents = [
+          "smlight"
+          "cast"
+        ];
         smlightHost = "SLZB-06M.local";
       };
       zigbee-stack = {

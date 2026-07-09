@@ -50,6 +50,7 @@ let
             "discovery": True,
         },
         "disabled_by": None,
+        "discovery_keys": {},
         "domain": "mqtt",
         "entry_id": ENTRY_ID,
         "minor_version": 2,
@@ -58,6 +59,7 @@ let
         "pref_disable_new_entities": False,
         "pref_disable_polling": False,
         "source": "user",
+        "subentries": [],
         "title": "Mosquitto (local)",
         "unique_id": None,
         "version": 1,
@@ -67,7 +69,7 @@ let
     if STORAGE.exists():
         doc = json.loads(STORAGE.read_text())
         entries = doc.setdefault("data", {}).setdefault("entries", [])
-        entries = [e for e in entries if e.get("entry_id") != ENTRY_ID and e.get("domain") != "mqtt"]
+        entries = [e for e in entries if e.get("entry_id") != ENTRY_ID]
         entries.append(entry)
         doc["data"]["entries"] = entries
     else:
@@ -129,7 +131,7 @@ let
     if STORAGE.exists():
         doc = json.loads(STORAGE.read_text())
         entries = doc.setdefault("data", {}).setdefault("entries", [])
-        entries = [e for e in entries if e.get("entry_id") != ENTRY_ID and e.get("domain") != "smlight"]
+        entries = [e for e in entries if e.get("entry_id") != ENTRY_ID]
         entries.append(entry)
         doc["data"]["entries"] = entries
     else:
