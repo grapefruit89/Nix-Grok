@@ -203,6 +203,7 @@ in
 
     # ── BOOT SAFEGUARD ────────────────────────────────────────────────────────
     (lib.mkIf cfgBoot.enable {
+      # machines/q958/rollout.nix setzt lib.mkForce p.boot.generationLimit (= 8) — dieser Wert greift effektiv.
       boot.loader.systemd-boot.configurationLimit = cfgBoot.configurationLimit;
     })
   ];

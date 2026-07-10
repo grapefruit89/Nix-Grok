@@ -68,8 +68,6 @@ in
 
     core = {
       boot-safeguard.enable = true;
-      # 1 GB ESP (NIXBOOT): 15 Generationen × ~50 MB worst-case = 750 MB + 77 MB belegt → 827 MB < 1 GB.
-      boot-safeguard.configurationLimit = 15;
       nix-tuning.enable = true;
       zram-swap.enable = true;
       kernel-slim = {
@@ -176,6 +174,58 @@ in
         zigbeePort = p.iot.zigbeeStack.zigbeePort;
         zigbeeDevice = zigbeeSocket;
         adapter = p.iot.zigbeeStack.adapter;
+      };
+      secrets-portal = {
+        enable = true;
+        secrets = [
+          {
+            name = "homeassistant_mqtt_password";
+            label = "HA / Mosquitto MQTT Passwort";
+            description = "Home Assistant + Zigbee2MQTT MQTT-Authentifizierung";
+            restart_services = [
+              "home-assistant-mqtt-provision"
+              "mosquitto"
+              "home-assistant"
+            ];
+          }
+          {
+            name = "grafana_secret_key";
+            label = "Grafana Secret Key";
+            description = "Grafana Session-Signing-Key";
+            restart_services = [ "grafana" ];
+          }
+          {
+            name = "groq_api_key";
+            label = "Groq API Key";
+            description = "Faster-Whisper STT via Groq";
+            regex = "^gsk_[A-Za-z0-9]{40,80}$";
+            restart_services = [ "groq-stt-wyoming" ];
+          }
+          {
+            name = "google_tts_api_key";
+            label = "Google TTS API Key";
+            description = "Wyoming Google Cloud TTS Engine";
+            regex = "^AIzaSy[A-Za-z0-9_-]{33}$";
+          }
+          {
+            name = "pocket-id.env";
+            label = "Pocket-ID Env";
+            description = "Pocket-ID Umgebungsvariablen (vollständige .env-Datei, KEY=value)";
+            restart_services = [ "pocket-id" ];
+          }
+          {
+            name = "vaultwarden.env";
+            label = "Vaultwarden Env";
+            description = "Vaultwarden Umgebungsvariablen (vollständige .env-Datei)";
+            restart_services = [ "vaultwarden" ];
+          }
+          {
+            name = "zigbee2mqtt.env";
+            label = "Zigbee2MQTT Env";
+            description = "Zigbee2MQTT Umgebungsvariablen (vollständige .env-Datei)";
+            restart_services = [ "zigbee2mqtt" ];
+          }
+        ];
       };
     };
   };

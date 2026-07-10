@@ -177,7 +177,7 @@ in
     };
     port = lib.mkOption {
       type = lib.types.port;
-      default = 8123;
+      default = config.my.ports.home-assistant;
       description = "Home Assistant port.";
     };
     stateDir = lib.mkOption {
