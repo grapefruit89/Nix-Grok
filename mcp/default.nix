@@ -125,6 +125,8 @@ in
           home.file.".local/bin/brave-search-mcp".executable = true;
           home.file.".local/bin/nixos-docs-mcp".source = mcp.nixosDocsMcpWrapper;
           home.file.".local/bin/nixos-docs-mcp".executable = true;
+          home.file.".local/bin/exa-mcp".source = mcp.exaMcpWrapper;
+          home.file.".local/bin/exa-mcp".executable = true;
           home.file.".local/bin/set-github-mcp-token".source = mcp.setGithubMcpToken;
           home.file.".local/bin/set-github-mcp-token".executable = true;
           home.file.".local/bin/set-brave-search-api-key".source = mcp.setBraveSearchApiKey;

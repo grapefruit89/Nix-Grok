@@ -49,6 +49,7 @@ in
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+    backupFileExtension = "hm-bak";
     users.${moritzUser.name} = import ../../users/moritz/home.nix;
   };
 

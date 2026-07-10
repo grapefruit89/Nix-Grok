@@ -26,9 +26,6 @@ let
   nixosMcpBin = "${pkgs.mcp-nixos}/bin/mcp-nixos";
   python3 = "${pkgs.python3}/bin/python3";
   nixosDocsScript = "/etc/nixos/scripts/nixos-docs-mcp.py";
-  exaMcpUrl = "https://mcp.exa.ai/mcp";
-  # Grok expandiert ${EXA_API_KEY} aus der Shell-Umgebung (headless, kein OAuth)
-  exaGrokHeaderValue = "$" + "{EXA_API_KEY}";
 
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
     set -euo pipefail
@@ -62,6 +59,18 @@ let
     export BRAVE_API_KEY="$(<"$KEY_FILE")"
     export PATH="${pkgs.nodejs_22}/bin:$PATH"
     exec ${pkgs.nodejs_22}/bin/npx -y @modelcontextprotocol/server-brave-search
+  '';
+
+  exaMcpWrapper = pkgs.writeShellScript "exa-mcp" ''
+    set -euo pipefail
+    KEY_FILE="${exaApiKey}"
+    if [ ! -s "$KEY_FILE" ]; then
+      echo "Exa API Key fehlt. Bitte: set-exa-api-key" >&2
+      exit 1
+    fi
+    export EXA_API_KEY="$(<"$KEY_FILE")"
+    export PATH="${pkgs.nodejs_22}/bin:$PATH"
+    exec ${pkgs.nodejs_22}/bin/npx -y exa-mcp-server
   '';
 
   nixosDocsMcpWrapper = pkgs.writeShellScript "nixos-docs-mcp" ''
@@ -166,8 +175,7 @@ let
 
   exaClaudeServer = {
     exa = {
-      type = "http";
-      url = exaMcpUrl;
+      command = "${exaMcpWrapper}";
     };
   };
 
@@ -192,11 +200,11 @@ let
 
   exaHermesServer = {
     exa = {
-      url = exaMcpUrl;
+      command = "${exaMcpWrapper}";
     };
   };
 
-  # Hermes agent (stdio + remote URL)
+  # Hermes agent (stdio)
   hermesServers = baseHermesServers // lib.optionalAttrs enableExa exaHermesServer;
 
   # Grok CLI ~/.grok/config.toml — 5 Server standard, exa optional
@@ -224,6 +232,7 @@ in
     context7McpWrapper
     githubMcpWrapper
     braveSearchMcpWrapper
+    exaMcpWrapper
     nixosDocsMcpWrapper
     setGithubMcpToken
     setBraveSearchApiKey
@@ -282,10 +291,7 @@ in
           command = "${homeDirectory}/.local/bin/brave-search-mcp";
         };
         exa = {
-          url = exaMcpUrl;
-          headers = {
-            "x-api-key" = exaGrokHeaderValue;
-          };
+          command = "${homeDirectory}/.local/bin/exa-mcp";
         };
       };
     in

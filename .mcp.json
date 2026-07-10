@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "brave-search": {
+      "command": "/nix/store/8yvx8cfqj5asz973apxaakl2lag2m2za-brave-search-mcp"
+    },
+    "context7": {
+      "command": "/nix/store/lbhxpl8ryl5i0hs1qbhppiv8b4cl9qjn-context7-mcp"
+    },
+    "exa": {
+      "command": "/nix/store/33alknk48jq327yiqz49igpjj7m30r3q-exa-mcp",
+      "headers": {
+        "x-api-key": "31032356-0293-47ce-90c0-8d2ae6c4f934"
+      }
+    },
+    "github": {
+      "command": "/nix/store/z3smxis51xdwf04z8z5havfsw7rpx2d4-github-mcp"
+    },
+    "nixos": {
+      "command": "/nix/store/a0zsmi3ja0sjaylksvvlxx4pcahhic0y-mcp-nixos-2.4.3/bin/mcp-nixos"
+    },
+    "nixos-docs": {
+      "args": [
+        "/etc/nixos/scripts/nixos-docs-mcp.py",
+        "/var/lib/nixos-docs-mcp/nixos_docs.sqlite"
+      ],
+      "command": "/nix/store/60m4rxhg2fldqaak400c0lry96ijrzqn-python3-3.13.13/bin/python3"
+    }
+  }
+}

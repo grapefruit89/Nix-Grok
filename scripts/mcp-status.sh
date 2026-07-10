@@ -56,6 +56,7 @@ OUT_GROK=""
 OUT_GROK_VER=""
 OUT_CLAUDE=""
 OUT_CLAUDE_VER=""
+OUT_NOOGLE_VER=""
 OUT_GROK_DOCTOR=""
 OUT_CLAUDE_MCP=""
 OUT_CREDS=()
@@ -96,6 +97,13 @@ if command -v claude >/dev/null 2>&1; then
 else
   bad "claude nicht im PATH"
   OUT_ISSUES+=("claude: nicht im PATH")
+fi
+
+if command -v noogle-search >/dev/null 2>&1; then
+  OUT_NOOGLE_VER="$(noogle-search --version 2>&1 | head -1 || echo "ok")"
+  ok "noogle / noogle-search → $(command -v noogle-search) ($OUT_NOOGLE_VER)"
+else
+  warn "noogle-search nicht im PATH — lib.* via MCP source=noogle trotzdem verfügbar"
 fi
 
 section "Credentials (nur vorhanden ja/nein)"
@@ -243,6 +251,7 @@ grok=${OUT_GROK:-fehlt}
 grok_version=${OUT_GROK_VER:-n/a}
 claude=${OUT_CLAUDE:-fehlt}
 claude_version=${OUT_CLAUDE_VER:-n/a}
+noogle_version=${OUT_NOOGLE_VER:-fehlt}
 
 credentials: $(IFS=,; echo "${OUT_CREDS[*]:-n/a}")
 wrapper: $(IFS=,; echo "${OUT_WRAPPERS[*]:-n/a}")

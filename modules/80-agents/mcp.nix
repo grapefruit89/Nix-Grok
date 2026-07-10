@@ -16,6 +16,7 @@
 
   config = {
     my.mcp.enable = lib.mkDefault true;
+    my.mcp.enableExa = lib.mkDefault true;
 
     systemd.services.nixos-docs-indexer = {
       description = "Indexiert /etc/nixos in nixos_docs.sqlite (FTS + Meta + Chunks)";

@@ -142,6 +142,7 @@ in
   home.file."bin/grok" = {
     source = grokCliWrapper;
     executable = true;
+    force = true;
   };
 
   home.file.".local/bin/set-context7-api-key" = {
