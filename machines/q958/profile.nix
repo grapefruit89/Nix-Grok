@@ -49,8 +49,8 @@ in
   boot = {
     menuName = "Basics_erfolgreich";
     sortKey = "0_basis";
-    # 8 rollierende NixOS-Generationen + 2 feste Baselines (boot-baseline.nix) ≈ 10 Menü-Einträge
-    generationLimit = 8;
+    # 15 rollierende NixOS-Generationen × ~50 MB worst-case = 750 MB + ~77 MB belegt → 827 MB < 1 GB ESP
+    generationLimit = 15;
     pinnedGenerations = [
       85
       86

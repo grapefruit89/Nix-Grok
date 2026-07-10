@@ -37,7 +37,6 @@ my.ports.<service> = <port>;                 # Zentrale Port-Registry
 my.services.<name>.enable = true | false;   # Dienste-Toggle (via rollout.nix)
 my.core.nix-tuning.enable = erstAb 1;
 my.core.zram-swap.enable = erstAb 1;
-my.core.boot-safeguard.enable = erstAb 1;
 ```
 
 ## System-Packages (09-nix-tools.nix)

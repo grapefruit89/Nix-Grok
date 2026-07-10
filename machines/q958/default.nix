@@ -67,7 +67,6 @@ in
     ];
 
     core = {
-      boot-safeguard.enable = true;
       nix-tuning.enable = true;
       zram-swap.enable = true;
       kernel-slim = {

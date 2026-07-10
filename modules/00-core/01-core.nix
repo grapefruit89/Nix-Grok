@@ -16,7 +16,6 @@
   ...
 }:
 let
-  cfgBoot = config.my.core.boot-safeguard;
   cfgJournald = config.my.core.journald;
 in
 {
@@ -25,17 +24,6 @@ in
   # ============================================================================
   options.my = {
     core = {
-      boot-safeguard.enable = lib.mkEnableOption "Boot safeguard generation limits";
-      boot-safeguard.configurationLimit = lib.mkOption {
-        type = lib.types.int;
-        default = 5;
-        description = ''
-          Maximale Anzahl NixOS-Generationen im EFI-Bootloader-Menü.
-          Schützt die ESP-Partition vor Überlauf — jede Generation belegt ~15–50 MB
-          (Kernel + Initrd + Bootloader-Eintrag). q958: 1 GB ESP (NIXBOOT), default 5 konservativ.
-          Auf Maschinen mit kleiner ESP (256–512 MB) auf 3 senken.
-        '';
-      };
       journald.maxUse = lib.mkOption {
         type = lib.types.str;
         default = "500M";
@@ -201,10 +189,5 @@ in
       '';
     }
 
-    # ── BOOT SAFEGUARD ────────────────────────────────────────────────────────
-    (lib.mkIf cfgBoot.enable {
-      # machines/q958/rollout.nix setzt lib.mkForce p.boot.generationLimit (= 8) — dieser Wert greift effektiv.
-      boot.loader.systemd-boot.configurationLimit = cfgBoot.configurationLimit;
-    })
   ];
 }

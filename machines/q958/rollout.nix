@@ -36,7 +36,6 @@ in
   my.mode = if stufe >= 9 then lib.mkForce "production" else lib.mkForce "development";
 
   my.core = {
-    boot-safeguard.enable = erstAb 1;
     kernel-slim.enable = erstAb 1;
     nix-tuning.enable = erstAb 1;
     zram-swap.enable = erstAb 1;

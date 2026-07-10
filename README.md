@@ -36,7 +36,7 @@ Eine Zahl steuert alles: `machines/q958/profile.nix` → `rollout.stufe`
 | Stufe | Inhalt |
 |-------|--------|
 | 0 | SSH, Netz, Grok CLI |
-| 1 | zram, kernel-slim, boot-safeguard |
+| 1 | zram, kernel-slim, nix-tuning |
 | 2 | Blocky, PostgreSQL, Valkey, Tailscale, Pocket-ID |
 | 5 | Caddy |
 | 6 | Media (*arr, Jellyfin, SAB, VPN) |
