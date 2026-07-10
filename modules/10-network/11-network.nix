@@ -13,7 +13,8 @@ let
     pocketIdPort =
       if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id else null;
     lanCidr = "192.168.0.0/16";
-    oauth2proxyPort = if config.my.services.oauth2-proxy.enable or false then 4180 else null;
+    oauth2proxyPort =
+      if config.my.services.oauth2-proxy.enable or false then config.my.ports.oauth2-proxy else null;
     oauth2Domain = config.my.configs.identity.domain;
   };
   dot = config.my.configs.network.dnsBootstrap;

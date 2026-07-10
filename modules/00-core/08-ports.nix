@@ -15,7 +15,7 @@
 #   5xxx  — Media / *arr-Stack (Jellyfin, Sonarr, Radarr, Readarr, Prowlarr, SABnzbd, ...)
 #   6xxx  — Nutzer-Apps (Vaultwarden, Homepage, Paperless, Filebrowser, Linkwarden, ...)
 #   7xxx  — Admin-Tools (Cockpit, AMP)
-#   Standard-Ports (22, 1883, 6379) behalten ihre kanonischen Werte.
+#   Standard-Ports (22, 1883, 6379, 8123) behalten ihre kanonischen Werte.
 { lib, ... }:
 {
   options.my.ports = {
@@ -33,6 +33,11 @@
       type = lib.types.port;
       default = 22;
       description = "SSH port (override via machines/<host>/profile.nix).";
+    };
+    home-assistant = lib.mkOption {
+      type = lib.types.port;
+      default = 8123;
+      description = "Home Assistant Web UI port (kanonisch).";
     };
     jellyfin = lib.mkOption {
       type = lib.types.port;
@@ -168,6 +173,46 @@
       type = lib.types.port;
       default = 4001;
       description = "Grafana Web UI port.";
+    };
+    oauth2-proxy = lib.mkOption {
+      type = lib.types.port;
+      default = 4180;
+      description = "oauth2-proxy Forward-Auth port (kanonisch).";
+    };
+    dropbear = lib.mkOption {
+      type = lib.types.port;
+      default = 2222;
+      description = "Dropbear rescue SSH port (Stage-2 + initrd).";
+    };
+    netbird-wg = lib.mkOption {
+      type = lib.types.port;
+      default = 51820;
+      description = "Netbird WireGuard listen port.";
+    };
+    node-exporter = lib.mkOption {
+      type = lib.types.port;
+      default = 9100;
+      description = "Prometheus node-exporter port (44-metrics).";
+    };
+    hermes = lib.mkOption {
+      type = lib.types.port;
+      default = 8787;
+      description = "Hermes Agent Gateway port (60-apps).";
+    };
+    wyoming-stt = lib.mkOption {
+      type = lib.types.port;
+      default = 10300;
+      description = "Wyoming STT bridge port (Groq Whisper).";
+    };
+    wyoming-tts = lib.mkOption {
+      type = lib.types.port;
+      default = 10200;
+      description = "Wyoming TTS bridge port (Google Cloud TTS).";
+    };
+    wyoming-edge-tts = lib.mkOption {
+      type = lib.types.port;
+      default = 10201;
+      description = "Wyoming Edge TTS bridge port (Microsoft Edge TTS).";
     };
   };
 }

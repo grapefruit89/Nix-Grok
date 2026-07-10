@@ -33,7 +33,7 @@ in
       oidcIssuerUrl = "https://auth.${domain}";
       upstream = "static://202"; # Auth-only Modus: Caddy übernimmt das eigentliche Proxying
       setXauthrequest = true;
-      # httpAddress default ist bereits "http://127.0.0.1:4180"
+      httpAddress = "http://127.0.0.1:${toString config.my.ports.oauth2-proxy}";
       cookie = {
         secretFile = "/var/lib/secrets/oauth2-proxy-cookie-secret";
         domain = ".${domain}";
@@ -53,7 +53,7 @@ in
 
     # Öffentlicher Caddy-Endpunkt für Login/Callback-Flow und Sign-in-Redirects
     services.caddy.virtualHosts."oauth.${domain}" = {
-      extraConfig = "reverse_proxy 127.0.0.1:4180";
+      extraConfig = "reverse_proxy 127.0.0.1:${toString config.my.ports.oauth2-proxy}";
     }
     // lib.optionalAttrs config.my.security.acme.enable {
       useACMEHost = domain;

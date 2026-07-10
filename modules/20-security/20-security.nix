@@ -42,7 +42,7 @@ in
       };
       port = lib.mkOption {
         type = lib.types.port;
-        default = 2222;
+        default = config.my.ports.dropbear;
         description = "Port for the Dropbear rescue daemon.";
       };
     };

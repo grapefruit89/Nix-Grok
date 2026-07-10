@@ -66,7 +66,7 @@ in
     };
     sshPort = lib.mkOption {
       type = lib.types.int;
-      default = 2222;
+      default = config.my.ports.dropbear;
     };
     authorizedKeys = lib.mkOption {
       type = lib.types.listOf lib.types.str;

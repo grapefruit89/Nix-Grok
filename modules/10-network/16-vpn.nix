@@ -90,7 +90,7 @@ in
 
       services.netbird.clients.default = {
         interface = "wt0";
-        port = 51820;
+        port = config.my.ports.netbird-wg;
         openFirewall = true;
         login = {
           enable = true;
