@@ -21,12 +21,10 @@ let
   stateDir = cfg.stateDirectory;
   context7KeyFile = "${config.home.homeDirectory}/.config/context7/api_key";
   context7Dir = "${config.home.homeDirectory}/.config/context7";
-  nixosDocsDbDir = "${config.home.homeDirectory}/.local/share/nix-grok";
-  nixosDocsDbFile = "${nixosDocsDbDir}/nixos_docs.db";
-  nixosDocsMcp = pkgs.callPackage ../../packages/nixos-docs-mcp { };
-  nixConfigDirs = [
-    "/etc/nixos"
-  ];
+  mcpLib = import ../../mcp/lib.nix {
+    inherit pkgs lib;
+    user = u.name;
+  };
 
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
     set -euo pipefail
@@ -78,43 +76,6 @@ let
     echo "Testen: source ~/.bashrc && grok mcp doctor context7"
   '';
 
-  nixosDocsMcpWrapper = pkgs.writeShellScript "nixos-docs-mcp" ''
-    set -euo pipefail
-    DB=/var/lib/nixos-docs-mcp/nixos_docs.sqlite
-    if [ ! -r "$DB" ]; then
-      echo "nixos_docs.sqlite fehlt unter $DB — nixos-docs-indexer.service ausführen" >&2
-      exit 1
-    fi
-    exec ${pkgs.python3}/bin/python3 /etc/nixos/scripts/nixos-docs-mcp.py "$DB"
-  '';
-
-  syncNixosDocsDb = pkgs.writeShellScript "sync-nixos-docs-db" ''
-    set -euo pipefail
-    DEST="${nixosDocsDbFile}"
-    mkdir -p "${nixosDocsDbDir}"
-
-    if [ -n "''${1:-}" ]; then
-      SRC="''${1}"
-    elif [ -r /mnt/usbinspect/NixOS/nixos_docs.db ]; then
-      SRC=/mnt/usbinspect/NixOS/nixos_docs.db
-    else
-      echo "Keine Quelle gefunden. Nutzung: sync-nixos-docs-db [pfad/zur/nixos_docs.db]" >&2
-      exit 1
-    fi
-
-    if [ -r "$SRC" ]; then
-      install -m 0644 "$SRC" "$DEST"
-    elif command -v sudo >/dev/null 2>&1 && sudo -n test -r "$SRC" 2>/dev/null; then
-      sudo install -o "$(id -un)" -g "$(id -gn)" -m 0644 "$SRC" "$DEST"
-    else
-      echo "Quelle nicht lesbar: $SRC" >&2
-      echo "Tipp: sudo install -o $(id -un) -g users -m 0644 <quelle> $DEST" >&2
-      exit 1
-    fi
-    echo "nixos_docs.db → $DEST ($(du -h "$DEST" | cut -f1))"
-    echo "Testen: source ~/.bashrc && grok mcp doctor nixos_docs"
-  '';
-
   checkGrokMcp = pkgs.writeShellScript "check-grok-mcp" ''
     set -euo pipefail
     GROK="${stateDir}/bin/grok"
@@ -145,7 +106,6 @@ in
       ++ lib.optionals cfg.enable [
         pkgs.mcp-nixos
         pkgs.mcp-server-git
-        nixosDocsMcp
       ];
 
     sessionVariables = lib.mkMerge [
@@ -183,46 +143,8 @@ in
     executable = true;
   };
 
-  home.file.".local/bin/nixos-docs-mcp" = lib.mkIf cfg.enable {
-    source = nixosDocsMcpWrapper;
-    executable = true;
-  };
-
-  home.file.".local/bin/sync-nixos-docs-db" = lib.mkIf cfg.enable {
-    source = syncNixosDocsDb;
-    executable = true;
-  };
-
   home.file.".grok/config.toml" = lib.mkIf cfg.enable {
-    text = ''
-      [cli]
-      auto_update = false
-      installer = "nixos"
-
-      [features]
-      telemetry = false
-
-      # Context7 — stdio, Key: set-context7-api-key → https://context7.com/dashboard
-      [mcp_servers.context7]
-      command = "${config.home.homeDirectory}/.local/bin/context7-mcp"
-      enabled = true
-
-      # mcp-nixos — Live-Daten: Pakete, Optionen, HM, Flakes, cache.nixos.org
-      [mcp_servers.nixos]
-      command = "${pkgs.mcp-nixos}/bin/mcp-nixos"
-      enabled = true
-
-      # nixos_docs — Wissens-SSoT-Index (DuckDB) vom USB/nix-hermes
-      [mcp_servers.nixos_docs]
-      command = "${config.home.homeDirectory}/.local/bin/nixos-docs-mcp"
-      enabled = true
-
-      # Git — optional; normales git reicht meist
-      [mcp_servers.git]
-      command = "${pkgs.mcp-server-git}/bin/mcp-server-git"
-      args = [ ${lib.concatStringsSep ", " (map (d: ''"${d}"'') nixConfigDirs)} ]
-      enabled = false
-    '';
+    text = mcpLib.grokConfigToml { homeDirectory = config.home.homeDirectory; };
     force = true;
   };
 

@@ -57,7 +57,7 @@ in
           command_approval = true;
         };
 
-        # MCP-Server: siehe modules/mcp-server/default.nix
+        # MCP-Server: siehe mcp/lib.nix
       };
     };
     services.hermes-agent.container.enable = lib.mkIf cfg.containerMode true;

@@ -10,7 +10,6 @@
 #     - docs/adr/015-cpu-power-profiles-daemon-thermald.md
 # ---
 {
-  pkgs,
   ...
 }:
 let
@@ -256,16 +255,7 @@ in
       # default = "qwen/qwen3-235b-a22b-2507";             # $0.09/M, 262k ctx
     };
     environmentFiles = [ "/var/lib/secrets/hermes.env" ];
-    mcpServers.nixos-docs = {
-      command = "${pkgs.python3}/bin/python3";
-      args = [
-        "/etc/nixos/scripts/nixos-docs-mcp.py"
-        "/var/lib/nixos-docs-mcp/nixos_docs.sqlite"
-      ];
-    };
-    mcpServers.exa = {
-      url = "https://mcp.exa.ai/mcp";
-    };
+    # MCP-Server: zentral in mcp/lib.nix (via modules/80-agents/mcp.nix)
   };
 
   services.power-profiles-daemon.enable = true;

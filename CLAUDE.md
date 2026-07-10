@@ -131,9 +131,8 @@ aktuellen HEAD ein Dry-Build-Flag gesetzt ist.
 - **Unified Port=UID=FolderPrefix Schema** implementiert (ADR-011):
   ID = Port = UID = Ordner-Präfix (4-stellig). Quellen: `lib/uid-registry.nix`,
   `lib/server-map.nix`, `modules/00-core/01-core.nix`.
-- **NixOS-Docs MCP** (`scripts/nixos-docs-mcp.py`): FTS5 + sqlite-vec +
+- **NixOS-Docs MCP** (`scripts/nixos-docs-mcp.py`): FTS5 auf `/var/lib/nixos-docs-mcp/nixos_docs.sqlite` — zentral in `mcp/lib.nix`
   Hybrid-RRF-Suche auf `data/nixos_docs.sqlite`. Nach rebuild aktivieren
-  und in `modules/mcp-server/default.nix` eintragen.
 
 ## Dev-System-Philosophie — maximal progressiv
 
@@ -174,7 +173,6 @@ wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
 
 **OFFEN — NIEDRIG:**
 - [ ] recyclarr: `services.recyclarr.*` NixOS-Modul (8.5.1 in nixpkgs)
-- [ ] NixOS-Docs MCP noch nicht in `modules/mcp-server/default.nix` verdrahtet
 - [ ] ADRs 014–018: Guide-Links im Frontmatter nachtragen
 - [ ] ADRs: `error_pattern`-Feld für maschinenlesbare Fehler-Erkennung
 
@@ -204,7 +202,6 @@ wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
   `packages/grok-cli/`, Flake-Wiring in `flake.nix`, Block in
   `users/moritz/home.nix` — alles deaktiviert aber noch vorhanden.
   Aufräumen sobald der Mensch grünes Licht gibt.
-- **NixOS-Docs MCP** noch nicht in `modules/mcp-server/default.nix` verdrahtet
   — `scripts/nixos-docs-mcp.py` existiert, braucht noch systemd-Service-Definition.
 - ***arr-UID-Migration** noch ausstehend: `scripts/migrate-arr-uids.sh` einmalig
   nach dem nächsten switch ausführen (chown auf `/persist/var/lib/{sonarr,...}`).

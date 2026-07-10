@@ -2,66 +2,44 @@
 schema: meta/schema.yaml
 entries:
   - |
-    file: modules/00-core.nix
+    file: modules/00-core/01-core.nix
     meta:
       layer: 3
       role: module
-      purpose: Boot-Safeguard, Nix-Tuning, ZRAM-Swap, zentrale System-Optionen
+      purpose: Globale Options (Systemschema) + Basis-Systemkonfiguration (Locale, Journald)
+      docs:
+        - docs/adr/013-flake-portability.md
       tags:
         - core
-        - zram
-        - nix
+        - locale
+        - boot
     ---
   - |
-    file: modules/05-alerting.nix
+    file: modules/00-core/02-nixmeta-ban.nix
     meta:
       layer: 3
       role: module
-      purpose: SRE webhook/ntfy alerts for VPN and backup failures
-      docs:
-        - docs/guides/GUIDE-nftables-hardening.md
-      tags:
-        - alerting
-        - sre
-    ---
-  - |
-    file: modules/05-deferred-ops.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: HDD-freundliche Deferred-Deletion-Queue auf Tier B
-      docs:
-        - docs/guides/GUIDE-storage-tiers.md
-      tags:
-        - storage
-        - deferred
-        - hdd
-    ---
-  - |
-    file: modules/05-forbidden-tech.nix
-    meta:
-      id: NIXH-05-MOD-003
-      layer: 3
-      role: module
-      purpose: Forbidden-technology Build-time Assertions
-      lib:
-        - lib/forbidden-tech.nix
-      tags:
-        - policy
-    ---
-  - |
-    file: modules/05-runtime-guard.nix
-    meta:
-      id: NIXH-05-MOD-004
-      layer: 3
-      role: module
-      purpose: Runtime Security Watchdog — nftables/sshd live prüfen
+      purpose: Build-Time-Assertion — NIXMETA (# !type Marker) permanent verboten
       tags:
         - security
-        - runtime
+        - hygiene
+        - meta
     ---
   - |
-    file: modules/05-services-spec.nix
+    file: modules/00-core/03-uid-registry.nix
+    meta:
+      id: NIXH-05-UID-001
+      layer: 3
+      role: module
+      purpose: UID/GID Single Source of Truth — keine Live-Migration, nur Registry + Assertions
+      lib:
+        - lib/uid-registry.nix
+      tags:
+        - uid
+        - registry
+    ---
+  - |
+    file: modules/00-core/04-services-spec.nix
     meta:
       id: NIXH-05-MOD-001
       layer: 3
@@ -78,20 +56,272 @@ entries:
         - ports
     ---
   - |
-    file: modules/05-sops.nix
+    file: modules/00-core/05-creds.nix
     meta:
-      id: NIXH-05-MOD-005
       layer: 3
       role: module
-      purpose: SOPS-Migration (Stufe 9+) — Schema + Kategorien nach mynixos-v5
+      purpose: systemd-creds Credential-Store + sops-nix-Verbot (Assertion)
       docs:
-        - docs/adr/006-sops-migration-path.md
+        - docs/adr/2024-systemd-creds-tpm.md
+        - docs/guides/ANTIPATTERNS.md
       tags:
-        - sops
-        - secrets
+        - security
+        - credentials
+        - systemd-creds
     ---
   - |
-    file: modules/05-storage-policy.nix
+    file: modules/00-core/06-boot-watchdog.nix
+    meta:
+      id: NIXH-05-MOD-006
+      layer: 3
+      role: module
+      purpose: Post-Boot Fail-Fast — kritische Dienste nach Grace-Period prüfen
+      docs:
+        - docs/adr/005-critical-systemd-restart.md
+      tags:
+        - boot
+        - watchdog
+        - systemd
+    ---
+  - |
+    file: modules/00-core/07-structure-validation.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Build-Time-Assertions — modules/-Verzeichnisstruktur und default.nix-Vollständigkeit
+      tags:
+        - structure
+        - validation
+    ---
+  - |
+    file: modules/00-core/08-ports.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Zentrale Port-Registry — alle my.ports.* Optionen als Single Source of Truth
+      docs:
+        - docs/adr/011-unified-port-uid-schema.md
+      tags:
+        - ports
+        - core
+    ---
+  - |
+    file: modules/00-core/09-nix-tools.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Nix-Store-Tuning, Dev-Tools (bat/eza/rg…), Shell-Aliases, Pre-Commit, ZRAM-Swap
+      tags:
+        - nix
+        - developer-experience
+        - zram
+    ---
+  - |
+    file: modules/00-core/README.md
+    meta:
+      role: doc
+      purpose: README für modules/00-core — Schicht-0-Module (Fundament)
+      tags:
+        - readme
+        - 00-core
+  - |
+    file: modules/10-network/12-blocky.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Blocky DNS — ad-blocking, split-horizon, DoT-Upstreams für LAN-Clients
+      services:
+        - blocky
+      tags:
+        - dns
+        - ad-blocking
+    ---
+  - |
+    file: modules/10-network/13-gateway.nix
+    meta:
+      id: NIXH-10-GTW-001
+      layer: 3
+      role: module
+      purpose: DDNS-Updater (Cloudflare) + optional DNS-Guard — kein Cloudflared-Tunnel
+      docs:
+        - docs/SPEC_REGISTRY.md
+        - docs/adr/2006-sops-migration-path.md
+      lib:
+        - lib/dns-map.nix
+        - lib/service-factory.nix
+      tags:
+        - gateway
+        - ddns
+        - cloudflare
+    ---
+  - |
+    file: modules/10-network/14-ingress.nix
+    meta:
+      id: NIXH-10-ING-001
+      layer: 3
+      role: module
+      purpose: Spez-basierter Caddy-Ingress — einzige Quelle für vHosts
+      lib:
+        - lib/caddy-ingress.nix
+        - lib/service-enable.nix
+      tags:
+        - caddy
+        - ingress
+    ---
+  - |
+    file: modules/20-security/15-firewall.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: nftables L4 — checkRuleset, WAN-Härtung, skuid, CrowdSec/Fail2ban
+      docs:
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/guides/GUIDE-nftables-hardening.md
+      lib:
+        - lib/nftables-rules.nix
+      services:
+        - nftables
+      tags:
+        - firewall
+        - nftables
+    ---
+  - |
+    file: modules/20-security/20-security.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: SSH-Härtung (Zero-Trust Production + Dev), Dropbear-Rescue
+      docs:
+        - docs/SECURITY.md
+      services:
+        - sshd
+      tags:
+        - security
+        - ssh
+    ---
+  - |
+    file: modules/20-security/21-sovereign-unlock.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Sovereign Unlock LUKS-Kaskade (TPM2 / Tang / FIDO2 / initrd-SSH)
+      docs:
+        - docs/SECURITY.md
+      tags:
+        - security
+        - luks
+        - initrd
+    ---
+  - |
+    file: modules/20-security/22-fail2ban.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Fail2ban Intrusion Prevention + Auditd Prozess-Monitoring
+      docs:
+        - docs/SECURITY.md
+      services:
+        - fail2ban
+      tags:
+        - security
+        - fail2ban
+        - auditd
+    ---
+  - |
+    file: modules/20-security/23-acme.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Let's Encrypt DNS-01 Wildcard-Cert via Cloudflare — security.acme
+      tags:
+        - acme
+        - tls
+        - caddy
+    ---
+  - |
+    file: modules/20-security/25-kernel-policy.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: NixOS-Optionen Kernel-Slim-Modus und Homelab-Profil
+      lib:
+        - lib/kernel/policy.nix
+      tags:
+        - kernel
+        - options
+    ---
+  - |
+    file: modules/20-security/26-kernel-hardening.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Kernel- und System-Härtung (sysctl, Boot-Parameter, Mount-Flags)
+      docs:
+        - docs/adr/2026-kernel-hardening-sysctl.md
+        - docs/guides/GUIDE-kernel-hardening.md
+      tags:
+        - security
+        - kernel
+        - sysctl
+    ---
+  - |
+    file: modules/20-security/27-hardened-core.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Headless Service-Slimming und hideProcessInformation (Production)
+      docs:
+        - docs/guides/GUIDE-security-secrets.md
+      docs:
+        - docs/adr/2026-kernel-hardening-sysctl.md
+        - docs/guides/GUIDE-kernel-hardening.md
+      tags:
+        - security
+        - hardening
+        - headless
+    ---
+  - |
+    file: modules/20-security/28-oauth2-proxy.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: oauth2-proxy OIDC Forward-Auth — SSO für Dienste ohne natives OIDC
+      tags:
+        - sso
+        - oauth2-proxy
+        - caddy
+    ---
+  - |
+    file: modules/20-security/29-secrets-portal.nix
+    meta:
+      id: NIXH-20-SPRT-001
+      layer: 29
+      role: module
+      purpose: secrets-portal — Web-UI für systemd-creds Provisioning und Rotation
+      domain: 20-security
+      uid: 2029
+      socket: /run/secrets-portal/secrets-portal.sock
+      tags:
+        - secrets
+        - security
+        - admin
+        - web
+    ---
+  - |
+    file: modules/30-storage/05-deferred-ops.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: HDD-freundliche Deferred-Deletion-Queue auf Tier B
+      docs:
+        - docs/guides/GUIDE-storage-tiers.md
+      tags:
+        - storage
+        - deferred
+        - hdd
+    ---
+  - |
+    file: modules/30-storage/05-storage-policy.nix
     meta:
       id: NIXH-05-MOD-002
       layer: 3
@@ -107,159 +337,58 @@ entries:
         - tier-c
     ---
   - |
-    file: modules/05-uid-registry.nix
+    file: modules/30-storage/30-storage.nix
     meta:
-      id: NIXH-05-UID-001
       layer: 3
       role: module
-      purpose: UID/GID Single Source of Truth — keine Live-Migration, nur Registry + Assertions
-      lib:
-        - lib/uid-registry.nix
-      tags:
-        - uid
-        - registry
-    ---
-  - |
-    file: modules/10-gateway.nix
-    meta:
-      id: NIXH-10-GTW-001
-      layer: 3
-      role: module
-      purpose: DDNS-Updater (Cloudflare) + optional DNS-Guard — kein Cloudflared-Tunnel
+      purpose: Sovereign Impermanence (ephemeral tmpfs root + Tier-A persistent bind mounts)
       docs:
-        - docs/SPEC_REGISTRY.md
-        - docs/adr/006-sops-migration-path.md
-      lib:
-        - lib/dns-map.nix
-        - lib/service-factory.nix
-      tags:
-        - gateway
-        - ddns
-        - cloudflare
-    ---
-  - |
-    file: modules/10-ingress.nix
-    meta:
-      id: NIXH-10-ING-001
-      layer: 3
-      role: module
-      purpose: Spez-basierter Caddy-Ingress — ersetzt manuelle vHosts
-      lib:
-        - lib/caddy-ingress.nix
-        - lib/service-enable.nix
-      tags:
-        - caddy
-        - ingress
-    ---
-  - |
-    file: modules/10-network.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Blocky DNS, Valkey, PostgreSQL, Tailscale, Pocket-ID, Privado
-      docs:
-        - docs/adr/001-dns-dot-fail-closed.md
-        - docs/adr/002-ipv6-homelab-v4-only.md
-        - docs/AUDIT-blocky-caddy-ipv6.md
-      lib:
-        - lib/dns-policy.nix
-        - lib/memory-policy.nix
-        - lib/critical-systemd.nix
-      services:
-        - blocky
-        - postgresql
-        - redis-valkey
-        - tailscaled
-        - pocket-id
-      tags:
-        - dns
-        - network
-        - database
-    ---
-  - |
-    file: modules/10-vpn-confinement.nix
-    meta:
-      id: NIXH-10-VPN-001
-      layer: 3
-      role: module
-      purpose: VPN Network-Namespaces für Usenet (veth-Bridge, Kill-Switch, Healthcheck)
-      docs:
-        - docs/adr/009-vpn-leak-check.md
-      tags:
-        - vpn
-        - netns
-    ---
-  - |
-    file: modules/15-firewall.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: nftables L4 — checkRuleset, WAN-Härtung, skuid, CrowdSec/Fail2ban
-      docs:
-        - docs/adr/008-nftables-l4-hardening.md
-        - docs/guides/GUIDE-nftables-hardening.md
-      lib:
-        - lib/nftables-rules.nix
-      services:
-        - nftables
-      tags:
-        - firewall
-        - nftables
-    ---
-  - |
-    file: modules/20-security.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Sovereign-Unlock, SSH-Härtung, Fail2ban, Dropbear-Rescue
-      docs:
-        - docs/SECURITY.md
-      services:
-        - sshd
-        - fail2ban
-      tags:
-        - security
-        - ssh
-    ---
-  - |
-    file: modules/25-kernel-policy.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: NixOS-Optionen Kernel-Slim-Modus und Homelab-Profil
-      lib:
-        - lib/kernel/policy.nix
-      tags:
-        - kernel
-        - options
-    ---
-  - |
-    file: modules/26-kernel-hardening.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Kernel- und System-Härtung (sysctl, Boot-Parameter, Mount-Flags)
-      docs:
-        - docs/guides/GUIDE-security-secrets.md
-      tags:
-        - security
-        - kernel
-        - sysctl
-    ---
-  - |
-    file: modules/30-storage.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Impermanence, MergerFS, Restic, Storage-Mover zwischen Tiers
-      services:
-        - restic-backup
+        - docs/guides/GUIDE-storage-tiers.md
+        - docs/guides/GUIDE-data-management.md
       tags:
         - storage
         - impermanence
     ---
   - |
-    file: modules/35-automount.nix
+    file: modules/30-storage/32-mergerfs.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: MergerFS hybrid pool (Tier B/C/external) + pending disk watcher
+      docs:
+        - docs/guides/GUIDE-storage-tiers.md
+      tags:
+        - storage
+        - mergerfs
+    ---
+  - |
+    file: modules/30-storage/33-backup.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Restic offsite S3 backup + MEGA secondary backup (Vaultwarden + Secrets)
+      docs:
+        - docs/guides/GUIDE-data-management.md
+      services:
+        - restic-backup
+      tags:
+        - storage
+        - backup
+    ---
+  - |
+    file: modules/30-storage/34-storage-mover.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Precision Storage Cache Mover (rclone local engine, SSD→HDD hysteresis)
+      docs:
+        - docs/guides/GUIDE-storage-tiers.md
+      tags:
+        - storage
+        - mover
+    ---
+  - |
+    file: modules/30-storage/35-automount.nix
     meta:
       layer: 3
       role: module
@@ -271,46 +400,170 @@ entries:
         - storage
     ---
   - |
-    file: modules/40-observability.nix
+    file: modules/30-storage/36-disk-health.nix
     meta:
       layer: 3
       role: module
-      purpose: Gatus, Vector/Loki/Grafana, CrowdSec
+      purpose: smartd + Scrutiny für Tier-C HDDs (SMART-Monitoring)
       docs:
-        - docs/AUDIT-blocky-caddy-ipv6.md
+        - docs/guides/GUIDE-disk-health.md
+      tags:
+        - storage
+        - smartd
+        - scrutiny
+    ---
+  - |
+    file: modules/40-observability/05-alerting.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: SRE webhook/ntfy alerts for VPN and backup failures
+      docs:
+        - docs/guides/GUIDE-nftables-hardening.md
+      tags:
+        - alerting
+        - sre
+    ---
+  - |
+    file: modules/40-observability/05-runtime-guard.nix
+    meta:
+      id: NIXH-05-MOD-004
+      layer: 3
+      role: module
+      purpose: Runtime Security Watchdog — nftables/sshd/lockdown live prüfen
+      tags:
+        - security
+        - runtime
+    ---
+  - |
+    file: modules/40-observability/41-gatus.nix
+    meta:
+      id: NIXH-41-MOD-001
+      layer: 3
+      role: module
+      purpose: Gatus Status-Dashboard — Health-Checks, SSH-Wrapper, Pool/Service-Check-Scripts
+      lib:
+        - lib/gatus-endpoints.nix
+        - lib/unix-sockets.nix
+        - lib/systemd-hardening.nix
+      services:
+        - gatus
+      tags:
+        - observability
+        - gatus
+        - monitoring
+    ---
+  - |
+    file: modules/40-observability/42-logging.nix
+    meta:
+      id: NIXH-42-MOD-001
+      layer: 3
+      role: module
+      purpose: Loki + Vector + Grafana — zentrales Logging- und Dashboarding-Stack
+      lib:
+        - lib/memory-policy.nix
+        - lib/unix-sockets.nix
+        - lib/systemd-hardening.nix
+      services:
+        - loki
+        - vector
+        - grafana
+      tags:
+        - observability
+        - logging
+        - grafana
+    ---
+  - |
+    file: modules/40-observability/43-crowdsec.nix
+    meta:
+      id: NIXH-43-MOD-001
+      layer: 3
+      role: module
+      purpose: CrowdSec Security-Engine + nftables Firewall-Bouncer
+      lib:
+        - lib/systemd-hardening.nix
+      services:
+        - crowdsec
+        - crowdsec-firewall-bouncer
+      tags:
+        - security
+        - crowdsec
+        - firewall
+    ---
+  - |
+    file: modules/40-observability/44-metrics.nix
+    meta:
+      id: NIXH-44-MOD-001
+      layer: 3
+      role: module
+      purpose: VictoriaMetrics TSDB + Prometheus Node-Exporter
+      services:
+        - victoriametrics
+        - prometheus-node-exporter
+      tags:
+        - observability
+        - metrics
+        - victoriametrics
+        - prometheus
+    ---
+  - |
+    file: modules/50-media/51-jellyfin.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy + Pocket-ID SSO-Plugin
+      docs:
         - docs/memory_oom.md
+        - docs/adr/1001-dns-dot-fail-closed.md
       lib:
         - lib/memory-policy.nix
       services:
-        - gatus
-        - loki
-        - grafana
-        - vector
-        - crowdsec
+        - jellyfin
+        - seerr
       tags:
-        - observability
+        - media
+        - jellyfin
+        - oidc
     ---
   - |
-    file: modules/50-media/arr-helper.nix
+    file: modules/50-media/52-arr.nix
     meta:
       layer: 3
       role: module
-      purpose: Fabrik für *arr-Apps — User, systemd, Caddy, RAM-Limits
+      purpose: Sonarr + Radarr + Readarr + Prowlarr + Lidarr — eine Datei, eine Fabrik (arr-helper.mkArrService)
       docs:
-        - docs/memory_oom.md
-      lib:
-        - lib/memory-policy.nix
+        - docs/adr/007-dendritic-one-file-per-service.md
       services:
         - sonarr
         - radarr
         - readarr
         - prowlarr
+        - lidarr
       tags:
         - media
         - arr
+        - dendritic
+        - factory
     ---
   - |
-    file: modules/50-media/audiobookshelf.nix
+    file: modules/50-media/53-sabnzbd.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: SABnzbd Usenet — VPN-Sandbox via 57-usenet-confinement
+      docs:
+        - docs/memory_oom.md
+        - docs/adr/5031-usenet-vpn-sandbox.md
+      lib:
+        - lib/memory-policy.nix
+      services:
+        - sabnzbd
+      tags:
+        - media
+        - usenet
+    ---
+  - |
+    file: modules/50-media/54-audiobookshelf.nix
     meta:
       id: NIXH-50-MED-001
       layer: 3
@@ -330,6 +583,65 @@ entries:
         - streaming
     ---
   - |
+    file: modules/50-media/55-navidrome.nix
+    meta:
+      id: NIXH-50-MED-006
+      layer: 3
+      role: module
+      purpose: Navidrome Music-Server mit Pocket-ID OIDC-SSO via EnvironmentFile
+      lib:
+        - lib/service-factory.nix
+        - lib/memory-policy.nix
+      services:
+        - navidrome
+      tags:
+        - media
+        - navidrome
+        - music
+        - oidc
+    ---
+  - |
+    file: modules/50-media/57-usenet-confinement/default.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Usenet VPN-Sandbox — SABnzbd + Prowlarr via Privado WireGuard (host-basiert)
+      docs:
+        - docs/adr/5031-usenet-vpn-sandbox.md
+      services:
+        - sabnzbd
+        - prowlarr
+      tags:
+        - media
+        - usenet
+        - vpn
+        - security
+    ---
+  - |
+    file: modules/50-media/arr-helper.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Fabrik für *arr-Apps — User, systemd, Caddy, RAM-Limits
+      docs:
+        - docs/adr/007-dendritic-one-file-per-service.md
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/guides/GUIDE-media-stack.md
+        - docs/memory_oom.md
+      lib:
+        - lib/memory-policy.nix
+      services:
+        - sonarr
+        - radarr
+        - readarr
+        - prowlarr
+        - lidarr
+      tags:
+        - media
+        - arr
+    ---
+  - |
     file: modules/50-media/default.nix
     meta:
       layer: 3
@@ -340,126 +652,45 @@ entries:
         - imports
     ---
   - |
-    file: modules/50-media/jellyfin.nix
+    file: modules/60-apps/61-core.nix
     meta:
       layer: 3
       role: module
-      purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy
-      docs:
-        - docs/memory_oom.md
-      lib:
-        - lib/memory-policy.nix
+      purpose: Vaultwarden, Filebrowser, Linkwarden, Open WebUI
       services:
-        - jellyfin
-        - seerr
+        - vaultwarden
+        - filebrowser
+        - linkwarden
+        - open-webui
       tags:
-        - media
-        - jellyfin
+        - apps
     ---
   - |
-    file: modules/50-media/prowlarr.nix
+    file: modules/60-apps/61-homepage.nix
     meta:
       layer: 3
       role: module
-      purpose: Prowlarr — VPN-NetNS, eigene dendritische Datei
-      docs:
-        - docs/adr/007-dendritic-one-file-per-service.md
+      purpose: Homepage Dashboard — Mäusekino Widget-Konfiguration und Layout
       services:
-        - prowlarr
+        - homepage-dashboard
       tags:
-        - media
-        - arr
-        - dendritic
-        - vpn
-    ---
-  - |
-    file: modules/50-media/readarr.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Readarr — eigene dendritische Datei
-      docs:
-        - docs/adr/007-dendritic-one-file-per-service.md
-      services:
-        - readarr
-      tags:
-        - media
-        - arr
-        - dendritic
-    ---
-  - |
-    file: modules/50-media/sabnzbd.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: SABnzbd Usenet mit VPN-Kill-Switch
-      docs:
-        - docs/memory_oom.md
-      lib:
-        - lib/memory-policy.nix
-        - lib/vpn-killswitch.nix
-      services:
-        - sabnzbd
-      tags:
-        - media
-        - usenet
-    ---
-  - |
-    file: modules/50-media/sonarr-radarr.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Sonarr + Radarr — gemeinsame dendritische Datei
-      docs:
-        - docs/adr/007-dendritic-one-file-per-service.md
-        - docs/guides/GUIDE-dendritic-architecture.md
-      services:
-        - sonarr
-        - radarr
-      tags:
-        - media
-        - arr
-        - dendritic
-    ---
-  - |
-    file: modules/50-media/sync.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Media-Stack Locale/Config-Sync per systemd oneshot
-      services:
-        - media-stack-config-sync
-      tags:
-        - media
-        - sync
+        - apps
+        - homepage
     ---
   - |
     file: modules/60-apps/automation.nix
     meta:
       layer: 3
       role: module
-      purpose: Paperless-ngx und n8n Workflow-Automatisierung
+      purpose: Paperless-ngx Dokumentenarchiv
       docs:
         - docs/memory_oom.md
       lib:
         - lib/memory-policy.nix
       services:
         - paperless-web
-        - n8n
       tags:
         - automation
-    ---
-  - |
-    file: modules/60-apps/core.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: Vaultwarden, Homepage, Filebrowser, Linkwarden, Open WebUI
-      services:
-        - vaultwarden
-        - homepage
-      tags:
-        - apps
     ---
   - |
     file: modules/60-apps/default.nix
@@ -475,6 +706,18 @@ entries:
       tags:
         - apps
         - caddy
+    ---
+  - |
+    file: modules/60-apps/gaming.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: AMP Game-Server-Manager in FHS-Sandbox
+      services:
+        - amp
+      tags:
+        - gaming
+        - amp
     ---
   - |
     file: modules/60-apps/grok.nix
@@ -501,66 +744,84 @@ entries:
         - llm
     ---
   - |
-    file: modules/60-apps/iot.nix
+    file: modules/70-home-automation/default.nix
+    meta:
+      layer: 3
+      role: domain
+      purpose: Home Automation — Home Assistant, Mosquitto, Zigbee2MQTT, Voice Assistant
+      tags:
+        - iot
+        - home-automation
+    ---
+  - |
+    file: modules/70-home-automation/home-assistant.nix
     meta:
       layer: 3
       role: module
-      purpose: Home Assistant und Zigbee-Stack (Mosquitto, Zigbee2MQTT)
-      docs:
-        - docs/memory_oom.md
+      purpose: Home Assistant Core — NixOS-Modul mit MQTT-Provisioning
       services:
         - home-assistant
+      tags:
+        - iot
+        - home-automation
+      docs:
+        - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+        - docs/adr/7002-ha-storage-provisioning.md
+    ---
+  - |
+    file: modules/70-home-automation/voice-assistant.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Voice Assistant — Groq STT + Google Cloud TTS (Wyoming Bridges)
+      services:
+        - groq-stt-wyoming
+        - google-tts-wyoming
+      tags:
+        - iot
+        - home-automation
+        - voice
+        - stt
+        - tts
+      docs:
+        - docs/adr/7003-groq-stt-wyoming-bridge.md
+        - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+        - docs/guides/GUIDE-home-assistant.md
+    ---
+  - |
+    file: modules/70-home-automation/zigbee-stack.nix
+    meta:
+      layer: 3
+      role: module
+      purpose: Zigbee-Stack — Mosquitto MQTT-Broker + Zigbee2MQTT Bridge
+      services:
         - mosquitto
         - zigbee2mqtt
       tags:
         - iot
+        - home-automation
     ---
   - |
-    file: modules/60-apps/SERVICE_TEMPLATE.nix
+    file: modules/80-agents/claude-code.nix
     meta:
-      id: NIXH-60-APP-TPL
-      layer: 3
+      layer: 4
       role: module
-      purpose: Onboarding-Vorlage für neue Apps — Kopieren, anpassen, in default.nix importieren
-      docs:
-        - docs/SPEC_REGISTRY.md
-        - docs/adr/README.md
-      lib:
-        - lib/service-factory.nix
-        - lib/dns-map.nix
+      purpose: Claude Code CLI (Anthropic) als System-Paket
       tags:
-        - template
-        - onboarding
+        - dev
+        - claude
     ---
   - |
-    file: modules/70-forge.nix
+    file: modules/80-agents/mcp.nix
     meta:
       layer: 3
       role: module
-      purpose: Forgejo Git, Semaphore Ansible-UI, Cockpit
-      lib:
-        - lib/unix-sockets.nix
-      services:
-        - forgejo
-        - semaphore
+      purpose: MCP-Indexer + Import zentraler mcp/-Schicht
       tags:
-        - forge
-        - git
+        - mcp
     ---
   - |
-    file: modules/80-gaming.nix
-    meta:
-      layer: 3
-      role: module
-      purpose: AMP Game-Server-Manager in FHS-Sandbox
-      services:
-        - amp
-      tags:
-        - gaming
-        - amp
-    ---
-  - |
-    file: modules/90-policy.nix
+    file: modules/90-policy/90-policy.nix
     meta:
       layer: 3
       role: module
@@ -572,7 +833,7 @@ entries:
         - sandbox
     ---
   - |
-    file: modules/91-security-assertions.nix
+    file: modules/90-policy/91-security-assertions.nix
     meta:
       id: NIXH-90-POL-001
       layer: 3
@@ -597,12 +858,15 @@ entries:
   - |
     file: lib/caddy-ingress.nix
     meta:
-      id: NIXH-05-LIB-010
-      layer: 5
-      role: lib
-      purpose: Caddy vHost-Generator aus my.services.spec (Zonen-Policy)
+      id: NIXH-10-ING-001
+      layer: 3
+      role: module
+      purpose: Spez-basierter Caddy-Ingress — einzige Quelle für vHosts
+      lib:
+        - lib/caddy-ingress.nix
+        - lib/service-enable.nix
       docs:
-        - docs/ROADMAP.md
+        - docs/adr/1017-caddy-health-checks-error-fallback.md
       tags:
         - caddy
         - ingress
@@ -612,10 +876,14 @@ entries:
     meta:
       layer: 5
       role: lib
-      purpose: Gemeinsame Caddyfile-Snippets — SSO, Security-Header, Tailscale
+      purpose: Gemeinsame Caddyfile-Snippets — SSO, Security-Header, Private-Admin
       tags:
         - caddy
         - snippets
+      docs:
+        - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+        - docs/adr/1016-caddy-security-headers-coop-scanners.md
+        - docs/adr/1017-caddy-health-checks-error-fallback.md
     ---
   - |
     file: lib/critical-systemd.nix
@@ -624,6 +892,8 @@ entries:
       role: lib
       purpose: Restart=always, StartLimit=0, OOM-Score für kritische Infrastruktur
       docs:
+        - docs/adr/005-critical-systemd-restart.md
+        - docs/adr/003-oom-cgroup-isolation.md
         - docs/AUDIT-blocky-caddy-ipv6.md
       tags:
         - systemd
@@ -660,22 +930,11 @@ entries:
       role: lib
       purpose: DNS-Upstream-Verschlüsselungs-Assertions (DoT/DoH)
       docs:
-        - docs/adr/001-dns-dot-fail-closed.md
+        - docs/adr/1001-dns-dot-fail-closed.md
         - docs/AUDIT-blocky-caddy-ipv6.md
       tags:
         - dns
         - dot
-    ---
-  - |
-    file: lib/forbidden-tech.nix
-    meta:
-      id: NIXH-05-LIB-008
-      layer: 5
-      role: lib
-      purpose: Forbidden-technology Assertions (subset mynixos-v5, ohne Tailscale-Ban)
-      tags:
-        - policy
-        - security
     ---
   - |
     file: lib/gatus-endpoints.nix
@@ -702,10 +961,14 @@ entries:
     meta:
       layer: 5
       role: lib
-      purpose: Kernel-Blacklist global — Datacenter/Legacy/Sicherheit
+      purpose: Kernel-Blacklist global — Datacenter/Legacy/Sicherheit/Netzwerkprotokolle
+      docs:
+        - docs/adr/1002-ipv6-homelab-v4-only.md
       tags:
         - kernel
         - blacklist
+        - ipv6
+        - network-security
     ---
   - |
     file: lib/kernel/blacklist-homelab-headless.nix
@@ -724,6 +987,9 @@ entries:
       layer: 5
       role: lib
       purpose: Kernel-Slim-Zwiebelschale — Whitelist/Blacklist + Assertions
+      docs:
+        - docs/adr/2027-kernel-slim-module-policy.md
+        - docs/guides/GUIDE-kernel-hardening.md
       tags:
         - kernel
         - policy
@@ -758,7 +1024,7 @@ entries:
       role: lib
       purpose: nftables ruleset Generator — WAN-Härtung, skuid, portscan
       docs:
-        - docs/adr/008-nftables-l4-hardening.md
+        - docs/adr/2008-nftables-l4-hardening.md
         - docs/guides/GUIDE-nftables-hardening.md
       tags:
         - nftables
@@ -774,12 +1040,26 @@ entries:
         - rollout
     ---
   - |
+    file: lib/server-map.nix
+    meta:
+      layer: 5
+      role: lib
+      purpose: Server-Landkarte — einheitliche ID, Port/Socket, UID, Modul
+      docs:
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/guides/GUIDE-server-map.md
+      tags:
+        - server-map
+        - ports
+        - uid
+    ---
+  - |
     file: lib/service-enable.nix
     meta:
       id: NIXH-05-LIB-009
       layer: 5
       role: lib
-      purpose: Spec-Schlüssel → my.services.*.enable für Ingress-Generator
+      purpose: Spec-Schlüssel → Service-enable für Ingress-Generator
       tags:
         - services-spec
         - ingress
@@ -833,11 +1113,29 @@ entries:
         - policy
     ---
   - |
+    file: lib/systemd-hardening.nix
+    meta:
+      id: NIXH-05-LIB-009
+      layer: 5
+      role: lib
+      purpose: mkHardened — systemd serviceConfig Hardening-Factory (ProtectSystem, Caps, RW-Pfade)
+      docs:
+        - docs/adr/028-systemd-service-isolation.md
+        - docs/guides/GUIDE-kernel-hardening.md
+      tags:
+        - systemd
+        - hardening
+        - security
+    ---
+  - |
     file: lib/uid-registry.nix
     meta:
       layer: 5
       role: lib
       purpose: Statische UID/GID-Registry für skuid und Reproduzierbarkeit
+      docs:
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/guides/GUIDE-server-map.md
       tags:
         - uid
         - security
@@ -848,29 +1146,14 @@ entries:
       layer: 5
       role: lib
       purpose: Standard-UDS-Pfade und Caddy-Upstream-Konvertierung
+      docs:
+        - docs/adr/1004-unix-socket-upstreams.md
+        - docs/adr/1019-uds-first-philosophy.md
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/guides/GUIDE-server-map.md
       tags:
         - unix-socket
         - caddy
-    ---
-  - |
-    file: lib/vpn-connection.nix
-    meta:
-      layer: 5
-      role: lib
-      purpose: Upstream-Host für Services in VPN-NetNS (nixflix/nixarr connectionAddress)
-      tags:
-        - vpn
-        - netns
-    ---
-  - |
-    file: lib/vpn-killswitch.nix
-    meta:
-      layer: 5
-      role: lib
-      purpose: VPN-Kill-Switch systemd-Attrs für privado WireGuard
-      tags:
-        - vpn
-        - privado
     ---
   - |
     file: lib/wait-for-api.nix
@@ -887,10 +1170,10 @@ entries:
     meta:
       layer: 2
       role: machine
-      purpose: Stufe 0+ Zugang — Notfall-User, LAN, DNS/IPv6-Assertions
+      purpose: Stufe 0+ Zugang — LAN, DNS/IPv6-Assertions, SSH-Gate
       docs:
-        - docs/adr/001-dns-dot-fail-closed.md
-        - docs/adr/002-ipv6-homelab-v4-only.md
+        - docs/adr/1001-dns-dot-fail-closed.md
+        - docs/adr/1002-ipv6-homelab-v4-only.md
       tags:
         - access
         - rollout
@@ -914,6 +1197,8 @@ entries:
       tags:
         - wiring
         - q958
+      docs:
+        - docs/adr/015-cpu-power-profiles-daemon-thermald.md
     ---
   - |
     file: machines/q958/dev-mode.nix
@@ -951,26 +1236,14 @@ entries:
     meta:
       layer: 2
       role: machine
-      purpose: Verdrahtung Netzwerk — Blocky, Tailscale, Pocket-ID, Privado
-      docs:
-        - docs/AUDIT-blocky-caddy-ipv6.md
+      purpose: Verdrahtung Netzwerk — Blocky, Netbird, Pocket-ID, Privado
       services:
         - blocky
-        - tailscale
+        - netbird
         - pocket-id
       tags:
         - network
         - dns
-    ---
-  - |
-    file: machines/q958/profile.local.nix
-    meta:
-      layer: 2
-      role: machine
-      purpose: Lokale Secrets und Notfall-Passwort (gitignored)
-      tags:
-        - secrets
-        - gitignored
     ---
   - |
     file: machines/q958/profile.nix
@@ -978,6 +1251,13 @@ entries:
       layer: 2
       role: machine
       purpose: Einzige Datenquelle aller q958-Maschinenwerte
+      docs:
+        - docs/adr/1001-dns-dot-fail-closed.md
+        - docs/adr/1002-ipv6-homelab-v4-only.md
+      tags:
+        - dns
+        - ipv6
+        - profile
       docs:
         - docs/ROADMAP.md
       tags:
@@ -1019,11 +1299,21 @@ entries:
         - tier-policy
     ---
   - |
+    file: users/admin/profile.nix
+    meta:
+      layer: 4
+      role: user
+      purpose: Einzige Datenquelle aller Admin-User-Werte (Name, Keys, Domain, Git)
+      tags:
+        - profile
+        - user
+    ---
+  - |
     file: users/moritz/default.nix
     meta:
       layer: 4
       role: user
-      purpose: System-User moritz aus profile.nix
+      purpose: System-User moritz — parallel zu admin, gleiche Rechte
       tags:
         - user
         - moritz
@@ -1033,7 +1323,7 @@ entries:
     meta:
       layer: 4
       role: user
-      purpose: Home-Manager — Grok CLI, MCP, Dotfiles
+      purpose: Home-Manager für moritz — Grok CLI, MCP, Dotfiles
       tags:
         - home-manager
         - grok
@@ -1053,10 +1343,10 @@ entries:
     meta:
       layer: 4
       role: user
-      purpose: Einzige Datenquelle moritz-spezifischer Werte (Keys, Domain)
+      purpose: Einzige Datenquelle aller Moritz-User-Werte — erbt von admin, name=moritz
       tags:
         - profile
-        - moritz
+        - user
     ---
   - |
     file: packages/grok-cli/default.nix
@@ -1068,130 +1358,1033 @@ entries:
         - package
     ---
   - |
-    file: packages/nixos-docs-mcp/default.nix
+    file: packages/secrets-portal/default.nix
     meta:
       role: package
-      purpose: DuckDB MCP-Server für lokale nixos_docs.db
+      purpose: secrets-portal — Web-UI für systemd-creds Provisioning und Rotation
       tags:
-        - mcp
-        - nixos-docs
+        - secrets
+        - security
+        - admin
     ---
-  - |
-    file: docs/adr/001-dns-dot-fail-closed.md
-    meta:
-      role: doc
-      purpose: ADR-001 DNS-over-TLS, Blocky-only, fail-closed
-      docs:
-        - docs/adr/README.md
-      tags:
-        - adr
-        - dns
-  - |
-    file: docs/adr/002-ipv6-homelab-v4-only.md
-    meta:
-      role: doc
-      purpose: ADR-002 IPv6 Homelab v4-only auf eno1
-      docs:
-        - docs/adr/README.md
-      tags:
-        - adr
-        - ipv6
   - |
     file: docs/adr/003-oom-cgroup-isolation.md
     meta:
       role: doc
-      purpose: ADR-003 RAM-Isolation per systemd cgroup
+      purpose: ADR-003 RAM-Isolation per systemd cgroup — OOM-Kill-Isolation pro Service
+      status: accepted
+      date: 2026-06-17
+      error_pattern: "oom-kill.*\\.service|memory cgroup out of memory|killed process.*memory.cgroup"
+      quick_fix: "MemoryMax in lib/memory-policy.nix erhöhen + systemctl restart <service>"
+      services: [jellyfin, postgresql, sabnzbd, loki, paperless-ngx, caddy, home-assistant]
+      betrifft:
+        - lib/memory-policy.nix
+        - lib/critical-systemd.nix
       docs:
         - docs/adr/README.md
+        - docs/memory_oom.md
+        - docs/adr/1001-dns-dot-fail-closed.md
+        - docs/adr/005-critical-systemd-restart.md
+        - docs/RUNBOOK.md
       tags:
         - adr
         - oom
-  - |
-    file: docs/adr/004-unix-socket-upstreams.md
-    meta:
-      role: doc
-      purpose: ADR-004 Unix-Socket-Upstreams für Caddy
-      docs:
-        - docs/adr/README.md
-      tags:
-        - adr
-        - caddy
+        - memory
+        - cgroup
+        - systemd
   - |
     file: docs/adr/005-critical-systemd-restart.md
     meta:
       role: doc
-      purpose: ADR-005 Restart=always für kritische Dienste
+      purpose: ADR-005 Restart=always für kritische Dienste — kein Rate-Limit, negativer OOM-Score
+      status: accepted
+      date: 2026-06-17
+      error_pattern: "Start request repeated too quickly|entered failed state|failed.*StartLimitHit"
+      quick_fix: "systemctl reset-failed <service> && systemctl start <service>"
+      services: [caddy, blocky, pocket-id]
+      betrifft:
+        - lib/critical-systemd.nix
+        - modules/10-network/11-network.nix
+        - modules/60-apps/pocket-id.nix
       docs:
         - docs/adr/README.md
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/007-dendritic-one-file-per-service.md
       tags:
         - adr
         - systemd
-  - |
-    file: docs/adr/006-sops-migration-path.md
-    meta:
-      role: doc
-      purpose: ADR-006 SOPS-Migration vs. secrets-provision
-      docs:
-        - docs/adr/README.md
-      tags:
-        - adr
-        - sops
+        - restart
+        - kritisch
   - |
     file: docs/adr/007-dendritic-one-file-per-service.md
     meta:
       role: doc
-      purpose: ADR-007 Dendritische Module — eine Datei pro Dienst
+      purpose: ADR-007 Dendritische Module — eine Datei pro Dienst, rollout.nix als einzige Enable-Quelle
+      status: accepted
+      date: 2026-06-17
+      betrifft:
+        - modules/50-media/
+        - machines/q958/rollout.nix
       docs:
         - docs/adr/README.md
         - docs/guides/GUIDE-dendritic-architecture.md
+        - docs/adr/1004-unix-socket-upstreams.md
+        - docs/adr/005-critical-systemd-restart.md
+        - docs/adr/011-unified-port-uid-schema.md
       tags:
         - adr
         - dendritic
-  - |
-    file: docs/adr/008-nftables-l4-hardening.md
-    meta:
-      role: doc
-      purpose: ADR-008 nftables L4-Härtung (KB-Synthese)
-      docs:
-        - docs/adr/README.md
-        - docs/guides/GUIDE-nftables-hardening.md
-      lib:
-        - lib/nftables-rules.nix
-      tags:
-        - adr
-        - nftables
-  - |
-    file: docs/adr/009-vpn-leak-check.md
-    meta:
-      role: doc
-      purpose: ADR-009 VPN-NetNS-Leak-Check per systemd-Timer
-      docs:
-        - docs/adr/README.md
-        - docs/guides/GUIDE-media-stack.md
-      tags:
-        - adr
-        - vpn
-        - netns
+        - module-struktur
+        - rollout
   - |
     file: docs/adr/010-production-ssh-impermanence.md
     meta:
       role: doc
-      purpose: ADR-010 Production-Modus — SSH-Port, PermitTTY, Impermanence
+      purpose: ADR-010 Production-Modus — SSH-Port, PermitTTY, Impermanence ab Rollout-Stufe 9
+      status: accepted
+      date: 2026-06-17
+      betrifft:
+        - machines/q958/profile.nix
+        - machines/q958/rollout.nix
+        - modules/20-security/ssh.nix
+        - modules/30-storage/impermanence.nix
       docs:
         - docs/adr/README.md
         - docs/guides/GUIDE-security-secrets.md
+        - docs/adr/2006-sops-migration-path.md
+        - docs/adr/2008-nftables-l4-hardening.md
       tags:
         - adr
         - ssh
         - impermanence
+        - production
+        - rollout
+  - |
+    file: docs/adr/011-unified-port-uid-schema.md
+    meta:
+      role: doc
+      purpose: ADR-011 Unified Port=UID=FolderPrefix Schema (4-stellig) — deterministisch, KI-ableitbar
+      status: accepted
+      date: 2026-06-27
+      betrifft:
+        - lib/uid-registry.nix
+        - lib/unix-sockets.nix
+        - lib/server-map.nix
+        - modules/00-core/01-core.nix
+      docs:
+        - docs/adr/README.md
+        - docs/guides/GUIDE-server-map.md
+        - docs/adr/1004-unix-socket-upstreams.md
+        - docs/adr/007-dendritic-one-file-per-service.md
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/adr/012-modern-cli-tools.md
+      lib:
+        - lib/uid-registry.nix
+        - lib/unix-sockets.nix
+        - lib/server-map.nix
+        - modules/00-core/01-core.nix
+      tags:
+        - adr
+        - uid
+        - ports
+        - server-map
+        - nftables
+  - |
+    file: docs/adr/012-modern-cli-tools.md
+    meta:
+      role: doc
+      purpose: ADR-012 Moderne CLI-Tools systemweit — bat/eza/fd/rg/btop/nh/nvd für bessere DX
+      status: accepted
+      date: 2026-06-28
+      betrifft:
+        - modules/00-core/09-nix-tools.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/011-unified-port-uid-schema.md
+      tags:
+        - adr
+        - cli
+        - dx
+        - shell
+  - |
+    file: docs/adr/013-flake-portability.md
+    meta:
+      role: doc
+      purpose: ADR-013 Flake-Portabilität — maximale Reproduzierbarkeit, minimale experimental-features
+      status: accepted
+      date: 2026-06-29
+      betrifft:
+        - modules/00-core/09-nix-tools.nix
+        - flake.nix
+        - flake.lock
+      docs:
+        - docs/adr/README.md
+        - docs/guides/GUIDE-flake-portability.md
+        - docs/adr/007-dendritic-one-file-per-service.md
+      tags:
+        - adr
+        - flakes
+        - portability
+        - reproducibility
+        - nix
+  - |
+    file: docs/adr/015-cpu-power-profiles-daemon-thermald.md
+    meta:
+      role: doc
+      purpose: CPU-Energieverwaltung — power-profiles-daemon + thermald für Intel HWP/EPP auf Q958
+      status: accepted
+      date: 2026-06-29
+      error_pattern: "thermald.*error|power-profiles-daemon.*failed|cpufreq.*error|EPP.*failed"
+      quick_fix: "systemctl restart thermald power-profiles-daemon; powerprofilesctl get"
+      services: [thermald, power-profiles-daemon]
+      betrifft:
+        - machines/q958/default.nix
+      docs:
+        - docs/adr/README.md
+      tags:
+        - adr
+        - power
+        - cpu
+        - homelab
+        - intel-pstate
+        - thermald
+  - |
+    file: docs/adr/020-no-legacy-explicit-stack.md
+    meta:
+      role: doc
+      purpose: Explizit ersetzte Technologien — was und warum nicht mehr im Stack ist
+      status: accepted
+      date: 2026-06-30
+      tags:
+        - governance
+        - policy
+        - boot
+        - systemd
+        - kernel
+        - no-legacy
+      docs:
+        - docs/adr/README.md
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/adr/011-unified-port-uid-schema.md
+  - |
+    file: docs/adr/028-systemd-service-isolation.md
+    meta:
+      role: doc
+      purpose: ADR-028 Systemd Service Isolation — mkHardened Factory + DynamicUser
+      status: accepted
+      date: 2026-07-05
+      error_pattern: "Permission denied|Read-only file system|Operation not permitted|ProtectSystem.*strict|NoNewPrivileges"
+      quick_fix: "systemctl show <service> | grep -E 'ProtectSystem|ProtectHome|NoNew|DynamicUser|PrivateTmp'"
+      services: []
+      betrifft:
+        - lib/systemd-hardening.nix
+        - modules/60-apps/
+        - modules/50-media/
+      docs:
+        - docs/adr/2026-kernel-hardening-sysctl.md
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/007-dendritic-one-file-per-service.md
+        - docs/guides/GUIDE-kernel-hardening.md
+      tags:
+        - adr
+        - systemd
+        - hardening
+        - isolation
+        - security
+  - |
+    file: docs/adr/032-os-native-first.md
+    meta:
+      role: doc
+      purpose: ADR-032 OS-native-first für kritische Infrastruktur — lego statt Caddy-ACME als Leitbeispiel
+      status: accepted
+      date: 2026-07-06
+      betrifft:
+        - modules/20-security/23-acme.nix
+        - modules/10-network/11-network.nix
+        - packages/secrets-portal/
+      docs:
+        - docs/adr/README.md
+        - docs/adr/1001-dns-dot-fail-closed.md
+        - docs/adr/2024-systemd-creds-tpm.md
+        - docs/adr/028-systemd-service-isolation.md
+      tags:
+        - adr
+        - philosophy
+        - acme
+        - tls
+        - security
+        - principle
+  - |
+    file: docs/adr/033-no-cockpit.md
+    meta:
+      role: doc
+      purpose: Kein Cockpit — Angriffsfläche überwiegt Nutzen im Ein-Personen-Homelab
+      status: accepted
+      date: 2026-07-06
+      tags:
+        - security
+        - admin-ui
+        - attack-surface
+  - |
+    file: docs/adr/034-no-ansible-semaphore.md
+    meta:
+      role: doc
+      purpose: Kein Ansible/Semaphore — Imperativismus verboten
+      status: accepted
+      date: 2026-07-06
+      tags:
+        - policy
+        - declarative
+        - forbidden-tech
+  - |
+    file: docs/adr/035-pre-commit-hooks-manual.md
+    meta:
+      role: doc
+      purpose: ADR-035 Pre-commit Hooks — manuell installieren statt activationScript
+      status: accepted
+      date: 2026-07-10
+      betrifft:
+        - modules/00-core/09-nix-tools.nix
+        - modules/00-core/README.md
+        - docs/GUIDE-developer-experience.md
+      tags:
+        - adr
+        - dx
+        - pre-commit
+        - layer-0
+  - |
+    file: docs/adr/1001-dns-dot-fail-closed.md
+    meta:
+      role: doc
+      purpose: ADR-1001 DNS-over-TLS, resolved→DoT direkt (Host), Blocky für LAN
+      status: accepted
+      date: 2026-06-17
+      error_pattern: "SERVFAIL|failed to resolve|no such host|blocky.*not reachable|connection refused.*1002"
+      quick_fix: "resolvectl status; dig cloudflare.com +short; systemctl restart blocky"
+      services: [blocky, systemd-resolved]
+      betrifft:
+        - machines/q958/profile.nix
+        - machines/q958/network.nix
+        - modules/10-network/11-network.nix
+        - modules/10-network/12-blocky.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/1002-ipv6-homelab-v4-only.md
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/2008-nftables-l4-hardening.md
+      tags:
+        - adr
+        - dns
+        - dot
+        - blocky
+  - |
+    file: docs/adr/1002-ipv6-homelab-v4-only.md
+    meta:
+      role: doc
+      purpose: ADR-1002 IPv6 Homelab v4-only auf eno1
+      status: accepted
+      date: 2026-06-17
+      betrifft:
+        - machines/q958/profile.nix
+        - machines/q958/network.nix
+        - machines/q958/access.nix
+        - modules/10-network/11-network.nix
+        - modules/15-firewall.nix
+        - modules/40-observability/crowdsec.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/1001-dns-dot-fail-closed.md
+        - docs/adr/2008-nftables-l4-hardening.md
+      tags:
+        - adr
+        - ipv6
+        - nftables
+        - network
+  - |
+    file: docs/adr/1004-unix-socket-upstreams.md
+    meta:
+      role: doc
+      purpose: ADR-1004 Unix-Socket-Upstreams für Caddy — weniger TCP-Ports, klarere Ingress-Grenze
+      status: accepted
+      date: 2026-06-17
+      betrifft:
+        - lib/unix-sockets.nix
+        - lib/caddy-helpers.nix
+        - lib/service-factory.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/007-dendritic-one-file-per-service.md
+        - docs/adr/011-unified-port-uid-schema.md
+      tags:
+        - adr
+        - caddy
+        - unix-sockets
+        - uds
+  - |
+    file: docs/adr/1014-caddy-security-headers-trusted-proxies.md
+    meta:
+      role: doc
+      purpose: Caddy Security-Härtung — Security Headers + trusted_proxies (KB-Analyse 2026-06-29)
+      status: accepted
+      date: 2026-06-29
+      betrifft:
+        - lib/caddy-snippets.nix
+        - modules/10-network/11-network.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/1016-caddy-security-headers-coop-scanners.md
+        - docs/adr/1017-caddy-health-checks-error-fallback.md
+        - docs/adr/1018-caddy-dual-log-dsgvo.md
+      tags:
+        - adr
+        - caddy
+        - sicherheit
+        - headers
+        - trusted-proxies
+  - |
+    file: docs/adr/1016-caddy-security-headers-coop-scanners.md
+    meta:
+      role: doc
+      purpose: Caddy Security-Härtung II — Server-Header entfernen, COOP, Scanner-Blocking via abort
+      status: accepted
+      date: 2026-06-29
+      betrifft:
+        - lib/caddy-snippets.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+        - docs/adr/1017-caddy-health-checks-error-fallback.md
+        - docs/adr/1018-caddy-dual-log-dsgvo.md
+      tags:
+        - adr
+        - caddy
+        - sicherheit
+        - headers
+        - coop
+        - scanner
+  - |
+    file: docs/adr/1017-caddy-health-checks-error-fallback.md
+    meta:
+      role: doc
+      purpose: Caddy Health Checks und 503-Fallback — upstream_errors Snippet für alle vHosts
+      status: accepted
+      date: 2026-06-29
+      error_pattern: "bad gateway|upstream.*unhealthy|connection refused.*upstream|502.*caddy"
+      quick_fix: "systemctl status <dienst>; curl -I https://<vhost>.domain.tld"
+      services: [caddy]
+      betrifft:
+        - lib/caddy-snippets.nix
+        - lib/caddy-ingress.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+        - docs/adr/1016-caddy-security-headers-coop-scanners.md
+        - docs/adr/1018-caddy-dual-log-dsgvo.md
+      tags:
+        - adr
+        - caddy
+        - health-checks
+        - 503
+        - stabilität
+  - |
+    file: docs/adr/1018-caddy-dual-log-dsgvo.md
+    meta:
+      role: doc
+      purpose: Caddy Dual-Log — DSGVO-Datei mit IP-Anonymisierung + journald für CrowdSec
+      status: accepted
+      date: 2026-06-29
+      error_pattern: "strconv\\.Atoi.*invalid syntax|ip_mask.*parsing error|error parsing.*ip_mask"
+      quick_fix: "ip_mask 24 statt /24 in Caddyfile (kein Slash!)"
+      services: [caddy]
+      betrifft:
+        - modules/10-network/11-network.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+        - docs/adr/1016-caddy-security-headers-coop-scanners.md
+        - docs/adr/1017-caddy-health-checks-error-fallback.md
+        - docs/RUNBOOK.md
+      tags:
+        - adr
+        - caddy
+        - dsgvo
+        - logging
+        - crowdsec
+        - ip-anonymisierung
+  - |
+    file: docs/adr/1019-uds-first-philosophy.md
+    meta:
+      role: doc
+      purpose: Entscheidung für Unix-Domain-Sockets als primäres IPC-Protokoll zwischen Caddy und Backend-Diensten
+      status: accepted
+      date: 2026-06-30
+      tags:
+        - unix-socket
+        - caddy
+        - architecture
+        - security
+  - |
+    file: docs/adr/1025-pocket-id-oidc-provider.md
+    meta:
+      role: doc
+      purpose: Pocket-ID als OIDC/Passkey Provider — Entscheidung gegen Authentik/Keycloak
+      status: accepted
+      date: 2026-07-05
+      error_pattern: "pocket-id.*failed|ENCRYPTION_KEY.*not set|invalid.*encryption.key"
+      quick_fix: "ENCRYPTION_KEY in /var/lib/secrets/pocket-id.env prüfen; systemctl restart pocket-id"
+      services: [pocket-id]
+      betrifft:
+        - modules/10-network/17-pocket-id.nix
+        - machines/q958/media-secrets.nix
+        - machines/q958/profile.local.nix
+      docs:
+        - docs/guides/GUIDE-auth-stack.md
+        - docs/guides/GUIDE-security-secrets.md
+        - docs/adr/2024-systemd-creds-tpm.md
+      tags:
+        - auth
+        - oidc
+        - pocket-id
+        - passkeys
+  - |
+    file: docs/adr/1031-caddy-zones-konzept.md
+    meta:
+      role: doc
+      purpose: Caddy-Zonen-Konzept — internal / external / streaming
+      status: accepted
+      date: 2026-07-10
+      tags:
+        - caddy
+        - zones
+        - security
+        - ingress
+      docs:
+        - lib/caddy-ingress.nix
+        - lib/caddy-snippets.nix
+        - lib/services-spec.nix
+        - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+        - docs/adr/1025-pocket-id-oidc-provider.md
+        - docs/adr/1032-internal-zone-sso.md
+        - docs/adr/7005-cloudflare-dns-acme-ddns.md
+  - |
+    file: docs/adr/1032-internal-zone-sso.md
+    meta:
+      role: doc
+      purpose: internal Zone — Umbenennung admin-hangar + SSO-Overlay
+      status: accepted
+      date: 2026-07-08
+      tags:
+        - caddy
+        - zones
+        - security
+        - sso
+        - ingress
+      docs:
+        - lib/caddy-ingress.nix
+        - lib/services-spec.nix
+        - docs/adr/1031-caddy-zones-konzept.md
+        - docs/adr/1025-pocket-id-oidc-provider.md
+  - |
+    file: docs/adr/1033-oauth2-proxy-forward-auth.md
+    meta:
+      role: doc
+      purpose: oauth2-proxy als OIDC Forward-Auth Gate — Bugs bei Erstinbetriebnahme und Lösungen
+      status: accepted
+      date: 2026-07-08
+      error_pattern: "unknown flag.*--|invalid.*cookie.*secret|x509.*unknown authority|OIDC.*issuer.*mismatch|start-limit-hit"
+      quick_fix: "journalctl -u oauth2-proxy -n 30; systemctl reset-failed oauth2-proxy; systemctl start oauth2-proxy"
+      services: [oauth2-proxy]
+      betrifft:
+        - modules/20-security/28-oauth2-proxy.nix
+        - machines/q958/secrets.nix
+        - machines/q958/profile.local.nix
+      docs:
+        - docs/adr/1025-pocket-id-oidc-provider.md
+        - docs/guides/GUIDE-auth-stack.md
+        - docs/adr/2030-networkd-wait-online-headless.md
+      tags:
+        - auth
+        - oidc
+        - oauth2-proxy
+        - forward-auth
+        - sso
+  - |
+    file: docs/adr/1034-secrets-portal-architecture.md
+    meta:
+      role: doc
+      purpose: secrets-portal — Architektur-Entscheidungen für Secret-Rotation-Web-UI
+      status: accepted
+      date: 2026-07-09
+      services: [secrets-portal]
+      betrifft:
+        - packages/secrets-portal/main.go
+        - packages/secrets-portal/static/index.html
+        - modules/20-security/29-secrets-portal.nix
+        - machines/q958/default.nix
+        - lib/services-spec.nix
+      docs:
+        - docs/guides/GUIDE-secrets-portal.md
+        - docs/adr/1031-caddy-zones-konzept.md
+        - docs/adr/2024-systemd-creds-tpm.md
+        - docs/superpowers/specs/2026-07-09-secrets-rotator-design.md
+        - docs/superpowers/plans/2026-07-09-secrets-portal.md
+      tags:
+        - secrets
+        - security
+        - web-ui
+        - go
+        - systemd-creds
+  - |
+    file: docs/adr/2006-sops-migration-path.md
+    meta:
+      role: doc
+      purpose: ADR-2006 SOPS-Migration — SUPERSEDED by ADR-2024
+      status: superseded
+      date: 2026-06-17
+      superseded_by: docs/adr/2024-systemd-creds-tpm.md
+      betrifft:
+        - machines/q958/secrets.nix
+        - machines/q958/profile.local.nix
+        - modules/10-network/11-network.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/2024-systemd-creds-tpm.md
+      tags:
+        - adr
+        - sops
+        - secrets
+        - superseded
+  - |
+    file: docs/adr/2008-nftables-l4-hardening.md
+    meta:
+      role: doc
+      purpose: ADR-2008 nftables L4-Härtung — KB-Synthese, skuid-Segmentierung, CrowdSec/Fail2ban-Integration
+      status: accepted
+      date: 2026-06-17
+      error_pattern: "nft.*error|Error in line.*nftables|nftables.*failed to load|ruleset.*error"
+      quick_fix: "nft -c -f /etc/nftables.conf && systemctl restart nftables"
+      services: []
+      betrifft:
+        - lib/nftables-rules.nix
+        - modules/15-firewall.nix
+        - modules/20-security/crowdsec.nix
+      docs:
+        - docs/adr/README.md
+        - docs/guides/GUIDE-nftables-hardening.md
+        - docs/adr/1001-dns-dot-fail-closed.md
+        - docs/adr/1002-ipv6-homelab-v4-only.md
+        - docs/adr/2009-vpn-leak-check.md
+        - docs/adr/011-unified-port-uid-schema.md
+      tags:
+        - adr
+        - nftables
+        - firewall
+        - crowdsec
+        - fail2ban
+        - skuid
+  - |
+    file: docs/adr/2009-vpn-leak-check.md
+    meta:
+      role: doc
+      purpose: ADR-2009 VPN-NetNS-Leak-Check per systemd-Timer — SABnzbd + Prowlarr Egress-Verifikation
+      status: superseded
+      date: 2026-06-17
+      error_pattern: "vpn.leak.check.*failed|IP.*match.*host|sabnzbd.*stopped.*leak|prowlarr.*stopped.*leak"
+      quick_fix: "systemctl status vpn-leak-check; ip -n vpn-netns addr show"
+      services: [vpn-leak-check, sabnzbd, prowlarr]
+      betrifft:
+        - modules/10-network/vpn-confinement.nix
+      docs:
+        - docs/adr/README.md
+        - docs/guides/GUIDE-media-stack.md
+        - docs/adr/2008-nftables-l4-hardening.md
+      tags:
+        - adr
+        - vpn
+        - netns
+        - sabnzbd
+        - prowlarr
+  - |
+    file: docs/adr/2021-sops-impermanence-boot-timing.md
+    meta:
+      role: doc
+      purpose: SOPS Boot-Timing mit Impermanence — withdrawn zugunsten ADR-2024
+      status: withdrawn
+      date: 2026-06-30
+      tags:
+        - sops
+        - impermanence
+        - withdrawn
+  - |
+    file: docs/adr/2024-systemd-creds-tpm.md
+    meta:
+      role: doc
+      purpose: ADR-2024 systemd-creds + TPM2 als Secrets-Strategie — ersetzt sops-nix
+      status: accepted
+      date: 2026-07-05
+      betrifft:
+        - modules/00-core/05-creds.nix
+        - machines/q958/rollout.nix
+        - flake.nix
+      docs:
+        - docs/adr/2006-sops-migration-path.md
+        - docs/guides/ANTIPATTERNS.md
+        - docs/guides/GUIDE-security-secrets.md
+      tags:
+        - adr
+        - secrets
+        - systemd-creds
+        - tpm2
+  - |
+    file: docs/adr/2026-kernel-hardening-sysctl.md
+    meta:
+      role: doc
+      purpose: ADR-2026 Kernel-Härtung — sysctl, Boot-Parameter, Mount-Flags
+      status: accepted
+      date: 2026-07-05
+      error_pattern: "ERROR: could not insert module|Operation not permitted.*lockdown|Lockdown: direct memory|kernel.* write protected"
+      quick_fix: "journalctl -b | grep -iE 'lockdown|module.*denied|sysctl.*fail'"
+      services: []
+      betrifft:
+        - modules/20-security/26-kernel-hardening.nix
+        - modules/20-security/27-hardened-core.nix
+        - machines/q958/rollout.nix
+      docs:
+        - docs/adr/2027-kernel-slim-module-policy.md
+        - docs/adr/028-systemd-service-isolation.md
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/guides/GUIDE-kernel-hardening.md
+      tags:
+        - adr
+        - kernel
+        - sysctl
+        - security
+        - hardening
+  - |
+    file: docs/adr/2027-kernel-slim-module-policy.md
+    meta:
+      role: doc
+      purpose: ADR-2027 Kernel-Slim — Modul-Blacklisting-Policy (Whitelist/Blacklist Zwiebelschale)
+      status: accepted
+      date: 2026-07-05
+      error_pattern: "modprobe: FATAL: Module .* not found|modprobe: ERROR.*could not insert|module blacklisted"
+      quick_fix: "lsmod | grep <modul>; journalctl -b | grep -i 'module.*black\\|modprobe.*error'"
+      services: []
+      betrifft:
+        - lib/kernel/policy.nix
+        - lib/kernel/blacklist-filesystems.nix
+        - lib/kernel/blacklist-global.nix
+        - lib/kernel/blacklist-homelab-headless.nix
+        - lib/kernel/whitelist-homelab.nix
+        - modules/20-security/25-kernel-policy.nix
+        - machines/q958/kernel-slim.nix
+      docs:
+        - docs/adr/2026-kernel-hardening-sysctl.md
+        - docs/guides/GUIDE-kernel-hardening.md
+      tags:
+        - adr
+        - kernel
+        - blacklist
+        - security
+        - module-policy
+  - |
+    file: docs/adr/2029-mtls-zero-trust-internal.md
+    meta:
+      role: doc
+      purpose: ADR-2029 mTLS Zero-Trust — interne Dienst-Kommunikation (proposed, nicht implementiert)
+      status: proposed
+      date: 2026-07-05
+      error_pattern: "certificate verify failed|tls.*handshake.*error|x509.*unknown authority"
+      quick_fix: "step certificate inspect <cert.pem>; curl -v --cacert /run/secrets/ca.crt https://dienst.internal"
+      services: []
+      betrifft: []
+      docs:
+        - docs/adr/2026-kernel-hardening-sysctl.md
+        - docs/adr/028-systemd-service-isolation.md
+        - docs/adr/1004-unix-socket-upstreams.md
+        - docs/adr/1019-uds-first-philosophy.md
+      tags:
+        - adr
+        - mtls
+        - zero-trust
+        - networking
+        - proposed
+  - |
+    file: docs/adr/2030-networkd-wait-online-headless.md
+    meta:
+      role: doc
+      purpose: systemd-networkd-wait-online auf Headless-Server deaktivieren — 2min Switch-Timeout Fix
+      status: accepted
+      date: 2026-07-08
+      error_pattern: "Job for systemd-networkd-wait-online.*failed|A stop job is running for.*wait-online"
+      quick_fix: "Nach switch: systemctl reset-failed; der Timeout tritt während switch auf, nicht danach"
+      services: [systemd-networkd-wait-online]
+      betrifft:
+        - modules/20-security/27-hardened-core.nix
+        - modules/10-network/16-vpn.nix
+      docs:
+        - docs/adr/2026-kernel-hardening-sysctl.md
+        - docs/adr/1033-oauth2-proxy-forward-auth.md
+      tags:
+        - systemd
+        - network
+        - headless
+        - rebuild
+        - wireguard
+  - |
+    file: docs/adr/3022-no-raid-distance-parity.md
+    meta:
+      role: doc
+      purpose: Keine lokale Redundanz — geografische Distanz statt RAID
+      status: accepted
+      date: 2026-06-30
+      tags:
+        - storage
+        - raid
+        - backup
+  - |
+    file: docs/adr/3023-backup-philosophy.md
+    meta:
+      role: doc
+      purpose: Backup-Philosophie — nur Unwiederbringliches sichern
+      status: accepted
+      date: 2026-06-30
+      tags:
+        - storage
+        - backup
+        - restic
+  - |
+    file: docs/adr/5030-media-stack-factory-hardening.md
+    meta:
+      role: doc
+      purpose: ADR-5030 — Media-Stack Architektur-Inventory (was bereits implementiert war)
+      status: accepted
+      date: 2026-07-05
+      betrifft:
+        - modules/50-media/51-jellyfin.nix
+        - modules/50-media/arr-helper.nix
+        - lib/caddy-ingress.nix
+        - lib/service-factory.nix
+      docs:
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/adr/2024-systemd-creds-tpm.md
+        - docs/adr/028-systemd-service-isolation.md
+      tags:
+        - media
+        - security
+        - caddy
+        - jellyfin
+        - navidrome
+        - inventory
+  - |
+    file: docs/adr/5031-usenet-vpn-sandbox.md
+    meta:
+      role: doc
+      purpose: ADR-5031 Usenet-Dienste VPN-Sandbox — Ablösung POSIX-NetNS durch host-basierten UID-Stack
+      status: accepted
+      date: 2026-07-06
+      error_pattern: "sabnzbd.*network.*denied|prowlarr.*network.*denied|privado.*not found|sys-subsystem-net-devices-privado.*failed"
+      quick_fix: "systemctl status wg-quick-privado; systemctl show sabnzbd -p RestrictNetworkInterfaces"
+      services: [sabnzbd, prowlarr, wg-quick-privado]
+      betrifft:
+        - modules/50-media/57-usenet-confinement/default.nix
+        - lib/nftables-rules.nix
+        - modules/50-media/52-arr.nix
+        - modules/50-media/53-sabnzbd.nix
+        - modules/50-media/arr-helper.nix
+      docs:
+        - docs/adr/README.md
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/adr/2009-vpn-leak-check.md
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/adr/028-systemd-service-isolation.md
+        - docs/superpowers/specs/2026-07-06-usenet-confinement-design.md
+      tags:
+        - adr
+        - vpn
+        - usenet
+        - sabnzbd
+        - prowlarr
+        - systemd
+        - nftables
+        - security
+  - |
+    file: docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+    meta:
+      role: doc
+      purpose: ADR-7001 — LoadCredentialEncrypted vs LoadCredential für systemd-creds
+      status: accepted
+      date: 2026-07-09
+      error_pattern: "MQTT.*Not authorized|homeassistant_mqtt_password missing|CREDENTIALS_DIRECTORY not set"
+      quick_fix: "Check LoadCredentialEncrypted in home-assistant-mqtt-provision.service; wc -c $CREDENTIALS_DIRECTORY/homeassistant_mqtt_password (should be 12, not 527)"
+      services:
+        - home-assistant-mqtt-provision
+        - home-assistant
+      betrifft:
+        - modules/70-home-automation/home-assistant.nix
+      docs:
+        - docs/adr/2024-systemd-creds-tpm.md
+        - docs/adr/7002-ha-storage-provisioning.md
+      tags:
+        - adr
+        - systemd
+        - secrets
+        - home-automation
+        - mqtt
+  - |
+    file: docs/adr/7002-ha-storage-provisioning.md
+    meta:
+      role: doc
+      purpose: ADR-7002 — HA .storage Provisioning — Muster, Race Conditions, Service-Reihenfolge
+      status: accepted
+      date: 2026-07-09
+      error_pattern: "MQTT.*Not authorized|smlight.*entry.*overwrite|provision.*concurrent"
+      quick_fix: "systemctl status home-assistant-mqtt-provision home-assistant-smlight-provision — beide müssen active (exited) sein BEVOR home-assistant.service startet"
+      services:
+        - home-assistant-mqtt-provision
+        - home-assistant-smlight-provision
+        - home-assistant
+      betrifft:
+        - modules/70-home-automation/home-assistant.nix
+      docs:
+        - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+      tags:
+        - adr
+        - home-automation
+        - provisioning
+        - systemd
+        - mqtt
+        - race-condition
+  - |
+    file: docs/adr/7003-groq-stt-wyoming-bridge.md
+    meta:
+      role: doc
+      purpose: ADR-7003 — STT via Groq Whisper + Wyoming Bridge statt lokalem Modell
+      status: accepted
+      date: 2026-07-09
+      error_pattern: "AsrModel.*missing.*version|groq.stt.wyoming.*failed|CREDENTIALS_DIRECTORY not set"
+      quick_fix: "sudo journalctl -u groq-stt-wyoming -n 30 --no-pager; sudo systemctl restart groq-stt-wyoming"
+      services:
+        - groq-stt-wyoming
+      betrifft:
+        - modules/70-home-automation/voice-assistant.nix
+      docs:
+        - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+        - docs/adr/2024-systemd-creds-tpm.md
+      tags:
+        - adr
+        - home-automation
+        - voice
+        - stt
+        - wyoming
+        - groq
+  - |
+    file: docs/adr/7004-google-tts-wyoming-bridge.md
+    meta:
+      role: doc
+      purpose: ADR-7004 — TTS via Google Cloud Text-to-Speech + Wyoming Bridge
+      status: accepted
+      date: 2026-07-09
+      error_pattern: "google.tts.wyoming.*failed|CREDENTIALS_DIRECTORY not set|ConditionPathExists.*unmet"
+      quick_fix: "sudo journalctl -u google-tts-wyoming -n 30 --no-pager; ls /var/lib/credstore.encrypted/google_tts_api_key.cred"
+      services:
+        - google-tts-wyoming
+      betrifft:
+        - modules/70-home-automation/voice-assistant.nix
+      docs:
+        - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+        - docs/adr/7003-groq-stt-wyoming-bridge.md
+        - docs/adr/2024-systemd-creds-tpm.md
+      tags:
+        - adr
+        - home-automation
+        - voice
+        - tts
+        - wyoming
+        - google-cloud
+  - |
+    file: docs/adr/7005-cloudflare-dns-acme-ddns.md
+    meta:
+      role: doc
+      purpose: Cloudflare DNS, ACME DNS-01, DDNS und Token-Management für q958
+      status: accepted
+      date: 2026-07-09
+      tags:
+        - cloudflare
+        - dns
+        - acme
+        - ddns
+  - |
+    file: docs/adr/7006-edge-tts-wyoming-bridge.md
+    meta:
+      role: doc
+      purpose: ADR-7006 — TTS via Microsoft Edge TTS + Wyoming Bridge (kein API Key)
+      status: accepted
+      date: 2026-07-10
+      error_pattern: "Edge TTS error:|edge.tts.wyoming.*failed"
+      quick_fix: "sudo journalctl -u edge-tts-wyoming -n 30 --no-pager; sudo systemctl restart edge-tts-wyoming"
+      services:
+        - edge-tts-wyoming
+      betrifft:
+        - modules/70-home-automation/voice-assistant.nix
+      docs:
+        - docs/adr/7004-google-tts-wyoming-bridge.md
+        - docs/adr/7003-groq-stt-wyoming-bridge.md
+      tags:
+        - adr
+        - home-automation
+        - voice
+        - tts
+        - wyoming
+        - edge-tts
+        - microsoft
+  - |
+    file: docs/adr/CLAUDE-GUIDE.md
+    meta:
+      role: doc
+      purpose: Anleitung für KI-Systeme — wie ADRs, Guides und Runbooks optimal genutzt werden
+      tags:
+        - adr
+        - ai
+        - llm
+        - meta
   - |
     file: docs/adr/README.md
     meta:
       role: doc
       purpose: ADR-Index — alle Architecture Decision Records
+      date: 2026-07-10
       tags:
         - adr
         - index
+  - |
+    file: docs/adr/TEMPLATE-ADR.md
+    meta:
+      role: template
+      purpose: "Vorlage für neue ADRs — kopieren, NNN ersetzen, Platzhalter füllen"
+      status: template
+      date: YYYY-MM-DD
+      # ─── PFLICHTFELDER FÜR ALERT-SCRIPT + KI-TRIAGE ─────────────────────────
+      error_pattern: "regex der direkt auf journalctl-output passt"
+      # Beispiele:
+      #   "oom-kill.*\\.service"
+      #   "strconv\\.Atoi.*invalid syntax"
+      #   "Failed to load environment files"
+      #   "cannot change owner.*not permitted"
+      quick_fix: "Einzeiler-Fix (kopierbar, ohne Kontext)"
+      services: [service-a, service-b]   # betroffene systemd-Units
+      # ─── OPTIONAL ABER EMPFOHLEN ─────────────────────────────────────────────
+      betrifft:                          # geänderte Dateien
+        - lib/example.nix
+        - modules/XX-layer/foo.nix
+      docs:                              # verlinkte Dokumente (maschinenlesbar)
+        - docs/adr/README.md
+        - docs/adr/NNN-verwandte-entscheidung.md
+        - docs/RUNBOOK.md
+      tags:
+        - adr
+        - thema-a
+        - thema-b
   - |
     file: docs/AUDIT-blocky-caddy-ipv6.md
     meta:
@@ -1204,6 +2397,22 @@ entries:
         - dns
         - ipv6
   - |
+    file: docs/CHECKLISTS.md
+    meta:
+      role: checklist
+      purpose: Wiederholbare Workflows als Schritt-für-Schritt-Checklisten — für Mensch und KI
+      tags:
+        - checklist
+        - workflow
+        - onboarding
+        - operations
+      docs:
+        - docs/adr/007-dendritic-one-file-per-service.md
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/005-critical-systemd-restart.md
+        - docs/RUNBOOK.md
+  - |
     file: docs/FILE-META.md
     meta:
       role: doc
@@ -1214,30 +2423,100 @@ entries:
         - meta
         - llm
   - |
+    file: docs/GUIDE-developer-experience.md
+    meta:
+      role: doc
+      purpose: Developer-Experience-Guide — nh, nvd, bat, eza, fd, rg und wie sie zusammenspielen
+      docs:
+        - docs/adr/012-modern-cli-tools.md
+      tags:
+        - guide
+        - dx
+        - cli
+  - |
     file: docs/guides/ANTIPATTERNS.md
     meta:
       role: doc
       purpose: Verbotene Muster — Synthese aus nix-hermes Guides
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/adr/007-dendritic-one-file-per-service.md
+        - docs/adr/012-modern-cli-tools.md
+        - docs/adr/1004-unix-socket-upstreams.md
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/adr/2024-systemd-creds-tpm.md
       tags:
         - antipattern
         - architecture
+  - |
+    file: docs/guides/GUIDE-auth-stack.md
+    meta:
+      role: doc
+      purpose: Auth-Stack — Pocket-ID, OAuth2-Proxy, Caddy forward_auth, Jellyfin-Client-Split, Jellyseerr
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/adr/1025-pocket-id-oidc-provider.md
+        - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+        - docs/adr/1019-uds-first-philosophy.md
+        - docs/guides/GUIDE-security-secrets.md
+      tags:
+        - auth
+        - oidc
+        - pocket-id
+        - oauth2-proxy
+        - jellyfin
+        - jellyseerr
+        - caddy
+  - |
+    file: docs/guides/GUIDE-cloudflare.md
+    meta:
+      role: doc
+      purpose: Cloudflare DNS, ACME, DDNS und Token-Rotation auf q958
+      status: current
+      date: 2026-07-10
+      docs:
+        - docs/adr/7005-cloudflare-dns-acme-ddns.md
+      tags:
+        - cloudflare
+        - dns
+        - acme
+        - ddns
   - |
     file: docs/guides/GUIDE-data-management.md
     meta:
       role: doc
       purpose: rsync, rclone, restic — NixOS-Risiken und Homelab-Einsatz
+      date: 2026-07-10
+      status: current
       docs:
         - docs/guides/GUIDE-storage-tiers.md
+        - docs/adr/1002-ipv6-homelab-v4-only.md
+        - docs/adr/003-oom-cgroup-isolation.md
         - modules/30-storage.nix
       tags:
         - storage
         - restic
         - rclone
   - |
+    file: docs/guides/GUIDE-declarative-mindset.md
+    meta:
+      role: doc
+      purpose: Leitfaden für AI-Agenten und Contributor — deklarativer NixOS-Mindset, Escape-Hatch-Regeln, Checkliste
+      date: 2026-07-10
+      status: current
+      tags:
+        - agents
+        - declarative
+        - review
+  - |
     file: docs/guides/GUIDE-dendritic-architecture.md
     meta:
       role: doc
       purpose: Guide — dendritische Modul-Architektur
+      date: 2026-07-10
+      status: current
       docs:
         - docs/adr/007-dendritic-one-file-per-service.md
         - AGENTS.md
@@ -1245,25 +2524,120 @@ entries:
         - guide
         - dendritic
   - |
+    file: docs/guides/GUIDE-disk-health.md
+    meta:
+      role: doc
+      purpose: Betriebsguide smartd + Scrutiny für Tier-C HDDs
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/guides/GUIDE-storage-tiers.md
+        - docs/guides/GUIDE-observability.md
+        - modules/36-disk-health.nix
+      tags:
+        - storage
+        - smartd
+        - scrutiny
+  - |
+    file: docs/guides/GUIDE-flake-portability.md
+    meta:
+      role: doc
+      purpose: Flake-Portabilität — System auf neuem Rechner aufsetzen, Offline-Betrieb
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/adr/013-flake-portability.md
+      tags:
+        - guide
+        - flakes
+        - portability
+        - disaster-recovery
+  - |
+    file: docs/guides/GUIDE-home-assistant.md
+    meta:
+      role: doc
+      purpose: GUIDE-home-assistant — Kompletter HA-Stack auf q958 (MQTT, Zigbee, Voice)
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md
+        - docs/adr/7002-ha-storage-provisioning.md
+        - docs/adr/7003-groq-stt-wyoming-bridge.md
+        - docs/adr/7004-google-tts-wyoming-bridge.md
+        - docs/adr/7006-edge-tts-wyoming-bridge.md
+      tags:
+        - guide
+        - home-automation
+        - home-assistant
+        - mqtt
+        - zigbee
+        - voice
+  - |
+    file: docs/guides/GUIDE-kernel-hardening.md
+    meta:
+      role: doc
+      purpose: Betriebsguide Kernel-Härtung — Kernel-Slim, sysctl, Systemd Service Isolation
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/adr/2026-kernel-hardening-sysctl.md
+        - docs/adr/2027-kernel-slim-module-policy.md
+        - docs/adr/028-systemd-service-isolation.md
+        - modules/20-security/26-kernel-hardening.nix
+        - modules/20-security/27-hardened-core.nix
+        - lib/kernel/policy.nix
+        - lib/systemd-hardening.nix
+      tags:
+        - security
+        - kernel
+        - hardening
+        - systemd
+  - |
+    file: docs/guides/GUIDE-knowledge-db.md
+    meta:
+      role: guide
+      purpose: Architektur und Bedienung der serverlosen nixos_docs.sqlite (FTS5)
+      status: current
+      date: 2026-07-10
+      tags:
+        - sqlite
+        - mcp
+        - fts5
+        - adr
+        - indexer
+      docs:
+        - docs/guides/ANTIPATTERNS.md#lokale-ki
+  - |
     file: docs/guides/GUIDE-media-stack.md
     meta:
       role: doc
       purpose: Betriebsguide Media-Stack, VPN-NetNS, Config-Sync, QSV
+      date: 2026-07-10
+      status: current
       docs:
         - docs/adr/007-dendritic-one-file-per-service.md
-        - docs/adr/009-vpn-leak-check.md
+        - docs/adr/2009-vpn-leak-check.md
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/011-unified-port-uid-schema.md
         - docs/guides/GUIDE-dendritic-architecture.md
+        - docs/guides/GUIDE-auth-stack.md
       tags:
         - media
         - jellyfin
+        - jellyseerr
         - vpn
   - |
     file: docs/guides/GUIDE-network-database.md
     meta:
       role: doc
       purpose: Betriebsguide DNS (Blocky), Valkey, PostgreSQL
+      date: 2026-07-10
+      status: current
       docs:
-        - docs/adr/001-dns-dot-fail-closed.md
+        - docs/adr/1001-dns-dot-fail-closed.md
+        - docs/adr/1004-unix-socket-upstreams.md
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/adr/1002-ipv6-homelab-v4-only.md
         - modules/10-network.nix
       tags:
         - network
@@ -1274,17 +2648,38 @@ entries:
     meta:
       role: doc
       purpose: Guide — nftables L4-Härtung für Homelab q958
+      date: 2026-07-10
+      status: current
       docs:
-        - docs/adr/008-nftables-l4-hardening.md
+        - docs/adr/2008-nftables-l4-hardening.md
+        - docs/adr/011-unified-port-uid-schema.md
       tags:
         - guide
         - nftables
+  - |
+    file: docs/guides/GUIDE-observability-kurz.md
+    meta:
+      role: doc
+      purpose: Täglicher Kurzguide — Gatus, Logs, Alerts (ohne Uptime Kuma)
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/guides/GUIDE-observability.md
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/005-critical-systemd-restart.md
+      tags:
+        - observability
+        - kurzguide
   - |
     file: docs/guides/GUIDE-observability.md
     meta:
       role: doc
       purpose: Betriebsguide Gatus, VLG-Logging, CrowdSec, Alerting
+      date: 2026-07-10
+      status: current
       docs:
+        - docs/adr/003-oom-cgroup-isolation.md
+        - docs/adr/005-critical-systemd-restart.md
         - modules/40-observability.nix
         - modules/05-alerting.nix
       tags:
@@ -1292,30 +2687,86 @@ entries:
         - gatus
         - crowdsec
   - |
+    file: docs/guides/GUIDE-secrets-portal.md
+    meta:
+      role: doc
+      purpose: Betriebsguide secrets-portal — Neues Secret hinzufügen, Validator erweitern
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/adr/1034-secrets-portal-architecture.md
+        - packages/secrets-portal/main.go
+        - modules/20-security/29-secrets-portal.nix
+        - machines/q958/default.nix
+      tags:
+        - secrets
+        - security
+        - web-ui
+        - how-to
+  - |
     file: docs/guides/GUIDE-security-secrets.md
     meta:
       role: doc
       purpose: Betriebsguide Sovereign-Unlock, SSH-Härtung, Secrets
+      date: 2026-07-10
+      status: current
       docs:
         - docs/adr/010-production-ssh-impermanence.md
+        - docs/adr/2024-systemd-creds-tpm.md
         - docs/SECURITY.md
         - modules/20-security.nix
       tags:
         - security
         - ssh
-        - sops
+        - systemd-creds
+        - secrets
+  - |
+    file: docs/guides/GUIDE-server-map.md
+    meta:
+      role: doc
+      purpose: Server-Landkarte — alle Services mit ID, Port/Socket, UID, Ist-Status
+      date: 2026-07-10
+      status: current
+      docs:
+        - docs/adr/011-unified-port-uid-schema.md
+        - docs/adr/1004-unix-socket-upstreams.md
+        - docs/adr/2008-nftables-l4-hardening.md
+      lib:
+        - lib/server-map.nix
+        - lib/unix-sockets.nix
+        - lib/uid-registry.nix
+      tags:
+        - server-map
+        - ports
+        - uid
+        - unix-socket
   - |
     file: docs/guides/GUIDE-storage-tiers.md
     meta:
       role: doc
       purpose: Betriebsguide Storage-Tiers, Impermanence, Restic, Pending-Watcher
+      date: 2026-07-10
+      status: current
       docs:
+        - docs/adr/003-oom-cgroup-isolation.md
         - machines/q958/profile.nix
         - modules/30-storage.nix
       tags:
         - storage
         - tiers
         - restic
+  - |
+    file: docs/guides/TEMPLATE-GUIDE.md
+    meta:
+      role: doc
+      purpose: "Vorlage für neue Guides — kopieren, Platzhalter füllen, als GUIDE-thema.md speichern"
+      status: template
+      docs:
+        - docs/adr/README.md
+        - docs/FILE-META.md
+      tags:
+        - template
+        - guide
   - |
     file: docs/memory_oom.md
     meta:
@@ -1345,6 +2796,15 @@ entries:
         - roadmap
         - rollout
   - |
+    file: docs/RUNBOOK.md
+    meta:
+      role: runbook
+      purpose: Bekannte Fehler + Quick-Fixes — erste Anlaufstelle für Alert-Script und KI-Triage
+      tags:
+        - runbook
+        - errors
+        - monitoring
+  - |
     file: docs/SECURITY.md
     meta:
       role: doc
@@ -1352,6 +2812,23 @@ entries:
       tags:
         - security
         - secrets
+  - |
+    file: docs/SERVICE_TEMPLATE.nix
+    meta:
+      id: NIXH-60-APP-TPL
+      layer: 3
+      role: module
+      purpose: Onboarding-Vorlage für neue Apps — Kopieren, anpassen, in default.nix importieren
+      docs:
+        - docs/SPEC_REGISTRY.md
+        - docs/adr/README.md
+      lib:
+        - lib/service-factory.nix
+        - lib/dns-map.nix
+      tags:
+        - template
+        - onboarding
+    ---
   - |
     file: docs/SESSION-2026-06-17-review-fixes.md
     meta:
@@ -1361,6 +2838,25 @@ entries:
         - session
         - changelog
   - |
+    file: docs/SESSION-2026-07-10-phase-a-00core.md
+    meta:
+      role: doc
+      purpose: Session-Changelog 2026-07-10 — Phase A (Audit-Fixes) + 00-core Vorzeigeordner
+      tags:
+        - session
+        - changelog
+        - 00-core
+        - phase-a
+  - |
+    file: docs/SOURCES.md
+    meta:
+      role: doc
+      purpose: Zero-Trust Provenance — Inspirationsquellen und bewusste Nicht-Abhängigkeiten
+      tags:
+        - governance
+        - provenance
+        - sources
+  - |
     file: docs/SPEC_REGISTRY.md
     meta:
       role: doc
@@ -1368,6 +2864,39 @@ entries:
       tags:
         - registry
         - spec
+  - |
+    file: docs/superpowers/specs/2026-07-06-usenet-confinement-design.md
+    name: usenet-confinement-modernisierung
+    description: Design-Spec für die Ablösung der POSIX-NetNS-Lösung durch einen modernen host-basierten UID-Sandbox-Stack für SABnzbd + Prowlarr
+    metadata:
+      type: project
+  - |
+    file: docs/superpowers/specs/2026-07-10-cloudflare-proxy-zone-derivation-design.md
+    meta:
+      role: doc
+      purpose: "Design: Cloudflare-Proxy-Ableitung aus Caddy-Zonen — welche Services CF-proxied sind und warum"
+      status: accepted
+      date: 2026-07-10
+      tags:
+        - cloudflare
+        - caddy
+        - dns
+        - networking
+        - security
+      betrifft:
+        - machines/q958/secrets.nix
+        - modules/10-network/11-network.nix
+        - lib/services-spec.nix
+      docs:
+        - docs/adr/1031-caddy-zones-konzept.md
+        - docs/adr/7005-cloudflare-dns-acme-ddns.md
+        - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+  - |
+    file: docs/TOC.md
+    meta:
+      role: toc
+      generated: true
+      purpose: Globales Inhaltsverzeichnis aller Heading-Anker aus docs/ für KI-Navigation
   - |
     file: docs/unraid-migration-map.md
     meta:
@@ -1380,9 +2909,10 @@ entries:
     file: AGENTS.md
     meta:
       role: doc
-      purpose: Projektregeln — 5-Schichten-Architektur, q958, Rollout, harte Regeln
+      purpose: Projektregeln — 6-Schichten-Architektur, q958, Rollout, harte Regeln
       docs:
         - docs/FILE-META.md
+        - modules/_HEADER_TEMPLATE.nix
       tags:
         - agents
         - architecture
