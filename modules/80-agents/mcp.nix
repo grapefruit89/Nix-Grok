@@ -175,12 +175,13 @@ in
       };
     })
 
-    # ── nixos-docs Indexer: .nix + .md → source_files in nixos_docs.sqlite ──
-    # Läuft nach Boot + nach jedem Rebuild (OnActivation via Persistent=true)
+    # ── nixos-docs: SQLite FTS5 + sqlite-vec (kein DuckDB) ──
+    # Indexer: source_files, doc_meta, doc_chunks, doc_links
+    # Embedder: chat_insights + doc_chunk_embeddings (Ollama, inkrementell)
     {
       systemd = {
         services.nixos-docs-indexer = {
-          description = "Indexiert /etc/nixos (.nix + .md) in nixos_docs.sqlite";
+          description = "Indexiert /etc/nixos in nixos_docs.sqlite (FTS + Meta + Chunks)";
           after = [ "local-fs.target" ];
           serviceConfig = {
             Type = "oneshot";
@@ -193,13 +194,49 @@ in
           };
         };
 
+        services.nixos-docs-embedder = {
+          description = "Embeddings für nixos_docs.sqlite (insights + Markdown-Chunks)";
+          after = [
+            "network-online.target"
+            "nixos-docs-indexer.service"
+          ];
+          wants = [ "network-online.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            Environment = [
+              "OLLAMA_HOST=http://127.0.0.1:11434"
+              "OLLAMA_EMBED_MODEL=nomic-embed-text"
+            ];
+            ExecStart = "${pkgs.python3}/bin/python3 /etc/nixos/tools/build_nixos_knowledge_db.py --target /var/lib/nixos-docs-mcp/nixos_docs.sqlite --skip-seed";
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            PrivateTmp = true;
+            ReadOnlyPaths = [
+              "/etc/nixos"
+              "/nix/store"
+            ];
+            ReadWritePaths = [
+              "/var/lib/nixos-docs-mcp"
+              "/tmp"
+            ];
+          };
+        };
+
         timers.nixos-docs-indexer = {
           description = "nixos-docs Indexer Timer";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "2min";
-            # Persistent=true: re-indexiert beim nächsten Boot wenn ein Rebuild
-            # während Downtime stattfand
+            Persistent = true;
+          };
+        };
+
+        timers.nixos-docs-embedder = {
+          description = "nixos-docs Embedder Timer (nach Indexer, wöchentlich)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "5min";
+            OnUnitActiveSec = "7d";
             Persistent = true;
           };
         };

@@ -258,7 +258,10 @@ in
     environmentFiles = [ "/var/lib/secrets/hermes.env" ];
     mcpServers.nixos-docs = {
       command = "${pkgs.python3}/bin/python3";
-      args = [ "/var/lib/hermes/nixos-docs-mcp.py" ];
+      args = [
+        "/etc/nixos/scripts/nixos-docs-mcp.py"
+        "/var/lib/nixos-docs-mcp/nixos_docs.sqlite"
+      ];
     };
     mcpServers.exa = {
       url = "https://mcp.exa.ai/mcp";

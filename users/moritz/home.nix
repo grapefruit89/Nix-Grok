@@ -80,15 +80,12 @@ let
 
   nixosDocsMcpWrapper = pkgs.writeShellScript "nixos-docs-mcp" ''
     set -euo pipefail
-    export HOME="${config.home.homeDirectory}"
-    cd "$HOME"
-    export NIXOS_DOCS_DB="${nixosDocsDbFile}"
-    mkdir -p "${nixosDocsDbDir}"
-    if [ ! -s "$NIXOS_DOCS_DB" ]; then
-      echo "nixos_docs.db fehlt. Bitte: sync-nixos-docs-db" >&2
+    DB=/var/lib/nixos-docs-mcp/nixos_docs.sqlite
+    if [ ! -r "$DB" ]; then
+      echo "nixos_docs.sqlite fehlt unter $DB — nixos-docs-indexer.service ausführen" >&2
       exit 1
     fi
-    exec ${nixosDocsMcp}/bin/nixos-docs-mcp
+    exec ${pkgs.python3}/bin/python3 /etc/nixos/scripts/nixos-docs-mcp.py "$DB"
   '';
 
   syncNixosDocsDb = pkgs.writeShellScript "sync-nixos-docs-db" ''
