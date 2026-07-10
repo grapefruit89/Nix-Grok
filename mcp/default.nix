@@ -20,21 +20,45 @@ let
   mcp = import ./lib.nix { inherit pkgs lib user; };
   claudeServersJson = builtins.toJSON mcp.claudeServers;
   mcpProjectJson = builtins.toJSON { mcpServers = mcp.claudeServers; };
-  mcpConfigFile = pkgs.writeText "nixos-mcp.json" mcpProjectJson;
+  mcpConfigBase = pkgs.writeText "nixos-mcp-base.json" mcpProjectJson;
   grokConfigFile = pkgs.writeText "grok-mcp-config.toml" (
     mcp.grokConfigToml { homeDirectory = userHome; }
   );
+
+  patchExaHeaders = ''
+    patch_exa_headers() {
+      local target="$1"
+      local key_file="${mcp.exaApiKey}"
+      if [ ! -s "$key_file" ]; then
+        return 0
+      fi
+      local exa_key
+      exa_key="$(<"$key_file")"
+      ${pkgs.jq}/bin/jq --arg k "$exa_key" \
+        '.mcpServers.exa.headers = {"x-api-key": $k}' \
+        "$target" > "$target.tmp" && mv "$target.tmp" "$target"
+    }
+  '';
+
+  provisionMcpJson = pkgs.writeShellScript "provision-mcp-json" ''
+    set -euo pipefail
+    ${patchExaHeaders}
+    install -o ${user} -g users -m 0644 ${mcpConfigBase} /etc/nixos/.mcp.json
+    patch_exa_headers /etc/nixos/.mcp.json
+  '';
 
   claudeCodeActivation = ''
     SETTINGS="$HOME/.claude/settings.json"
     mkdir -p "$HOME/.claude"
     MCP=${lib.escapeShellArg claudeServersJson}
+    ${patchExaHeaders}
     if [ -f "$SETTINGS" ]; then
       ${pkgs.jq}/bin/jq --argjson mcp "$MCP" '.mcpServers = $mcp' \
         "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
     else
       ${pkgs.jq}/bin/jq -n --argjson mcp "$MCP" '{ mcpServers: $mcp }' > "$SETTINGS"
     fi
+    patch_exa_headers "$SETTINGS"
   '';
 in
 {
@@ -62,7 +86,7 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${pkgs.coreutils}/bin/install -o ${user} -g users -m 0644 ${mcpConfigFile} /etc/nixos/.mcp.json";
+        ExecStart = "${provisionMcpJson}";
       };
     };
 
@@ -101,6 +125,8 @@ in
           home.file.".local/bin/set-github-mcp-token".executable = true;
           home.file.".local/bin/set-brave-search-api-key".source = mcp.setBraveSearchApiKey;
           home.file.".local/bin/set-brave-search-api-key".executable = true;
+          home.file.".local/bin/set-exa-api-key".source = mcp.setExaApiKey;
+          home.file.".local/bin/set-exa-api-key".executable = true;
           home.file.".grok/config.toml" = {
             text = mcp.grokConfigToml { homeDirectory = config.home.homeDirectory; };
             force = true;

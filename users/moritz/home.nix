@@ -138,9 +138,12 @@ in
       # MCP + Grok CLI (auch in nicht-login Shells)
       export PATH="${config.home.homeDirectory}/.local/bin:${stateDir}/bin''${PATH:+:}''$PATH"
 
-      # Context7 API-Key für Grok MCP
+      # API-Keys für MCP (headless — kein OAuth-Browser)
       if [ -f "${context7KeyFile}" ]; then
         export CONTEXT7_API_KEY="$(<"${context7KeyFile}")"
+      fi
+      if [ -f "${config.home.homeDirectory}/.config/exa/api_key" ]; then
+        export EXA_API_KEY="$(<"${config.home.homeDirectory}/.config/exa/api_key")"
       fi
 
       [[ -r "${stateDir}/completions/bash/grok.bash" ]] && source "${stateDir}/completions/bash/grok.bash"

@@ -102,7 +102,8 @@ section "Credentials (nur vorhanden ja/nein)"
 for spec in \
   "context7:${HOME}/.config/context7/api_key" \
   "github:${HOME}/.config/github-mcp/token" \
-  "brave:${HOME}/.config/brave-search/api_key"; do
+  "brave:${HOME}/.config/brave-search/api_key" \
+  "exa:${HOME}/.config/exa/api_key"; do
   name="${spec%%:*}"
   path="${spec#*:}"
   st="$(key_ok "$path")"
@@ -201,7 +202,7 @@ if command -v grok >/dev/null 2>&1; then
   OUT_GROK_DOCTOR="$(echo "$DOC" | tail -3 | tr '\n' ' ')"
   echo "$DOC" | sed 's/^/  /'
   if echo "$DOC" | grep -q 'exa.*OAuth\|authorization required'; then
-    warn "exa braucht einmalig OAuth: grok mcp doctor exa"
+    warn "exa: set-exa-api-key (OAuth geht nicht per SSH — API-Key von dashboard.exa.ai)"
   elif [[ $DOC_RC -ne 0 ]]; then
     OUT_ISSUES+=("grok-doctor:exit-$DOC_RC")
   fi
@@ -261,7 +262,7 @@ probleme=$(IFS=';'; echo "${OUT_ISSUES[*]:-keine}")
 # Nächste Schritte (wenn alles ok):
 #   cd /etc/nixos && grok          # Grok CLI mit allen MCPs
 #   cd /etc/nixos && claude        # Claude Code mit Repo-MCPs
-#   grok mcp doctor exa            # einmalig Exa-OAuth
+#   set-exa-api-key                # Exa API-Key (headless, kein OAuth)
 EOF
 echo -e "${BLD}════════════════════════════════════════════════════════════════${RST}"
 echo -e "${BLD}####/Ausgabe###${RST}"

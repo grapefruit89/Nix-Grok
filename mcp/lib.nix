@@ -20,11 +20,14 @@ let
   context7Key = "${userHome}/.config/context7/api_key";
   githubMcpToken = "${userHome}/.config/github-mcp/token";
   braveSearchApiKey = "${userHome}/.config/brave-search/api_key";
+  exaApiKey = "${userHome}/.config/exa/api_key";
   nixosDocsDb = "/var/lib/nixos-docs-mcp/nixos_docs.sqlite";
   nixosMcpBin = "${pkgs.mcp-nixos}/bin/mcp-nixos";
   python3 = "${pkgs.python3}/bin/python3";
   nixosDocsScript = "/etc/nixos/scripts/nixos-docs-mcp.py";
   exaMcpUrl = "https://mcp.exa.ai/mcp";
+  # Grok expandiert ${EXA_API_KEY} aus der Shell-Umgebung (headless, kein OAuth)
+  exaGrokHeaderValue = "$" + "{EXA_API_KEY}";
 
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
     set -euo pipefail
@@ -114,6 +117,30 @@ let
     echo "Gespeichert: $KEY_FILE (chmod 600)"
   '';
 
+  setExaApiKey = pkgs.writeShellScript "set-exa-api-key" ''
+    set -euo pipefail
+    KEY_FILE="${exaApiKey}"
+    EXA_DIR="$(dirname "$KEY_FILE")"
+    mkdir -p "$EXA_DIR"
+    chmod 700 "$EXA_DIR"
+    if [ -t 0 ]; then
+      read -r -s -p "Exa API Key (dashboard.exa.ai/api-keys): " _key </dev/tty
+      echo "" >/dev/tty
+    else
+      IFS= read -r _key
+    fi
+    if [ -z "$_key" ]; then
+      echo "Abgebrochen: leerer Key." >&2
+      exit 1
+    fi
+    umask 077
+    printf '%s' "$_key" > "$KEY_FILE"
+    chmod 600 "$KEY_FILE"
+    unset _key
+    echo "Gespeichert: $KEY_FILE (chmod 600)"
+    echo "Testen: source ~/.bashrc && grok mcp doctor exa"
+  '';
+
   # Claude Code ~/.claude/settings.json und /etc/nixos/.mcp.json
   claudeServers = {
     context7 = {
@@ -157,7 +184,6 @@ let
       ];
     };
     exa = {
-      type = "http";
       url = exaMcpUrl;
     };
   };
@@ -172,6 +198,15 @@ let
     "exa"
   ];
 
+  headersToml =
+    headers:
+    if headers == { } then
+      ""
+    else
+      "headers = { "
+      + lib.concatStringsSep ", " (lib.mapAttrsToList (k: v: ''"${k}" = "${v}"'') headers)
+      + " }\n";
+
 in
 {
   inherit
@@ -181,6 +216,8 @@ in
     nixosDocsMcpWrapper
     setGithubMcpToken
     setBraveSearchApiKey
+    setExaApiKey
+    exaApiKey
     nixosMcpBin
     nixosDocsDb
     claudeServers
@@ -198,6 +235,7 @@ in
           ''
             [mcp_servers.${name}]
             url = "${value.url}"
+            ${headersToml (value.headers or { })}
             enabled = true
 
           ''
@@ -233,8 +271,10 @@ in
           command = "${homeDirectory}/.local/bin/brave-search-mcp";
         };
         exa = {
-          type = "http";
           url = exaMcpUrl;
+          headers = {
+            "x-api-key" = exaGrokHeaderValue;
+          };
         };
       };
     in
