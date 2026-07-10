@@ -47,7 +47,7 @@ meta:
 
 ### Aktuelle Architektur: Two-Tier {#two-tier}
 
-```
+```text
 HOST-DNS:
   systemd-resolved → DoT direkt (8 Server aus my.configs.network.dnsBootstrap)
   /etc/resolv.conf → 127.0.0.53 (resolved stub)
@@ -92,7 +92,7 @@ LAN split-horizon:
 resolvectl status                          # DNS-Server + DNSOverTLS-Status
 dig cloudflare.com +short                  # via 127.0.0.53 → resolved → DoT
 cat /etc/resolv.conf                       # Muss: nameserver 127.0.0.53
-```
+```bash
 
 **Blocky (LAN-DNS):**
 ```bash
@@ -106,20 +106,20 @@ curl -s http://127.0.0.1:1002/metrics | grep blocky_query  # Prometheus-Metriken
 ```bash
 getent hosts sonarr.nix.m7c5.de           # muss LAN-IP zurückgeben (via /etc/hosts)
 grep "nix.m7c5.de" /etc/hosts             # alle generierten Einträge
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# 1. Host-DNS weg — resolved neustarten
+# 1. Host-DNS weg — resolved neustarten {#1-host-dns-weg-resolved-neustarten}
 sudo systemctl restart systemd-resolved
 resolvectl status
 
-# 2. Blocky neustart (LAN-DNS weg, Blockliste fehlt, etc.)
+# 2. Blocky neustart (LAN-DNS weg, Blockliste fehlt, etc.) {#2-blocky-neustart-lan-dns-weg-blockliste-fehlt-etc}
 sudo systemctl restart blocky
 systemctl status blocky
 
-# 3. Build-Assertions prüfen
+# 3. Build-Assertions prüfen {#3-build-assertions-pruefen}
 grep -r "nameservers" /etc/nixos/machines/q958/
 ```
 
@@ -159,7 +159,7 @@ dig cloudflare.com +short                              # Host-DNS via resolved
 dig @192.168.2.73 cloudflare.com +short               # LAN-DNS via Blocky
 getent hosts sonarr.nix.m7c5.de                       # split-horizon via /etc/hosts
 systemctl is-active blocky                             # active
-```
+```bash
 
 ## Alternativen verworfen {#alternativen}
 

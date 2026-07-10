@@ -30,7 +30,7 @@ meta:
 
 Der Q958 nutzt `intel_pstate` im **active mode** (Hardware-Managed P-states / HWP):
 
-```
+```text
 scaling_driver:                     intel_pstate (active)
 scaling_available_governors:        performance powersave
 energy_performance_available_preferences: default performance balance_performance balance_power power
@@ -61,34 +61,34 @@ Intel Thermal Management Daemon:
 **Symptom:** QuickSync-Transcoding langsam, oder CPU throttelt unerwartet.
 
 ```bash
-# Aktuellen EPP prüfen
+# Aktuellen EPP prüfen {#aktuellen-epp-pruefen}
 cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
-# Soll: balance_performance
+# Soll: balance_performance {#soll-balance_performance}
 
-# PPD-Profil prüfen
+# PPD-Profil prüfen {#ppd-profil-pruefen}
 powerprofilesctl get
-# Soll: balanced
+# Soll: balanced {#soll-balanced}
 
-# Thermald-Status
+# Thermald-Status {#thermald-status}
 systemctl status thermald --no-pager
 journalctl -u thermald -n 20 --no-pager | grep -iE "error|warn|throttl"
 
-# PPD-Status
+# PPD-Status {#ppd-status}
 systemctl status power-profiles-daemon --no-pager
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# Dienste neu starten
+# Dienste neu starten {#dienste-neu-starten}
 sudo systemctl restart thermald power-profiles-daemon
 
-# EPP manuell prüfen (nach restart)
+# EPP manuell prüfen (nach restart) {#epp-manuell-pruefen-nach-restart}
 cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
 
-# Falls PPD nicht läuft: prüfen ob Konflikt mit anderem Governor
+# Falls PPD nicht läuft: prüfen ob Konflikt mit anderem Governor {#falls-ppd-nicht-laeuft-pruefen-ob-konflikt-mit-anderem-governor}
 cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
-# Muss: intel_pstate (active)
+# Muss: intel_pstate (active) {#muss-intel_pstate-active}
 ```
 
 ## Konsequenzen {#konsequenzen}
@@ -105,7 +105,7 @@ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
 cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference  # balance_performance
 powerprofilesctl get                                                      # balanced
 systemctl status thermald                                                  # active (running)
-```
+```bash
 
 ## Alternativen verworfen {#alternativen}
 

@@ -46,7 +46,7 @@ meta:
 systemctl status usenet.service
 systemctl start vpn-netns-test    # wenn vpnTest.enable
 journalctl -u vpn-leak-check.service -n 20
-```
+```nix
 
 ## Jellyfin {#jellyfin}
 

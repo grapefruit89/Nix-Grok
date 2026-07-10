@@ -40,7 +40,7 @@ q958 singleDisk: `mergerfsEnable = false` bis Branches existieren.
 
 Metadata außerhalb von `/var/lib/*arr`:
 
-```
+```text
 /mnt/fast_pool/metadata/{sonarr,radarr,prowlarr,jellyfin}
 ```
 
@@ -53,7 +53,7 @@ Unlabelierte Disks → `/run/nixhome-pending-disks/*.pending`
 ```bash
 ls /run/nixhome-pending-disks/
 systemctl status nixhome-pending-watcher.timer
-```
+```yaml
 
 **Wichtig:** Schreibpfad ist `/run/nixhome-pending-disks`, nicht `/run/pending-disks`.
 

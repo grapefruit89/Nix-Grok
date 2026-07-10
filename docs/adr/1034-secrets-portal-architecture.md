@@ -25,14 +25,14 @@ meta:
     - systemd-creds
 ---
 
-# ADR-1034: secrets-portal Architektur
+# ADR-1034: secrets-portal Architektur {#adr-1034-secrets-portal-architektur}
 
 **Status:** Accepted
 **Datum:** 2026-07-09
 
 ---
 
-## Kontext
+## Kontext {#kontext}
 
 Secrets (CF-Token, Restic-Keys, VPN-Key, Usenet-Zugangsdaten) landen bisher in
 `profile.local.nix` — einer gitignorierten Datei die manuell per SSH editiert werden
@@ -43,9 +43,9 @@ ohne dass Secrets jemals den Server verlassen. Kein SSH nötig.
 
 ---
 
-## Entscheidungen
+## Entscheidungen {#entscheidungen}
 
-### 1. Einbahnstraße: Write-Only, niemals Read
+### 1. Einbahnstraße: Write-Only, niemals Read {#1-einbahnstrasse-write-only-niemals-read}
 
 Das Portal gibt **keine Secret-Werte zurück**. Weder via API noch via UI.
 
@@ -56,7 +56,7 @@ Input-Felder werden nach erfolgreichem Submit geleert.
 **Konsequenz:** Selbst wenn ein Angreifer im LAN die Seite öffnet — er sieht leere
 Felder und Statusicons. Kein Angriffsziel für Secret-Exfiltration.
 
-### 2. Go Binary statt Python/Bash
+### 2. Go Binary statt Python/Bash {#2-go-binary-statt-pythonbash}
 
 Go wird gewählt weil:
 - Stdlib only, kein `vendorHash`-Problem bei nixpkgs-Updates
@@ -67,7 +67,7 @@ Go wird gewählt weil:
 Python wäre für eine einmalige UI einfacher gewesen, aber Go passt besser in die
 bestehende nixpkgs-Paket-Infrastruktur (vgl. `grok-cli`).
 
-### 3. Unix Socket + Caddy internal zone statt TCP-Port
+### 3. Unix Socket + Caddy internal zone statt TCP-Port {#3-unix-socket-caddy-internal-zone-statt-tcp-port}
 
 Der Service lauscht auf `/run/secrets-portal/secrets-portal.sock` (kein TCP).
 Caddy proxied darauf mit `zone = "internal"` (ADR-1031) — das bedeutet:
@@ -81,11 +81,11 @@ Caddy proxied darauf mit `zone = "internal"` (ADR-1031) — das bedeutet:
 (laut Caddy-Gruppe-Berechtigung) verbinden kann. TCP auf LAN-IP wäre breiter exponiert
 und würde kein TLS ohne zusätzliche Konfiguration bekommen.
 
-### 4. Zwei-Schritt Write: profile.local.nix + systemd-creds
+### 4. Zwei-Schritt Write: profile.local.nix + systemd-creds {#4-zwei-schritt-write-profilelocalnix-systemd-creds}
 
 Bei jedem erfolgreichen Seal:
 
-```
+```text
 1. systemd-creds encrypt → /var/lib/credstore.encrypted/{name}.cred  (sofort wirksam)
 2. profile.local.nix atomar aktualisieren (tmp + rename)              (Persistenz)
 3. q958-secrets-provision restart                                      (alle abhängigen creds)
@@ -100,7 +100,7 @@ Rebuild. Beide zusammen: sofort wirksam UND persistent.
 Outputs (CF-Token → ddns-updater-config.json + cloudflare_acme_env + cloudflare_api_token).
 Der direkte systemd-creds Write ist zuverlässiger für den einfachen Fall.
 
-### 5. Regex: Nur visuelles Feedback, kein Gate
+### 5. Regex: Nur visuelles Feedback, kein Gate {#5-regex-nur-visuelles-feedback-kein-gate}
 
 Regex-Pattern werden clientseitig ausgewertet:
 - Match → Feld grün + auto-submit (500ms debounce)
@@ -111,7 +111,7 @@ Regex-Pattern werden clientseitig ausgewertet:
 das Token-Format geändert). Ein hartes Disable würde den Workflow brechen ohne
 sichtbaren Grund. Das Backend validiert ohnehin via echtem API-Call.
 
-### 6. Rebuild-Debounce-Timer (3 Minuten)
+### 6. Rebuild-Debounce-Timer (3 Minuten) {#6-rebuild-debounce-timer-3-minuten}
 
 Nach jedem erfolgreichen Seal startet/resettet ein Server-seitiger Timer. Feuert er:
 `nixos-rebuild switch --flake /etc/nixos#q958 --impure`
@@ -123,7 +123,7 @@ stellt sicher dass nicht bei jedem Key-Eintrag sofort ein 2-Minuten-Rebuild star
 **Was wenn der Rebuild scheitert?** profile.local.nix hat den Key bereits — der
 nächste manuelle Rebuild (oder nächste Portal-Nutzung) triggert wieder.
 
-### 7. Validation vor Write — immer
+### 7. Validation vor Write — immer {#7-validation-vor-write-immer}
 
 Kein Key wird in systemd-creds oder profile.local.nix geschrieben ohne:
 - **API-Validator vorhanden:** HTTP-Call muss `expect_status` zurückgeben
@@ -137,7 +137,7 @@ das ist die wichtigere Garantie.
 
 ---
 
-## Was dieses ADR NICHT entscheidet
+## Was dieses ADR NICHT entscheidet {#was-dieses-adr-nicht-entscheidet}
 
 - **Phase 2 (Stufe 9+):** TPM-sealed Creds Rotation ohne profile.local.nix — separates ADR
 - **Secret-Anzeige:** Wird bewusst nie implementiert (Design-Constraint)
@@ -147,7 +147,7 @@ das ist die wichtigere Garantie.
 
 ---
 
-## Erweiterung
+## Erweiterung {#erweiterung}
 
 Neues Secret hinzufügen: **ein Eintrag in `machines/q958/default.nix`** unter
 `my.services.secrets-portal.secrets`. Kein Code-Änderung nötig solange:
@@ -158,3 +158,9 @@ Für neue Validator-Typen (z.B. S3-Connect, SMTP-Check): `main.go handleValidate
 erweitern — das ist die einzige Go-Code-Änderung.
 
 Siehe: `docs/guides/GUIDE-secrets-portal.md`
+
+## Siehe auch {#siehe-auch}
+
+- [GUIDE-secrets-portal](../guides/GUIDE-secrets-portal.md)
+- [ADR-2024 — systemd-creds + TPM2](2024-systemd-creds-tpm.md)
+- [ADR-1031 — Caddy-Zonen-Konzept](1031-caddy-zones-konzept.md)

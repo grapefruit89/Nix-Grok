@@ -5,7 +5,7 @@ meta:
   status: accepted
   date: 2026-06-29
   betrifft:
-    - modules/00-core/01-core.nix
+    - modules/00-core/09-nix-tools.nix
     - flake.nix
     - flake.lock
   docs:
@@ -42,7 +42,7 @@ meta:
 
 ```nix
 experimental-features = [ "nix-command" "flakes" ];
-```
+```nix
 
 Nur diese zwei — sie sind alternativlos für dieses Setup. Alle anderen wurden entfernt.
 
@@ -62,17 +62,17 @@ Nur diese zwei — sie sind alternativlos für dieses Setup. Alle anderen wurden
 
 **Tier 2 — Input-Archiv (einmal im Jahr, ~5 Minuten):**
 ```bash
-# Alle Flake-Inputs lokal in den Nix-Store laden
+# Alle Flake-Inputs lokal in den Nix-Store laden {#alle-flake-inputs-lokal-in-den-nix-store-laden}
 nix flake archive
 ```
 
 **Tier 3 — Vollständiges System-Snapshot (für echten Offline-Transport):**
 ```bash
-# Komplette Closure exportieren
+# Komplette Closure exportieren {#komplette-closure-exportieren}
 nix-store --export $(nix-store -qR /run/current-system) > /backup/nixos-closure.nar
-# Auf neuem Rechner importieren:
+# Auf neuem Rechner importieren: {#auf-neuem-rechner-importieren}
 nix-store --import < /backup/nixos-closure.nar
-```
+```nix
 
 ### Risikobewertung externe Abhängigkeiten {#risiko}
 
@@ -100,7 +100,7 @@ nix-store --import < /backup/nixos-closure.nar
 
 | Artefakt | Pfad |
 |----------|------|
-| Konfiguration | `modules/00-core/01-core.nix` → `nix.settings.experimental-features` |
+| Konfiguration | `modules/00-core/09-nix-tools.nix` → `nix.settings.experimental-features` |
 | Lockfile | `flake.lock` (committed, niemals in .gitignore) |
 | Portabilitäts-Guide | `docs/guides/GUIDE-flake-portability.md` |
 

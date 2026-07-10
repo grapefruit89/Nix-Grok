@@ -47,7 +47,7 @@ meta:
 
 `systemd-creds encrypt` produziert eine base64-ähnliche ASCII-Datei (~527 Bytes für ein 12-Byte-Passwort):
 
-```
+```text
 k6iUCUh0RJCQyvL8k8q1UyAAAAABAAAADAAAABAAAADAW8yt...
 ```
 
@@ -66,27 +66,27 @@ Der Fehler: das Provision-Script bekam 527 verschlüsselte Bytes, rief `.strip()
 ### Fix in home-assistant.nix {#fix-nix}
 
 ```nix
-# VORHER (falsch — gibt 527 verschlüsselte Bytes):
+# VORHER (falsch — gibt 527 verschlüsselte Bytes): {#vorher-falsch-gibt-527-verschluesselte-bytes}
 LoadCredential = [
   "homeassistant_mqtt_password:/var/lib/credstore.encrypted/homeassistant_mqtt_password.cred"
 ];
 
-# NACHHER (korrekt — gibt 12 Bytes Klartext):
+# NACHHER (korrekt — gibt 12 Bytes Klartext): {#nachher-korrekt-gibt-12-bytes-klartext}
 LoadCredentialEncrypted = [
   "homeassistant_mqtt_password:/var/lib/credstore.encrypted/homeassistant_mqtt_password.cred"
 ];
-```
+```bash
 
 ### Fallback entfernt (Sicherheitsprinzip) {#fallback}
 
 Das Script hatte einen Silent-Fallback auf `/var/lib/secrets/homeassistant_mqtt_password` wenn `CREDENTIALS_DIRECTORY` nicht gesetzt war:
 
 ```python
-# VORHER — maskiert Konfigurationsfehler still:
+# VORHER — maskiert Konfigurationsfehler still: {#vorher-maskiert-konfigurationsfehler-still}
 _creds = os.environ.get("CREDENTIALS_DIRECTORY", "")
 PASSWORD_FILE = Path(_creds) / "homeassistant_mqtt_password" if _creds else Path("/var/lib/secrets/...")
 
-# NACHHER — scheitert laut bei Fehlkonfiguration:
+# NACHHER — scheitert laut bei Fehlkonfiguration: {#nachher-scheitert-laut-bei-fehlkonfiguration}
 _creds = os.environ.get("CREDENTIALS_DIRECTORY")
 if not _creds:
     raise SystemExit("CREDENTIALS_DIRECTORY not set — LoadCredentialEncrypted failed")
@@ -98,54 +98,54 @@ PASSWORD_FILE = Path(_creds) / "homeassistant_mqtt_password"
 **Symptom:** HA verbindet sich nicht mit Mosquitto, "Not authorized" bleibt dauerhaft — auch nach korrekt gesetztem Passwort.
 
 ```bash
-# Passwort in .storage prüfen:
+# Passwort in .storage prüfen: {#passwort-in-storage-pruefen}
 sudo grep -o '"password":"[^"]*"' /var/lib/hass/.storage/core.config_entries
-# Korrekt:  "password":"#1Baumeister"  (12 Zeichen)
-# Buggy:    "password":"k6iUCUh0..."   (526 Zeichen)
-```
+# Korrekt:  "password":"#1Baumeister"  (12 Zeichen) {#korrekt-password1baumeister-12-zeichen}
+# Buggy:    "password":"k6iUCUh0..."   (526 Zeichen) {#buggy-passwordk6iucuh0-526-zeichen}
+```bash
 
 ```bash
-# Wie groß ist die Credential im CREDENTIALS_DIRECTORY?
+# Wie groß ist die Credential im CREDENTIALS_DIRECTORY? {#wie-gross-ist-die-credential-im-credentials_directory}
 sudo systemd-run --wait --pipe \
   -p LoadCredentialEncrypted=homeassistant_mqtt_password:/var/lib/credstore.encrypted/homeassistant_mqtt_password.cred \
   -p Type=oneshot \
   /bin/sh -c 'wc -c "$CREDENTIALS_DIRECTORY/homeassistant_mqtt_password"'
-# Erwartet: 12 / Buggy: 527
+# Erwartet: 12 / Buggy: 527 {#erwartet-12-buggy-527}
 ```
 
 <details>
 <summary>Vollständige Diagnose-Befehle</summary>
 
 ```bash
-# Credential-Datei raw ansehen (ist base64-ähnlich ASCII, kein Binär):
+# Credential-Datei raw ansehen (ist base64-ähnlich ASCII, kein Binär): {#credential-datei-raw-ansehen-ist-base64-aehnlich-ascii-kein-binaer}
 sudo od -c /var/lib/credstore.encrypted/homeassistant_mqtt_password.cred | head -3
 
-# Manuell entschlüsseln:
+# Manuell entschlüsseln: {#manuell-entschluesseln}
 sudo systemd-creds decrypt --name=homeassistant_mqtt_password \
   /var/lib/credstore.encrypted/homeassistant_mqtt_password.cred -
 
-# Service-Unit inspizieren:
+# Service-Unit inspizieren: {#service-unit-inspizieren}
 sudo systemctl cat home-assistant-mqtt-provision.service | grep LoadCred
-# Muss "LoadCredentialEncrypted" zeigen, nicht "LoadCredential"
-```
+# Muss "LoadCredentialEncrypted" zeigen, nicht "LoadCredential" {#muss-loadcredentialencrypted-zeigen-nicht-loadcredential}
+```bash
 
 </details>
 
 ## Fix {#fix}
 
 ```bash
-# 1. Service-Unit prüfen
+# 1. Service-Unit prüfen {#1-service-unit-pruefen}
 sudo systemctl cat home-assistant-mqtt-provision.service | grep LoadCred
 
-# 2. home-assistant.nix: LoadCredential → LoadCredentialEncrypted
+# 2. home-assistant.nix: LoadCredential → LoadCredentialEncrypted {#2-home-assistantnix-loadcredential-loadcredentialencrypted}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
 
-# 3. Verifikation
+# 3. Verifikation {#3-verifikation}
 sudo grep -o '"password":"[^"]*"' /var/lib/hass/.storage/core.config_entries
-# → "password":"#1Baumeister"
+# → "password":"#1Baumeister" {#password1baumeister}
 sudo journalctl -u mosquitto --since "1 minute ago" --no-pager | grep homeassistant
-# → New client connected ... u'homeassistant' (kein auth error)
+# → New client connected ... u'homeassistant' (kein auth error) {#new-client-connected-uhomeassistant-kein-auth-error}
 ```
 
 ## Konsequenzen {#konsequenzen}
@@ -173,7 +173,7 @@ sudo journalctl -u mosquitto --since "1 minute ago" --no-pager | grep homeassist
 
 ```bash
 sudo systemctl cat home-assistant-mqtt-provision.service | grep "LoadCredentialEncrypted"
-```
+```nix
 
 ## Alternativen verworfen {#alternativen}
 

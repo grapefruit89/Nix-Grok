@@ -29,7 +29,7 @@ meta:
 
 ## Media-Stack (50-media) {#media-stack}
 
-```
+```text
 modules/50-media/
 ├── default.nix          # imports + options
 ├── arr-helper.nix       # Fabrik (mkArrService)

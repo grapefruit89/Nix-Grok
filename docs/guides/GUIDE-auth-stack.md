@@ -54,13 +54,13 @@ Pflicht-Secrets:
 - Production (Stufe 9+): `LoadCredentialEncrypted=pocket_id_key:…` → `ENCRYPTION_KEY_FILE=$CREDENTIALS_DIRECTORY/pocket_id_key`
 
 ```bash
-# Status prüfen
+# Status prüfen {#status-pruefen}
 systemctl status pocket-id
 journalctl -u pocket-id -n 30
 
-# API-Key-Test (STATIC_API_KEY gesetzt?)
+# API-Key-Test (STATIC_API_KEY gesetzt?) {#api-key-test-static_api_key-gesetzt}
 curl -H "X-Api-Key: $STATIC_API_KEY" http://127.0.0.1:1411/api/v1/application-configuration
-```
+```bash
 
 ### OIDC-Clients anlegen {#oidc-clients}
 
@@ -111,7 +111,7 @@ forward_auth http://127.0.0.1:<oauth2-proxy-port> {
         redir * /oauth2/sign_in?rd={scheme}://{host}{uri} 302
     }
 }
-```
+```text
 
 Dienste die SSO brauchen: `import sso_auth` vor `reverse_proxy`.
 Dienste ohne SSO (Pocket-ID, API-Endpoints): direkt `reverse_proxy`.
@@ -146,7 +146,7 @@ Sonst: OAuth2-Proxy → Pocket-ID → OAuth2-Proxy → ∞
 
 6. oauth2-proxy starten:
    sudo systemctl reset-failed oauth2-proxy && sudo systemctl start oauth2-proxy
-```
+```nix
 
 ### Bekannte Fallstricke (oauth2-proxy 7.x) {#oauth2-proxy-fallstricke}
 
@@ -219,12 +219,12 @@ Jellyseerr generiert beim ersten Start einen zufälligen API-Key. Für deklarati
 Zugriff (Sync-Skripte, Automatisierung) kann ein fester Key gesetzt werden:
 
 ```bash
-# In /var/lib/secrets/jellyseerr.env (Dev):
+# In /var/lib/secrets/jellyseerr.env (Dev): {#in-varlibsecretsjellyseerrenv-dev}
 API_KEY=dein-langer-zufaelliger-api-key
 
-# Zugriff:
+# Zugriff: {#zugriff}
 curl -H "X-Api-Key: $API_KEY" http://127.0.0.1:5002/api/v1/settings/main
-```
+```text
 
 Nützliche Endpoints:
 
@@ -265,7 +265,7 @@ Der `DiscoveryUrl` ist in `55-navidrome.nix` statisch konfiguriert;
 
 ### Einmalige Ersteinrichtung (nach erstem Start) {#navidrome-oidc-setup}
 
-```
+```yaml
 1. Pocket-ID Web-UI → Applications → New
    Name: "Navidrome"
    Callback URL: https://music.<domain>/auth/oidc/callback
@@ -289,18 +289,18 @@ Das EnvironmentFile wird mit `-`-Prefix geladen — Navidrome startet auch ohne 
 ## Debugging {#debugging}
 
 ```bash
-# OAuth2-Proxy: Session-Cookie verfolgen
+# OAuth2-Proxy: Session-Cookie verfolgen {#oauth2-proxy-session-cookie-verfolgen}
 journalctl -u oauth2-proxy -n 50
 
-# Pocket-ID: OIDC-Fehler
+# Pocket-ID: OIDC-Fehler {#pocket-id-oidc-fehler}
 journalctl -u pocket-id -n 50
 
-# Jellyseerr: API-Fehler
+# Jellyseerr: API-Fehler {#jellyseerr-api-fehler}
 journalctl -u seerr -n 50
 
-# Caddy: forward_auth Logs
+# Caddy: forward_auth Logs {#caddy-forward_auth-logs}
 journalctl -u caddy | grep forward_auth
-```
+```nix
 
 ### Häufige Fehler {#fehler}
 

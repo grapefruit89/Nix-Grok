@@ -49,7 +49,7 @@ flowchart TD
   ETTS -->|HTTPS| Edge["Microsoft Edge TTS\nde-DE-KatjaNeural"]
 
   HA -->|Voice Pipeline| Assist["HA Assist\n(Conversation Agent)"]
-```
+```text
 
 | Dienst | Port | Beschreibung |
 |--------|------|--------------|
@@ -76,7 +76,7 @@ edge-tts-wyoming                (unabhängig, startet nach network.target, kein 
 google-tts-wyoming              (unabhängig, ConditionPathExists: google_tts_api_key.cred)
 mosquitto                       (unabhängig, startet nach secrets-provision)
 zigbee2mqtt                     (after mosquitto)
-```
+```text
 
 Die Reihenfolge der Provision-Services ist kritisch: Ohne sie überschreiben konkurrierende Services einander ([ADR-7002](../adr/7002-ha-storage-provisioning.md)).
 
@@ -139,16 +139,16 @@ entry = {
     },
     ...
 }
-```
+```bash
 
 Pattern: [ADR-7002](../adr/7002-ha-storage-provisioning.md) — Filtern nur nach `entry_id`, nicht nach `domain`.
 
 ```bash
-# MQTT-Verbindung prüfen
+# MQTT-Verbindung prüfen {#mqtt-verbindung-pruefen}
 sudo grep -o '"password":"[^"]*"' /var/lib/hass/.storage/core.config_entries
-# → "password":"#1Baumeister"  (nicht 527-Byte-Blob!)
+# → "password":"#1Baumeister"  (nicht 527-Byte-Blob!) {#password1baumeister-nicht-527-byte-blob}
 sudo journalctl -u mosquitto -n 20 --no-pager | grep homeassistant
-# → New client connected ... u'homeassistant'
+# → New client connected ... u'homeassistant' {#new-client-connected-uhomeassistant}
 ```
 
 ## Zigbee — SLZB-06M + Zigbee2MQTT {#zigbee}
@@ -157,16 +157,16 @@ Die SLZB-06M ist ein Ethernet-Zigbee-Koordinator (kein USB). Zigbee2MQTT verbind
 
 ```nix
 zigbeeDevice = "socket://SLZB-06M.local:6638";
-```
+```bash
 
 Der Hostname `SLZB-06M.local` wird via `networking.extraHosts` aufgelöst (kein mDNS nötig). SMLIGHT-Weboberfläche und HA-Integration (Firmware-Updates, Gerätestatus) laufen parallel.
 
 ```bash
-# Zigbee2MQTT Status
+# Zigbee2MQTT Status {#zigbee2mqtt-status}
 sudo systemctl status zigbee2mqtt --no-pager
 sudo journalctl -u zigbee2mqtt -n 20 --no-pager | grep -E "error|connected|paired"
 
-# SLZB-06M erreichbar?
+# SLZB-06M erreichbar? {#slzb-06m-erreichbar}
 curl -s http://SLZB-06M.local/ha_info | python3 -m json.tool | grep -E "MAC|hostname"
 ```
 
@@ -174,7 +174,7 @@ curl -s http://SLZB-06M.local/ha_info | python3 -m json.tool | grep -E "MAC|host
 
 ### Architektur {#voice-architektur}
 
-```
+```text
 HA Assist Pipeline
   Mikrofon (HA App / Chromecast mit Mikrofon)
     ↓ Wyoming TCP 10300
@@ -222,19 +222,19 @@ Standardstimme: `de-DE-KatjaNeural`. Andere Stimme via `machines/q958/default.ni
 
 ```nix
 voice-assistant.edgeTts.voice = "de-DE-ConradNeural";
-```
+```nix
 
 Alle verfügbaren deutschen Stimmen:
 ```bash
 nix run nixpkgs#python3Packages.edge-tts -- --list-voices | grep "^de-"
-# de-AT-IngridNeural   de-AT-JonasNeural
-# de-CH-JanNeural      de-CH-LeniNeural
-# de-DE-AmalaNeural    de-DE-ConradNeural
-# de-DE-ElkeNeural     de-DE-FlorianMultilingualNeural
-# de-DE-GiselaNeural   de-DE-KatjaNeural
-# de-DE-KillianNeural  de-DE-LouisaNeural
-# de-DE-MajaNeural     de-DE-RalfNeural
-# de-DE-SeraphinaMultilingualNeural
+# de-AT-IngridNeural   de-AT-JonasNeural {#de-at-ingridneural-de-at-jonasneural}
+# de-CH-JanNeural      de-CH-LeniNeural {#de-ch-janneural-de-ch-lenineural}
+# de-DE-AmalaNeural    de-DE-ConradNeural {#de-de-amalaneural-de-de-conradneural}
+# de-DE-ElkeNeural     de-DE-FlorianMultilingualNeural {#de-de-elkeneural-de-de-florianmultilingualneural}
+# de-DE-GiselaNeural   de-DE-KatjaNeural {#de-de-giselaneural-de-de-katjaneural}
+# de-DE-KillianNeural  de-DE-LouisaNeural {#de-de-killianneural-de-de-louisaneural}
+# de-DE-MajaNeural     de-DE-RalfNeural {#de-de-majaneural-de-de-ralfneural}
+# de-DE-SeraphinaMultilingualNeural {#de-de-seraphinamultilingualneural}
 ```
 
 ### Google Cloud TTS — Credential-Setup {#google-tts-key}
@@ -246,7 +246,7 @@ secrets.devKeys.googleTts = {
   apiKey = "AIza...";                    # GCP Console → APIs → Credentials
   voice  = "de-DE-Chirp3-HD-Aoede";     # oder andere gewählte Stimme
 };
-```
+```bash
 
 Nach `nixos-rebuild switch` startet `google-tts-wyoming` automatisch auf Port 10200.
 
@@ -259,7 +259,7 @@ Schützt gegen API-Key-Leaks. Details: [ADR-7004 — Preismodell](../adr/7004-go
 ### Groq API Key verwalten {#groq-key}
 
 ```bash
-# Key neu versiegeln (interaktiv, kein Terminal-Log):
+# Key neu versiegeln (interaktiv, kein Terminal-Log): {#key-neu-versiegeln-interaktiv-kein-terminal-log}
 read -rsp "Groq Key: " K && echo
 printf '%s' "$K" > ~/secrets/groq_api_key
 chmod 600 ~/secrets/groq_api_key
@@ -280,37 +280,37 @@ Muster für jede weitere HA-Integration die nicht auto-discovered werden soll:
 4. Nicht nach `domain` filtern — nur nach `entry_id` ([ADR-7002](../adr/7002-ha-storage-provisioning.md#eintrag-muster))
 
 ```python
-# Korrekt:
+# Korrekt: {#korrekt}
 entries = [e for e in entries if e.get("entry_id") != ENTRY_ID]
-# Falsch — entfernt ALLE Einträge der Domain:
+# Falsch — entfernt ALLE Einträge der Domain: {#falsch-entfernt-alle-eintraege-der-domain}
 entries = [e for e in entries if e.get("entry_id") != ENTRY_ID and e.get("domain") != "mqtt"]
-```
+```bash
 
 ## Verifikation {#verifikation}
 
 ```bash
-# Alle HA-relevanten Services aktiv?
+# Alle HA-relevanten Services aktiv? {#alle-ha-relevanten-services-aktiv}
 systemctl is-active home-assistant mosquitto zigbee2mqtt groq-stt-wyoming edge-tts-wyoming
 
-# .storage korrekt gesetzt?
+# .storage korrekt gesetzt? {#storage-korrekt-gesetzt}
 sudo python3 -c "
 import json
 doc = json.load(open('/var/lib/hass/.storage/core.config_entries'))
 for e in doc['data']['entries']:
     print(e['domain'], e['entry_id'])
 "
-# → mqtt   q958mqttmosquitto001
-# → smlight q958smlightslzb001
+# → mqtt   q958mqttmosquitto001 {#mqtt-q958mqttmosquitto001}
+# → smlight q958smlightslzb001 {#smlight-q958smlightslzb001}
 
-# Wyoming Ports offen?
+# Wyoming Ports offen? {#wyoming-ports-offen}
 sudo ss -tlnp | grep -E "10300|10200|10201"
-# → LISTEN 0.0.0.0:10300  (STT, immer aktiv)
-# → LISTEN 0.0.0.0:10201  (Edge TTS, immer aktiv)
-# → LISTEN 0.0.0.0:10200  (Google TTS, nur wenn Credentials gesetzt)
+# → LISTEN 0.0.0.0:10300  (STT, immer aktiv) {#listen-000010300-stt-immer-aktiv}
+# → LISTEN 0.0.0.0:10201  (Edge TTS, immer aktiv) {#listen-000010201-edge-tts-immer-aktiv}
+# → LISTEN 0.0.0.0:10200  (Google TTS, nur wenn Credentials gesetzt) {#listen-000010200-google-tts-nur-wenn-credentials-gesetzt}
 
-# MQTT Auth OK?
+# MQTT Auth OK? {#mqtt-auth-ok}
 sudo journalctl -u mosquitto --since '5 minutes ago' --no-pager | grep homeassistant
-# → kein "Not authorized"
+# → kein "Not authorized" {#kein-not-authorized}
 ```
 
 ## Häufige Probleme {#probleme}

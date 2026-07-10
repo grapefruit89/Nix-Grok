@@ -49,33 +49,33 @@ Die nftables-Firewall ([ADR-2008](2008-nftables-l4-hardening.md)) schützt auf L
 **Symptom:** SABnzbd/Prowlarr gestoppt ohne erkennbaren Grund, oder Leak-Check meldet Fehler.
 
 ```bash
-# Leak-Check-Status
+# Leak-Check-Status {#leak-check-status}
 systemctl status vpn-leak-check --no-pager
 journalctl -u vpn-leak-check -n 20 --no-pager
 
-# VPN-NetNS-IP prüfen (muss VPN-IP, nicht Host-IP sein)
+# VPN-NetNS-IP prüfen (muss VPN-IP, nicht Host-IP sein) {#vpn-netns-ip-pruefen-muss-vpn-ip-nicht-host-ip-sein}
 ip -n vpn-netns addr show
-# Host-IP zum Vergleich
+# Host-IP zum Vergleich {#host-ip-zum-vergleich}
 curl -s https://ipinfo.io/ip
 
-# Manueller Leak-Test
+# Manueller Leak-Test {#manueller-leak-test}
 systemctl start vpn-netns-test
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# 1. VPN-Tunnel-Status prüfen
+# 1. VPN-Tunnel-Status prüfen {#1-vpn-tunnel-status-pruefen}
 ip -n vpn-netns route show
 systemctl status wg-netns --no-pager 2>/dev/null
 
-# 2. VPN neu starten
+# 2. VPN neu starten {#2-vpn-neu-starten}
 sudo systemctl restart wg-netns 2>/dev/null || sudo systemctl restart vpn-confinement
 
-# 3. Dienste manuell neu starten wenn VPN wieder läuft
+# 3. Dienste manuell neu starten wenn VPN wieder läuft {#3-dienste-manuell-neu-starten-wenn-vpn-wieder-laeuft}
 sudo systemctl start sabnzbd prowlarr
 
-# 4. Leak-Check manuell ausführen (Verifikation)
+# 4. Leak-Check manuell ausführen (Verifikation) {#4-leak-check-manuell-ausfuehren-verifikation}
 sudo systemctl start vpn-leak-check
 systemctl status vpn-leak-check --no-pager
 ```

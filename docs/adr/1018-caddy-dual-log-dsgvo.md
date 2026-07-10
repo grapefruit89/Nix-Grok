@@ -52,7 +52,7 @@ unveränderten Default-Logger.
 
 ### Architektur {#architektur}
 
-```
+```yaml
 HTTP-Request
     │
     ├─► default-Logger (stdout → journald → CrowdSec)
@@ -85,7 +85,7 @@ log dsgvo_access {
   }
   level INFO
 }
-```
+```bash
 
 **Wichtig:** `ip_mask 24` ohne Slash — `ip_mask /24` verursacht `strconv.Atoi`-Fehler und Endlos-Restart-Loop!
 
@@ -106,8 +106,8 @@ log dsgvo_access {
 ```bash
 journalctl -u caddy -n 30 --no-pager | grep -iE "error|fail|strconv|ip_mask"
 
-# Typischer Fehler:
-# Error: adapting config using caddyfile: error parsing ip_mask /24: strconv.Atoi: ...
+# Typischer Fehler: {#typischer-fehler}
+# Error: adapting config using caddyfile: error parsing ip_mask /24: strconv.Atoi: ... {#error-adapting-config-using-caddyfile-error-parsing-ip_mask-24-strconvatoi}
 ```
 
 **Bekanntes Gotcha:** `ip_mask /24` (mit Slash) → Syntaxfehler → Caddy-Crash-Loop.
@@ -115,16 +115,16 @@ journalctl -u caddy -n 30 --no-pager | grep -iE "error|fail|strconv|ip_mask"
 ## Fix {#fix}
 
 ```bash
-# Syntaxfehler: /24 → 24 (kein Slash bei ip_mask!)
+# Syntaxfehler: /24 → 24 (kein Slash bei ip_mask!) {#syntaxfehler-24-24-kein-slash-bei-ip_mask}
 grep -rn "ip_mask" /etc/nixos/modules/
 
-# Fix in modules/10-network/11-network.nix:
-#   ip_mask { ipv4 /24 → ip_mask { ipv4 24
-#   ip_mask { ipv6 /48 → ip_mask { ipv6 48
+# Fix in modules/10-network/11-network.nix: {#fix-in-modules10-network11-networknix}
+# ip_mask { ipv4 /24 → ip_mask { ipv4 24 {#ip_mask-ipv4-24-ip_mask-ipv4-24}
+# ip_mask { ipv6 /48 → ip_mask { ipv6 48 {#ip_mask-ipv6-48-ip_mask-ipv6-48}
 
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
-# in tmux: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
-```
+# in tmux: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure {#in-tmux-sudo-nixos-rebuild-switch---flake-etcnixosq958---impure}
+```text
 
 Vollständige Fehlerdetails: [RUNBOOK — Caddy](../RUNBOOK.md#caddy-ip-mask)
 

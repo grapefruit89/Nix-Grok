@@ -30,7 +30,9 @@ meta:
 | [015](015-cpu-power-profiles-daemon-thermald.md) | CPU-Energieverwaltung — power-profiles-daemon + thermald | accepted | 2026-06-29 |
 | [020](020-no-legacy-explicit-stack.md) | Explizit ersetzte Technologien — Legacy-Stack | accepted | 2026-06-30 |
 | [028](028-systemd-service-isolation.md) | Systemd Service Isolation — mkHardened Factory | accepted | 2026-07-05 |
-| [032](032-os-native-first.md) | OS-native-first für kritische Infrastruktur | accepted | 2026-07-06 |
+| [033](033-no-cockpit.md) | Kein Cockpit — Angriffsfläche überwiegt Nutzen | accepted | 2026-07-06 |
+| [034](034-no-ansible-semaphore.md) | Kein Ansible/Semaphore — Imperativismus verboten | accepted | 2026-07-06 |
+| [035](035-pre-commit-hooks-manual.md) | Pre-commit Hooks — manuell statt activationScript | accepted | 2026-07-10 |
 
 ### 10-network — Netzwerk, DNS, Ingress
 
@@ -45,8 +47,11 @@ meta:
 | [1018](1018-caddy-dual-log-dsgvo.md) | Caddy Dual-Log — DSGVO + journald für CrowdSec | accepted | 2026-06-29 |
 | [1019](1019-uds-first-philosophy.md) | Unix-Domain-Sockets als primäres IPC-Protokoll | accepted | 2026-06-30 |
 | [1025](1025-pocket-id-oidc-provider.md) | Pocket-ID als OIDC/Passkey Provider | accepted | 2026-07-05 |
-| [1031](1031-caddy-zones-konzept.md) | Caddy-Zonen-Konzept — internal / family-pocketid / public | accepted | 2026-07-05 |
+| [1031](1031-caddy-zones-konzept.md) | Caddy-Zonen-Konzept — internal / external / streaming | accepted | 2026-07-10 |
 | [1032](1032-internal-zone-sso.md) | internal Zone — Umbenennung admin-hangar + SSO-Overlay | accepted | 2026-07-08 |
+| [1033](1033-oauth2-proxy-forward-auth.md) | oauth2-proxy als OIDC Forward-Auth Gate | accepted | 2026-07-08 |
+| [1034](1034-secrets-portal-architecture.md) | secrets-portal Architektur | accepted | 2026-07-09 |
+| [2030](2030-networkd-wait-online-headless.md) | systemd-networkd-wait-online auf Headless deaktivieren | accepted | 2026-07-08 |
 
 ### 20-security — Härtung, Secrets, Firewall
 
@@ -73,6 +78,7 @@ meta:
 | ADR | Titel | Status | Datum |
 |-----|-------|--------|-------|
 | [5030](5030-media-stack-factory-hardening.md) | Media-Stack Inventory — was bereits implementiert war | accepted | 2026-07-05 |
+| [5031](5031-usenet-vpn-sandbox.md) | Usenet-Dienste VPN-Sandbox (host-basiert) | accepted | 2026-07-06 |
 
 ### 70-home-automation — Home Assistant, MQTT, IoT
 
@@ -82,6 +88,8 @@ meta:
 | [7002](7002-ha-storage-provisioning.md) | HA .storage Provisioning — Muster, Race Conditions, Reihenfolge | accepted | 2026-07-09 |
 | [7003](7003-groq-stt-wyoming-bridge.md) | STT via Groq Whisper + Wyoming Bridge (wyoming 1.9.0 Breaking Change) | accepted | 2026-07-09 |
 | [7004](7004-google-tts-wyoming-bridge.md) | TTS via Google Cloud Text-to-Speech + Wyoming Bridge (Preismodell, Circuit Breaker) | accepted | 2026-07-09 |
+| [7005](7005-cloudflare-dns-acme-ddns.md) | Cloudflare DNS, ACME DNS-01, DDNS und Token-Management | accepted | 2026-07-09 |
+| [7006](7006-edge-tts-wyoming-bridge.md) | TTS via Microsoft Edge TTS + Wyoming Bridge | accepted | 2026-07-10 |
 
 
 ## Wann neues ADR?
@@ -126,4 +134,5 @@ Nicht: tote `ADR-10-network.md`-Pfade ohne Datei.
 | 2026-07-08 | ADR 1031 aktualisiert (admin-hangar → internal); ADR 1032 (internal Zone + SSO-Overlay) |
 | 2026-07-09 | ADR 7001–7002 (Home-Automation: LoadCredentialEncrypted, HA .storage Provisioning) |
 | 2026-07-09 | ADR 7003 (Groq STT Wyoming Bridge, wyoming 1.9.0 Breaking Change); GUIDE-home-assistant.md (kompletter HA-Stack) |
+| 2026-07-10 | ADR-Index: 033–035, 1033–1034, 2030, 5031, 7005–7006 ergänzt; 1031-Titel aktualisiert
 | 2026-07-09 | ADR 7004 (Google Cloud TTS Wyoming Bridge, Preismodell getrennte Free-Tier-Töpfe, Circuit Breaker); GUIDE-home-assistant.md (TTS-Sektion) |

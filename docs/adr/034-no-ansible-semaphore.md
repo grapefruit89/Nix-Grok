@@ -10,9 +10,9 @@ meta:
     - forbidden-tech
 ---
 
-# ADR-034: Kein Ansible/Semaphore — Imperativismus verboten
+# ADR-034: Kein Ansible/Semaphore — Imperativismus verboten {#adr-034-kein-ansiblesemaphore-imperativismus-verboten}
 
-## Kontext
+## Kontext {#kontext}
 
 Semaphore (Ansible-UI, Port 7002) war in der Codebase als geplanter Dienst
 reserviert (`lib/server-map.nix`, `meta/index.yaml`). Ein Code-Review (Juli 2026)
@@ -22,7 +22,7 @@ hat die Reservierung aufgedeckt und zur Entscheidung geführt.
 Semaphore ist ein Web-Frontend für Ansible-Playbooks — ein grafisches Tool um
 imperative Shell-Skripte (`ansible-playbook`) gegen entfernte Hosts auszuführen.
 
-## Entscheidung
+## Entscheidung {#entscheidung}
 
 Semaphore und jede Form von Ansible-basierter Konfigurationsverwaltung sind
 **dauerhaft verboten** und durch eine Assertion in `lib/forbidden-tech.nix`
@@ -33,7 +33,7 @@ Referenzen wurden bereinigt:
 - `lib/unix-sockets.nix` (Kommentar)
 - Port 7002 bleibt reserviert-frei (kein anderer Dienst weist auf diesen Port)
 
-## Begründung
+## Begründung {#begruendung}
 
 **Grundsatzproblem — Paradigma-Kollision**:
 
@@ -57,13 +57,19 @@ verändert hat — und dieser Drift ist für Menschen und Agenten unsichtbar.
    (`scripts/nixos-rebuild-safe.sh`) und das Pre-commit-Gate.
 4. **Nie gebraucht**: Die Reservierung war spekulativ, kein Use-Case ist eingetreten.
 
-## Folgen
+## Folgen {#folgen}
 
 - `lib/forbidden-tech.nix` → `[POL-FT-009]`: Build bricht wenn `services.semaphore.enable = true`
 - Die Entscheidung gilt global für alle Maschinen die dieses Flake nutzen
 - KVM/Libvirtd kann ohne Ansible-Overhead direkt via NixOS aktiviert werden
 
-## Alternative
+## Alternative {#alternative}
 
 Für Automatisierung: `systemd.services` + `scripts/` + `nixos-rebuild switch`.
 Das ist deklarativ, auditierbar und von NixOS verwaltet.
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-032 — OS-native-first](032-os-native-first.md)
+- [ADR-020 — Legacy-Stack](020-no-legacy-explicit-stack.md)
+- [ANTIPATTERNS](../guides/ANTIPATTERNS.md)

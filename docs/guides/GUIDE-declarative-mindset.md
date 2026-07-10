@@ -10,7 +10,7 @@ meta:
     - review
 ---
 
-# GUIDE: Deklarativer NixOS-Mindset
+# GUIDE: Deklarativer NixOS-Mindset {#guide-deklarativer-nixos-mindset}
 
 **Für**: AI-Agenten (Claude, Grok, etc.) und menschliche Contributor beim Code-Review.
 
@@ -20,7 +20,7 @@ meta:
 
 ---
 
-## 1. Was ist imperativ — und warum verboten?
+## 1. Was ist imperativ — und warum verboten? {#1-was-ist-imperativ-und-warum-verboten}
 
 | Muster | Warum problematisch | Erlaubte Alternative |
 |--------|---------------------|----------------------|
@@ -35,17 +35,17 @@ meta:
 
 ---
 
-## 2. Erlaubte Escape-Hatches (mit Begründung)
+## 2. Erlaubte Escape-Hatches (mit Begründung) {#2-erlaubte-escape-hatches-mit-begruendung}
 
-### `system.activationScripts.preCommitInstall` (`01-core.nix`)
+### Pre-commit Hooks (`09-nix-tools.nix` + [ADR-035](../adr/035-pre-commit-hooks-manual.md)) {#pre-commit}
 
-**Warum imperativ**: `.git/hooks/` liegt außerhalb des Nix-Store. Nix kann dort nicht schreiben.
+**Entfernt:** `activationScripts.preCommitInstall` — Root schreibt nicht mehr in `.git/hooks/`.
 
-**Warum erlaubt**: Offizieller NixOS-Mechanismus für "one-time setup". Erzwingt nixfmt/statix/deadnix (POL-FMT-010..012) nach jedem switch automatisch.
+**Setup (einmalig nach Clone):** `pre-commit install --config /etc/nixos/.pre-commit-config.yaml`
 
-**Bedingungen**: Nur aktiv wenn `my.mode == "development"` (kein Overhead auf Produktionsservern).
+**Package:** `pre-commit` bleibt systemweit in `09-nix-tools.nix` installiert.
 
-### `builtins.readDir`/`readFile` in `02-nixmeta-ban.nix` + `07-structure-validation.nix`
+### `builtins.readDir`/`readFile` in `02-nixmeta-ban.nix` + `07-structure-validation.nix` {#builtinsreaddirreadfile-in-02-nixmeta-bannix-07-structure-validationnix}
 
 **Warum scheinbar imperativ**: Filesystem-Scan zur Evaluierungszeit.
 
@@ -55,7 +55,7 @@ meta:
 
 ---
 
-## 3. Magic Numbers — wann Option, wann Kommentar?
+## 3. Magic Numbers — wann Option, wann Kommentar? {#3-magic-numbers-wann-option-wann-kommentar}
 
 **Diskriminierender Test**: *Wird dieser Wert jemals zwischen Maschinen, `my.mode`-Stufen oder Rebuilds variieren?*
 
@@ -77,36 +77,36 @@ meta:
 
 ---
 
-## 4. Muster: maschinenabhängige Werte korrekt ableiten
+## 4. Muster: maschinenabhängige Werte korrekt ableiten {#4-muster-maschinenabhaengige-werte-korrekt-ableiten}
 
-**So sieht es richtig aus** (Vorlage aus `01-core.nix`):
+**So sieht es richtig aus** (Nix-Tuning in `09-nix-tools.nix`, Options in `01-core.nix`):
 
 ```nix
-# In machines/<host>/profile.nix:
+# In machines/<host>/profile.nix: {#in-machineshostprofilenix}
 hardware = {
   ramGB = 32;
   nixStoreGB = 468;  # /dev/sda2, Stand YYYY-MM
 };
 
-# In machines/<host>/default.nix:
+# In machines/<host>/default.nix: {#in-machineshostdefaultnix}
 my.configs.hardware = {
   ramGB = p.hardware.ramGB;
   nixStoreGB = p.hardware.nixStoreGB;
 };
 
-# In modules/00-core/01-core.nix:
+# In modules/00-core/09-nix-tools.nix (Nix-Store-Tuning): {#in-modules00-core09-nix-toolsnix-nix-store-tuning}
 let
   nixStoreGB = config.my.configs.hardware.nixStoreGB;
 in
   min-free = nixStoreGB * 1073741824 / 100;  # 1% des Stores
   max-free = nixStoreGB * 1073741824 / 50;   # 2% des Stores
-```
+```nix
 
-**Neues Hardware-Attribut hinzufügen**: immer `profile.nix` → `default.nix` → `01-core.nix options` → Nutzung im Modul.
+**Neues Hardware-Attribut hinzufügen**: immer `profile.nix` → `default.nix` → `01-core.nix` (Options) → Nutzung im Modul. **Neue Ports:** `08-ports.nix`.
 
 ---
 
-## 5. `my.mode` — korrekte Nutzung
+## 5. `my.mode` — korrekte Nutzung {#5-mymode-korrekte-nutzung}
 
 `my.mode` ist **kein toter Code**. Es wird aktiv in folgenden Modulen genutzt:
 - `lib/nftables-rules.nix` — SSH-Port-Auswahl
@@ -116,11 +116,9 @@ in
 - `machines/q958/rollout.nix` — `stufe >= 9 → production`
 - `modules/90-policy/` — Security-Assertions
 
-**In `01-core.nix`** steuert es: `system.activationScripts.preCommitInstall` (nur in `development`).
-
 ---
 
-## 6. Review-Checkliste
+## 6. Review-Checkliste {#6-review-checkliste}
 
 - [ ] Keine neuen `activationScripts` ohne Begründung + `lib.mkIf`-Gate
 - [ ] Keine `builtins.readFile`/`readDir` außerhalb `00-core/` Guardrails
@@ -131,17 +129,17 @@ in
 
 ---
 
-## 7. Cross-Layer Dependencies
+## 7. Cross-Layer Dependencies {#7-cross-layer-dependencies}
 
 `04-services-spec.nix` referenziert `config.my.ingress.fromSpec.enable` (definiert in höherer Schicht). Solche Upstream-Abhängigkeiten sind erlaubt — NixOS löst sie lazy auf. Beim Review: sicherstellen dass das referenzierte Modul im Flake eingebunden ist.
 
 ---
 
-## 8. Layer-Review: 20-security (Juli 2026)
+## 8. Layer-Review: 20-security (Juli 2026) {#8-layer-review-20-security-juli-2026}
 
 Sicherheitskritische Module: Firewall, SSH, LUKS-Unlock, Kernel-Hardening, Fail2ban.
 
-### 8.1 Imperative Escape-Hatches (vollständig)
+### 8.1 Imperative Escape-Hatches (vollständig) {#81-imperative-escape-hatches-vollstaendig}
 
 | Stelle | Muster | Bewertung |
 |--------|--------|-----------|
@@ -152,7 +150,7 @@ Sicherheitskritische Module: Firewall, SSH, LUKS-Unlock, Kernel-Hardening, Fail2
 
 **Neue Agentenregel**: `writeShellScript` in `ExecStart`/`ExecStartPre` → prüfen ob persistenter State mutiert wird. Wenn ja: dokumentieren + Deaktivierungsoption.
 
-### 8.2 Was Grok falsch lag (nicht nachahmbar)
+### 8.2 Was Grok falsch lag (nicht nachahmbar) {#82-was-grok-falsch-lag-nicht-nachahmbar}
 
 | Grok-Behauptung | Realität |
 |----------------|----------|
@@ -161,14 +159,14 @@ Sicherheitskritische Module: Firewall, SSH, LUKS-Unlock, Kernel-Hardening, Fail2
 | "Port 2222: dupliziert (Prio Hoch)" | Zwei getrennte Dienste (initrd-SSH ≠ stage-2 dropbear), zeitlich disjunkt, beide schon `mkOption`. Kein Bug. |
 | "dropbear `ExecStartPre` modernisieren mit `LoadCredential`" | `StateDirectory = "dropbear"` bereits gesetzt — kein Handlungsbedarf. |
 
-### 8.3 Positiv (vorbildlich für andere Layer)
+### 8.3 Positiv (vorbildlich für andere Layer) {#83-positiv-vorbildlich-fuer-andere-layer}
 
 - `my.mode` wird in `20-security` **korrekt genutzt** — SSH-Port, Sovereign-Unlock, Kernel-Params reagieren auf `development` vs. `production`. Das Muster das in `00-core` fehlt, ist hier Realität.
 - Starke Assertions: AuthorizedKeys-Pflicht, Tang/SSH-Keys bei Sovereign-Unlock.
 - `kfence.sample_interval=100` bereits kommentiert: `# KFENCE: 1% Sampling für UAF/OOB-Detection`.
 - Kernel-Blacklist in `26-kernel-hardening.nix` ist vollständig kommentiert pro Modul.
 
-### 8.4 Was tatsächlich umgesetzt wurde
+### 8.4 Was tatsächlich umgesetzt wurde {#84-was-tatsaechlich-umgesetzt-wurde}
 
 - `geoipAutoUpdate.enable` Option + `lib.mkIf`-Gate für Service+Timer
 - Kommentare zu `rmem_max`, `wmem_max`, `tcp_max_syn_backlog`

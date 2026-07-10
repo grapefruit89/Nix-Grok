@@ -36,7 +36,7 @@ flowchart TD
   trusted --> lan[in_lan: LAN-CIDR auf lanInterface]
   lan --> wan[in_wan: bogon, icmp, portscan, syn, udp, 80/443, ssh]
   wan --> log[limit log dropped]
-```
+```yaml
 
 ## Optionen (`my.security.firewall`) {#optionen}
 

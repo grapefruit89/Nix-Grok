@@ -46,7 +46,7 @@ Gatus-Integration: [GUIDE-observability.md#gatus](GUIDE-observability.md#gatus).
 systemctl status smartd scrutiny
 smartctl -H /dev/sdX          # manuell
 journalctl -u smartd -n 30
-```
+```text
 
 HDD spin-up: erste SMART-Abfrage nach Standby kann 10–20s dauern — Gatus-Timeout berücksichtigt das.
 

@@ -17,7 +17,7 @@ meta:
     - docs/adr/011-unified-port-uid-schema.md
 ---
 
-# ADR-020: Explizit ersetzte Technologien (No-Legacy Policy)
+# ADR-020: Explizit ersetzte Technologien (No-Legacy Policy) {#adr-020-explizit-ersetzte-technologien-no-legacy-policy}
 
 **Status:** Accepted  
 **Datum:** 2026-06-30  
@@ -25,15 +25,15 @@ meta:
 
 ---
 
-## Problem
+## Problem {#problem}
 
 Implizite Entscheidungen verrottten: In drei Jahren weiß niemand mehr warum GRUB weg ist, warum es keinen Cron-Daemon gibt, warum NetworkManager nie installiert war. Dieses ADR macht die Entscheidungen explizit und dauerhaft.
 
 ---
 
-## Entscheidungsmatrix: Was wurde ersetzt und warum
+## Entscheidungsmatrix: Was wurde ersetzt und warum {#entscheidungsmatrix-was-wurde-ersetzt-und-warum}
 
-### Boot
+### Boot {#boot}
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
@@ -43,13 +43,13 @@ Implizite Entscheidungen verrottten: In drei Jahren weiß niemand mehr warum GRU
 **NixOS-Konfiguration:**
 ```nix
 boot.loader.systemd-boot.enable = true;
-# configurationLimit → machines/<host>/profile.nix (generationLimit) → rollout.nix lib.mkForce
-# q958: 15 Generationen × ~50 MB worst-case = 750 MB + 77 MB belegt < 1 GB ESP
-```
+# configurationLimit → machines/<host>/profile.nix (generationLimit) → rollout.nix lib.mkForce {#configurationlimit-machineshostprofilenix-generationlimit-rolloutnix-libmkforce}
+# q958: 15 Generationen × ~50 MB worst-case = 750 MB + 77 MB belegt < 1 GB ESP {#q958-15-generationen-50-mb-worst-case-750-mb-77-mb-belegt-1-gb-esp}
+```nix
 
 ---
 
-### Netzwerk
+### Netzwerk {#netzwerk}
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
@@ -60,7 +60,7 @@ boot.loader.systemd-boot.enable = true;
 
 ---
 
-### Task-Scheduling
+### Task-Scheduling {#task-scheduling}
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
@@ -79,7 +79,7 @@ systemd.timers.my-job = {
 
 ---
 
-### Dateisysteme
+### Dateisysteme {#dateisysteme}
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
@@ -90,7 +90,7 @@ systemd.timers.my-job = {
 
 ---
 
-### Monitoring & Logging
+### Monitoring & Logging {#monitoring-logging}
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
@@ -100,7 +100,7 @@ systemd.timers.my-job = {
 
 ---
 
-### DNS
+### DNS {#dns}
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
@@ -109,12 +109,12 @@ systemd.timers.my-job = {
 
 ---
 
-### Kernel-Module (blacklisted)
+### Kernel-Module (blacklisted) {#kernel-module-blacklisted}
 
 Für headless q958 ohne WiFi/Bluetooth/GPU gibt es keine Rechtfertigung für diese Module im Kernel:
 
 ```nix
-# kernel-slim.nix (machines/q958/)
+# kernel-slim.nix (machines/q958/) {#kernel-slimnix-machinesq958}
 boot.blacklistedKernelModules = [
   # WiFi — nicht vorhanden auf q958
   "iwlwifi" "ath9k" "rtl8192cu"
@@ -125,13 +125,13 @@ boot.blacklistedKernelModules = [
   # Legacy-Hardware
   "pcspkr" "iTCO_wdt"
 ];
-```
+```yaml
 
 **Prinzip:** Nicht installierter Code = keine Angriffsfläche. Security-by-reduction.
 
 ---
 
-## Was NICHT ersetzt wurde (bewusste Entscheidungen)
+## Was NICHT ersetzt wurde (bewusste Entscheidungen) {#was-nicht-ersetzt-wurde-bewusste-entscheidungen}
 
 | Technologie | Begründung für Beibehaltung |
 |-------------|----------------------------|
@@ -141,14 +141,14 @@ boot.blacklistedKernelModules = [
 
 ---
 
-## Assertions (Build-Time-Enforcement)
+## Assertions (Build-Time-Enforcement) {#assertions-build-time-enforcement}
 
 Nix-Grok erzwingt folgende Policies zur Build-Zeit:
 
 | Code | Assertion | Fundstelle |
 |------|-----------|------------|
 | [SEC-TIER-C] | Kein Dienst darf HDD (Tier-C) schreiben ohne Exemption | `modules/30-storage/05-storage-policy.nix` |
-| [SEC-NET-001] | Firewall muss aktiv sein | Implizit via `networking.firewall.enable = true` in 01-core.nix |
+| [SEC-NET-001] | Firewall muss aktiv sein | Implizit via `networking.firewall.enable = true` in `modules/20-security/` |
 | [PORT-REGISTRY] | Keine doppelten Ports in my.ports | `lib/services-spec.nix` |
 | [SERVICES-SPEC] | Keine doppelten Ports in services-spec | `lib/services-spec.nix` |
 
@@ -156,7 +156,7 @@ Nix-Grok erzwingt folgende Policies zur Build-Zeit:
 
 ---
 
-## Offene Punkte (nicht implementiert, aber bekannt)
+## Offene Punkte (nicht implementiert, aber bekannt) {#offene-punkte-nicht-implementiert-aber-bekannt}
 
 1. **Security-sysctl fehlen**: Das alte mynixos hatte `kernel.kptr_restrict`, `net.ipv4.conf.all.rp_filter` etc. Nix-Grok hat nur Performance-sysctl. → Zukünftiger ADR.
 2. **/boot-Monitoring**: Script für >85% ESP-Auslastungswarnung. `configurationLimit` (via `profile.nix`) ist Prävention, kein Monitoring.
@@ -164,7 +164,7 @@ Nix-Grok erzwingt folgende Policies zur Build-Zeit:
 
 ---
 
-## Verwandte ADRs
+## Siehe auch {#siehe-auch}
 
 - ADR-1001: DNS-over-TLS (Technitium statt Blocky)
 - ADR-1002: IPv4-only Homelab

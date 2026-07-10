@@ -48,7 +48,7 @@ meta:
 ### Private CA (step-ca) {#private-ca}
 
 ```nix
-# Geplante Implementierung
+# Geplante Implementierung {#geplante-implementierung}
 services.step-ca = {
   enable = true;
   address = "127.0.0.1";
@@ -57,14 +57,14 @@ services.step-ca = {
     dnsNames = [ "ca.internal.q958" ];
   };
 };
-```
+```text
 
 Jeder Microservice und jede Sandbox erhält ein individuelles Zertifikat, ausgestellt von der privaten CA. Gültigkeit: 24 Stunden (Auto-Rotation via ACME-ähnlichem Step-Client).
 
 ### mTLS-Konfiguration (Caddy) {#mtls-caddy}
 
 ```caddy
-# Geplant: interne Dienst-zu-Dienst-Routen mit mTLS
+# Geplant: interne Dienst-zu-Dienst-Routen mit mTLS {#geplant-interne-dienst-zu-dienst-routen-mit-mtls}
 prowlarr.internal:443 {
   tls {
     client_auth {

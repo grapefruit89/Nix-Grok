@@ -37,7 +37,7 @@ Valkey und PostgreSQL kommunizieren intern über Unix Domain Sockets ([ADR-1004]
 ```bash
 systemctl status postgresql.service
 sudo -u postgres psql -c "\l+"
-```
+```text
 
 Backup-Dump auf persistentem Tier A (nicht mergerfs):
 
@@ -51,7 +51,7 @@ OOM-Schutz: PostgreSQL `shared_buffers` ~8G — MemoryMax skaliert mit `hardware
 
 ```bash
 sudo -u valkey valkey-cli info memory
-```
+```bash
 
 Valkey nutzt UDS `/run/redis-valkey/valkey.sock` — kein TCP-Port ([ADR-1004](../adr/1004-unix-socket-upstreams.md)).
 

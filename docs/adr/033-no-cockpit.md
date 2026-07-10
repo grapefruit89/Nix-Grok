@@ -10,9 +10,9 @@ meta:
     - attack-surface
 ---
 
-# ADR-033: Kein Cockpit — Angriffsfläche überwiegt Nutzen
+# ADR-033: Kein Cockpit — Angriffsfläche überwiegt Nutzen {#adr-033-kein-cockpit-angriffsflaeche-ueberwiegt-nutzen}
 
-## Kontext
+## Kontext {#kontext}
 
 Cockpit (Port 7003, `services.cockpit`) war als Web-basiertes Server-Admin-UI geplant
 und in der Codebase als reservierter Port, Modul (`modules/60-apps/forge.nix`),
@@ -23,7 +23,7 @@ Der Wert wurde im Rahmen eines Layer-Reviews (20-security + Grok-Analyse) bewert
 
 > *"Cockpit: Mehr Angriffsfläche als Nutzen für einen Ein-Personen-Homelab."*
 
-## Entscheidung
+## Entscheidung {#entscheidung}
 
 Cockpit wird **vollständig entfernt**:
 
@@ -32,7 +32,7 @@ Cockpit wird **vollständig entfernt**:
 - Referenzen aus `services-spec.nix`, `dns-map.nix`, `server-map.nix`,
   `service-enable.nix`, `gatus-endpoints.nix`, `machines/q958/default.nix` entfernt
 
-## Begründung
+## Begründung {#begruendung}
 
 **Warum Cockpit nicht passt**:
 
@@ -58,7 +58,7 @@ Cockpit wird **vollständig entfernt**:
 - Für spätere Visualisierung: `pkgs.nixosOptionsDoc` als statische HTML-Referenz
   (keine Runtime-Angriffsfläche, rein build-time)
 
-## Alternativen verworfen
+## Alternativen verworfen {#alternativen-verworfen}
 
 | Alternative | Warum verworfen |
 |-------------|----------------|
@@ -66,9 +66,14 @@ Cockpit wird **vollständig entfernt**:
 | Cockpit read-only | Cockpit hat keine sinnvolle Read-only-Mode — privilegierter Daemon bleibt |
 | Cockpit mit mTLS | Overengineering (ADR-2029 reserviert mTLS für Zero-Trust-Szenarien, nicht für interne Tools) |
 
-## Konsequenzen
+## Konsequenzen {#konsequenzen}
 
 - Port 7003 ist frei (kann bei Bedarf für anderes vergeben werden)
 - `KVM/libvirtd` kann bei Bedarf ohne Cockpit aktiviert werden (eigenes Modul)
 - Intel AMT Proxy-Konfiguration (`machines.domain`) entfällt — AMT-Zugriff weiterhin
   direkt über `192.168.1.100:16992` im LAN möglich
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-032 — OS-native-first](032-os-native-first.md)
+- [ANTIPATTERNS — sops-nix](../guides/ANTIPATTERNS.md#sops-nix)

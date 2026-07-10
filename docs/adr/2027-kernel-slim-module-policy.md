@@ -57,11 +57,11 @@ Immer aktiv, profilunabhängig. Enthält:
 - Exotische Dateisysteme (Cluster-FS, Flash-FS, Legacy-UNIX-FS, macOS HFS/HFS+)
 
 ```nix
-# lib/kernel/blacklist-filesystems.nix — exotische Dateisysteme
+# lib/kernel/blacklist-filesystems.nix — exotische Dateisysteme {#libkernelblacklist-filesystemsnix-exotische-dateisysteme}
 [ "gfs2" "ceph" "xfs" "btrfs" "f2fs" "jffs2" "erofs" "cramfs"
   "hfs" "hfsplus" "udf" "isofs" "minix" "sysv" ... ]
-# exfat bewusst NICHT geblacklistet — USB-Sticks mit exFAT sind valid
-```
+# exfat bewusst NICHT geblacklistet — USB-Sticks mit exFAT sind valid {#exfat-bewusst-nicht-geblacklistet-usb-sticks-mit-exfat-sind-valid}
+```bash
 
 ### Schicht B — Homelab-Profil headless-server {#schicht-b}
 
@@ -78,9 +78,9 @@ Im Modus `homelab-strict` prüft die Policy bei jedem Build:
 - Kein `requiredModule` landet auf der effektiven Blacklist.
 
 ```bash
-# Assertion-Fehler im Build:
-# KERNEL-POLICY: Pflichtmodul 'xyz' ist weder in der Homelab-Whitelist
-# noch in kernel.whitelistExtra — Profil oder whitelistExtra anpassen.
+# Assertion-Fehler im Build: {#assertion-fehler-im-build}
+# KERNEL-POLICY: Pflichtmodul 'xyz' ist weder in der Homelab-Whitelist {#kernel-policy-pflichtmodul-xyz-ist-weder-in-der-homelab-whitelist}
+# noch in kernel.whitelistExtra — Profil oder whitelistExtra anpassen. {#noch-in-kernelwhitelistextra-profil-oder-whitelistextra-anpassen}
 ```
 
 ### Modi {#modi}
@@ -99,36 +99,36 @@ Im Modus `homelab-strict` prüft die Policy bei jedem Build:
 **Symptom:** Treiber/Modul fehlt, Service startet nicht.
 
 ```bash
-# Geblacklisted?
+# Geblacklisted? {#geblacklisted}
 cat /etc/modprobe.d/blacklist.conf | grep <modul>
 
-# Aktuell geladene Module
+# Aktuell geladene Module {#aktuell-geladene-module}
 lsmod | grep <modul>
 
-# Kernel-Meldungen beim Boot
+# Kernel-Meldungen beim Boot {#kernel-meldungen-beim-boot}
 journalctl -b | grep -iE "module.*black|modprobe.*error|could not insert"
-```
+```text
 
 **Erwarteter Output bei Blacklist-Treffer:**
 ```
 kernel: blacklisted <modul>
 modprobe: ERROR: could not insert 'modul': Operation not permitted
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# 1. Modul als requiredModule eintragen (machines/q958/profile.nix)
-#    kernel.requiredModules = [ "mein_modul" ];
+# 1. Modul als requiredModule eintragen (machines/q958/profile.nix) {#1-modul-als-requiredmodule-eintragen-machinesq958profilenix}
+# kernel.requiredModules = [ "mein_modul" ]; {#kernelrequiredmodules-mein_modul}
 
-# 2. Oder in whitelistExtra (wenn nicht in whitelist-homelab.nix)
-#    kernel.whitelistExtra = [ "mein_modul" ];
+# 2. Oder in whitelistExtra (wenn nicht in whitelist-homelab.nix) {#2-oder-in-whitelistextra-wenn-nicht-in-whitelist-homelabnix}
+# kernel.whitelistExtra = [ "mein_modul" ]; {#kernelwhitelistextra-mein_modul}
 
-# 3. Dry-build (Assertions prüfen!)
+# 3. Dry-build (Assertions prüfen!) {#3-dry-build-assertions-pruefen}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 
-# 4. Switch in tmux
-# tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; read'
+# 4. Switch in tmux {#4-switch-in-tmux}
+# tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; read' {#tmux-new-session-sudo-nixos-rebuild-switch---flake-etcnixosq958---impure-21-tee-tmpnixos-switchlog-read}
 ```
 
 ## Konsequenzen {#konsequenzen}
@@ -161,13 +161,13 @@ sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 ### Verifikation {#verifikation}
 
 ```bash
-# Assertions wurden erfüllt (kein Build-Fehler) → Policy korrekt
-# Effektive Blacklist nach Boot
+# Assertions wurden erfüllt (kein Build-Fehler) → Policy korrekt {#assertions-wurden-erfuellt-kein-build-fehler-policy-korrekt}
+# Effektive Blacklist nach Boot {#effektive-blacklist-nach-boot}
 cat /etc/modprobe.d/blacklist.conf | wc -l   # Viele Einträge = aktiv
 
-# Kein exotisches FS ladbar (Test mit Dummy):
+# Kein exotisches FS ladbar (Test mit Dummy): {#kein-exotisches-fs-ladbar-test-mit-dummy}
 sudo modprobe hfs 2>&1   # → FATAL: Module hfs not found / blacklisted
-```
+```text
 
 ## Alternativen verworfen {#alternativen}
 

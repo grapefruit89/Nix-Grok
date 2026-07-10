@@ -49,7 +49,7 @@ meta:
 ### sysctl — Speicher und Introspektion {#sysctl-memory}
 
 ```nix
-# modules/20-security/26-kernel-hardening.nix
+# modules/20-security/26-kernel-hardening.nix {#modules20-security26-kernel-hardeningnix}
 boot.kernel.sysctl = {
   "kernel.dmesg_restrict"        = 1;   # Nur root liest dmesg
   "kernel.kptr_restrict"         = 2;   # Kernel-Pointer nie an Userspace
@@ -60,7 +60,7 @@ boot.kernel.sysctl = {
   "vm.mmap_rnd_bits"             = 32;  # Max. ASLR-Entropie
   "kernel.core_pattern"          = "|/bin/false";  # Core dumps verworfen
 };
-```
+```text
 
 > **ptrace_scope = 1 (bewusste Entscheidung):** Der Wert `2` würde GDB und Debugger für normale User-Sessions brechen. Wert `1` begrenzt Ptrace auf Parent-Child-Beziehungen — ausreichend für ein Homelab ohne unprivilegierte Angreifer.
 
@@ -95,9 +95,9 @@ boot.kernelParams = [
   "kfence.sample_interval=100"  # KFENCE: 1 % UAF/OOB-Sampling
   "intel_iommu=on"        # DMA-Angriffe via IOMMU blockieren
 ];
-# Production (Stufe 9) zusätzlich:
-# "page_poison=1"   "debugfs=off"   (via my.mode == "production")
-```
+# Production (Stufe 9) zusätzlich: {#production-stufe-9-zusaetzlich}
+# "page_poison=1"   "debugfs=off"   (via my.mode == "production") {#page_poison1-debugfsoff-via-mymode-production}
+```bash
 
 ### Mount-Härtung {#mount-haertung}
 
@@ -110,10 +110,10 @@ fileSystems."/run/lock" = { options = [ "noexec" "nosuid" "nodev" ]; };
 ### Kernel-Lockdown (Stufe 9) {#lockdown}
 
 ```nix
-# modules/20-security/27-hardened-core.nix — aktiv wenn hardened.enable = true
+# modules/20-security/27-hardened-core.nix — aktiv wenn hardened.enable = true {#modules20-security27-hardened-corenix-aktiv-wenn-hardenedenable-true}
 security.lockKernelModules = true;   # modules_disabled=1 nach dem Boot
 boot.kernelParams = [ "lockdown=confidentiality" ];
-```
+```bash
 
 `lockKernelModules` verhindert nach dem Boot jegliches Nachladen von Kernel-Modulen. Standard ist `true` ab `hardened.enable` (Stufe 9). Kein Treiber-Hotplug mehr im Production-Betrieb — bewusste Einschränkung.
 
@@ -132,30 +132,30 @@ sysctl vm.mmap_rnd_bits                   # Sollte: 32
 <summary>Vollständige Verifikation (ausklappen)</summary>
 
 ```bash
-# Alle Härtungs-sysctl-Werte prüfen
+# Alle Härtungs-sysctl-Werte prüfen {#alle-haertungs-sysctl-werte-pruefen}
 sysctl kernel.dmesg_restrict kernel.kptr_restrict kernel.sysrq \
        kernel.unprivileged_bpf_disabled vm.mmap_rnd_bits \
        net.core.bpf_jit_harden
 
-# Mount-Flags prüfen
+# Mount-Flags prüfen {#mount-flags-pruefen}
 findmnt /tmp /dev/shm /run/lock | grep -E "noexec|nosuid|nodev"
 
-# Lockdown-Status (Production)
+# Lockdown-Status (Production) {#lockdown-status-production}
 cat /sys/kernel/security/lockdown
-```
+```bash
 
 </details>
 
 ## Fix {#fix}
 
 ```bash
-# 1. Dry-build nach Änderungen an kernel-hardening.nix
+# 1. Dry-build nach Änderungen an kernel-hardening.nix {#1-dry-build-nach-aenderungen-an-kernel-hardeningnix}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 
-# 2. Switch in tmux
-# tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; read'
+# 2. Switch in tmux {#2-switch-in-tmux}
+# tmux new-session 'sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure 2>&1 | tee /tmp/nixos-switch.log; read' {#tmux-new-session-sudo-nixos-rebuild-switch---flake-etcnixosq958---impure-21-tee-tmpnixos-switchlog-read}
 
-# 3. Nach Reboot prüfen
+# 3. Nach Reboot prüfen {#3-nach-reboot-pruefen}
 sysctl kernel.unprivileged_bpf_disabled   # → 1
 cat /proc/sys/kernel/modules_disabled     # → 1 (nur Stufe 9)
 ```
@@ -190,9 +190,9 @@ cat /proc/sys/kernel/modules_disabled     # → 1 (nur Stufe 9)
 sysctl kernel.unprivileged_bpf_disabled   # → 1
 sysctl vm.mmap_rnd_bits                   # → 32
 findmnt /tmp | grep noexec                # Mount-Flag gesetzt
-# Stufe 9:
+# Stufe 9: {#stufe-9}
 cat /sys/kernel/security/lockdown         # → confidentiality
-```
+```text
 
 ## Alternativen verworfen {#alternativen}
 

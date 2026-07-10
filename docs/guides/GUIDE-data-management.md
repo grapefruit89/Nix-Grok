@@ -50,7 +50,7 @@ Storage-Mover: `rclone move` von Tier-B-Cache → Tier-C mit `--min-age 30d`.
 ```bash
 systemctl status restic-backups-tier-a-sovereign.timer
 restic -r s3:... snapshots   # mit env aus /var/lib/secrets/restic_s3_creds
-```
+```bash
 
 ## SSoT {#ssot}
 

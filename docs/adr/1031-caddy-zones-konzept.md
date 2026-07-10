@@ -19,13 +19,13 @@ meta:
     - docs/adr/7005-cloudflare-dns-acme-ddns.md
 ---
 
-# ADR-1031: Caddy-Zonen-Konzept — internal / external / streaming
+# ADR-1031: Caddy-Zonen-Konzept — internal / external / streaming {#adr-1031-caddy-zonen-konzept-internal-external-streaming}
 
 **Status:** accepted  
 **Datum:** 2026-07-05 (aktualisiert 2026-07-10)  
 **Betrifft:** lib/services-spec.nix, lib/caddy-ingress.nix, lib/caddy-snippets.nix
 
-## Kontext
+## Kontext {#kontext}
 
 Alle Services werden über Caddy als Reverse-Proxy exponiert. Es gibt vier Zonen, davon drei
 mit Caddy-vHosts:
@@ -50,9 +50,9 @@ Muss auf vHost-Ebene importiert werden, NICHT innerhalb von `handle {}` (Caddy-L
 **`streamer_headers` (caddy-snippets.nix):** Setzt streaming-freundliche Response-Header.
 Das eigentliche `flush_interval -1` kommt aus `caddy-ingress.nix` im `reverse_proxy`-Block.
 
-## Entscheidung
+## Entscheidung {#entscheidung}
 
-### Zonen-Redesign 2026-07-10
+### Zonen-Redesign 2026-07-10 {#zonen-redesign-2026-07-10}
 
 Die ursprünglichen Zonen `family-pocketid` und `public` wurden zusammengeführt:
 
@@ -69,7 +69,7 @@ Ingress-Generator braucht keine separate Liste mehr.
 CF puffert Response-Bodies → bricht Media-Streaming auch mit `flush_interval -1` auf Caddy-Seite.
 Details: [ADR-7005 — Cloudflare](7005-cloudflare-dns-acme-ddns.md).
 
-### Welche Services in welcher Zone?
+### Welche Services in welcher Zone? {#welche-services-in-welcher-zone}
 
 **internal (LAN-only, `private_admin`):**
 `gatus`, `scrutiny`, `grafana`, `sabnzbd`, `blocky`, `ddns-updater`,
@@ -82,7 +82,7 @@ Details: [ADR-7005 — Cloudflare](7005-cloudflare-dns-acme-ddns.md).
 **streaming (Internet + LAN, SSO, flush_interval=-1, CF UNPROXIED):**
 `jellyfin`, `navidrome`, `audiobookshelf`
 
-### Besondere vHosts (eigene Generatoren in caddy-ingress.nix)
+### Besondere vHosts (eigene Generatoren in caddy-ingress.nix) {#besondere-vhosts-eigene-generatoren-in-caddy-ingressnix}
 
 | vHost | Generator | Grund |
 |-------|-----------|-------|
@@ -95,12 +95,12 @@ Details: [ADR-7005 — Cloudflare](7005-cloudflare-dns-acme-ddns.md).
 Für Jellyfin und Navidrome überschreibt der eigene Generator die `streaming`-Zone-Logik, liefert
 aber dieselben `flush_interval -1` + `streamer_headers`-Semantiken manuell.
 
-### Netbird als LAN-Ersatz
+### Netbird als LAN-Ersatz {#netbird-als-lan-ersatz}
 
 `internal` blockiert WAN-Clients, aber Netbird-Clients haben IPs im `100.64.0.0/10`
 (Netbird Overlay-Netz). Alle `internal`-Dienste sind von Netbird aus erreichbar.
 
-## Konsequenzen
+## Konsequenzen {#konsequenzen}
 
 - `services-spec.nix` ist die SSoT für Zone-Zuordnung. Neue Dienste brauchen explizite Zone.
 - `caddy-ingress.nix` generiert vHosts vollständig aus Zone — kein separates Streaming-Listen-Pflegen.
@@ -108,7 +108,7 @@ aber dieselben `flush_interval -1` + `streamer_headers`-Semantiken manuell.
 - Neue WAN-Dienste brauchen explizite Begründung (Risikobewertung vor Öffnung).
 - Services mit eigenem Generator ignorieren Zone-Logik für Caddy-Snippets.
 
-## Entscheidungsmatrix für neue Dienste
+## Entscheidungsmatrix für neue Dienste {#entscheidungsmatrix-fuer-neue-dienste}
 
 | Frage | ja → | nein → |
 |-------|------|--------|
@@ -117,9 +117,18 @@ aber dieselben `flush_interval -1` + `streamer_headers`-Semantiken manuell.
 | Hat er eigene App-Auth (kein SSO-Overlay nötig)? | `genSecurityOnlyVhost` | standard `genZoneVhost` |
 | Hat er API-Endpoints die SSO umgehen müssen? | eigener `genXxxVhost` | standard |
 
-## Changelog
+## Changelog {#changelog}
 
 | Datum | Änderung |
 |-------|----------|
 | 2026-07-05 | Initial — 3 Zonen (internal, family-pocketid, public) |
 | 2026-07-10 | Redesign: family-pocketid → external; public entfernt; streaming als eigene Zone; streamingSubdomains-Liste entfernt |
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-1034 — secrets-portal Architektur](1034-secrets-portal-architecture.md)
+- [ADR-1032 — internal Zone SSO](1032-internal-zone-sso.md)
+- [ADR-1033 — oauth2-proxy Forward-Auth](1033-oauth2-proxy-forward-auth.md)
+- [ADR-7005 — Cloudflare DNS/ACME/DDNS](7005-cloudflare-dns-acme-ddns.md)
+- [GUIDE-auth-stack](../guides/GUIDE-auth-stack.md)
+- [GUIDE-cloudflare](../guides/GUIDE-cloudflare.md)

@@ -53,22 +53,22 @@ TPM ist auf q958 vollständig verfügbar (`systemd-analyze has-tpm2` → yes, al
 
 Zweistufige Migration:
 
-### Stufe A — Ohne TPM (aktuell, Dev-Betrieb)
+### Stufe A — Ohne TPM (aktuell, Dev-Betrieb) {#stufe-a-ohne-tpm-aktuell-dev-betrieb}
 
 ```bash
-# Credential versiegeln (host key, /var/lib/systemd/credential.secret)
+# Credential versiegeln (host key, /var/lib/systemd/credential.secret) {#credential-versiegeln-host-key-varlibsystemdcredentialsecret}
 printf '%s' 'WERT' | systemd-creds encrypt --name=sonarr_api_key \
   - /var/lib/credstore.encrypted/sonarr_api_key.cred
-```
+```text
 
 Entschlüsselung erfolgt automatisch durch systemd via `LoadCredentialEncrypted=` in der
 Unit. Das Secret landet nur in `$CREDENTIALS_DIRECTORY/<name>`, nur für diesen Service
 sichtbar, automatisch bereinigt beim Stop.
 
-### Stufe B — Mit TPM (zukünftig, ein Boolean-Flip)
+### Stufe B — Mit TPM (zukünftig, ein Boolean-Flip) {#stufe-b-mit-tpm-zukuenftig-ein-boolean-flip}
 
 ```nix
-# In rollout.nix oder profile.nix:
+# In rollout.nix oder profile.nix: {#in-rolloutnix-oder-profilenix}
 my.creds.useTpm = true;  # war: false
 ```
 
@@ -76,21 +76,21 @@ Dann Credentials neu versiegeln (einmalig):
 ```bash
 printf '%s' 'WERT' | systemd-creds encrypt --with-key=tpm2 --name=sonarr_api_key \
   - /var/lib/credstore.encrypted/sonarr_api_key.cred
-```
+```nix
 
 Kein weiterer Rebuild nötig — nur Credentials neu erstellen.
 
-### NixOS-Integration
+### NixOS-Integration {#nixos-integration}
 
 ```nix
-# Service-Unit erhält Credential transparent:
+# Service-Unit erhält Credential transparent: {#service-unit-erhaelt-credential-transparent}
 systemd.services.sonarr.serviceConfig = {
   LoadCredentialEncrypted = "sonarr_api_key:${config.my.creds.storeDir}/sonarr_api_key.cred";
 };
-# Im Service: $CREDENTIALS_DIRECTORY/sonarr_api_key
+# Im Service: $CREDENTIALS_DIRECTORY/sonarr_api_key {#im-service-credentials_directorysonarr_api_key}
 ```
 
-### Deklarative Credentials-Liste
+### Deklarative Credentials-Liste {#deklarative-credentials-liste}
 
 ```nix
 my.creds = {
@@ -98,7 +98,7 @@ my.creds = {
   useTpm = false; # → true für TPM-Migration
   keys = [ "sonarr_api_key" "radarr_api_key" "cloudflare_api_token" ];
 };
-```
+```text
 
 Fehlendes `.cred`-File → Warnung bei `nixos-rebuild switch` mit Siegel-Befehl.
 
@@ -140,7 +140,7 @@ TPM (optional, später):
   my.creds.useTpm = true;
   → Credentials neu versiegeln mit --with-key=tpm2
   → kein Rebuild nötig
-```
+```bash
 
 ## Alternativen verworfen {#alternativen}
 
@@ -153,6 +153,7 @@ TPM (optional, später):
 
 ## Siehe auch {#siehe-auch}
 
+- [ADR-1034 — secrets-portal Architektur](1034-secrets-portal-architecture.md)
 - [ADR-2006 — SOPS-Migration](2006-sops-migration-path.md) — Superseded by this ADR
 - [ADR-2021 — SOPS Boot-Timing](2021-sops-impermanence-boot-timing.md) — Withdrawn (entfällt)
 - [ANTIPATTERNS.md#sops-nix](../guides/ANTIPATTERNS.md#sops-nix) — sops-nix als Anti-Pattern

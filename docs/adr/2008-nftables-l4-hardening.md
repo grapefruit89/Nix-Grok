@@ -82,42 +82,42 @@ Voraussetzung: `lib/uid-registry.nix` ([ADR-011](011-unified-port-uid-schema.md#
 **Symptom:** Ruleset lädt nicht nach Rebuild, oder Dienste nicht mehr erreichbar nach Firewall-Änderung.
 
 ```bash
-# Aktuelles Ruleset anzeigen
+# Aktuelles Ruleset anzeigen {#aktuelles-ruleset-anzeigen}
 sudo nft list ruleset | head -50
 
-# Syntax-Check ohne Laden
+# Syntax-Check ohne Laden {#syntax-check-ohne-laden}
 sudo nft -c -f /etc/nftables.conf
 
-# nftables-Service-Status
+# nftables-Service-Status {#nftables-service-status}
 systemctl status nftables --no-pager
 journalctl -u nftables -n 20 --no-pager
 
-# Aktive Sets (CrowdSec, Fail2ban, Portscan)
+# Aktive Sets (CrowdSec, Fail2ban, Portscan) {#aktive-sets-crowdsec-fail2ban-portscan}
 sudo nft list set inet filter crowdsec_blocked_ipv4
 sudo nft list set inet filter f2b_blocked_ipv4
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# 1. Syntax-Fehler im Ruleset identifizieren
+# 1. Syntax-Fehler im Ruleset identifizieren {#1-syntax-fehler-im-ruleset-identifizieren}
 sudo nft -c -f /etc/nftables.conf
-# Fehler: "Error in line X: ..."
+# Fehler: "Error in line X: ..." {#fehler-error-in-line-x}
 
-# 2. Fix in lib/nftables-rules.nix oder modules/15-firewall.nix
-# 3. checkRuleset=true bricht Rebuild bei Syntaxfehler — Dry-Build nutzen
+# 2. Fix in lib/nftables-rules.nix oder modules/15-firewall.nix {#2-fix-in-libnftables-rulesnix-oder-modules15-firewallnix}
+# 3. checkRuleset=true bricht Rebuild bei Syntaxfehler — Dry-Build nutzen {#3-checkrulesettrue-bricht-rebuild-bei-syntaxfehler-dry-build-nutzen}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 
-# 4. Dienst nach Fix neu laden
+# 4. Dienst nach Fix neu laden {#4-dienst-nach-fix-neu-laden}
 sudo systemctl reload nftables || sudo systemctl restart nftables
 
-# 5. Verifikation
+# 5. Verifikation {#5-verifikation}
 sudo nft list ruleset | grep -E "chain|policy"
 ```
 
 ## Architektur {#architektur}
 
-```
+```text
 lib/nftables-rules.nix   ← Generator (Sets, Chains, skuid)
 modules/15-firewall.nix  ← Options, checkRuleset, Geo-IP-Timer
 modules/20-security/     ← Fail2ban → f2b_blocked_ipv4, CrowdSec-Bouncer

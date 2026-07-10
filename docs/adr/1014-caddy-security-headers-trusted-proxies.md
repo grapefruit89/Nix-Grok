@@ -50,7 +50,7 @@ Chat-Transcript-Analyse (USB-Stick, claude/homelab_server/) ergab drei Probleme 
 
 ### `lib/caddy-snippets.nix` {#snippets}
 
-```
+```text
 X-XSS-Protection "0"             # war: "1; mode=block"
 X-Frame-Options "SAMEORIGIN"     # war: "DENY"
 Permissions-Policy "geolocation=(), microphone=(), camera=()"  # neu
@@ -64,7 +64,7 @@ services.caddy.globalConfig = lib.mkIf config.services.caddy.enable ''
     trusted_proxies static private_ranges
   }
 '';
-```
+```bash
 
 ## Konsequenzen {#konsequenzen}
 

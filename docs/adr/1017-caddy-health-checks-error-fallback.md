@@ -59,7 +59,7 @@ In `lib/caddy-snippets.nix`:
     respond "Service momentan nicht verfügbar" 503
   }
 }
-```
+```bash
 
 Eingebunden in **alle** vHost-Generatoren in `lib/caddy-ingress.nix`:
 - `genAuthVhost` (Pocket-ID)
@@ -76,27 +76,27 @@ Eingebunden in **alle** vHost-Generatoren in `lib/caddy-ingress.nix`:
 **Symptom:** Nutzer sieht "Service momentan nicht verfügbar" (503) oder rohe 502-Seite.
 
 ```bash
-# Betroffenen Dienst identifizieren
+# Betroffenen Dienst identifizieren {#betroffenen-dienst-identifizieren}
 systemctl list-units --state=failed
 
-# Upstream-Status prüfen (Beispiel Sonarr)
+# Upstream-Status prüfen (Beispiel Sonarr) {#upstream-status-pruefen-beispiel-sonarr}
 systemctl status sonarr --no-pager
 curl -s http://localhost:5003/ping
 
-# Caddy-Logs auf Upstream-Fehler
+# Caddy-Logs auf Upstream-Fehler {#caddy-logs-auf-upstream-fehler}
 journalctl -u caddy -n 30 --no-pager | grep -iE "upstream|502|503|refused"
 ```
 
 ## Fix {#fix}
 
 ```bash
-# 1. Betroffenen Dienst neu starten
+# 1. Betroffenen Dienst neu starten {#1-betroffenen-dienst-neu-starten}
 sudo systemctl restart <dienst>
 
-# 2. Verifikation: vHost antwortet wieder
+# 2. Verifikation: vHost antwortet wieder {#2-verifikation-vhost-antwortet-wieder}
 curl -I https://<vhost>.<domain>
-# Erwartete Antwort: HTTP/2 200 (oder 301/302 für Login)
-```
+# Erwartete Antwort: HTTP/2 200 (oder 301/302 für Login) {#erwartete-antwort-http2-200-oder-301302-fuer-login}
+```bash
 
 ## Konsequenzen {#konsequenzen}
 
@@ -112,11 +112,11 @@ curl -I https://<vhost>.<domain>
 ## Verifikation {#verifikation}
 
 ```bash
-# Einen Dienst temporär stoppen:
+# Einen Dienst temporär stoppen: {#einen-dienst-temporaer-stoppen}
 sudo systemctl stop sonarr
-# Request an Sonarr-vHost:
+# Request an Sonarr-vHost: {#request-an-sonarr-vhost}
 curl -I https://sonarr.example.com
-# Erwartete Antwort: HTTP/2 503 + Body "Service momentan nicht verfügbar"
+# Erwartete Antwort: HTTP/2 503 + Body "Service momentan nicht verfügbar" {#erwartete-antwort-http2-503-body-service-momentan-nicht-verfuegbar}
 sudo systemctl start sonarr
 ```
 

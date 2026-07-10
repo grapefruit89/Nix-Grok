@@ -49,7 +49,7 @@ meta:
 
 HA entdeckt STT-Services automatisch wenn sie das Wyoming-Protokoll auf TCP sprechen:
 
-```
+```text
 HA Assist → TCP 10300 → groq-stt-wyoming → Groq API → Transkript
 ```
 
@@ -63,7 +63,7 @@ Ablauf pro Transkription:
 
 ### Groq API {#groq-api}
 
-```
+```yaml
 POST https://api.groq.com/openai/v1/audio/transcriptions
   model: whisper-large-v3-turbo
   language: de
@@ -78,9 +78,9 @@ POST https://api.groq.com/openai/v1/audio/transcriptions
 
 ```nix
 my.services.voice-assistant.enable = true;
-# Port: 10300 (Wyoming Default)
-# LoadCredentialEncrypted = groq_api_key.cred
-```
+# Port: 10300 (Wyoming Default) {#port-10300-wyoming-default}
+# LoadCredentialEncrypted = groq_api_key.cred {#loadcredentialencrypted-groq_api_keycred}
+```nix
 
 Service: `modules/70-home-automation/voice-assistant.nix`
 
@@ -90,9 +90,9 @@ nixpkgs unstable enthält `python313Packages.wyoming` in Version **1.9.0** (nich
 In 1.9.0 ist `Artifact.version` ein **required** Feld (kein Default):
 
 ```python
-# 1.8.0 — version optional mit Default
-# 1.9.0 — PFLICHT, sonst TypeError:
-# "AsrModel.__init__() missing 1 required positional argument: 'version'"
+# 1.8.0 — version optional mit Default {#180-version-optional-mit-default}
+# 1.9.0 — PFLICHT, sonst TypeError: {#190-pflicht-sonst-typeerror}
+# "AsrModel.__init__() missing 1 required positional argument: 'version'" {#asrmodel__init__-missing-1-required-positional-argument-version}
 
 AsrModel(
     name="whisper-large-v3-turbo",
@@ -112,7 +112,7 @@ Gilt für `AsrModel` und `AsrProgram` gleichermaßen.
 
 ```bash
 sudo journalctl -u groq-stt-wyoming -n 30 --no-pager
-```
+```bash
 
 **Wichtige Fehlermuster:**
 
@@ -127,13 +127,13 @@ sudo journalctl -u groq-stt-wyoming -n 30 --no-pager
 <summary>Vollständige Diagnose (ausklappen)</summary>
 
 ```bash
-# Service-Status
+# Service-Status {#service-status}
 sudo systemctl status groq-stt-wyoming --no-pager
 
-# Port prüfen
+# Port prüfen {#port-pruefen}
 sudo ss -tlnp | grep 10300
 
-# Wyoming Handshake testen (braucht python mit wyoming)
+# Wyoming Handshake testen (braucht python mit wyoming) {#wyoming-handshake-testen-braucht-python-mit-wyoming}
 PYTHON=$(sudo cat /proc/$(sudo systemctl show groq-stt-wyoming --property=MainPID --value)/cmdline | tr '\0' '\n' | head -1)
 $PYTHON - << 'EOF'
 import asyncio
@@ -152,7 +152,7 @@ async def check():
 asyncio.run(check())
 EOF
 
-# Groq API direkt testen
+# Groq API direkt testen {#groq-api-direkt-testen}
 curl -s https://api.groq.com/openai/v1/models \
   -H "Authorization: Bearer $(sudo systemd-creds decrypt --name=groq_api_key /var/lib/credstore.encrypted/groq_api_key.cred -)" \
   | python3 -c "import json,sys; d=json.load(sys.stdin); print('OK:', len(d['data']), 'Modelle')"
@@ -163,22 +163,22 @@ curl -s https://api.groq.com/openai/v1/models \
 ## Fix {#fix}
 
 ```bash
-# 1. Service neu starten
+# 1. Service neu starten {#1-service-neu-starten}
 sudo systemctl restart groq-stt-wyoming
 
-# 2. Handshake prüfen (Wyoming Info-Response)
+# 2. Handshake prüfen (Wyoming Info-Response) {#2-handshake-pruefen-wyoming-info-response}
 sudo systemctl status groq-stt-wyoming --no-pager
 sudo ss -tlnp | grep 10300
 
-# 3. Bei fehlendem API Key: neu versiegeln
+# 3. Bei fehlendem API Key: neu versiegeln {#3-bei-fehlendem-api-key-neu-versiegeln}
 printf '%s' 'gsk_...' | sudo systemd-creds encrypt --name=groq_api_key - \
   /var/lib/credstore.encrypted/groq_api_key.cred
 sudo systemctl restart groq-stt-wyoming
 
-# 4. Nach Code-Änderungen (voice-assistant.nix):
+# 4. Nach Code-Änderungen (voice-assistant.nix): {#4-nach-code-aenderungen-voice-assistantnix}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
-```
+```bash
 
 ## Konsequenzen {#konsequenzen}
 
@@ -209,17 +209,17 @@ sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
 ### Verifikation {#verifikation}
 
 ```bash
-# Service aktiv?
+# Service aktiv? {#service-aktiv}
 sudo systemctl is-active groq-stt-wyoming
 
-# Port offen?
+# Port offen? {#port-offen}
 sudo ss -tlnp | grep 10300
-# → LISTEN 0.0.0.0:10300
+# → LISTEN 0.0.0.0:10300 {#listen-000010300}
 
-# Wyoming Handshake OK?
-# (Describe → Info mit AsrProgram groq-whisper)
+# Wyoming Handshake OK? {#wyoming-handshake-ok}
+# (Describe → Info mit AsrProgram groq-whisper) {#describe-info-mit-asrprogram-groq-whisper}
 sudo journalctl -u groq-stt-wyoming -n 5 --no-pager
-# → Groq STT Wyoming bridge listening on port 10300
+# → Groq STT Wyoming bridge listening on port 10300 {#groq-stt-wyoming-bridge-listening-on-port-10300}
 ```
 
 ## Alternativen verworfen {#alternativen}

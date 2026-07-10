@@ -59,7 +59,7 @@ Nach Clone oder auf neuem System einmalig:
 
 ```bash
 pre-commit install --config /etc/nixos/.pre-commit-config.yaml
-```
+```nix
 
 Git merkt sich die Hooks. Kein erneuter Aufruf nach Rebuilds nötig.
 
@@ -73,13 +73,13 @@ Git merkt sich die Hooks. Kein erneuter Aufruf nach Rebuilds nötig.
 
 ## Konsequenzen {#konsequenzen}
 
-### Positiv
+### Positiv {#positiv}
 
 - Layer-0 (00-core) hat keine `activationScripts` mehr außer `05-creds.nix` (P0, geplant).
 - `rg 'activationScripts' modules/00-core/` → nur 05-creds (expected).
 - Kein Root-Prozess schreibt mehr in `.git/`.
 
-### Negativ / Risiken
+### Negativ / Risiken {#negativ-risiken}
 
 - Nach erstem Clone auf neuem System: Hooks fehlen bis `pre-commit install` ausgeführt wurde.
   Mitigation: Dokumentiert in README und GUIDE-developer-experience.md.

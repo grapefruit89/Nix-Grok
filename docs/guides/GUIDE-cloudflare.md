@@ -15,9 +15,9 @@ meta:
 
 # GUIDE: Cloudflare Integration {#guide-cloudflare}
 
-## Überblick: Was CF für uns tut
+## Überblick: Was CF für uns tut {#uberblick-was-cf-fuer-uns-tut}
 
-```
+```text
 Internet → Cloudflare DNS → q958 (93.226.213.104)
                 ↓
          DDNS-Updater       → hält A-Records aktuell wenn IP wechselt
@@ -30,7 +30,7 @@ Ausnahme: Root-Domain `moritzbaumeister.de` ist proxied für DDoS-Schutz.
 
 ---
 
-## Der CF-Token
+## Der CF-Token {#der-cf-token}
 
 **Typ:** `cfut_` — normaler Cloudflare User API Token  
 **Wo hinterlegt:**
@@ -40,10 +40,10 @@ Ausnahme: Root-Domain `moritzbaumeister.de` ist proxied für DDoS-Schutz.
 **Was er kann:** DNS lesen/schreiben auf moritzbaumeister.de und m7c5.de  
 **Was er nicht kann:** Neue Tokens erstellen, eigene Permissions lesen
 
-### Token rotieren
+### Token rotieren {#token-rotieren}
 
 Im CF-Dashboard:
-```
+```text
 My Profile (Avatar oben rechts)
 → API Tokens
 → Token suchen → "..." → Edit → Roll Token
@@ -53,7 +53,7 @@ My Profile (Avatar oben rechts)
 Dann in `profile.local.nix` eintragen:
 ```nix
 secrets.cloudflare.apiToken = "cfut_NEUER_WERT";
-```
+```yaml
 
 Danach: `sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure`
 
@@ -61,7 +61,7 @@ Danach: `sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure`
 
 ---
 
-## DDNS-Updater
+## DDNS-Updater {#ddns-updater}
 
 **Service:** `ddns-updater.service`  
 **Was er tut:** Prüft alle N Minuten die öffentliche IP und aktualisiert CF-Records
@@ -70,16 +70,16 @@ Aktuell konfiguriert für `moritzbaumeister.de` (@ und *).
 m7c5.de zeigt absichtlich auf den Unraid-Server — DDNS nicht von q958 verwaltet.
 
 ```bash
-# Status prüfen
+# Status prüfen {#status-pruefen}
 sudo systemctl status ddns-updater
 
-# Letzter Update-Log
+# Letzter Update-Log {#letzter-update-log}
 journalctl -u ddns-updater -n 20 --no-pager
 ```
 
 ---
 
-## ACME Wildcard-Zertifikat
+## ACME Wildcard-Zertifikat {#acme-wildcard-zertifikat}
 
 **Service:** `acme-moritzbaumeister.de.service`  
 **Timer:** `acme-renew-moritzbaumeister.de.timer`  
@@ -89,16 +89,16 @@ Das Zertifikat gilt für `*.moritzbaumeister.de` und wird automatisch erneuert.
 Caddy liest es direkt aus `/var/lib/acme/`.
 
 ```bash
-# Cert-Ablaufdatum prüfen
+# Cert-Ablaufdatum prüfen {#cert-ablaufdatum-pruefen}
 sudo openssl x509 -in /var/lib/acme/moritzbaumeister.de/cert.pem -noout -dates
 
-# Manuell erneuern
+# Manuell erneuern {#manuell-erneuern}
 sudo systemctl start acme-moritzbaumeister.de.service
-```
+```yaml
 
 ---
 
-## Neue Subdomains hinzufügen
+## Neue Subdomains hinzufügen {#neue-subdomains-hinzufuegen}
 
 **Kein CF-Schritt nötig.** Der Wildcard-Record `*.moritzbaumeister.de` fängt alles ab.
 
@@ -111,7 +111,7 @@ Fertig. Keine CF-Aktion, kein DNS-Eintrag, kein Cert-Request.
 
 ---
 
-## DNS-Records manuell verwalten (via Claude MCP)
+## DNS-Records manuell verwalten (via Claude MCP) {#dns-records-manuell-verwalten-via-claude-mcp}
 
 In einer Claude-Session mit CF-MCP:
 
@@ -135,7 +135,7 @@ Zonen-IDs: moritzbaumeister.de = `facfa2e5e9ca3f00a93e145fe7684fd1`, m7c5.de = `
 
 ---
 
-## CF-Sicherheitseinstellungen (Free Tier)
+## CF-Sicherheitseinstellungen (Free Tier) {#cf-sicherheitseinstellungen-free-tier}
 
 Bereits optimal konfiguriert (verifiziert 2026-07-09):
 
@@ -156,23 +156,23 @@ Für beide Domains (moritzbaumeister.de und m7c5.de) separat.
 
 ---
 
-## Häufige Fehler
+## Häufige Fehler {#haeufige-fehler}
 
-### cfk\_ Key funktioniert nicht für DNS
+### cfk\_ Key funktioniert nicht für DNS {#cfk_-key-funktioniert-nicht-fuer-dns}
 
 `cfk_...` ist der **Origin CA Key** — nur für CF-eigene SSL-Zertifikate,
 nicht für DNS-API-Calls. Gibt Error 9103 oder 9109.  
 Der richtige Token hat `cfut_`-Präfix.
 
-### Token kann keine anderen Tokens erstellen
+### Token kann keine anderen Tokens erstellen {#token-kann-keine-anderen-tokens-erstellen}
 
 Unser `cfut_`-Token hat kein `token:edit`-Recht. Token-Erstellung nur:
 - CF-Dashboard → My Profile → API Tokens → Create Token
 - Oder mit dem Global API Key (37-stellige Hex-Zeichenkette)
 
-### ACME schlägt fehl
+### ACME schlägt fehl {#acme-schlaegt-fehl}
 
 ```bash
 journalctl -u acme-moritzbaumeister.de -n 50 --no-pager
-```
+```text
 Häufige Ursache: CF-Token abgelaufen → rotieren (siehe oben).

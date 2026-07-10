@@ -26,7 +26,7 @@ meta:
    ```bash
    systemctl status boot-watchdog.service
    journalctl -u boot-watchdog -b --no-pager
-   ```
+```yaml
 
 ## Bei rotem Gatus-Check {#roter-check}
 

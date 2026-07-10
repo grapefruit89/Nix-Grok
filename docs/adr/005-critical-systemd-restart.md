@@ -47,29 +47,29 @@ meta:
 **Symptom:** Dienst startet endlos-schnell durch (Crash-Loop) ohne in `active` zu kommen.
 
 ```bash
-# Crash-Loop erkennen
+# Crash-Loop erkennen {#crash-loop-erkennen}
 systemctl status caddy --no-pager
 journalctl -u caddy -n 50 --no-pager | grep -iE "error|fail|start"
 
-# Alle fehlgeschlagenen Dienste
+# Alle fehlgeschlagenen Dienste {#alle-fehlgeschlagenen-dienste}
 systemctl list-units --state=failed
 
-# Rate-Limit-Treffer (tritt bei Standard-Restart-Policy auf, nicht bei dieser)
+# Rate-Limit-Treffer (tritt bei Standard-Restart-Policy auf, nicht bei dieser) {#rate-limit-treffer-tritt-bei-standard-restart-policy-auf-nicht-bei-dieser}
 journalctl -u caddy --no-pager | grep "Start request repeated too quickly"
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# 1. Fehlerursache identifizieren (nicht einfach neu starten!)
+# 1. Fehlerursache identifizieren (nicht einfach neu starten!) {#1-fehlerursache-identifizieren-nicht-einfach-neu-starten}
 journalctl -u <service> -n 100 --no-pager | grep -iE "error|fail|fatal"
 
-# 2. Nach manueller Behebung: Failed-State zurücksetzen
+# 2. Nach manueller Behebung: Failed-State zurücksetzen {#2-nach-manueller-behebung-failed-state-zuruecksetzen}
 sudo systemctl reset-failed <service>
 sudo systemctl start <service>
 
-# 3. Falls Crash-Loop auf anderen Diensten ohne critical-systemd:
-#    → Preset in lib/critical-systemd.nix anwenden
+# 3. Falls Crash-Loop auf anderen Diensten ohne critical-systemd: {#3-falls-crash-loop-auf-anderen-diensten-ohne-critical-systemd}
+# → Preset in lib/critical-systemd.nix anwenden {#preset-in-libcritical-systemdnix-anwenden}
 grep -n "Restart\|StartLimit" /etc/nixos/lib/critical-systemd.nix
 ```
 

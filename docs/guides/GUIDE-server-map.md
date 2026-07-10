@@ -23,7 +23,7 @@ meta:
 
 > **Konvention:** ID = Port = UID = Ordner-Präfix (4-stellig)
 > · Quelle der Wahrheit: [`lib/server-map.nix`](../../lib/server-map.nix)
-> · Ports: [`modules/00-core/01-core.nix`](../../modules/00-core/01-core.nix)
+> · Ports: [`modules/00-core/08-ports.nix`](../../modules/00-core/08-ports.nix)
 > · UIDs: [`lib/uid-registry.nix`](../../lib/uid-registry.nix)
 > · ADR: [ADR-011 — Unified Port=UID-Schema](../adr/011-unified-port-uid-schema.md)
 
@@ -179,7 +179,7 @@ Die folgende Liste zeigt was fehlt und ob es technisch umsetzbar ist.
 ## Neuen Service einbinden {#neue-services}
 
 1. **ID vergeben** — nächste freie Nummer im Layer-Block (`60xx`, `70xx`, …)
-2. **Port registrieren** — `my.ports.<name>` in [`modules/00-core/01-core.nix`](../../modules/00-core/01-core.nix)
+2. **Port registrieren** — `my.ports.<name>` in [`modules/00-core/08-ports.nix`](../../modules/00-core/08-ports.nix)
 3. **UID anlegen** (falls eigener Systemuser) — [`lib/uid-registry.nix`](../../lib/uid-registry.nix)
 4. **server-map.nix** — Eintrag mit `transport = "uds:…"` oder `"tcp:PORT"` ergänzen
 5. **unix-sockets.nix** (bei UDS) — Socketpfad eintragen für `toCaddyUpstream`-Helper
@@ -192,24 +192,24 @@ Die folgende Liste zeigt was fehlt und ob es technisch umsetzbar ist.
 ## Debugging {#debugging}
 
 ```bash
-# Alle gebundenen TCP-Ports anzeigen
+# Alle gebundenen TCP-Ports anzeigen {#alle-gebundenen-tcp-ports-anzeigen}
 ss -tlnp | grep -E '(100[0-9]|[4-7][0-9]{3})'
 
-# Unix-Sockets prüfen — welche existieren wirklich
+# Unix-Sockets prüfen — welche existieren wirklich {#unix-sockets-pruefen-welche-existieren-wirklich}
 for s in grafana gatus pocket-id vaultwarden paperless linkwarden open-webui homepage; do
   sock=$(ls /run/$s/*.sock 2>/dev/null | head -1)
   [ -S "$sock" ] && echo "🟢 $s: $sock" || echo "❌ $s: kein Socket"
 done
 
-# Wildcard-Bindings aufdecken (Security-Check)
+# Wildcard-Bindings aufdecken (Security-Check) {#wildcard-bindings-aufdecken-security-check}
 ss -tlnp | grep -v '127\.0\.0\.1\|::1' | grep LISTEN
 
-# Caddy gegen UDS-Upstream testen
+# Caddy gegen UDS-Upstream testen {#caddy-gegen-uds-upstream-testen}
 curl --unix-socket /run/grafana/grafana.sock http://localhost/api/health
 
-# *arr UIDs prüfen (ADR-011)
+# *arr UIDs prüfen (ADR-011) {#arr-uids-pruefen-adr-011}
 id sonarr radarr readarr prowlarr sabnzbd lidarr
-```
+```text
 
 ---
 

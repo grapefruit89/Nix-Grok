@@ -11,7 +11,7 @@ meta:
     - ddns
 ---
 
-# ADR-7005: Cloudflare — DNS, ACME, DDNS und Token-Management
+# ADR-7005: Cloudflare — DNS, ACME, DDNS und Token-Management {#adr-7005-cloudflare-dns-acme-ddns-und-token-management}
 
 **Kontext:** Zwei Domains (moritzbaumeister.de, m7c5.de) werden über Cloudflare DNS verwaltet.
 NixOS braucht einen CF-API-Token für DDNS (IP-Nachführung) und ACME DNS-01-Challenge
@@ -19,9 +19,9 @@ NixOS braucht einen CF-API-Token für DDNS (IP-Nachführung) und ACME DNS-01-Cha
 Token-Typen es gibt.
 ---
 
-## Entscheidungen
+## Entscheidungen {#entscheidungen}
 
-### 1. Ein Token für DDNS + ACME, beide Zonen
+### 1. Ein Token für DDNS + ACME, beide Zonen {#1-ein-token-fuer-ddns-acme-beide-zonen}
 
 **Entscheidung:** Ein einzelner `cfut_`-Token deckt beide Zonen ab.
 
@@ -34,7 +34,7 @@ die unser Token nicht hat.
 
 ---
 
-### 2. Wildcard-Records statt Einzel-Subdomains
+### 2. Wildcard-Records statt Einzel-Subdomains {#2-wildcard-records-statt-einzel-subdomains}
 
 **Entscheidung:** `*.moritzbaumeister.de` und `*.m7c5.de` als einzige A-Records,
 nicht proxied (grau). Keine per-Service DNS-Einträge nötig.
@@ -47,7 +47,7 @@ DDoS-Schutz der Haupt-Domain.
 
 ---
 
-### 3. ACME via DNS-01 (kein HTTP-01)
+### 3. ACME via DNS-01 (kein HTTP-01) {#3-acme-via-dns-01-kein-http-01}
 
 **Entscheidung:** `security.acme` mit Cloudflare DNS-01-Challenge via lego.
 
@@ -59,7 +59,7 @@ HTTP-01 würde pro Subdomain ein eigenes Zertifikat erfordern.
 
 ---
 
-### 4. DDNS via ddns-updater, nicht via Caddy
+### 4. DDNS via ddns-updater, nicht via Caddy {#4-ddns-via-ddns-updater-nicht-via-caddy}
 
 **Entscheidung:** Separater `ddns-updater`-Service aktualisiert A-Records.
 
@@ -68,9 +68,9 @@ stabiler Service der CF-API nativ unterstützt. Aktualisiert @ und * gleichzeiti
 
 ---
 
-## Token-Typen — kritisches Wissen
+## Token-Typen — kritisches Wissen {#token-typen-kritisches-wissen}
 
-### cfut\_ — Cloudflare User Token (normaler API Token)
+### cfut\_ — Cloudflare User Token (normaler API Token) {#cfut_-cloudflare-user-token-normaler-api-token}
 
 Format: `cfut_<alphanumeric>`  
 Verwendung: `Authorization: Bearer cfut_...`  
@@ -87,7 +87,7 @@ Im MCP-Server: als Bearer-Token konfiguriert
 - Eigene Permissions auflisten (9109)
 - User-Account-Info lesen (/user)
 
-### cfk\_ — Cloudflare Origin CA Key (NICHT für DNS!)
+### cfk\_ — Cloudflare Origin CA Key (NICHT für DNS!) {#cfk_-cloudflare-origin-ca-key-nicht-fuer-dns}
 
 Format: `cfk_<alphanumeric>`  
 Verwendung: Nur mit Header `X-Auth-User-Service-Key`  
@@ -97,7 +97,7 @@ Nur für: `/client/v4/certificates` (Origin CA Zertifikate)
 Gibt bei Verwendung als X-Auth-Key: Error 9103 "Unknown X-Auth-Key or X-Auth-Email"  
 Gibt bei Verwendung als Bearer: Error 9109 "Invalid access token"
 
-### Global API Key — für Token-Management
+### Global API Key — für Token-Management {#global-api-key-fuer-token-management}
 
 Format: 37-stellige Hex-Zeichenkette ohne Präfix  
 Verwendung: `X-Auth-Email + X-Auth-Key` Header  
@@ -107,7 +107,7 @@ Kann alles inkl. Token-Erstellung. Sollte NICHT routinemäßig verwendet werden.
 
 ---
 
-## CF-Sicherheits-Baseline (Free Tier, beide Domains)
+## CF-Sicherheits-Baseline (Free Tier, beide Domains) {#cf-sicherheits-baseline-free-tier-beide-domains}
 
 Verifiziert 2026-07-09 via API. Bereits optimal konfiguriert:
 
@@ -129,9 +129,9 @@ Für m7c5.de wiederholen.
 
 ---
 
-## DNS-Architektur
+## DNS-Architektur {#dns-architektur}
 
-```
+```text
 moritzbaumeister.de     A  93.226.213.104  proxied    (DDoS-Schutz für Root)
 *.moritzbaumeister.de   A  93.226.213.104  nicht proxied  (Caddy Wildcard)
 
@@ -146,14 +146,14 @@ m7c5.de zeigt absichtlich auf den Unraid-Server — DDNS dort separat, nicht von
 
 ---
 
-## Neue Subdomains hinzufügen
+## Neue Subdomains hinzufügen {#neue-subdomains-hinzufuegen}
 
 **Keine CF-Aktion nötig.** Der Wildcard-Record fängt alles ab.  
 Nur in NixOS: Service + Caddy-Vhost hinzufügen → `nixos-rebuild switch`.
 
 ---
 
-## Zonen-IDs (für MCP und direkten API-Zugriff)
+## Zonen-IDs (für MCP und direkten API-Zugriff) {#zonen-ids-fuer-mcp-und-direkten-api-zugriff}
 
 | Domain | Zone-ID |
 |---|---|
@@ -163,7 +163,7 @@ Nur in NixOS: Service + Caddy-Vhost hinzufügen → `nixos-rebuild switch`.
 
 ---
 
-## Bekannte Fallgruben (Community-Recherche 2026-07-10)
+## Bekannte Fallgruben (Community-Recherche 2026-07-10) {#bekannte-fallgruben-community-recherche-2026-07-10}
 
 Aus nixpkgs-Issues und NixOS-Discourse gesammelt — betreffen uns teilweise nicht mehr
 (behoben), aber relevant für Debugging und Domain-Wechsel:
@@ -179,7 +179,7 @@ Aus nixpkgs-Issues und NixOS-Discourse gesammelt — betreffen uns teilweise nic
 
 ---
 
-## Alternativen (nicht umgesetzt — Begründung)
+## Alternativen (nicht umgesetzt — Begründung) {#alternativen-nicht-umgesetzt-begruendung}
 
 **Cloudflare Tunnel (cloudflared):**
 NixOS: `services.cloudflared.tunnels`. Kein Port-Forwarding, CF übernimmt TLS.
@@ -190,3 +190,8 @@ Nicht geeignet: Streaming-Zone muss CF-unproxied sein (Tunnel = immer proxied),
 Aktuell nur eine "effective domain" (`profile.local.nix`). Beide parallel brauchen
 zwei `security.acme.certs`-Blöcke + zwei DDNS-Konfigurationen. Nicht nötig solange
 eine Domain ausreicht.
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-1031 — Caddy-Zonen-Konzept](1031-caddy-zones-konzept.md)
+- [GUIDE-cloudflare](../guides/GUIDE-cloudflare.md)

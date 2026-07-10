@@ -9,20 +9,20 @@ meta:
     - backup
     - restic
 ---
-# ADR-3023: Backup-Philosophie — Nur Unwiederbringliches sichern
+# ADR-3023: Backup-Philosophie — Nur Unwiederbringliches sichern {#adr-3023-backup-philosophie-nur-unwiederbringliches-sichern}
 
 ---
 
-## Kontext
+## Kontext {#kontext}
 
 Ein NixOS-Homelab hat drei Datenkategorien die grundsätzlich verschieden behandelt werden müssen:
 Deklarative Konfiguration, unwiederbringliche Anwendungsdaten, und regenerierbare Massendaten.
 
-## Entscheidung
+## Entscheidung {#entscheidung}
 
 **Grundsatz: Nur sichern was man nicht wieder neu erzeugen oder herunterladen kann.**
 
-### Was gesichert wird (Tier A → S3 via Restic)
+### Was gesichert wird (Tier A → S3 via Restic) {#was-gesichert-wird-tier-a-s3-via-restic}
 
 | Daten | Warum | Service |
 |-------|-------|---------|
@@ -37,7 +37,7 @@ Deklarative Konfiguration, unwiederbringliche Anwendungsdaten, und regenerierbar
 | `/home/moritz/blocky-allowlist.txt` | DNS-Allowlist (Blocky) — deklarativ, kein State | blocky |
 | `/var/lib/grafana` | Selbst erstellte Dashboards | grafana |
 
-### Was explizit NICHT gesichert wird
+### Was explizit NICHT gesichert wird {#was-explizit-nicht-gesichert-wird}
 
 | Daten | Warum nicht |
 |-------|-------------|
@@ -49,7 +49,7 @@ Deklarative Konfiguration, unwiederbringliche Anwendungsdaten, und regenerierbar
 | Caches, Logs, temporäre Dateien | Per Definition flüchtig |
 | Crowdsec Hub-Daten | Re-downloadbar von `hub.crowdsec.net` |
 
-### Immich (zukünftig)
+### Immich (zukünftig) {#immich-zukuenftig}
 
 Foto-Originale sind zu groß für ein Free-S3-Bucket (10GB Limit bei Cloudflare R2 / Backblaze B2).
 
@@ -59,9 +59,9 @@ Foto-Originale sind zu groß für ein Free-S3-Bucket (10GB Limit bei Cloudflare 
 - Foto-Originale → Lokale Redundanz: externes HDD oder zweite interne Platte
 - Optional: rsync auf Freunde-/Familie-Server als off-site Kopie
 
-## Backup-Parameter
+## Backup-Parameter {#backup-parameter}
 
-```
+```text
 Retention: --keep-daily 7 --keep-weekly 4
 Verschlüsselung: Restic native (ChaCha20-Poly1305)
 Ziel: S3-kompatibel (Cloudflare R2 / Backblaze B2 — Free Tier 10GB)
@@ -70,7 +70,7 @@ Service-Stop: Apps + DBs werden vor Backup gestoppt, danach neu gestartet
 Dead Man's Switch: healthcheckUrl → Ping bei Erfolg, /fail bei Fehler
 ```
 
-## Größenschätzung
+## Größenschätzung {#groessenschaetzung}
 
 | Daten | Rohgröße | Restic nach Deduplizierung |
 |-------|----------|---------------------------|
@@ -84,8 +84,14 @@ Dead Man's Switch: healthcheckUrl → Ping bei Erfolg, /fail bei Fehler
 
 → Passt komfortabel in 10GB Free Tier, auch mit mehreren Wochen Retention.
 
-## Links
+## Links {#links}
 
 - `modules/30-storage/30-storage.nix` — Implementierung
 - F-009 in `docs/learnings/FINDINGS-REGISTRY.md`
 - [ADR-3022](3022-no-raid-distance-parity.md) — warum kein lokales RAID
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-3022 — Keine lokale Redundanz](3022-no-raid-distance-parity.md)
+- [GUIDE-data-management](../guides/GUIDE-data-management.md)
+- [GUIDE-storage-tiers](../guides/GUIDE-storage-tiers.md)

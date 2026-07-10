@@ -71,46 +71,46 @@ meta:
 **Symptom:** Service gestoppt, `systemctl status <service>` zeigt `(Result: oom-kill)` oder `Exit: signal`.
 
 ```bash
-# OOM-Events im Kernel-Log (letzte 7 Tage)
+# OOM-Events im Kernel-Log (letzte 7 Tage) {#oom-events-im-kernel-log-letzte-7-tage}
 journalctl -k --no-pager | grep -iE "oom.kill|killed process|out of memory"
 
-# Welcher Service, welche Zeit?
+# Welcher Service, welche Zeit? {#welcher-service-welche-zeit}
 journalctl -b --no-pager | grep -iE "memory.*cgroup|oom.kill" | tail -20
 
-# Aktuell konfigurierte Limits anzeigen
+# Aktuell konfigurierte Limits anzeigen {#aktuell-konfigurierte-limits-anzeigen}
 systemctl show jellyfin postgresql caddy sabnzbd \
   -p MemoryMax,MemoryHigh,OOMScoreAdjust --no-pager
 
-# Wieviel RAM verbraucht jeder Service gerade?
+# Wieviel RAM verbraucht jeder Service gerade? {#wieviel-ram-verbraucht-jeder-service-gerade}
 systemd-cgtop -n1
-```
+```text
 
 **Erwarteter Output bei OOM-Kill:**
 ```
 kernel: oom-kill: constraint=CONSTRAINT_MEMCG, ... task=jellyfin ...
 kernel: Memory cgroup out of memory: Killed process 12345 (jellyfin) ...
 systemd[1]: jellyfin.service: A process of this unit has been killed by the OOM killer.
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# 1. Betroffenen Service + aktuelles Limit identifizieren
+# 1. Betroffenen Service + aktuelles Limit identifizieren {#1-betroffenen-service-aktuelles-limit-identifizieren}
 journalctl -k | grep -i "oom-kill" | tail -5
 systemctl show <service> -p MemoryMax
 
-# 2. In lib/memory-policy.nix: MemoryMax-Preset erhöhen
-#    Beispiel: jellyfin MemoryMax = "12G" → "16G"
+# 2. In lib/memory-policy.nix: MemoryMax-Preset erhöhen {#2-in-libmemory-policynix-memorymax-preset-erhoehen}
+# Beispiel: jellyfin MemoryMax = "12G" → "16G" {#beispiel-jellyfin-memorymax-12g-16g}
 grep -n "MemoryMax\|jellyfin\|sabnzbd" /etc/nixos/lib/memory-policy.nix
 
-# 3. Dry-build + Switch
+# 3. Dry-build + Switch {#3-dry-build-switch}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
-# in tmux: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
+# in tmux: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure {#in-tmux-sudo-nixos-rebuild-switch---flake-etcnixosq958---impure}
 
-# 4. Service neu starten (falls gestoppt)
+# 4. Service neu starten (falls gestoppt) {#4-service-neu-starten-falls-gestoppt}
 sudo systemctl restart <service>
 
-# 5. Caps-Übersicht prüfen
+# 5. Caps-Übersicht prüfen {#5-caps-uebersicht-pruefen}
 systemctl show postgresql jellyfin caddy -p MemoryMax,MemoryHigh
 ```
 
@@ -145,7 +145,7 @@ Vollständige Cap-Tabelle: [docs/memory_oom.md](../memory_oom.md)
 systemctl show postgresql jellyfin caddy system-paperless.slice \
   -p MemoryMax,MemoryHigh,OOMScoreAdjust
 journalctl -k --no-pager | grep -iE 'oom|out of memory' --since '7 days ago'
-```
+```bash
 
 ## Alternativen verworfen {#alternativen}
 
@@ -156,6 +156,7 @@ journalctl -k --no-pager | grep -iE 'oom|out of memory' --since '7 days ago'
 
 ## Siehe auch {#siehe-auch}
 
+- [ADR-028 — Systemd Service Isolation](028-systemd-service-isolation.md)
 - [ADR-1001 — DNS-over-TLS](1001-dns-dot-fail-closed.md) — Blocky als Tier-0-Dienst, MemoryMax 500M
 - [ADR-005 — Restart=always](005-critical-systemd-restart.md) — Neustart nach cgroup-Kill
 - [docs/memory_oom.md](../memory_oom.md) — vollständige Cap-Tabelle aller Dienste

@@ -50,7 +50,7 @@ meta:
 
 HA Assist entdeckt TTS-Services automatisch wenn sie das Wyoming-Protokoll auf TCP sprechen:
 
-```
+```text
 HA Assist → TCP 10200 → google-tts-wyoming → Google Cloud TTS API → PCM Audio
 ```
 
@@ -64,7 +64,7 @@ Ablauf pro Synthesize-Anfrage:
 
 ### Google Cloud TTS API {#google-api}
 
-```
+```text
 POST https://texttospeech.googleapis.com/v1/text:synthesize?key=<API_KEY>       # WaveNet, Neural2
 POST https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=<API_KEY>  # Chirp3-HD
 ```
@@ -92,7 +92,7 @@ my.services.voice-assistant = {
   enable = true;      # Groq STT (Port 10300)
   tts.enable = true;  # Google TTS (Port 10200)
 };
-```
+```text
 
 Credentials via `profile.local.nix` (gitignored):
 ```nix
@@ -113,10 +113,10 @@ Gleiche Problematik wie bei ADR-7003 ([→ Details](7003-groq-stt-wyoming-bridge
 `Artifact.version` ist in wyoming 1.9.0 ein **required** Feld. Gilt auch für TTS-Klassen:
 
 ```python
-# PFLICHT in wyoming 1.9.0:
+# PFLICHT in wyoming 1.9.0: {#pflicht-in-wyoming-190}
 TtsVoice(name="...", ..., version="1.0.0")    # ohne version= → TypeError
 TtsProgram(name="...", ..., version="1.0.0")  # ohne version= → TypeError
-```
+```bash
 
 ### Graceful Start ohne Credentials {#condition}
 
@@ -164,16 +164,16 @@ wegen normaler Nutzung, sondern als Schutz gegen API-Key-Leaks.
 ## Diagnose {#diagnose}
 
 ```bash
-# Service-Status
+# Service-Status {#service-status}
 sudo systemctl status google-tts-wyoming --no-pager
 
-# Service wartet auf Credentials (kein Fehler — expected)
+# Service wartet auf Credentials (kein Fehler — expected) {#service-wartet-auf-credentials-kein-fehler-expected}
 sudo systemctl status google-tts-wyoming | grep -E "Condition|inactive"
-# → Condition: start condition unmet → erst nach nixos-rebuild switch mit Credentials
+# → Condition: start condition unmet → erst nach nixos-rebuild switch mit Credentials {#condition-start-condition-unmet-erst-nach-nixos-rebuild-switch-mit-credentials}
 
-# Port prüfen (wenn aktiv)
+# Port prüfen (wenn aktiv) {#port-pruefen-wenn-aktiv}
 sudo ss -tlnp | grep 10200
-```
+```bash
 
 **Fehlermuster:**
 
@@ -190,20 +190,20 @@ sudo ss -tlnp | grep 10200
 <summary>Vollständige Diagnose (ausklappen)</summary>
 
 ```bash
-# Alle Voice-Services auf einen Blick
+# Alle Voice-Services auf einen Blick {#alle-voice-services-auf-einen-blick}
 sudo systemctl status groq-stt-wyoming google-tts-wyoming --no-pager
 
-# Port-Check beider Bridges
+# Port-Check beider Bridges {#port-check-beider-bridges}
 sudo ss -tlnp | grep -E "10200|10300"
 
-# Credential-Dateien prüfen
+# Credential-Dateien prüfen {#credential-dateien-pruefen}
 ls -la /var/lib/credstore.encrypted/google_tts_api_key.cred
 ls -la /var/lib/secrets/google-tts.env
 
-# Voice-Datei zeigen (nur Voice-Name, kein Key)
+# Voice-Datei zeigen (nur Voice-Name, kein Key) {#voice-datei-zeigen-nur-voice-name-kein-key}
 sudo cat /var/lib/secrets/google-tts.env
 
-# Google TTS API direkt testen
+# Google TTS API direkt testen {#google-tts-api-direkt-testen}
 KEY=$(sudo systemd-creds decrypt --name=google_tts_api_key \
   /var/lib/credstore.encrypted/google_tts_api_key.cred -)
 curl -sf "https://texttospeech.googleapis.com/v1/voices?languageCode=de-DE&key=$KEY" \
@@ -244,17 +244,17 @@ curl -sf "https://texttospeech.googleapis.com/v1/voices?languageCode=de-DE&key=$
 ### Verifikation {#verifikation}
 
 ```bash
-# Service aktiv?
+# Service aktiv? {#service-aktiv}
 sudo systemctl is-active google-tts-wyoming
 
-# Port offen?
+# Port offen? {#port-offen}
 sudo ss -tlnp | grep 10200
-# → LISTEN 0.0.0.0:10200
+# → LISTEN 0.0.0.0:10200 {#listen-000010200}
 
-# Log-Check
+# Log-Check {#log-check}
 sudo journalctl -u google-tts-wyoming -n 5 --no-pager
-# → Google TTS Wyoming bridge on port 10200 (voice: de-DE-Chirp3-HD-Aoede)
-```
+# → Google TTS Wyoming bridge on port 10200 (voice: de-DE-Chirp3-HD-Aoede) {#google-tts-wyoming-bridge-on-port-10200-voice-de-de-chirp3-hd-aoede}
+```nix
 
 ## Alternativen verworfen {#alternativen}
 

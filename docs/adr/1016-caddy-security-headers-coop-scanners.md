@@ -64,7 +64,7 @@ Alle drei Änderungen in `lib/caddy-snippets.nix`:
   @scanners header User-Agent *shodan* *masscan* *zgrab* *nmap* *python-requests* *censys* *nuclei*
   abort @scanners
 }
-```
+```bash
 
 ### Verwendung von `block_scanners` {#block-scanners-usage}
 

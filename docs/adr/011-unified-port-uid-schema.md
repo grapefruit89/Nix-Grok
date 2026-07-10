@@ -101,11 +101,11 @@ Vollständige Entscheidung welche Dienste UDS nutzen: [ADR-1004](1004-unix-socke
 
 ## Implementierung {#implementierung}
 
-```
+```text
 lib/uid-registry.nix        ← UIDs 5003–5007 (*arr), alle anderen Services
 lib/unix-sockets.nix        ← 11 UDS-Pfade (Caddy-Upstreams)
 lib/server-map.nix          ← Server-Landkarte (Doku, kein Config-Input)
-modules/00-core/01-core.nix ← Port-Defaults 4-stellig als NixOS-Options
+modules/00-core/08-ports.nix ← Port-Defaults 4-stellig als NixOS-Options
 scripts/migrate-arr-uids.sh ← Einmalige chown-Migration
 ```
 
@@ -115,7 +115,7 @@ Einmalig nach `nixos-rebuild switch` (UID-Änderung braucht neue Prozesse):
 
 ```bash
 sudo /etc/nixos/scripts/migrate-arr-uids.sh
-```
+```nix
 
 Ändert UID/GID auf `/persist/var/lib/{sonarr,radarr,readarr,prowlarr,sabnzbd}`.
 

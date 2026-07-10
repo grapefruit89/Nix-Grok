@@ -49,7 +49,7 @@ meta:
 ### mkHardened Baseline {#mkhardened-baseline}
 
 ```nix
-# lib/systemd-hardening.nix
+# lib/systemd-hardening.nix {#libsystemd-hardeningnix}
 mkHardened = { caps ? [], rw ? [], mdwx ? true }: {
   ProtectSystem      = "strict";   # Dateisystem read-only außer Ausnahmen
   ProtectHome        = true;       # /home komplett ausgeblendet
@@ -68,12 +68,12 @@ mkHardened = { caps ? [], rw ? [], mdwx ? true }: {
 } // optionalAttrs (rw != []) {
   ReadWritePaths = rw;             # Explizite Schreib-Ausnahmen
 };
-```
+```nix
 
 ### Verwendung im Dienst {#verwendung}
 
 ```nix
-# Beispiel: ein eigener Service in modules/60-apps/
+# Beispiel: ein eigener Service in modules/60-apps/ {#beispiel-ein-eigener-service-in-modules60-apps}
 systemd.services.mein-dienst = {
   serviceConfig = lib.mkMerge [
     (hardening.mkHardened {
@@ -103,31 +103,31 @@ systemd.services.mein-dienst = {
 **Symptom:** Dienst schlägt mit Permission-Fehlern fehl, Schreibzugriff auf eigene Daten verweigert.
 
 ```bash
-# Welche Hardening-Flags sind aktiv?
+# Welche Hardening-Flags sind aktiv? {#welche-hardening-flags-sind-aktiv}
 systemctl show jellyfin | grep -E 'ProtectSystem|ProtectHome|NoNew|DynamicUser|MemoryDeny'
 
-# Wurde ein Schreibversuch auf geschütztes FS blockiert?
+# Wurde ein Schreibversuch auf geschütztes FS blockiert? {#wurde-ein-schreibversuch-auf-geschuetztes-fs-blockiert}
 journalctl -u mein-dienst -n 50 --no-pager | grep -iE "permission denied|read-only|not permitted"
-```
+```text
 
 **Erwarteter Output bei fehlender ReadWritePaths-Ausnahme:**
 ```
 mein-dienst[1234]: Error: open /var/lib/mein-dienst/data.db: read-only file system
-```
+```bash
 
 ## Fix {#fix}
 
 ```bash
-# 1. Fehlendes Schreib-Verzeichnis in mkHardened-rw eintragen:
-#    mkHardened { rw = [ "/var/lib/mein-dienst" "/run/mein-dienst.sock" ]; }
+# 1. Fehlendes Schreib-Verzeichnis in mkHardened-rw eintragen: {#1-fehlendes-schreib-verzeichnis-in-mkhardened-rw-eintragen}
+# mkHardened { rw = [ "/var/lib/mein-dienst" "/run/mein-dienst.sock" ]; } {#mkhardened-rw-varlibmein-dienst-runmein-dienstsock}
 
-# 2. Hardware-Zugriff: PrivateDevices = false + DeviceAllow
-#    serviceConfig.DeviceAllow = [ "/dev/dri rw" ];
+# 2. Hardware-Zugriff: PrivateDevices = false + DeviceAllow {#2-hardware-zugriff-privatedevices-false-deviceallow}
+# serviceConfig.DeviceAllow = [ "/dev/dri rw" ]; {#serviceconfigdeviceallow-devdri-rw}
 
-# 3. Dry-build
+# 3. Dry-build {#3-dry-build}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 
-# 4. Nach Switch Flags prüfen
+# 4. Nach Switch Flags prüfen {#4-nach-switch-flags-pruefen}
 systemctl show mein-dienst | grep -E 'ProtectSystem|ProtectHome|NoNew'
 ```
 
@@ -156,10 +156,10 @@ systemctl show mein-dienst | grep -E 'ProtectSystem|ProtectHome|NoNew'
 ### Verifikation {#verifikation}
 
 ```bash
-# Baseline-Flags eines gehärteten Dienstes prüfen
+# Baseline-Flags eines gehärteten Dienstes prüfen {#baseline-flags-eines-gehaerteten-dienstes-pruefen}
 systemctl show pocket-id | grep -E 'ProtectSystem|NoNewPrivileges|ProtectHome'
-# Erwartete Ausgabe: ProtectSystem=strict, NoNewPrivileges=yes, ProtectHome=yes
-```
+# Erwartete Ausgabe: ProtectSystem=strict, NoNewPrivileges=yes, ProtectHome=yes {#erwartete-ausgabe-protectsystemstrict-nonewprivilegesyes-protecthomeyes}
+```text
 
 ## Alternativen verworfen {#alternativen}
 

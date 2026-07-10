@@ -9,7 +9,7 @@ meta:
     - impermanence
     - withdrawn
 ---
-# ADR-2021: SOPS Boot-Timing mit Impermanence — WITHDRAWN
+# ADR-2021: SOPS Boot-Timing mit Impermanence — WITHDRAWN {#adr-2021-sops-boot-timing-mit-impermanence-withdrawn}
 
 > **WITHDRAWN** — Entfällt mit [ADR-2024: systemd-creds + TPM2](2024-systemd-creds-tpm.md) (2026-07-05).
 >
@@ -24,7 +24,7 @@ meta:
 
 ---
 
-## Historischer Kontext
+## Historischer Kontext {#historischer-kontext}
 
 Dieses ADR beschrieb eine Boot-Timing-Race zwischen `sops-install-secrets.service`
 und Impermanence-Bind-Mounts (`local-fs.target`). Die Lösung war implementiert in
@@ -33,7 +33,7 @@ und Impermanence-Bind-Mounts (`local-fs.target`). Die Lösung war implementiert 
 Da sops-nix durch systemd-creds ersetzt wurde (ADR-2024), ist dieses Problem
 gegenstandslos. `05-sops.nix` existiert nicht mehr im Repo.
 
-## Siehe auch
+## Siehe auch {#siehe-auch}
 
 - [ADR-2024 — systemd-creds + TPM2](2024-systemd-creds-tpm.md)
 - [ADR-2006 — SOPS-Migration (superseded)](2006-sops-migration-path.md)

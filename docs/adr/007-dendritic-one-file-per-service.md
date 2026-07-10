@@ -49,7 +49,7 @@ meta:
 
 ### Modulstruktur-Konvention {#konvention}
 
-```
+```text
 modules/
   XX-layer/
     default.nix          ← nur imports + options
@@ -74,6 +74,7 @@ modules/
 
 ## Siehe auch {#siehe-auch}
 
+- [ADR-028 — Systemd Service Isolation](028-systemd-service-isolation.md)
 - [ADR-1004 — Unix-Socket-Upstreams](1004-unix-socket-upstreams.md) — Sockets werden pro Dienst-Datei registriert
 - [ADR-005 — Restart=always](005-critical-systemd-restart.md) — `critical-systemd.nix` wird pro Datei eingebunden
 - [ADR-011 — Port/UID-Schema](011-unified-port-uid-schema.md) — Ordner-Präfix `XX` als Basis für Port/UID-Nummerierung

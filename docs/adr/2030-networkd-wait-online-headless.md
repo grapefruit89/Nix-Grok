@@ -36,7 +36,7 @@ meta:
 Jeder `nixos-rebuild switch` auf q958 schlägt mit **exit code 4** fehl und blockiert für
 **exakt 120 Sekunden**. Das Fehler-Log zeigt:
 
-```
+```text
 switch-to-configuration: warning: the following units failed: systemd-networkd-wait-online.service
 ```
 
@@ -47,14 +47,14 @@ selbst gibt 0 zurück. Die 2 Minuten entstehen durch den Default-Timeout von
 **Warum blockiert wait-online?** q958 nutzt Privado WireGuard VPN (`networking.wg-quick.interfaces.privado`).
 Das NixOS wg-quick-Modul setzt automatisch:
 ```nix
-# nixpkgs/nixos/modules/services/networking/wg-quick.nix Zeile 457:
+# nixpkgs/nixos/modules/services/networking/wg-quick.nix Zeile 457: {#nixpkgsnixosmodulesservicesnetworkingwg-quicknix-zeile-457}
 systemd.network.wait-online.ignoredInterfaces = builtins.attrNames cfg.interfaces;
-# → ignoredInterfaces = ["privado"]
-```
+# → ignoredInterfaces = ["privado"] {#ignoredinterfaces-privado}
+```nix
 
 Das triggert im networkd-Modul:
 ```nix
-# nixpkgs/nixos/modules/system/boot/networkd.nix Zeile 4196-4203:
+# nixpkgs/nixos/modules/system/boot/networkd.nix Zeile 4196-4203: {#nixpkgsnixosmodulessystembootnetworkdnix-zeile-4196-4203}
 systemd.services.systemd-networkd-wait-online = {
   inherit (cfg.wait-online) enable;
   wantedBy = [ "network-online.target" ];  # ← UNCONDITIONAL
@@ -72,10 +72,10 @@ erst nach network-online.target) → wait-online wartet 120 Sekunden → Timeout
 **Zwei NixOS-Optionen kombinieren**, beide sind nötig:
 
 ```nix
-# modules/20-security/27-hardened-core.nix
+# modules/20-security/27-hardened-core.nix {#modules20-security27-hardened-corenix}
 systemd.network.wait-online.enable = false;
 systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
-```
+```nix
 
 ### Warum beide Zeilen? {#warum-beide}
 
@@ -135,13 +135,13 @@ gleiche Store-Path.
 
 ```bash
 journalctl -u systemd-networkd-wait-online -n 10 --no-pager
-# Erwarteter Output bei Timeout:
-# systemd-networkd-wait-online[...]: Timeout waiting for network connectivity.
+# Erwarteter Output bei Timeout: {#erwarteter-output-bei-timeout}
+# systemd-networkd-wait-online[...]: Timeout waiting for network connectivity. {#systemd-networkd-wait-online-timeout-waiting-for-network-connectivity}
 
-# WantedBy-Symlink prüfen (nach Fix sollte er weg sein):
+# WantedBy-Symlink prüfen (nach Fix sollte er weg sein): {#wantedby-symlink-pruefen-nach-fix-sollte-er-weg-sein}
 ls -la /etc/systemd/system/network-online.target.wants/ | grep wait-online
 
-# Override-File prüfen (nach Fix leer oder nicht existent):
+# Override-File prüfen (nach Fix leer oder nicht existent): {#override-file-pruefen-nach-fix-leer-oder-nicht-existent}
 cat /etc/systemd/system/systemd-networkd-wait-online.service.d/overrides.conf 2>/dev/null || echo "kein Override"
 ```
 
@@ -150,9 +150,9 @@ cat /etc/systemd/system/systemd-networkd-wait-online.service.d/overrides.conf 2>
 ## Fix {#fix}
 
 ```nix
-# modules/10-network/16-vpn.nix — innerhalb lib.mkIf config.my.services.privado-vpn.enable { ... }
+# modules/10-network/16-vpn.nix — innerhalb lib.mkIf config.my.services.privado-vpn.enable { ... } {#modules10-network16-vpnnix-innerhalb-libmkif-configmyservicesprivado-vpnenable}
 systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
-```
+```nix
 
 **Wichtig: Wo der Fix NICHT hingehört (und warum):**
 - `27-hardened-core.nix` ist falsch: dort ist der Block in `lib.mkIf cfg.enable` eingebettet, wobei
@@ -161,16 +161,16 @@ systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
   im gleichen Modul → klar und wartbar.
 
 ```bash
-# Strukturelle Verifikation OHNE Switch (sicherer als direkter Switch):
+# Strukturelle Verifikation OHNE Switch (sicherer als direkter Switch): {#strukturelle-verifikation-ohne-switch-sicherer-als-direkter-switch}
 sudo nixos-rebuild build --flake /etc/nixos#q958 --impure
 ls result/etc/systemd/system/network-online.target.wants/
-# Erwartete Ausgabe: leer (Verzeichnis existiert nicht)
+# Erwartete Ausgabe: leer (Verzeichnis existiert nicht) {#erwartete-ausgabe-leer-verzeichnis-existiert-nicht}
 
-# Switch (kein tmux/systemd-run nötig — Switch dauert jetzt <60s):
+# Switch (kein tmux/systemd-run nötig — Switch dauert jetzt <60s): {#switch-kein-tmuxsystemd-run-noetig-switch-dauert-jetzt-60s}
 nsw
-# oder direkt: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure
+# oder direkt: sudo nixos-rebuild switch --flake /etc/nixos#q958 --impure {#oder-direkt-sudo-nixos-rebuild-switch---flake-etcnixosq958---impure}
 
-# Verifikation nach Switch:
+# Verifikation nach Switch: {#verifikation-nach-switch}
 ls /etc/systemd/system/network-online.target.wants/ 2>/dev/null || echo "Verzeichnis fehlt — korrekt"
 ```
 
@@ -216,10 +216,10 @@ Bei der Suche nach tmux-Alternativen wurden drei Varianten versucht, die alle sc
 ### Verifikation {#verifikation}
 
 ```bash
-# Nach Switch: kein WantedBy-Symlink
+# Nach Switch: kein WantedBy-Symlink {#nach-switch-kein-wantedby-symlink}
 ls /etc/systemd/system/network-online.target.wants/ | grep -c wait-online
-# Erwartete Ausgabe: 0
-```
+# Erwartete Ausgabe: 0 {#erwartete-ausgabe-0}
+```nix
 
 ---
 

@@ -22,16 +22,16 @@ meta:
     - inventory
 ---
 
-# ADR-5030: Media-Stack Architektur-Inventory
+# ADR-5030: Media-Stack Architektur-Inventory {#adr-5030-media-stack-architektur-inventory}
 
-## Kontext
+## Kontext {#kontext}
 
 Abgleich eines externen Specs (nixflix/nixarr-Analyse) gegen den tatsächlichen Codestand.
 Dokumentiert was bereits implementiert war und warum bestimmte Vorschläge NICHT umgesetzt wurden.
 
-## Entscheidungen
+## Entscheidungen {#entscheidungen}
 
-### 1. Navidrome Subsonic-Bypass — bereits implementiert
+### 1. Navidrome Subsonic-Bypass — bereits implementiert {#1-navidrome-subsonic-bypass-bereits-implementiert}
 
 `lib/caddy-ingress.nix` → `genNavidromeVhost` (Zeile ~82):
 
@@ -48,12 +48,12 @@ handle {
   import sso_auth
   reverse_proxy ...
 }
-```
+```text
 
 `/rest/*` = OpenSubsonic-API-Protokoll. Subsonic-Clients können keinen Browser-OAuth-Flow
 durchlaufen. `/share/*` = Navidrome Share-Links — ebenfalls ohne Login erreichbar by design.
 
-### 2. Servarr /api/* LAN-only — durch nftables abgedeckt
+### 2. Servarr /api/* LAN-only — durch nftables abgedeckt {#2-servarr-api-lan-only-durch-nftables-abgedeckt}
 
 Der Spec schlug einen Caddy-Filter für Servarr `/api/*` vor. Unnötig, weil:
 
@@ -64,7 +64,7 @@ Der Spec schlug einen Caddy-Filter für Servarr `/api/*` vor. Unnötig, weil:
 **Kein Caddy-Layer ergänzt.** Wenn später ein einzelner Endpunkt granularer
 abgesichert werden soll: `(private_admin)` Snippet aus `caddy-snippets.nix` nutzen.
 
-### 3. freeformType + _secret AST-Injection — gestrichen
+### 3. freeformType + _secret AST-Injection — gestrichen {#3-freeformtype-_secret-ast-injection-gestrichen}
 
 Vorgeschlagenes Pattern: Nix-Submodule mit `{ _secret = "/path"; }` Platzhalter →
 sanitizeSecrets-Funktion für Store-sicheres JSON → jq-Injection zur Laufzeit.
@@ -79,7 +79,7 @@ Systemebene eleganter löst:
 Bash-Skripte + `EnvironmentFile` reicht für API-Payloads aus. freeformType bringt
 Typ-Sicherheit auf Kosten massiver Komplexität bei minimalem Gewinn.
 
-### 4. Was bereits fertig war (gegen Spec-Erwartung)
+### 4. Was bereits fertig war (gegen Spec-Erwartung) {#4-was-bereits-fertig-war-gegen-spec-erwartung}
 
 | Feature | Datei | Zeile |
 |---------|-------|-------|
@@ -94,8 +94,13 @@ Typ-Sicherheit auf Kosten massiver Komplexität bei minimalem Gewinn.
 | Memory-Policy OOMScoreAdjust, MemoryMax | lib/memory-policy.nix | – |
 | locale SSoT (LANG aus systemd) | 53-sabnzbd.nix | – |
 
-## Konsequenzen
+## Konsequenzen {#konsequenzen}
 
 - Kein neuer Code für Navidrome, Servarr-API-Filter, freeformType
 - Offene Tasks: Recyclarr (ADR folgt), Exportarr, Plugin-Factory, IPAddressAllow in factory
 - Zukünftige Analysen: zuerst Codestand prüfen, dann Spec übernehmen
+
+## Siehe auch {#siehe-auch}
+
+- [ADR-5031 — Usenet VPN-Sandbox](5031-usenet-vpn-sandbox.md)
+- [GUIDE-media-stack](../guides/GUIDE-media-stack.md)

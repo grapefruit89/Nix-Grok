@@ -88,7 +88,7 @@ meta:
 sysctl net.ipv6.conf.eno1.disable_ipv6       # → 1
 sysctl net.ipv6.conf.tailscale0.disable_ipv6  # → 0
 dig @127.0.0.1 google.com AAAA +short         # leer
-```
+```bash
 
 ## Alternativen verworfen {#alternativen}
 

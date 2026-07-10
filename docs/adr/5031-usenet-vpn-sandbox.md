@@ -59,7 +59,7 @@ Die neue Lösung nutzt drei komplementäre Schichten:
 ### Schicht 1: systemd (BPF-Level) {#systemd-layer}
 
 ```nix
-# modules/50-media/57-usenet-confinement/default.nix
+# modules/50-media/57-usenet-confinement/default.nix {#modules50-media57-usenet-confinementdefaultnix}
 sandboxAttrs = {
   bindsTo = [ "sys-subsystem-net-devices-privado.device" ];
   after   = [ "sys-subsystem-net-devices-privado.device" ];
@@ -72,23 +72,23 @@ sandboxAttrs = {
     InaccessiblePaths         = [ "/sys/class/net" ];
   };
 };
-```
+```text
 
 `RestrictNetworkInterfaces` greift am BPF-Level — Sockets die andere Interfaces versuchen werden vom Kernel geblockt, bevor ein Paket entsteht. Kein Bypass über nftables-Lücken möglich.
 
 ### Schicht 2: nftables (Paket-Level) {#nftables-layer}
 
 ```
-# lib/nftables-rules.nix — skuidUsenetGuard
+# lib/nftables-rules.nix — skuidUsenetGuard {#libnftables-rulesnix-skuidusenetguard}
 meta skuid { 5006, 5007 } oifname != { "lo", "privado" } drop comment "usenet VPN-only egress"
-```
+```text
 
 Positive Whitelist statt Negativliste. Entfernt alle Legacy-Referenzen (`veth-usenet`, `usenet-br`, `192.168.15.0/24`).
 
 ### Schicht 3: UID-Routing (Policy Routing) {#routing-layer}
 
 ```bash
-# 16-vpn.nix (postUp)
+# 16-vpn.nix (postUp) {#16-vpnnix-postup}
 ip rule add uidrange 5006-5006 lookup 51820 priority 95006
 ip rule add uidrange 5007-5007 lookup 51820 priority 95007
 ip route add default dev privado table 51820
@@ -101,7 +101,7 @@ Bereits aktiv — bleibt unverändert.
 ```nix
 environment.etc."usenet-resolv.conf".text =
   lib.concatMapStrings (dns: "nameserver ${dns}\n") config.my.services.privado-vpn.dns;
-```
+```bash
 
 Generiert zur Build-Zeit aus `my.services.privado-vpn.dns`. Per `BindReadOnlyPaths` wird `/etc/resolv.conf` für die Usenet-Prozesse durch diese Datei überschattet. Effekt: nur Privado-DNS (198.18.0.1 / 198.18.0.2) erreichbar, kein DNS-Leak über Host-Resolver.
 
@@ -110,16 +110,16 @@ Generiert zur Build-Zeit aus `my.services.privado-vpn.dns`. Per `BindReadOnlyPat
 **Symptom:** sabnzbd/prowlarr starten nicht oder verlieren Netzwerk nach WireGuard-Neustart.
 
 ```bash
-# Interface-Status
+# Interface-Status {#interface-status}
 systemctl status wg-quick-privado --no-pager
 
-# Sandbox-Attribute prüfen
+# Sandbox-Attribute prüfen {#sandbox-attribute-pruefen}
 systemctl show sabnzbd -p RestrictNetworkInterfaces,BindsTo,PrivateIPC
 systemctl show prowlarr -p RestrictNetworkInterfaces,BindsTo,PrivateIPC
 ```
 
 **Erwarteter Output:**
-```
+```text
 RestrictNetworkInterfaces=lo privado
 BindsTo=sys-subsystem-net-devices-privado.device
 PrivateIPC=yes
@@ -129,41 +129,41 @@ PrivateIPC=yes
 <summary>Vollständige Diagnose-Befehle (ausklappen)</summary>
 
 ```bash
-# DNS-Isolation aktiv?
+# DNS-Isolation aktiv? {#dns-isolation-aktiv}
 cat /etc/usenet-resolv.conf
 
-# nftables Regel vorhanden?
+# nftables Regel vorhanden? {#nftables-regel-vorhanden}
 nft list ruleset | grep "usenet VPN-only"
 
-# Routing korrekt?
+# Routing korrekt? {#routing-korrekt}
 ip rule list | grep "5006\|5007"
 ip route show table 51820
 
-# Kein Legacy mehr?
+# Kein Legacy mehr? {#kein-legacy-mehr}
 grep -r "vpn.confinement\|veth.usenet\|usenet.br\|192\.168\.15\." /etc/nixos/ 2>/dev/null
 
-# Journal
+# Journal {#journal}
 journalctl -u sabnzbd -u prowlarr -n 30 --no-pager
-```
+```bash
 
 </details>
 
 ## Fix {#fix}
 
 ```bash
-# Schritt 1: WireGuard-Status prüfen
+# Schritt 1: WireGuard-Status prüfen {#schritt-1-wireguard-status-pruefen}
 systemctl status wg-quick-privado --no-pager
 
-# Schritt 2: Bei WireGuard-Problem
+# Schritt 2: Bei WireGuard-Problem {#schritt-2-bei-wireguard-problem}
 systemctl restart wg-quick-privado
 
-# Schritt 3: Services neu starten (starten automatisch wenn privado.device erscheint)
+# Schritt 3: Services neu starten (starten automatisch wenn privado.device erscheint) {#schritt-3-services-neu-starten-starten-automatisch-wenn-privadodevice-erscheint}
 systemctl start sabnzbd prowlarr
 
-# Schritt 4: Dry-build nach Config-Änderungen
+# Schritt 4: Dry-build nach Config-Änderungen {#schritt-4-dry-build-nach-config-aenderungen}
 sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 
-# Schritt 5: Verifikation
+# Schritt 5: Verifikation {#schritt-5-verifikation}
 systemctl show sabnzbd -p RestrictNetworkInterfaces,BindsTo
 ```
 
@@ -206,14 +206,14 @@ systemctl show sabnzbd -p RestrictNetworkInterfaces,BindsTo
 
 ```bash
 systemctl show sabnzbd -p RestrictNetworkInterfaces,BindsTo,PrivateIPC,ProcSubset
-# RestrictNetworkInterfaces=lo privado
-# BindsTo=sys-subsystem-net-devices-privado.device
-# PrivateIPC=yes
-# ProcSubset=pid
+# RestrictNetworkInterfaces=lo privado {#restrictnetworkinterfaceslo-privado}
+# BindsTo=sys-subsystem-net-devices-privado.device {#bindstosys-subsystem-net-devices-privadodevice}
+# PrivateIPC=yes {#privateipcyes}
+# ProcSubset=pid {#procsubsetpid}
 
 nft list ruleset | grep "usenet VPN-only"
-# meta skuid { 5006, 5007 } oifname != { "lo", "privado" } drop comment "usenet VPN-only egress"
-```
+# meta skuid { 5006, 5007 } oifname != { "lo", "privado" } drop comment "usenet VPN-only egress" {#meta-skuid-5006-5007-oifname-lo-privado-drop-comment-usenet-vpn-only-egress}
+```text
 
 ## Alternativen verworfen {#alternativen}
 

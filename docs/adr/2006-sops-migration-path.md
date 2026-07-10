@@ -35,7 +35,7 @@ meta:
 | **Datum** | 2026-06-17 |
 | **Superseded by** | [ADR-2024](2024-systemd-creds-tpm.md) |
 
-## Historischer Kontext (zur Nachvollziehbarkeit)
+## Historischer Kontext (zur Nachvollziehbarkeit) {#historischer-kontext-zur-nachvollziehbarkeit}
 
 Der ursprüngliche Plan sah vor:
 
@@ -48,9 +48,9 @@ Dieser Plan wurde am 2026-07-05 verworfen, weil:
 2. Age-Key auf Disk ist eine reale Schwachstelle (systemd-creds + TPM hat dieses Problem nicht)
 3. Flake-Input + `.sops.yaml` + Boot-Timing-Komplexität (ADR-2021) für null echten Sicherheitsgewinn
 
-## Aktueller Stand
+## Aktueller Stand {#aktueller-stand}
 
-```
+```text
 Dev (Stufe < 9):  profile.local.nix → secrets-provision → /var/lib/secrets/*
                   (unverändert)
 
@@ -59,6 +59,6 @@ Production (Stufe 9+): systemd-creds → /var/lib/credstore.encrypted/*.cred
                        → ADR-2024
 ```
 
-## Siehe auch
+## Siehe auch {#siehe-auch}
 
 - [ADR-2024 — systemd-creds + TPM2](2024-systemd-creds-tpm.md) — aktuelle Strategie

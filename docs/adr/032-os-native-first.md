@@ -49,7 +49,7 @@ Die Entscheidung welchen Weg wir gehen ist nicht offensichtlich — beide Option
 
 Rangfolge bei der Tool-Auswahl:
 
-```
+```text
 1. Kernel-/Systemd-Mechanismus    (systemd-creds, systemd-resolved DoT)
 2. NixOS-Modul (security.*, networking.*)  (security.acme → lego)
 3. Eigenständiges spezialisiertes Tool     (restic, ddns-updater)
@@ -84,7 +84,7 @@ security.acme.certs."m7c5.de" = {
   environmentFile = "/run/credentials/acme.env";
   group = "caddy";
 };
-```
+```text
 
 - **Separation of Concerns:** Zertifikat-Management ist unabhängig vom Reverse-Proxy
 - **Systemd-nativer Lifecycle:** `acme-m7c5.de.timer` (systemd-Timer) für Renewal
@@ -100,7 +100,7 @@ security.acme.certs."m7c5.de" = {
 modules/20-security/23-acme.nix    → security.acme config (lego)
 machines/q958/secrets.nix          → CF_DNS_API_TOKEN in /var/lib/secrets/cloudflare_acme_env
 modules/10-network/14-ingress.nix  → Caddy liest /var/lib/acme/m7c5.de/{cert,key}.pem
-```
+```nix
 
 ## Weitere Anwendungen des Prinzips {#weitere-anwendungen}
 

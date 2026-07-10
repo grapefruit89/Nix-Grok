@@ -81,14 +81,14 @@ services.oauth2-proxy = {
     "ssl-insecure-skip-verify" = "true";
   };
 };
-```
+```bash
 
 ### Cookie Secret generieren {#cookie-secret}
 
 Das Cookie Secret muss **exakt 32 Bytes** sein (AES-256). Falsche Größe → Start-Fehler.
 
 ```bash
-# Korrekt: 32 Chars, kein Newline
+# Korrekt: 32 Chars, kein Newline {#korrekt-32-chars-kein-newline}
 openssl rand -base64 24 | tr -d '\n' > /var/lib/secrets/oauth2-proxy-cookie-secret
 chmod 600 /var/lib/secrets/oauth2-proxy-cookie-secret
 wc -c /var/lib/secrets/oauth2-proxy-cookie-secret  # muss "32" ausgeben
@@ -100,7 +100,7 @@ if [ ! -f ${secretsDir}/oauth2-proxy-cookie-secret ] || \
    [ "$(wc -c < ${secretsDir}/oauth2-proxy-cookie-secret)" != "32" ]; then
   ${pkgs.openssl}/bin/openssl rand -base64 24 | tr -d '\n' > ${secretsDir}/oauth2-proxy-cookie-secret
 fi
-```
+```bash
 
 ### OIDC-Client einrichten (Pocket-ID) {#oidc-client}
 
@@ -119,7 +119,7 @@ fi
    };
 
 5. nixos-rebuild switch → secrets.nix schreibt oauth2-proxy.env
-```
+```yaml
 
 ---
 
@@ -130,18 +130,18 @@ fi
 **Symptom:**
 ```
 oauth2-proxy[...]: unknown flag: --http_address
-```
+```text
 oder
 ```
 oauth2-proxy[...]: unknown flag: --upstreams
-```
+```text
 
 **Ursache:** oauth2-proxy 7.x akzeptiert **ausschließlich Hyphen-Form** (`--http-address`,
 `--upstream`). Underscore-Flags (`--http_address`, `--upstreams`) sind in 7.x entfernt.
 
 Alte `extraConfig`-Einträge mit Underscore-Flags:
 ```nix
-# FALSCH — verursacht exit code 2 (INVALIDARGUMENT):
+# FALSCH — verursacht exit code 2 (INVALIDARGUMENT): {#falsch-verursacht-exit-code-2-invalidargument}
 extraConfig = {
   "http_address" = "http://127.0.0.1:4180";
   "upstreams" = [ "static://202" ];
@@ -151,12 +151,12 @@ extraConfig = {
 
 **Fix:** NixOS-Modul-Optionen statt extraConfig verwenden:
 ```nix
-# KORREKT:
+# KORREKT: {#korrekt}
 oidcIssuerUrl = "...";  # nicht "oidc_issuer_url" in extraConfig
 upstream = "static://202";  # nicht "upstreams" in extraConfig
 setXauthrequest = true;  # nicht "set_xauthrequest" in extraConfig
-# httpAddress nicht setzen — Default "http://127.0.0.1:4180" ist korrekt
-```
+# httpAddress nicht setzen — Default "http://127.0.0.1:4180" ist korrekt {#httpaddress-nicht-setzen-default-http1270014180-ist-korrekt}
+```yaml
 
 **Merke:** Wenn extraConfig nötig: immer Hyphen-Form. Aber bevorzuge NixOS-Optionen.
 
@@ -167,17 +167,17 @@ setXauthrequest = true;  # nicht "set_xauthrequest" in extraConfig
 **Symptom:**
 ```
 oauth2-proxy[...]: cookie_secret must be 16, 24, or 32 bytes
-```
+```text
 
 **Ursache:** `openssl rand -base64 32` erzeugt 44 Zeichen + Newline = **45 Bytes**. AES
 erfordert exakt 16/24/32 Bytes.
 
 ```bash
-# FALSCH — 45 Bytes:
+# FALSCH — 45 Bytes: {#falsch-45-bytes}
 openssl rand -base64 32 > /var/lib/secrets/oauth2-proxy-cookie-secret
 wc -c  # → 45
 
-# KORREKT — 32 Bytes, kein Newline:
+# KORREKT — 32 Bytes, kein Newline: {#korrekt-32-bytes-kein-newline}
 openssl rand -base64 24 | tr -d '\n' > /var/lib/secrets/oauth2-proxy-cookie-secret
 wc -c  # → 32
 ```
@@ -185,8 +185,8 @@ wc -c  # → 32
 **Diagnose bestehender Secrets:**
 ```bash
 wc -c < /var/lib/secrets/oauth2-proxy-cookie-secret
-# Wenn nicht 32: Secret regenerieren (alle Sessions werden invalidiert)
-```
+# Wenn nicht 32: Secret regenerieren (alle Sessions werden invalidiert) {#wenn-nicht-32-secret-regenerieren-alle-sessions-werden-invalidiert}
+```yaml
 
 ---
 
@@ -195,7 +195,7 @@ wc -c < /var/lib/secrets/oauth2-proxy-cookie-secret
 **Symptom:**
 ```
 oauth2-proxy[...]: error redeeming code: x509: certificate signed by unknown authority
-```
+```text
 
 **Ursache:** Wenn kein Cloudflare-API-Token gesetzt ist, stellt NixOS ACME minica-Zertifikate
 aus (lokale CA). Gos Standard-Trust-Store kennt minica nicht.
@@ -213,7 +213,7 @@ Let's Encrypt-Certs → Go-Trust-Store vertraut ihnen.
 ### Bug 4: OIDC Issuer Mismatch — APP_URL vs PUBLIC_URL {#bug-app-url}
 
 **Symptom:**
-```
+```text
 oauth2-proxy[...]: oidc: issuer did not match the issuer returned by provider
 expected "https://auth.<domain>" got "http://localhost"
 ```
@@ -222,12 +222,12 @@ expected "https://auth.<domain>" got "http://localhost"
 NixOS-Option: `services.pocket-id.settings.APP_URL`.
 
 ```nix
-# FALSCH — PUBLIC_URL existiert nicht als offizielle Pocket-ID-Option:
+# FALSCH — PUBLIC_URL existiert nicht als offizielle Pocket-ID-Option: {#falsch-public_url-existiert-nicht-als-offizielle-pocket-id-option}
 environment.extraEnv.PUBLIC_URL = "https://auth.${domain}";
 
-# KORREKT — NixOS-Modul-Option:
+# KORREKT — NixOS-Modul-Option: {#korrekt-nixos-modul-option}
 services.pocket-id.settings.APP_URL = "https://auth.${domain}";
-```
+```bash
 
 Nach dieser Änderung Pocket-ID neu starten:
 ```bash
@@ -238,8 +238,8 @@ sudo systemctl reset-failed oauth2-proxy && sudo systemctl start oauth2-proxy
 **Pocket-ID OIDC Discovery URL zum Testen:**
 ```bash
 curl https://auth.<domain>/.well-known/openid-configuration | grep issuer
-# Muss exakt "https://auth.<domain>" ausgeben (kein trailing slash, kein http://localhost)
-```
+# Muss exakt "https://auth.<domain>" ausgeben (kein trailing slash, kein http://localhost) {#muss-exakt-httpsauthdomain-ausgeben-kein-trailing-slash-kein-httplocalhost}
+```yaml
 
 ---
 
@@ -249,7 +249,7 @@ curl https://auth.<domain>/.well-known/openid-configuration | grep issuer
 ```
 systemd: oauth2-proxy.service: Start request repeated too quickly.
 systemd: oauth2-proxy.service: Failed with result 'start-limit-hit'.
-```
+```bash
 
 **Ursache:** Systemd lässt einen Service nach mehreren schnellen Fehlstarts nicht mehr
 automatisch neu starten (Rate-Limit).
@@ -258,7 +258,7 @@ automatisch neu starten (Rate-Limit).
 ```bash
 sudo systemctl reset-failed oauth2-proxy
 sudo systemctl start oauth2-proxy
-# Ggf. zuerst secrets prüfen:
+# Ggf. zuerst secrets prüfen: {#ggf-zuerst-secrets-pruefen}
 sudo systemctl start q958-secrets-provision
 ```
 
@@ -269,21 +269,21 @@ sudo systemctl start q958-secrets-provision
 **Vollständige Diagnose-Sequenz:**
 
 ```bash
-# 1. oauth2-proxy Status + letzte Fehler
+# 1. oauth2-proxy Status + letzte Fehler {#1-oauth2-proxy-status-letzte-fehler}
 journalctl -u oauth2-proxy -n 50 --no-pager
 
-# 2. Pocket-ID Status + OIDC Discovery
+# 2. Pocket-ID Status + OIDC Discovery {#2-pocket-id-status-oidc-discovery}
 journalctl -u pocket-id -n 30 --no-pager
 curl -s https://auth.<domain>/.well-known/openid-configuration | grep -E '"issuer"|"token_endpoint"'
 
-# 3. Secrets prüfen
+# 3. Secrets prüfen {#3-secrets-pruefen}
 ls -la /var/lib/secrets/oauth2-proxy*
 wc -c < /var/lib/secrets/oauth2-proxy-cookie-secret  # muss 32 sein
 cat /var/lib/secrets/oauth2-proxy.env  # CLIENT_ID + CLIENT_SECRET
 
-# 4. Config prüfen (welche Flags oauth2-proxy tatsächlich bekommt)
+# 4. Config prüfen (welche Flags oauth2-proxy tatsächlich bekommt) {#4-config-pruefen-welche-flags-oauth2-proxy-tatsaechlich-bekommt}
 systemctl cat oauth2-proxy | grep ExecStart
-```
+```yaml
 
 ---
 
@@ -312,10 +312,10 @@ systemctl cat oauth2-proxy | grep ExecStart
 ### Verifikation {#verifikation}
 
 ```bash
-# oauth2-proxy läuft und kann Auth-Requests beantworten:
+# oauth2-proxy läuft und kann Auth-Requests beantworten: {#oauth2-proxy-laeuft-und-kann-auth-requests-beantworten}
 systemctl is-active oauth2-proxy && curl -sI http://127.0.0.1:4180/oauth2/auth | head -3
 
-# Pocket-ID OIDC-Issuer korrekt:
+# Pocket-ID OIDC-Issuer korrekt: {#pocket-id-oidc-issuer-korrekt}
 curl -s https://auth.<domain>/.well-known/openid-configuration | grep '"issuer"'
 ```
 
@@ -340,6 +340,7 @@ curl -s https://auth.<domain>/.well-known/openid-configuration | grep '"issuer"'
 
 ## Siehe auch {#siehe-auch}
 
+- [ADR-1031 — Caddy-Zonen-Konzept](1031-caddy-zones-konzept.md)
 - [ADR-1025 — Pocket-ID als OIDC Provider](1025-pocket-id-oidc-provider.md) — IdP-Entscheidung
 - [ADR-2030 — wait-online Headless](2030-networkd-wait-online-headless.md) — wait-online 2min Timeout Fix
 - [GUIDE-auth-stack.md](../guides/GUIDE-auth-stack.md) — Auth-Matrix, Caddy-Integration, Debugging

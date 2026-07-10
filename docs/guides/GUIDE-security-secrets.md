@@ -37,7 +37,7 @@ Umschaltung: nur `machines/q958/profile.nix` → `rollout.stufe` erhöhen und re
 
 ```bash
 ssh -p 53844 moritz@100.64.0.1   # nach Stufe 9
-```
+```bash
 
 ## Sovereign Unlock {#sovereign-unlock}
 
@@ -63,11 +63,11 @@ Vollständige Strategie: [ADR-2024 — systemd-creds + TPM2](../adr/2024-systemd
 #### Credential versiegeln (einmalig pro Secret)
 
 ```bash
-# Ohne TPM (host key — Default):
+# Ohne TPM (host key — Default): {#ohne-tpm-host-key-default}
 printf '%s' 'WERT' | systemd-creds encrypt \
   --name=sonarr_api_key - /var/lib/credstore.encrypted/sonarr_api_key.cred
 
-# Mit TPM (nach my.creds.useTpm = true):
+# Mit TPM (nach my.creds.useTpm = true): {#mit-tpm-nach-mycredsusetpm-true}
 printf '%s' 'WERT' | systemd-creds encrypt --with-key=tpm2 \
   --name=sonarr_api_key - /var/lib/credstore.encrypted/sonarr_api_key.cred
 ```
@@ -75,9 +75,9 @@ printf '%s' 'WERT' | systemd-creds encrypt --with-key=tpm2 \
 #### TPM-Migration: ein Boolean-Flip
 
 ```nix
-# In rollout.nix — mehr ist nicht nötig:
+# In rollout.nix — mehr ist nicht nötig: {#in-rolloutnix-mehr-ist-nicht-noetig}
 my.creds.useTpm = true;  # war: false
-```
+```nix
 
 Danach alle Credentials neu versiegeln (einmalig), rebuild.
 
@@ -88,7 +88,7 @@ systemd.services.sonarr.serviceConfig = {
   LoadCredentialEncrypted =
     "sonarr_api_key:${config.my.creds.storeDir}/sonarr_api_key.cred";
 };
-# Im Service-Script: $CREDENTIALS_DIRECTORY/sonarr_api_key
+# Im Service-Script: $CREDENTIALS_DIRECTORY/sonarr_api_key {#im-service-script-credentials_directorysonarr_api_key}
 ```
 
 ### Anti-Pattern: sops-nix ist verboten {#sops-verboten}

@@ -11,7 +11,7 @@ meta:
     - security
 ---
 
-# ADR-1019: Unix-Domain-Sockets First
+# ADR-1019: Unix-Domain-Sockets First {#adr-1019-unix-domain-sockets-first}
 
 **Status:** Accepted  
 **Datum:** 2026-06-30  
@@ -19,7 +19,7 @@ meta:
 
 ---
 
-## Kontext
+## Kontext {#kontext}
 
 Das System nutzte historisch TCP-Localhost-Verbindungen (`127.0.0.1:PORT`) für den Caddy→Service-Hop. Caddy als Reverse-Proxy kommuniziert dabei mit Backend-Diensten auf demselben Host — ein Fall, bei dem Unix Domain Sockets (UDS) klarer besser geeignet sind.
 
@@ -27,7 +27,7 @@ Gleichzeitig hatten `server-map.nix` und `unix-sockets.nix` mehrere Dienste aspi
 
 ---
 
-## Entscheidung
+## Entscheidung {#entscheidung}
 
 **Principle: UDS-First für alle Caddy-frontierten Dienste, die das technisch unterstützen.**
 
@@ -39,9 +39,9 @@ Dienste, die TCP bleiben, sind die Minderheit und müssen einen konkreten Grund 
 
 ---
 
-## Begründung
+## Begründung {#begruendung}
 
-### Warum UDS statt TCP-Localhost?
+### Warum UDS statt TCP-Localhost? {#warum-uds-statt-tcp-localhost}
 
 | Aspekt | TCP 127.0.0.1 | Unix Domain Socket |
 |--------|--------------|-------------------|
@@ -53,13 +53,13 @@ Dienste, die TCP bleiben, sind die Minderheit und müssen einen konkreten Grund 
 
 Der Schlüsselvorteil: **Nur der Caddy-Prozess** (über Gruppenmitgliedschaft) kann den Socket erreichen. Kein anderer lokaler Prozess kann sich verbinden, selbst wenn er kompromittiert ist.
 
-### Warum socket-Eintrag in services-spec als SSoT?
+### Warum socket-Eintrag in services-spec als SSoT? {#warum-socket-eintrag-in-services-spec-als-ssot}
 
 `services-spec.nix` ist die Single Source of Truth für Caddy. Wenn dort `socket:` steht, nutzt `mkUpstream` automatisch `unix/path/to/socket`. Sonstige Dateien (`server-map.nix`, `unix-sockets.nix`) müssen damit übereinstimmen — nicht umgekehrt.
 
 ---
 
-## Implementierte UDS-Dienste (Stand 2026-06-30)
+## Implementierte UDS-Dienste (Stand 2026-06-30) {#implementierte-uds-dienste-stand-2026-06-30}
 
 | Dienst | Socket-Pfad | Methode |
 |--------|-------------|---------|
@@ -70,7 +70,7 @@ Der Schlüsselvorteil: **Nur der Caddy-Prozess** (über Gruppenmitgliedschaft) k
 
 ---
 
-## Dienste die TCP bleiben — und warum
+## Dienste die TCP bleiben — und warum {#dienste-die-tcp-bleiben-und-warum}
 
 | Dienst | Grund |
 |--------|-------|
@@ -89,18 +89,18 @@ Der Schlüsselvorteil: **Nur der Caddy-Prozess** (über Gruppenmitgliedschaft) k
 
 ---
 
-## Konsequenzen
+## Konsequenzen {#konsequenzen}
 
-### Positiv
+### Positiv {#positiv}
 - Sicherheitsmodell: Caddy→Service-Kanal ist filesystem-ACL-gesichert
 - Keine unbenutzten TCP-Ports auf loopback
 - Klarer SSoT: `services-spec.nix` entscheidet, `server-map.nix` dokumentiert Realität
 
-### Negativ / Einschränkungen
+### Negativ / Einschränkungen {#negativ-einschraenkungen}
 - Dienste mit UDS benötigen `RuntimeDirectory` + Gruppe für Caddy
 - `genVaultwardenVhost` (und ähnliche spezielle Vhost-Generatoren) müssen bei UDS-Migration refaktoriert werden — sie akzeptierten vorher `port:int`, jetzt `upstream:string`
 
-### Wartungshinweis
+### Wartungshinweis {#wartungshinweis}
 Wenn ein neuer Dienst hinzukommt:
 1. Prüfe in der NixOS-Modul-Dokumentation, ob UDS konfigurierbar ist
 2. Füge in `unix-sockets.nix` den Pfad hinzu
@@ -110,7 +110,7 @@ Wenn ein neuer Dienst hinzukommt:
 
 ---
 
-## Verwandte ADRs
+## Siehe auch {#siehe-auch}
 
 - ADR-1004: Unix Socket Upstreams (erstes UDS-Konzept)
 - ADR-011: Unified Port/UID-Schema (Ports bleiben für TCP-Dienste als ID)

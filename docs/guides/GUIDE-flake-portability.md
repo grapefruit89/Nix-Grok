@@ -23,7 +23,7 @@ meta:
 Das System ist ein NixOS-Flake. Das bedeutet: in `flake.lock` steht der **exakte
 Git-Commit-Hash** jeder externen Abhängigkeit (nixpkgs, home-manager, etc.).
 
-```
+```nix
 flake.lock → "nixpkgs": { "rev": "abc123...", "url": "github:NixOS/nixpkgs" }
 ```
 
@@ -33,15 +33,15 @@ das **exakt gleiche System** — heute, in 2 Jahren, auf einem anderen Rechner.
 ## Szenario A: Neuer Rechner mit Internet {#szenario-a}
 
 ```bash
-# 1. Minimal-NixOS booten (USB-Stick)
-# 2. Repo klonen
+# 1. Minimal-NixOS booten (USB-Stick) {#1-minimal-nixos-booten-usb-stick}
+# 2. Repo klonen {#2-repo-klonen}
 git clone git@github.com:grapefruit89/Nix-Grok.git /etc/nixos
 
-# 3. System bauen — identisch zum Original
+# 3. System bauen — identisch zum Original {#3-system-bauen-identisch-zum-original}
 nixos-rebuild switch --flake /etc/nixos#q958 --impure
 
-# Fertig. Kein "welche Version war das?", kein Raten.
-```
+# Fertig. Kein "welche Version war das?", kein Raten. {#fertig-kein-welche-version-war-das-kein-raten}
+```text
 
 Die `flake.lock` ist der Fingerabdruck. Nie löschen, immer committen.
 
@@ -50,32 +50,32 @@ Die `flake.lock` ist der Fingerabdruck. Nie löschen, immer committen.
 Einmal im Jahr auf dem laufenden System ausführen (5 Minuten):
 
 ```bash
-# Alle Flake-Inputs in den lokalen Nix-Store laden
+# Alle Flake-Inputs in den lokalen Nix-Store laden {#alle-flake-inputs-in-den-lokalen-nix-store-laden}
 nix flake archive
 
-# Prüfen welche Inputs jetzt lokal sind
+# Prüfen welche Inputs jetzt lokal sind {#pruefen-welche-inputs-jetzt-lokal-sind}
 nix flake metadata | grep "Inputs"
 ```
 
 Danach alle Store-Pfade auf USB exportieren:
 
 ```bash
-# Inputs identifizieren
+# Inputs identifizieren {#inputs-identifizieren}
 INPUTS=$(nix flake archive --json 2>/dev/null | \
   python3 -c "import sys,json; d=json.load(sys.stdin); \
   [print(v['path']) for v in d['inputs'].values()]")
 
-# Auf USB exportieren
+# Auf USB exportieren {#auf-usb-exportieren}
 nix-store --export $INPUTS /nix/store/$(readlink /nix/var/nix/profiles/system) \
   | gzip > /media/usb/nixos-inputs.nar.gz
-```
+```text
 
 Auf dem neuen Rechner:
 ```bash
-# Inputs importieren (kein Internet nötig)
+# Inputs importieren (kein Internet nötig) {#inputs-importieren-kein-internet-noetig}
 gunzip -c /media/usb/nixos-inputs.nar.gz | nix-store --import
 
-# Dann normal aufsetzen
+# Dann normal aufsetzen {#dann-normal-aufsetzen}
 nixos-rebuild switch --flake /etc/nixos#q958 --impure
 ```
 
@@ -84,21 +84,21 @@ nixos-rebuild switch --flake /etc/nixos#q958 --impure
 Für den Fall dass wirklich alles offline sein muss (kein nixpkgs-Download möglich):
 
 ```bash
-# Komplette Closure des laufenden Systems exportieren
-# (das ist alles was das System braucht — mehrere GB)
+# Komplette Closure des laufenden Systems exportieren {#komplette-closure-des-laufenden-systems-exportieren}
+# (das ist alles was das System braucht — mehrere GB) {#das-ist-alles-was-das-system-braucht-mehrere-gb}
 nix-store --export $(nix-store -qR /run/current-system) \
   | gzip > /backup/nixos-full-closure.nar.gz
 
 echo "Größe:"
 du -sh /backup/nixos-full-closure.nar.gz
-```
+```text
 
 Auf neuem Rechner:
 ```bash
-# Importieren
+# Importieren {#importieren}
 gunzip -c /backup/nixos-full-closure.nar.gz | nix-store --import
 
-# System aktivieren
+# System aktivieren {#system-aktivieren}
 /nix/store/<system-drv>/bin/switch-to-configuration switch
 ```
 
@@ -126,23 +126,23 @@ Für einen Homelab-Horizont von 2–5 Jahren ist das kein reales Risiko.
 ## Checkliste: Jahresroutine (5 Minuten) {#jahresroutine}
 
 ```bash
-# 1. Inputs einfrieren (lokal cachen)
+# 1. Inputs einfrieren (lokal cachen) {#1-inputs-einfrieren-lokal-cachen}
 nix flake archive
 
-# 2. Flake.lock committen (sollte immer der Fall sein)
+# 2. Flake.lock committen (sollte immer der Fall sein) {#2-flakelock-committen-sollte-immer-der-fall-sein}
 git -C /etc/nixos status flake.lock
 
-# 3. Generation-Übersicht
+# 3. Generation-Übersicht {#3-generation-uebersicht}
 nixos-rebuild list-generations | tail -5
 
-# 4. Alten Ballast entfernen
+# 4. Alten Ballast entfernen {#4-alten-ballast-entfernen}
 nix-collect-garbage --delete-older-than 30d
-```
+```bash
 
 ## Experimental-Features: Was bleibt, was nicht {#experimental-features}
 
 ```nix
-# modules/00-core/01-core.nix
+# modules/00-core/09-nix-tools.nix  (Nix-Tuning) {#modules00-core09-nix-toolsnix-nix-tuning}
 experimental-features = [
   "nix-command"   # neues CLI: "nix build", "nix develop" — alternativlos für Flakes
   "flakes"        # das flake.nix System — alternativlos für dieses Setup

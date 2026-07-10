@@ -56,7 +56,7 @@ kein Rate Limit. Das Paket spricht die interne Microsoft-API direkt an.
 
 Beide TTS-Services laufen parallel — HA kann beliebig zwischen ihnen wählen:
 
-```
+```text
 Port 10200 → google-tts-wyoming → Google Cloud TTS (API Key erforderlich)
 Port 10201 → edge-tts-wyoming   → Microsoft Edge TTS (kein API Key)
 ```
@@ -65,7 +65,7 @@ Port 10201 → edge-tts-wyoming   → Microsoft Edge TTS (kein API Key)
 
 Identisch mit Google TTS Bridge ([ADR-7004](7004-google-tts-wyoming-bridge.md#wyoming)):
 
-```
+```text
 HA Assist → TCP 10201 → edge-tts-wyoming → Microsoft Edge TTS API → MP3 → ffmpeg → PCM
 ```
 
@@ -82,7 +82,7 @@ Ablauf pro Synthesize-Anfrage:
 
 Edge TTS gibt MP3 aus (24kHz, mono). Wyoming erwartet PCM (raw bytes). Konvertierung:
 
-```
+```text
 edge-tts.Communicate.stream()  →  MP3-Chunks  →  asyncio.create_subprocess_exec(ffmpeg)
   -i pipe:0  -f s16le  -ar 24000  -ac 1  pipe:1
 →  signed 16-bit little-endian PCM
@@ -108,7 +108,7 @@ for v in json.load(sys.stdin):
     if v['Locale'].startswith('de-'):
         print(v['ShortName'], v['Gender'])
 "
-```
+```bash
 
 ### NixOS-Modul {#nixos-modul}
 
@@ -127,7 +127,7 @@ my.services.voice-assistant.edgeTts = {
   port    = 10201;                # default: 10201
   voice   = "de-DE-KatjaNeural"; # default: de-DE-KatjaNeural
 };
-```
+```bash
 
 Keine Credential-Datei nötig — kein `ConditionPathExists`, kein `LoadCredentialEncrypted`.
 Service startet sofort nach `nixos-rebuild switch`.
@@ -135,13 +135,13 @@ Service startet sofort nach `nixos-rebuild switch`.
 ## Diagnose {#diagnose}
 
 ```bash
-# Service-Status
+# Service-Status {#service-status}
 sudo systemctl status edge-tts-wyoming --no-pager
 
-# Port prüfen
+# Port prüfen {#port-pruefen}
 sudo ss -tlnp | grep 10201
 
-# Log (sollte "Edge TTS Wyoming bridge on port 10201" zeigen)
+# Log (sollte "Edge TTS Wyoming bridge on port 10201" zeigen) {#log-sollte-edge-tts-wyoming-bridge-on-port-10201-zeigen}
 sudo journalctl -u edge-tts-wyoming -n 10 --no-pager
 ```
 
@@ -185,18 +185,18 @@ sudo journalctl -u edge-tts-wyoming -n 10 --no-pager
 ### Verifikation {#verifikation}
 
 ```bash
-# Service aktiv?
+# Service aktiv? {#service-aktiv}
 sudo systemctl is-active edge-tts-wyoming
-# → active
+# → active {#active}
 
-# Port offen?
+# Port offen? {#port-offen}
 sudo ss -tlnp | grep 10201
-# → LISTEN 0.0.0.0:10201
+# → LISTEN 0.0.0.0:10201 {#listen-000010201}
 
-# Log-Check
+# Log-Check {#log-check}
 sudo journalctl -u edge-tts-wyoming -n 3 --no-pager
-# → Edge TTS Wyoming bridge on port 10201 (voice: de-DE-KatjaNeural)
-```
+# → Edge TTS Wyoming bridge on port 10201 (voice: de-DE-KatjaNeural) {#edge-tts-wyoming-bridge-on-port-10201-voice-de-de-katjaneural}
+```nix
 
 ## Alternativen verworfen {#alternativen}
 

@@ -28,7 +28,7 @@ meta:
 ```bash
 systemctl status gatus.service
 curl -s http://127.0.0.1:$(nix eval --raw .#q958 2>/dev/null || echo 4003)/health  # Port aus my.ports.gatus
-```
+```bash
 
 ## Unix-Socket-Checks {#unix-socket-checks}
 
@@ -36,7 +36,7 @@ Gatus kann keine UDS direkt — Prüfskripte laufen per eingeschränktem SSH-Use
 
 ```
 restrict,command="/run/current-system/sw/bin/gatus-ssh-wrapper" <key>
-```
+```text
 
 ## VLG (Vector / Loki / Grafana) {#vlg}
 
