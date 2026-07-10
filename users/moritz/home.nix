@@ -57,7 +57,7 @@ let
       echo "         Für Grok reicht ~/.config/context7/api_key völlig aus."
     fi
 
-    echo "Testen: source ~/.bashrc && grok mcp doctor context7"
+    echo "Testen: grok mcp doctor context7"
   '';
 
   checkGrokMcp = pkgs.writeShellScript "check-grok-mcp" ''
@@ -104,25 +104,25 @@ in
       })
     ];
 
-    sessionPath = lib.mkIf cfg.enable [
-      "${stateDir}/bin"
+    sessionPath = [
       "${config.home.homeDirectory}/.local/bin"
+      "${stateDir}/bin"
     ];
 
     stateVersion = "23.11";
   };
 
-  home.file.".local/bin/set-context7-api-key" = lib.mkIf cfg.enable {
+  home.file.".local/bin/set-context7-api-key" = {
     source = setContext7ApiKey;
     executable = true;
   };
 
-  home.file.".local/bin/check-grok-mcp" = lib.mkIf cfg.enable {
+  home.file.".local/bin/check-grok-mcp" = {
     source = checkGrokMcp;
     executable = true;
   };
 
-  programs.bash = lib.mkIf cfg.enable {
+  programs.bash = {
     enable = true;
     bashrcExtra = ''
       # Context7 API-Key für Grok MCP
