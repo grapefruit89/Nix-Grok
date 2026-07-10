@@ -18,8 +18,9 @@ let
   user = config.my.configs.identity.user;
   userHome = "/home/${user}";
   mcp = import ./lib.nix { inherit pkgs lib user; };
-  claudeJson = builtins.toJSON mcp.claudeServers;
-  mcpConfigFile = pkgs.writeText "nixos-mcp.json" claudeJson;
+  claudeServersJson = builtins.toJSON mcp.claudeServers;
+  mcpProjectJson = builtins.toJSON { mcpServers = mcp.claudeServers; };
+  mcpConfigFile = pkgs.writeText "nixos-mcp.json" mcpProjectJson;
   grokConfigFile = pkgs.writeText "grok-mcp-config.toml" (
     mcp.grokConfigToml { homeDirectory = userHome; }
   );
@@ -27,7 +28,7 @@ let
   claudeCodeActivation = ''
     SETTINGS="$HOME/.claude/settings.json"
     mkdir -p "$HOME/.claude"
-    MCP=${lib.escapeShellArg claudeJson}
+    MCP=${lib.escapeShellArg claudeServersJson}
     if [ -f "$SETTINGS" ]; then
       ${pkgs.jq}/bin/jq --argjson mcp "$MCP" '.mcpServers = $mcp' \
         "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"

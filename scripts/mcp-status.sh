@@ -140,7 +140,8 @@ else
 fi
 
 if command -v systemctl >/dev/null 2>&1; then
-  OUT_INDEXER="$(systemctl is-active nixos-docs-indexer.service 2>/dev/null | head -1 || echo unknown)"
+  OUT_INDEXER="$(systemctl is-active nixos-docs-indexer.service 2>/dev/null | tr -d '\n' | head -c 32)"
+  [[ -z "$OUT_INDEXER" ]] && OUT_INDEXER="unknown"
   dim "nixos-docs-indexer: $OUT_INDEXER (oneshot = inactive nach Lauf ist normal)"
 fi
 
@@ -199,13 +200,10 @@ if command -v grok >/dev/null 2>&1; then
   set -e
   OUT_GROK_DOCTOR="$(echo "$DOC" | tail -3 | tr '\n' ' ')"
   echo "$DOC" | sed 's/^/  /'
-  if [[ $DOC_RC -ne 0 ]]; then
+  if echo "$DOC" | grep -q 'exa.*OAuth\|authorization required'; then
+    warn "exa braucht einmalig OAuth: grok mcp doctor exa"
+  elif [[ $DOC_RC -ne 0 ]]; then
     OUT_ISSUES+=("grok-doctor:exit-$DOC_RC")
-  fi
-  if echo "$DOC" | grep -q 'failing'; then
-    if echo "$DOC" | grep -q 'exa.*OAuth\|authorization required'; then
-      warn "exa braucht einmalig OAuth: grok mcp doctor exa"
-    fi
   fi
 else
   OUT_GROK_DOCTOR="übersprungen (grok fehlt)"
