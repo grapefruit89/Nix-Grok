@@ -32,6 +32,7 @@ in
     ./grok.nix
     ./61-core.nix
     ./61-homepage.nix
+    ./62-libreseerr.nix
     ./automation.nix
     ./hermes.nix
     ./gaming.nix
@@ -104,12 +105,12 @@ in
       };
     };
 
-    linkwarden = {
-      enable = lib.mkEnableOption "Linkwarden Collaborative Bookmark Manager";
+    shiori = {
+      enable = lib.mkEnableOption "Shiori bookmark manager (SQLite, single-user)";
       port = lib.mkOption {
         type = lib.types.port;
-        default = config.my.ports.linkwarden;
-        description = "Linkwarden port.";
+        default = config.my.ports.shiori;
+        description = "Shiori port.";
       };
     };
 
@@ -131,11 +132,9 @@ in
   # Caddy .enable nur in machines/<host>/rollout.nix — hier nur Hardening
   config = lib.mkIf config.services.caddy.enable {
     systemd.services.caddy = {
-      # Blocky → Caddy (ACME-DNS). PostgreSQL → Caddy via boot-watchdog (Linkwarden)
+      # Blocky → Caddy (ACME-DNS)
       after = lib.mkAfter (
-        lib.optional config.my.services.blocky.enable "blocky.service"
-        ++ lib.optional (config.my.services.linkwarden.enable or false) "postgresql.service"
-        ++ [ "network-online.target" ]
+        lib.optional config.my.services.blocky.enable "blocky.service" ++ [ "network-online.target" ]
       );
       wants = lib.optional config.my.services.blocky.enable "blocky.service" ++ [
         "network-online.target"

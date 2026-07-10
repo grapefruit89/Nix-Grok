@@ -37,7 +37,8 @@ let
         vaultwarden = mySvc.vaultwarden.enable or false;
         homepage = mySvc.homepage.enable or false;
         filebrowser = mySvc.filebrowser.enable or false;
-        linkwarden = mySvc.linkwarden.enable or false;
+        shiori = mySvc.shiori.enable or false;
+        libreseerr = mySvc.libreseerr.enable or false;
         open-webui = mySvc.open-webui.enable or false;
         paperless = mySvc.paperless.enable or false;
         home-assistant = mySvc.home-assistant.enable or false;

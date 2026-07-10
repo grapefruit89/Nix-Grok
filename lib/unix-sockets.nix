@@ -28,7 +28,8 @@
   # loki         — Vector/Grafana-Client ohne http+unix Support   → tcp:4002
   # homepage     — Node.js listenPort                             → tcp:6002
   # paperless    — Gunicorn (Django), UDS möglich, ausstehend     → tcp:6003
-  # linkwarden   — Next.js                                        → tcp:6006
+  # shiori       — Go HTTP server                               → tcp:6006
+  # libreseerr   — Flask/gunicorn                                → tcp:6010
   # open-webui   — FastAPI/uvicorn, kein UDS via NixOS-Modul      → tcp:6007
   # ── helper ─────────────────────────────────────────────────────────────────
   toCaddyUpstream = path: "unix/${lib.removePrefix "/" path}";

@@ -193,11 +193,17 @@ let
       subdomain = "files";
       description = "Files";
     };
-    linkwarden = {
-      port = ports.linkwarden;
+    shiori = {
+      port = ports.shiori;
       zone = "external";
       subdomain = "links";
       description = "Bookmarks";
+    };
+    libreseerr = {
+      port = ports.libreseerr;
+      zone = "external";
+      subdomain = "libreseerr";
+      description = "Book Requests";
     };
     open-webui = {
       port = ports.open-webui;

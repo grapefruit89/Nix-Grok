@@ -118,7 +118,8 @@ meta:
 | homepage | 6002 | — | `🎯 UDS* /run/homepage/homepage.sock` | ja | Dashboard |
 | [paperless](../../modules/60-apps/automation.nix) | 6003 | — | `🎯 UDS* /run/paperless/paperless.sock` | ja | Dokumente |
 | filebrowser | 6005 | — | `🔵 TCP-L :6005` | ja | Go · UDS möglich |
-| linkwarden | 6006 | — | `🎯 UDS* /run/linkwarden/linkwarden.sock` | ja | Bookmarks |
+| shiori | 6006 | — | tcp:6006 | ja | Bookmarks |
+| libreseerr | 6010 | — | tcp:6010 | ja | Book Requests |
 | [open-webui](../../modules/60-apps/61-core.nix) | 6007 | — | `🎯 UDS* /run/open-webui/open-webui.sock` | ja | LLM-Chat |
 
 ---
@@ -165,7 +166,7 @@ Die folgende Liste zeigt was fehlt und ob es technisch umsetzbar ist.
 | vaultwarden | `/run/vaultwarden/vaultwarden.sock` | Rust/Rocket — ja | hoch (Passwörter) |
 | homepage | `/run/homepage/homepage.sock` | Node.js — ja | niedrig |
 | paperless | `/run/paperless/paperless.sock` | Python/granian — ja | mittel |
-| linkwarden | `/run/linkwarden/linkwarden.sock` | Next.js — ja | niedrig |
+| shiori | `/run/shiori/shiori.sock` | Go — ja | niedrig |
 | open-webui | `/run/open-webui/open-webui.sock` | Python — ja | niedrig |
 | filebrowser | — (noch nicht geplant) | Go — ja | mittel |
 | navidrome | — (noch nicht geplant) | Go — ja | mittel |
@@ -196,7 +197,7 @@ Die folgende Liste zeigt was fehlt und ob es technisch umsetzbar ist.
 ss -tlnp | grep -E '(100[0-9]|[4-7][0-9]{3})'
 
 # Unix-Sockets prüfen — welche existieren wirklich {#unix-sockets-pruefen-welche-existieren-wirklich}
-for s in grafana gatus pocket-id vaultwarden paperless linkwarden open-webui homepage; do
+for s in grafana gatus pocket-id vaultwarden paperless shiori open-webui homepage; do
   sock=$(ls /run/$s/*.sock 2>/dev/null | head -1)
   [ -S "$sock" ] && echo "🟢 $s: $sock" || echo "❌ $s: kein Socket"
 done

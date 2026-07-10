@@ -13,7 +13,7 @@
 #   1xxx  — Infra-Dienste (DNS, OIDC, DDNS, Zigbee2MQTT, MQTT)
 #   4xxx  — Observability (Grafana, Loki, Gatus, CrowdSec, Scrutiny, VictoriaMetrics)
 #   5xxx  — Media / *arr-Stack (Jellyfin, Sonarr, Radarr, Readarr, Prowlarr, SABnzbd, ...)
-#   6xxx  — Nutzer-Apps (Vaultwarden, Homepage, Paperless, Filebrowser, Linkwarden, ...)
+#   6xxx  — Nutzer-Apps (Vaultwarden, Homepage, Paperless, Filebrowser, Shiori, Libreseerr, ...)
 #   7xxx  — Admin-Tools (Cockpit, AMP)
 #   Standard-Ports (22, 1883, 6379, 8123) behalten ihre kanonischen Werte.
 { lib, ... }:
@@ -129,10 +129,15 @@
       default = 6005;
       description = "Filebrowser port.";
     };
-    linkwarden = lib.mkOption {
+    shiori = lib.mkOption {
       type = lib.types.port;
       default = 6006;
-      description = "Linkwarden port.";
+      description = "Shiori port.";
+    };
+    libreseerr = lib.mkOption {
+      type = lib.types.port;
+      default = 6010;
+      description = "Libreseerr port.";
     };
     open-webui = lib.mkOption {
       type = lib.types.port;

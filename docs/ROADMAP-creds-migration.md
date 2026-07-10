@@ -43,7 +43,7 @@ TPM-Versiegelung folgt als Schritt 2 (ein Flip: `useTpm = true`).
 
 **⚠️ TBD — User muss entscheiden (hat "Ausnahmen gibt es" angegeben):**
 
-homepage, filebrowser, open-webui, paperless, linkwarden, home-assistant, zigbee-stack, amp.  
+homepage, filebrowser, open-webui, paperless, shiori, home-assistant, zigbee-stack, amp.  
 → Vorschlag: alle zu internal, bis User Ausnahmen benennt. Kein Risk: mit Netbird 
   aus dem Netz erreichbar.
 
@@ -154,7 +154,7 @@ my.creds.enable = erstAb 8;
 keys = [
   "sonarr.env" "radarr.env" "prowlarr.env" "lidarr.env" "readarr.env"
   "grafana.env" "navidrome-oidc.env" "jellyfin-oidc.env"
-  "vaultwarden.env" "linkwarden.env" "zigbee2mqtt.env"
+  "vaultwarden.env" "shiori.env" "zigbee2mqtt.env"
   "oauth2-proxy.env" "oauth2-proxy-cookie-secret"
   "cloudflare_acme_env" "cloudflare_api_token"
   "restic_password" "restic_s3_creds" "restic_mega_creds"
@@ -202,7 +202,7 @@ EnvironmentFile = [ "%d/${name}.env" ];
 | 2 | `23-acme.nix` | ACME/Caddy | environmentFile → %d |
 | 3 | `55-navidrome.nix` | navidrome | EnvironmentFile optional |
 | 4 | `42-logging.nix` | grafana | EnvironmentFile optional |
-| 5 | `61-core.nix` | vaultwarden (2x!), linkwarden | EnvironmentFile |
+| 5 | `61-core.nix` | vaultwarden (2x!), shiori | EnvironmentFile |
 | 6 | `28-oauth2-proxy.nix` | oauth2-proxy | keyFile + secretFile |
 | 7 | `33-backup.nix` | restic (3 Credentials) | passwordFile, environmentFile |
 | 8 | `70-home-automation/zigbee-stack.nix` | zigbee2mqtt | EnvironmentFile |

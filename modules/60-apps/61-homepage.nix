@@ -141,6 +141,13 @@ in
                 icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/read-me-a-book.png";
               };
             }
+            {
+              Libreseerr = {
+                href = "https://libreseerr.${domain}";
+                description = "Buch-Anfragen";
+                icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/readarr.svg";
+              };
+            }
           ];
         }
         {
@@ -192,17 +199,10 @@ in
               };
             }
             {
-              Linkding = {
-                href = "https://linkding.${domain}";
+              Shiori = {
+                href = "https://links.${domain}";
                 description = "Lesezeichen";
-                icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/linkding.svg";
-              };
-            }
-            {
-              Readeck = {
-                href = "https://readeck.${domain}";
-                description = "Read Later";
-                icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/readeck.svg";
+                icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/shiori.svg";
               };
             }
             {

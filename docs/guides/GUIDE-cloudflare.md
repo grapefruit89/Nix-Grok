@@ -176,3 +176,18 @@ Unser `cfut_`-Token hat kein `token:edit`-Recht. Token-Erstellung nur:
 journalctl -u acme-moritzbaumeister.de -n 50 --no-pager
 ```text
 Häufige Ursache: CF-Token abgelaufen → rotieren (siehe oben).
+
+---
+
+## Caddy-Plugin-Ersatz {#caddy-plugin-ersatz}
+
+Caddy ist bei uns **nur Ingress** — TLS, DDNS und Rate-Limits liegen woanders:
+
+| Thema | Lösung | Wo |
+|---|---|---|
+| DDNS | `ddns-updater` + Cloudflare API | `13-gateway.nix` |
+| TLS | `security.acme` + lego DNS-01 | `23-acme.nix` |
+| `caddy-dns/cloudflare` | lego (nicht Caddy-Plugin) | `23-acme.nix` |
+| `caddy-ratelimit` | nftables `webRateLimit` (L4) | `lib/nftables-rules.nix` |
+
+Details: [ADR-7005 § Caddy-Plugin-Ersatz](../adr/7005-cloudflare-dns-acme-ddns.md#caddy-plugin-ersatz-bewusste-trennung)

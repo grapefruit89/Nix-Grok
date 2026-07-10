@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -8,7 +9,7 @@ let
 in
 {
   options.my.policy.forbidden-tech = {
-    enable = lib.mkEnableOption "Forbidden-technology assertions (Docker, Cron, …)";
+    enable = lib.mkEnableOption "Forbidden-technology assertions (Docker, Cron, Caddy-Plugins, …)";
   };
 
   config = {
@@ -17,6 +18,7 @@ in
     assertions = lib.optionals config.my.policy.forbidden-tech.enable (
       policy.baselineAssertions config
       ++ policy.formatterAssertions config
+      ++ policy.caddyAssertions config pkgs
       ++ lib.optionals (config.my.security.firewall.enable or false) (policy.firewallAssertions config)
     );
   };

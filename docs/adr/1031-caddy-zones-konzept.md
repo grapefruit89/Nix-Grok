@@ -76,7 +76,7 @@ Details: [ADR-7005 — Cloudflare](7005-cloudflare-dns-acme-ddns.md).
 `sonarr`, `radarr`, `readarr`, `prowlarr`, `lidarr`, `vaultwarden`, `homepage`
 
 **external (Internet + LAN, Pocket-ID SSO):**
-`pocket-id`, `seerr`, `filebrowser`, `linkwarden`, `open-webui`, `paperless`,
+`pocket-id`, `seerr`, `filebrowser`, `shiori`, `libreseerr`, `open-webui`, `paperless`,
 `home-assistant`, `zigbee-stack`, `amp`
 
 **streaming (Internet + LAN, SSO, flush_interval=-1, CF UNPROXIED):**

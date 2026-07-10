@@ -656,11 +656,11 @@ entries:
     meta:
       layer: 3
       role: module
-      purpose: Vaultwarden, Filebrowser, Linkwarden, Open WebUI
+      purpose: Vaultwarden, Filebrowser, Shiori, Open WebUI
       services:
         - vaultwarden
         - filebrowser
-        - linkwarden
+        - shiori
         - open-webui
       tags:
         - apps

@@ -323,13 +323,22 @@ let
         path = "/health";
       })
     ]
-    ++ lib.optionals svc.linkwarden.enable [
+    ++ lib.optionals svc.shiori.enable [
       (mkHttp {
-        name = "linkwarden";
+        name = "shiori";
         group = "apps";
         host = local;
-        port = ports.linkwarden;
-        path = "/api/health";
+        port = ports.shiori;
+        path = "/";
+      })
+    ]
+    ++ lib.optionals svc.libreseerr.enable [
+      (mkHttp {
+        name = "libreseerr";
+        group = "apps";
+        host = local;
+        port = ports.libreseerr;
+        path = "/";
       })
     ]
     ++ lib.optionals svc.filebrowser.enable [

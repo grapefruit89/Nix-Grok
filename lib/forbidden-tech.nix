@@ -1,4 +1,4 @@
-_:
+{ lib }:
 let
   must = assertion: message: { inherit assertion message; };
 
@@ -18,16 +18,34 @@ let
     # Formatter-Policy
     fmtBanned = "Verbotener Nix-Formatter — ausschließlich nixfmt (RFC-Style) + statix + deadnix.";
     fmtMissing = "Pflicht-Formatter fehlt in systemPackages — nixfmt + statix + deadnix müssen installiert sein.";
+
+    # Caddy-Plugin-Policy (ADR-7005, ADR-1031) — Caddy ist Ingress only
+    caddyPlugins = "Caddy-Plugins verboten — stattdessen: Ingress-only Caddy (reverse_proxy + forward_auth). Kein services.caddy.package mit withPlugins.";
+    caddyRatelimit = "caddy-ratelimit verboten — stattdessen: nftables webRateLimit in lib/nftables-rules.nix (L4, ~100/min pro WAN-IP auf 80/443).";
+    caddyTransformEncoder = "transform-encoder (Apache-Logs) verboten — stattdessen: JSON-Logs + journald (services.caddy.logFormat, ADR-1018).";
+    caddyWol = "caddy-wol verboten — stattdessen: separates WOL-Tooling am NAS/PC (ethtool/wakeonlan), nicht im Ingress.";
+    caddyDnsCloudflare = "caddy-dns/cloudflare verboten — stattdessen: security.acme + lego DNS-01 (modules/20-security/23-acme.nix).";
+    caddyInternalAcme = "Caddy-internes ACME verboten — stattdessen: security.acme + useACMEHost (Zertifikate aus /var/lib/acme/).";
+    sablier = "Sablier verboten — widerspricht No-Docker-Policy; stattdessen: systemd socket activation oder always-on Services.";
   };
 
-  # Hilfsfunktion: prüft ob ein Paket (über pname/name) in systemPackages ist
   hasPkg =
     config: name: builtins.any (p: (p.pname or p.name or "") == name) config.environment.systemPackages;
+
+  hasInfix = needle: haystack: lib.strings.hasInfix needle haystack;
+
+  caddyCfgText =
+    config:
+    let
+      cfg = config.services.caddy or { };
+    in
+    (cfg.extraConfig or "") + (cfg.globalConfig or "");
+
+  caddyEnabled = config: config.services.caddy.enable or false;
 in
 {
   inherit must reasons;
 
-  # Immer aktiv (unabhängig von Firewall/Mode)
   baselineAssertions = config: [
     (must (!(config.virtualisation.docker.enable or false)) "[POL-FT-001] Docker: ${reasons.docker}")
     (must (!(config.services.cron.enable or false)) "[POL-FT-002] Cron: ${reasons.cron}")
@@ -47,24 +65,73 @@ in
     (must (!(config.services.gitea.enable or false)) "[POL-FT-012] Gitea: ${reasons.forgejo}")
   ];
 
-  # Wenn nftables-Firewall-Stack aktiv
   firewallAssertions = config: [
     (must (
       config.networking.nftables.enable == true
     ) "[POL-FT-005] nftables Pflicht: ${reasons.iptables}")
   ];
 
-  # Formatter-Policy: Whitelist (Pflicht) + Blacklist (verboten)
-  # Verhindert, dass ein KI-Agent einen anderen Formatter einschleust.
   formatterAssertions = config: [
-    # ── Pflicht-Trio ──────────────────────────────────────────────────────────
     (must (hasPkg config "nixfmt") "[POL-FMT-010] nixfmt fehlt: ${reasons.fmtMissing}")
     (must (hasPkg config "statix") "[POL-FMT-011] statix fehlt: ${reasons.fmtMissing}")
     (must (hasPkg config "deadnix") "[POL-FMT-012] deadnix fehlt: ${reasons.fmtMissing}")
-
-    # ── Blacklist: andere Nix-Formatter ───────────────────────────────────────
     (must (!(hasPkg config "alejandra")) "[POL-FMT-001] alejandra: ${reasons.fmtBanned}")
     (must (!(hasPkg config "nixpkgs-fmt")) "[POL-FMT-002] nixpkgs-fmt: ${reasons.fmtBanned}")
     (must (!(hasPkg config "rnix-linter")) "[POL-FMT-003] rnix-linter: ${reasons.fmtBanned}")
   ];
+
+  # Caddy: keine Plugins / keine doppelte Infrastruktur (DDNS, ACME, Rate-Limit, WOL, Sablier)
+  caddyAssertions =
+    config: pkgs:
+    let
+      cfg = config.services.caddy or { };
+      enabled = caddyEnabled config;
+      caddyText = caddyCfgText config;
+      stockCaddy = cfg.package or pkgs.caddy;
+      forbiddenInCaddyfile =
+        patterns: enabled && builtins.any (pattern: hasInfix pattern caddyText) patterns;
+    in
+    [
+      (must (
+        !enabled || stockCaddy == pkgs.caddy
+      ) "[POL-CADDY-001] Caddy-Plugins: ${reasons.caddyPlugins}")
+      (must (
+        !enabled || !(config.my.security.acme.enable or false) || (cfg.acmeCA or null) == null
+      ) "[POL-CADDY-002] Caddy-ACME: ${reasons.caddyInternalAcme}")
+      (must (
+        !forbiddenInCaddyfile [
+          "rate_limit"
+          "caddy-ratelimit"
+          "http.ratelimit"
+        ]
+      ) "[POL-CADDY-003] caddy-ratelimit: ${reasons.caddyRatelimit}")
+      (must (
+        !forbiddenInCaddyfile [
+          "transform-encoder"
+          "encode apache"
+          "transform encode"
+        ]
+      ) "[POL-CADDY-004] transform-encoder: ${reasons.caddyTransformEncoder}")
+      (must (
+        !forbiddenInCaddyfile [
+          "caddy-wol"
+          "wake_on_lan"
+          "wake-on-lan"
+        ]
+      ) "[POL-CADDY-005] caddy-wol: ${reasons.caddyWol}")
+      (must (
+        !forbiddenInCaddyfile [
+          "caddy-dns/cloudflare"
+          "acme_dns cloudflare"
+          "dns.cloudflare"
+        ]
+      ) "[POL-CADDY-006] caddy-dns/cloudflare: ${reasons.caddyDnsCloudflare}")
+      (must (
+        !(config.services.sablier.enable or false)
+        && !forbiddenInCaddyfile [
+          "sablier"
+          "github.com/sablier"
+        ]
+      ) "[POL-CADDY-007] Sablier: ${reasons.sablier}")
+    ];
 }

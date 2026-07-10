@@ -59,7 +59,8 @@ Alle FQDNs: `lib/dns-map.nix` → `host "<schlüssel>"`. Beispiele:
 
 | Schlüssel | FQDN (domain = nix.m7c5.de) |
 |-----------|----------------------------|
-| `linkwarden` | `links.nix.m7c5.de` |
+| `shiori` | `links.nix.m7c5.de` |
+| `libreseerr` | `libreseerr.nix.m7c5.de` |
 | `audiobookshelf` | `audiobookshelf.nix.m7c5.de` |
 | `vaultwarden` | `vault.nix.m7c5.de` |
 | `ddns-updater` | `ddns.nix.m7c5.de` |

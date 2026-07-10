@@ -14,6 +14,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -150,6 +151,24 @@ in
             OOMScoreAdjust = 300;
             ProtectClock = true;
             ProtectHostname = true;
+          };
+        }
+
+        {
+          systemd.services.shiori-secret-init = {
+            description = "Generate SHIORI_HTTP_SECRET_KEY on first boot";
+            before = [ "shiori.service" ];
+            wantedBy = [ "shiori.service" ];
+            unitConfig.ConditionPathExists = "!/var/lib/secrets/shiori.env";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${pkgs.writeShellScript "shiori-secret-init" ''
+                install -m 600 /dev/null /var/lib/secrets/shiori.env
+                printf 'SHIORI_HTTP_SECRET_KEY=%s\n' \
+                  "$(${pkgs.openssl}/bin/openssl rand -hex 32)" \
+                  >> /var/lib/secrets/shiori.env
+              ''}";
+            };
           };
         }
       ]

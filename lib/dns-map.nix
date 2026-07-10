@@ -31,7 +31,8 @@ let
     vaultwarden = fqdn "vault";
     homepage = fqdn "dashboard";
     filebrowser = fqdn "files";
-    linkwarden = fqdn "links";
+    shiori = fqdn "links";
+    libreseerr = fqdn "libreseerr";
     "open-webui" = fqdn "ai";
     "home-assistant" = fqdn "home";
     "pocket-id" = fqdn "auth";

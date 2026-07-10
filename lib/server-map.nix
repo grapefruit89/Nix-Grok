@@ -172,9 +172,15 @@ _: {
       module = "60-apps";
       sso = true;
     };
-    linkwarden = {
+    shiori = {
       id = 6006;
-      transport = "tcp:6006"; # Next.js, kein UDS
+      transport = "tcp:6006";
+      module = "60-apps";
+      sso = true;
+    };
+    libreseerr = {
+      id = 6010;
+      transport = "tcp:6010";
       module = "60-apps";
       sso = true;
     };

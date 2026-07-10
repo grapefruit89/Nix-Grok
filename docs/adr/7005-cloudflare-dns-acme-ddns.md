@@ -195,3 +195,27 @@ eine Domain ausreicht.
 
 - [ADR-1031 — Caddy-Zonen-Konzept](1031-caddy-zones-konzept.md)
 - [GUIDE-cloudflare](../guides/GUIDE-cloudflare.md)
+
+---
+
+## Caddy-Plugin-Ersatz — bewusste Trennung {#caddy-plugin-ersatz-bewusste-trennung}
+
+Caddy auf q958 ist **Ingress only** — kein ACME, kein DDNS, kein Rate-Limiting.
+Plugins aus dem Caddy-Ökosystem werden durch NixOS-native Bausteine ersetzt:
+
+| Caddy-Plugin / Feature | Stattdessen auf q958 | Modul / Referenz |
+|---|---|---|
+| DDNS | `ddns-updater` (qdm12) + Cloudflare API | `modules/10-network/13-gateway.nix` |
+| TLS / ACME DNS-01 | `security.acme` + lego + Cloudflare | `modules/20-security/23-acme.nix` |
+| `caddy-dns/cloudflare` | lego `dnsProvider = "cloudflare"` | [ADR-7005 §3](#3-acme-via-dns-01-kein-http-01) |
+| `caddy-ratelimit` | nftables WAN-Rate-Limit (L4) | `lib/nftables-rules.nix` — `webRateLimit` (default 100/min pro WAN-IP auf 80/443) |
+| `transform-encoder` (Apache-Logs) | JSON + journald | [ROADMAP](../ROADMAP.md) |
+| `caddy-wol` | nicht benötigt (always-on q958) | — |
+| Sablier (on-demand) | nicht geeignet (braucht Container-Runtime) | [ANTIPATTERNS](../guides/ANTIPATTERNS.md) |
+
+**Prinzip:** Eine Wahrheit pro Schicht — L4 (nftables), L7-Ingress (Caddy), Zertifikate (ACME),
+DNS-Nachführung (DDNS). Caddy liest fertige Zertifikate aus `/var/lib/acme/` und macht
+`reverse_proxy` + `forward_auth` (Pocket-ID).
+
+Siehe auch: [ADR-1031 — Caddy-Zonen-Konzept](1031-caddy-zones-konzept.md),
+[GUIDE-nftables-hardening](../guides/GUIDE-nftables-hardening.md).

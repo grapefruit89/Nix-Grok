@@ -99,7 +99,8 @@ in
     homepage.enable = erstAb 7;
     paperless.enable = erstAb 7;
     filebrowser.enable = erstAb 7;
-    linkwarden.enable = erstAb 7;
+    shiori.enable = erstAb 7;
+    libreseerr.enable = erstAb 7;
     open-webui.enable = erstAb 7;
     hermes.enable = erstAb 7;
     hermes.containerMode = false; # nativ statt Podman (Entscheidung 2026-06-26)

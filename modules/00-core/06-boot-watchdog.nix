@@ -92,12 +92,8 @@ in
       };
     };
 
-    # Caddy: PostgreSQL-Abhängigkeit (Linkwarden) + Restart-Policy (wenn watchdog überwacht)
+    # Caddy: Restart-Policy (wenn watchdog überwacht)
     systemd.services.caddy = lib.mkMerge [
-      (lib.mkIf (config.my.services.linkwarden.enable or false) {
-        requires = [ "postgresql.service" ];
-        after = [ "postgresql.service" ];
-      })
       (lib.mkIf cfg.requireCaddy {
         serviceConfig = {
           Restart = lib.mkDefault "on-failure";
