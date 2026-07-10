@@ -136,6 +136,7 @@ let
       command = "${braveSearchMcpWrapper}";
     };
     exa = {
+      type = "http";
       url = exaMcpUrl;
     };
   };
@@ -156,6 +157,7 @@ let
       ];
     };
     exa = {
+      type = "http";
       url = exaMcpUrl;
     };
   };
@@ -231,6 +233,7 @@ in
           command = "${homeDirectory}/.local/bin/brave-search-mcp";
         };
         exa = {
+          type = "http";
           url = exaMcpUrl;
         };
       };
