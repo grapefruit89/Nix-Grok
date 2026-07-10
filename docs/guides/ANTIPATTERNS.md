@@ -143,6 +143,24 @@ Mutual TLS (Client-Zertifikate) für interne Admin-Interfaces (Cockpit, Grafana-
 **Stattdessen:** Technitium Split-Horizon DNS: `service.m7c5.de` löst intern zur LAN-IP auf, extern ist der Dienst via Caddy gesperrt. Caddy + Cloudflare DNS-01 Challenge stellt automatisch Let's Encrypt Zertifikate aus. Ergebnis: HTTPS ohne Warnings, funktioniert von LAN und WireGuard/Netbird, kein CA-Management.  
 **Ausnahme (acceptable):** Drucker, Chromecasts und andere Consumer-Geräte die kein DNS haben und ausschließlich auf mDNS angewiesen sind — dort ist Avahi für Service-Discovery (nicht für Web-Endpunkte) legitim.
 
+## Lokale KI auf q958 (Ollama, llama.cpp, GPU-Inference) {#lokale-ki}
+
+Ollama, lokale LLM-Runtime, Embedding-Modelle oder GPU-Inference **auf q958**.
+
+**Warum nicht:**
+- q958 ist zu schwach für sinnvolle lokale Inference (RAM, GPU, Thermik).
+- Ollama/Embedding-Dienste erzeugen Wartungs- und RAM-Overhead ohne echten Nutzen.
+- KI-Arbeit läuft über **externe APIs** (Claude Code, Grok, Hermes/OpenRouter) — nicht auf dem Host.
+- Die Knowledge-DB nutzt **FTS5 + strukturiertes Frontmatter** — das reicht ohne Vektoren.
+
+**Stattdessen:**
+- nixos-docs-indexer → SQLite FTS5 (search_docs, search_chunks, list_doc_links)
+- Remote-KI mit MCP-Zugriff auf nixos_docs.sqlite
+- build_nixos_knowledge_db.py nur noch für chat_insights-Seed — **kein** Embedder-Service
+
+Siehe [GUIDE-knowledge-db.md](GUIDE-knowledge-db.md).
+
+
 ## Siehe auch {#siehe-auch}
 
 - [ADR-2024 — systemd-creds + TPM2](../adr/2024-systemd-creds-tpm.md) — Secrets-Strategie

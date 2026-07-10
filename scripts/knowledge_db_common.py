@@ -1,51 +1,10 @@
-"""Shared helpers for nixos_docs.sqlite indexing, chunking, and embeddings."""
+"""Shared helpers for nixos_docs.sqlite indexing and chunking (FTS5 only)."""
 
 from __future__ import annotations
 
-import json
-import os
 import re
-import struct
-import subprocess
-import urllib.request
 from pathlib import Path
 from typing import Any
-
-EMBED_DIM = 384
-
-
-def find_vec_so() -> str | None:
-    import glob
-
-    hits = sorted(glob.glob("/nix/store/*/lib/vec0.so"))
-    return hits[-1] if hits else None
-
-
-def load_sqlite_vec(conn, vec_so: str | None = None) -> str | None:
-    vec_so = vec_so or os.environ.get("SQLITE_VEC_PATH")
-    if not vec_so:
-        try:
-            vec_so = (
-                subprocess.check_output(
-                    [
-                        "nix-build",
-                        "<nixpkgs>",
-                        "-A",
-                        "sqlite-vec",
-                        "--no-link",
-                        "--out-link",
-                        "/tmp/sqlite-vec-out",
-                    ],
-                    text=True,
-                ).strip()
-                + "/lib/vec0.so"
-            )
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return None
-    conn.enable_load_extension(True)
-    conn.load_extension(vec_so)
-    conn.enable_load_extension(False)
-    return vec_so
 
 
 def extract_comment_meta_block(content: str, max_lines: int = 40) -> str | None:
@@ -278,37 +237,3 @@ def resolve_doc_path(from_path: str, target: str) -> str:
         return target.lstrip("/")
     base = Path(from_path).parent
     return str((base / target).as_posix()).replace("/./", "/")
-
-
-def zero_embedding() -> bytes:
-    return struct.pack(f"{EMBED_DIM}f", *([0.0] * EMBED_DIM))
-
-
-def pack_embedding(vec: list[float]) -> bytes:
-    if len(vec) != EMBED_DIM:
-        if len(vec) > EMBED_DIM:
-            vec = vec[:EMBED_DIM]
-        else:
-            vec = vec + [0.0] * (EMBED_DIM - len(vec))
-    return struct.pack(f"{EMBED_DIM}f", *vec)
-
-
-def embed_via_ollama(text: str, model: str, host: str) -> list[float] | None:
-    payload = json.dumps({"model": model, "input": text}).encode()
-    req = urllib.request.Request(
-        f"{host.rstrip('/')}/api/embed",
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            data = json.load(resp)
-        embeddings = data.get("embeddings") or data.get("embedding")
-        if isinstance(embeddings, list) and embeddings and isinstance(embeddings[0], list):
-            return embeddings[0]
-        if isinstance(embeddings, list) and embeddings and isinstance(embeddings[0], (int, float)):
-            return embeddings
-    except Exception:
-        return None
-    return None

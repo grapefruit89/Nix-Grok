@@ -220,7 +220,7 @@ Noch offen:
 ## Wissens-SSoT
 
 - [x] `chat_insights_seed.json` — homelab Kirschen, unraid nur Vorlage
-- [ ] SQLite + vec Embeddings (Ollama)
+- [x] SQLite FTS5 Knowledge-DB (keine lokalen Embeddings — Antipattern)
 
 ---
 

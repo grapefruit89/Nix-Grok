@@ -182,9 +182,7 @@ in
       };
     })
 
-    # ── nixos-docs: SQLite FTS5 + sqlite-vec (kein DuckDB) ──
-    # Indexer: source_files, doc_meta, doc_chunks, doc_links
-    # Embedder: chat_insights + doc_chunk_embeddings (Ollama, inkrementell)
+    # ── nixos-docs: SQLite FTS5 (kein DuckDB, keine lokale KI) ──
     {
       systemd = {
         services.nixos-docs-indexer = {
@@ -201,49 +199,11 @@ in
           };
         };
 
-        services.nixos-docs-embedder = {
-          description = "Embeddings für nixos_docs.sqlite (insights + Markdown-Chunks)";
-          after = [
-            "network-online.target"
-            "nixos-docs-indexer.service"
-          ];
-          wants = [ "network-online.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            Environment = [
-              "OLLAMA_HOST=http://127.0.0.1:11434"
-              "OLLAMA_EMBED_MODEL=nomic-embed-text"
-            ];
-            ExecStart = "${pkgs.python3}/bin/python3 /etc/nixos/tools/build_nixos_knowledge_db.py --target /var/lib/nixos-docs-mcp/nixos_docs.sqlite --skip-seed";
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            ReadOnlyPaths = [
-              "/etc/nixos"
-              "/nix/store"
-            ];
-            ReadWritePaths = [
-              "/var/lib/nixos-docs-mcp"
-              "/tmp"
-            ];
-          };
-        };
-
         timers.nixos-docs-indexer = {
           description = "nixos-docs Indexer Timer";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "2min";
-            Persistent = true;
-          };
-        };
-
-        timers.nixos-docs-embedder = {
-          description = "nixos-docs Embedder Timer (nach Indexer, wöchentlich)";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "5min";
-            OnUnitActiveSec = "7d";
             Persistent = true;
           };
         };

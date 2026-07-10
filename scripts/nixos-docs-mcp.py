@@ -2,71 +2,27 @@
 # ---
 # meta:
 #   role: script
-#   purpose: MCP-Server für nixos_docs.sqlite — FTS5 + sqlite-vec + Hybrid-RRF über stdio
+#   purpose: MCP-Server für nixos_docs.sqlite — FTS5 über stdio (keine lokale KI)
 #   docs:
 #     - docs/guides/GUIDE-knowledge-db.md
+#     - docs/guides/ANTIPATTERNS.md#lokale-ki
 #   tags:
 #     - mcp
 #     - sqlite
 #     - fts5
-#     - vector
-#     - hybrid-search
 # ---
-"""NixOS-Docs MCP Server — FTS5 + sqlite-vec + Hybrid-RRF über stdio (JSON-RPC 2.0)"""
-import glob
+"""NixOS-Docs MCP Server — FTS5 über stdio (JSON-RPC 2.0). Keine Embeddings auf q958."""
 import json
 import sqlite3
-import struct
 import sys
 
 DB_PATH = sys.argv[1] if len(sys.argv) > 1 else "/var/lib/nixos-docs-mcp/nixos_docs.sqlite"
-RRF_K = 60
-EMBED_DIM = 384
-
-
-def find_vec_so():
-    hits = sorted(glob.glob("/nix/store/*/lib/vec0.so"))
-    return hits[-1] if hits else None
-
-
-VEC_SO = find_vec_so()
 
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    if VEC_SO:
-        try:
-            conn.enable_load_extension(True)
-            conn.load_extension(VEC_SO[:-3])
-            conn.enable_load_extension(False)
-        except Exception:
-            pass
     return conn
-
-
-def rrf_merge(fts_rows, vec_rows, id_key="id", limit=10):
-    fts_rrf = {row[id_key]: 1.0 / (RRF_K + pos + 1) for pos, row in enumerate(fts_rows)}
-    vec_rrf = {row[id_key]: 1.0 / (RRF_K + pos + 1) for pos, row in enumerate(vec_rows)}
-    row_cache = {row[id_key]: dict(row) for row in fts_rows}
-    for row in vec_rows:
-        if row[id_key] not in row_cache:
-            row_cache[row[id_key]] = dict(row)
-
-    all_ids = set(fts_rrf) | set(vec_rrf)
-    ranked = sorted(all_ids, key=lambda i: fts_rrf.get(i, 0) + vec_rrf.get(i, 0), reverse=True)
-
-    results = []
-    for doc_id in ranked[:limit]:
-        row = row_cache[doc_id].copy()
-        row["rrf_score"] = round(fts_rrf.get(doc_id, 0) + vec_rrf.get(doc_id, 0), 6)
-        row["sources"] = (
-            "fts+vec" if doc_id in fts_rrf and doc_id in vec_rrf
-            else "fts" if doc_id in fts_rrf
-            else "vec"
-        )
-        results.append(row)
-    return results
 
 
 TOOLS = [
@@ -77,37 +33,6 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "query": {"type": "string"},
-                "limit": {"type": "integer", "default": 10},
-            },
-            "required": ["query"],
-        },
-    },
-    {
-        "name": "hybrid_search",
-        "description": "Hybrid RRF: FTS5 + Vektor in chat_insights",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string"},
-                "embedding": {"type": "array", "items": {"type": "number"}},
-                "limit": {"type": "integer", "default": 10},
-            },
-            "required": ["query"],
-        },
-    },
-    {
-        "name": "hybrid_search_docs",
-        "description": (
-            "Hybrid RRF über Markdown-Chunks (ADRs, Guides): doc_chunks_fts + doc_chunk_embeddings. "
-            "Besser für semantische Doku-Suche als search_docs (ganze Dateien)."
-        ),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "FTS5-Suchbegriff"},
-                "embedding": {"type": "array", "items": {"type": "number"}, "description": "float[384] von Ollama nomic-embed-text"},
-                "role": {"type": "string", "description": "adr | guide | learning | doc"},
-                "status": {"type": "string", "description": "accepted | current | draft | deprecated"},
                 "limit": {"type": "integer", "default": 10},
             },
             "required": ["query"],
@@ -142,11 +67,11 @@ TOOLS = [
     },
     {
         "name": "list_doc_links",
-        "description": "Link-Graph: ausgehende oder eingehende Verknüpfungen (meta.docs, betrifft, siehe_auch)",
+        "description": "Link-Graph: meta.docs, betrifft, siehe_auch",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "path": {"type": "string", "description": "Repo-relativer Pfad"},
+                "path": {"type": "string"},
                 "direction": {"type": "string", "enum": ["from", "to", "both"], "default": "both"},
             },
             "required": ["path"],
@@ -159,30 +84,6 @@ TOOLS = [
             "type": "object",
             "properties": {"sql": {"type": "string"}},
             "required": ["sql"],
-        },
-    },
-    {
-        "name": "vec_search",
-        "description": "KNN in insight_embeddings (float[384])",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "embedding": {"type": "array", "items": {"type": "number"}},
-                "limit": {"type": "integer", "default": 5},
-            },
-            "required": ["embedding"],
-        },
-    },
-    {
-        "name": "vec_search_docs",
-        "description": "KNN in doc_chunk_embeddings — semantische Suche in Markdown-Abschnitten",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "embedding": {"type": "array", "items": {"type": "number"}},
-                "limit": {"type": "integer", "default": 10},
-            },
-            "required": ["embedding"],
         },
     },
     {
@@ -249,42 +150,8 @@ def tool_fts_search(args):
         conn.close()
 
 
-def tool_hybrid_search(args):
-    q = args.get("query", "")
-    embedding = args.get("embedding")
-    limit = int(args.get("limit", 10))
-    conn = get_db()
-    try:
-        fts_rows = conn.execute(
-            "SELECT i.id, i.theme, i.agent, i.title, i.content, i.status, i.rollout_stufe "
-            "FROM chat_insights_fts "
-            "JOIN chat_insights i ON i.id = chat_insights_fts.rowid "
-            "WHERE chat_insights_fts MATCH ? "
-            "ORDER BY bm25(chat_insights_fts) LIMIT ?",
-            (q, limit * 3),
-        ).fetchall()
-
-        vec_rows = []
-        if embedding and VEC_SO and len(embedding) == EMBED_DIM:
-            blob = struct.pack(f"{len(embedding)}f", *[float(x) for x in embedding])
-            vec_rows = conn.execute(
-                "SELECT i.id, i.title, i.content, i.status, v.distance "
-                "FROM insight_embeddings v "
-                "JOIN chat_insights i ON i.id = v.insight_id "
-                "WHERE v.embedding MATCH ? AND k = ? ORDER BY v.distance",
-                (blob, limit * 3),
-            ).fetchall()
-
-        return rrf_merge(fts_rows, vec_rows, id_key="id", limit=limit)
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        conn.close()
-
-
 def _chunk_filters(role, status):
     where = ["doc_chunks_fts MATCH ?"]
-    params = []
     joins = [
         "JOIN doc_chunks c ON c.id = doc_chunks_fts.rowid",
         "JOIN source_files sf ON sf.id = c.source_file_id",
@@ -292,18 +159,23 @@ def _chunk_filters(role, status):
     ]
     if role:
         where.append("(sf.module_role = ? OR dm.role = ?)")
-        params.extend([role, role])
     if status:
         where.append("dm.status = ?")
-        params.append(status)
-    return joins, where, params
+    return joins, where
 
 
 def tool_search_chunks(args):
     q = args.get("query", "")
     limit = int(args.get("limit", 10))
-    joins, where, params = _chunk_filters(args.get("role"), args.get("status"))
-    params = [q] + params + [limit]
+    role = args.get("role")
+    status = args.get("status")
+    joins, where = _chunk_filters(role, status)
+    params = [q]
+    if role:
+        params.extend([role, role])
+    if status:
+        params.append(status)
+    params.append(limit)
     conn = get_db()
     try:
         sql = (
@@ -314,71 +186,6 @@ def tool_search_chunks(args):
             f"WHERE {' AND '.join(where)} ORDER BY rank LIMIT ?"
         )
         return [dict(r) for r in conn.execute(sql, params).fetchall()]
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        conn.close()
-
-
-def tool_hybrid_search_docs(args):
-    q = args.get("query", "")
-    embedding = args.get("embedding")
-    limit = int(args.get("limit", 10))
-    joins, where, params = _chunk_filters(args.get("role"), args.get("status"))
-    conn = get_db()
-    try:
-        fts_params = [q]
-        if args.get("role"):
-            fts_params.extend([args["role"], args["role"]])
-        if args.get("status"):
-            fts_params.append(args["status"])
-        fts_params.append(limit * 3)
-
-        fts_sql = (
-            "SELECT c.id, c.path, c.heading, c.anchor, c.content, dm.status, dm.purpose "
-            f"FROM doc_chunks_fts {' '.join(joins)} "
-            f"WHERE {' AND '.join(where)} ORDER BY bm25(doc_chunks_fts) LIMIT ?"
-        )
-        fts_rows = conn.execute(fts_sql, fts_params).fetchall()
-
-        vec_rows = []
-        if embedding and VEC_SO and len(embedding) == EMBED_DIM:
-            blob = struct.pack(f"{len(embedding)}f", *[float(x) for x in embedding])
-            vec_rows = conn.execute(
-                "SELECT c.id, c.path, c.heading, c.anchor, c.content, v.distance "
-                "FROM doc_chunk_embeddings v "
-                "JOIN doc_chunks c ON c.id = v.chunk_id "
-                "WHERE v.embedding MATCH ? AND k = ? ORDER BY v.distance",
-                (blob, limit * 3),
-            ).fetchall()
-
-        return rrf_merge(fts_rows, vec_rows, id_key="id", limit=limit)
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        conn.close()
-
-
-def tool_vec_search_docs(args):
-    if not VEC_SO:
-        return {"error": "sqlite-vec nicht verfügbar"}
-    embedding = args.get("embedding", [])
-    if len(embedding) != EMBED_DIM:
-        return {"error": f"Benötige float[{EMBED_DIM}], erhalten: {len(embedding)}"}
-    limit = int(args.get("limit", 10))
-    blob = struct.pack(f"{len(embedding)}f", *[float(x) for x in embedding])
-    conn = get_db()
-    try:
-        rows = conn.execute(
-            "SELECT c.id, c.path, c.heading, c.anchor, "
-            "       substr(c.content, 1, 500) AS content_preview, v.distance, dm.status "
-            "FROM doc_chunk_embeddings v "
-            "JOIN doc_chunks c ON c.id = v.chunk_id "
-            "LEFT JOIN doc_meta dm ON dm.path = c.path "
-            "WHERE v.embedding MATCH ? AND k = ? ORDER BY v.distance",
-            (blob, limit),
-        ).fetchall()
-        return [dict(r) for r in rows]
     except Exception as e:
         return {"error": str(e)}
     finally:
@@ -435,30 +242,6 @@ def tool_query(args):
     conn = get_db()
     try:
         return [dict(r) for r in conn.execute(sql).fetchall()]
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        conn.close()
-
-
-def tool_vec_search(args):
-    if not VEC_SO:
-        return {"error": "sqlite-vec nicht verfügbar"}
-    embedding = args.get("embedding", [])
-    if len(embedding) != EMBED_DIM:
-        return {"error": f"Benötige float[{EMBED_DIM}], erhalten: {len(embedding)}"}
-    limit = int(args.get("limit", 5))
-    blob = struct.pack(f"{len(embedding)}f", *[float(x) for x in embedding])
-    conn = get_db()
-    try:
-        rows = conn.execute(
-            "SELECT i.id, i.title, i.content, i.status, v.distance "
-            "FROM insight_embeddings v "
-            "JOIN chat_insights i ON i.id = v.insight_id "
-            "WHERE v.embedding MATCH ? AND k = ? ORDER BY v.distance",
-            (blob, limit),
-        ).fetchall()
-        return [dict(r) for r in rows]
     except Exception as e:
         return {"error": str(e)}
     finally:
@@ -547,14 +330,10 @@ def tool_search_all(args):
 
 TOOL_HANDLERS = {
     "fts_search": tool_fts_search,
-    "hybrid_search": tool_hybrid_search,
-    "hybrid_search_docs": tool_hybrid_search_docs,
     "search_chunks": tool_search_chunks,
     "list_insights": tool_list_insights,
     "list_doc_links": tool_list_doc_links,
     "query": tool_query,
-    "vec_search": tool_vec_search,
-    "vec_search_docs": tool_vec_search_docs,
     "search_nix": tool_search_nix,
     "search_docs": tool_search_docs,
     "search_all": tool_search_all,
@@ -575,7 +354,7 @@ def handle(msg):
             "id": mid,
             "result": {
                 "protocolVersion": "2024-11-05",
-                "serverInfo": {"name": "nixos-docs-mcp", "version": "1.3.0"},
+                "serverInfo": {"name": "nixos-docs-mcp", "version": "1.4.0"},
                 "capabilities": {"tools": {}},
             },
         })
