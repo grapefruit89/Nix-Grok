@@ -17,7 +17,7 @@
 let
   cfg = config.my.services.libreseerr;
   factory = import ../../lib/service-factory.nix { inherit lib; };
-  port = config.my.ports.libreseerr;
+  port = cfg.port;
   package = pkgs.callPackage ../../packages/libreseerr { };
 in
 {
@@ -44,8 +44,6 @@ in
           "d /var/lib/libreseerr 0750 libreseerr libreseerr -"
           "d /var/lib/libreseerr/data 0750 libreseerr libreseerr -"
         ];
-
-        my.impermanence.extraPaths = [ "/var/lib/libreseerr" ];
 
         systemd.services.libreseerr = {
           description = "Libreseerr — book requests for Readarr";

@@ -61,7 +61,8 @@ in
           "${cfgImp.persistMountPoint}/var/lib/postgresql"
           "${cfgImp.persistMountPoint}/var/lib/vaultwarden"
           "${cfgImp.persistMountPoint}/var/lib/pocket-id"
-          "${cfgImp.persistMountPoint}/var/lib/linkwarden"
+          "${cfgImp.persistMountPoint}/var/lib/shiori"
+          "${cfgImp.persistMountPoint}/var/lib/libreseerr"
 
           # ── Dokumente (Paperless-NGX — absolut unwiederbringlich) ────────
           "${cfgImp.persistMountPoint}/var/lib/paperless"
@@ -115,7 +116,7 @@ in
           echo "Stopping services for consistent backup snapshot..."
           systemctl stop \
             paperless-web paperless-scheduler paperless-task-queue \
-            home-assistant linkwarden vaultwarden zigbee2mqtt \
+            home-assistant shiori libreseerr vaultwarden zigbee2mqtt \
             audiobookshelf blocky || true
           systemctl stop mosquitto postgresql || true
         '';
@@ -126,7 +127,7 @@ in
           systemctl start postgresql mosquitto || true
           systemctl start \
             paperless-web paperless-scheduler paperless-task-queue \
-            home-assistant linkwarden vaultwarden zigbee2mqtt \
+            home-assistant shiori libreseerr vaultwarden zigbee2mqtt \
             audiobookshelf blocky || true
         '';
       };

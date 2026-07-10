@@ -2,11 +2,11 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Vaultwarden, Filebrowser, Linkwarden, Open WebUI
+#   purpose: Vaultwarden, Filebrowser, Shiori, Open WebUI
 #   services:
 #     - vaultwarden
 #     - filebrowser
-#     - linkwarden
+#     - shiori
 #     - open-webui
 #   tags:
 #     - apps
@@ -20,20 +20,19 @@ let
   factory = import ../../lib/service-factory.nix { inherit lib; };
   cfgVaultwarden = config.my.services.vaultwarden;
   cfgFilebrowser = config.my.services.filebrowser;
-  cfgLinkwarden = config.my.services.linkwarden;
+  cfgShiori = config.my.services.shiori;
   cfgOpenWebui = config.my.services.open-webui;
 
   domain = config.my.configs.identity.domain;
   dnsMap = import ../../lib/dns-map.nix { inherit domain; };
   vaultHost = dnsMap.host "vaultwarden";
-  linksHost = dnsMap.host "linkwarden";
 in
 {
   config = lib.mkMerge [
     (lib.mkIf cfgVaultwarden.enable {
       services.vaultwarden = {
         enable = true;
-        dbBackend = "sqlite"; # Lokale SQLite DB für minimale externe Latenz
+        dbBackend = "sqlite";
         environmentFile = "/var/lib/secrets/vaultwarden.env";
 
         config = {
@@ -41,24 +40,15 @@ in
           ROCKET_PORT = config.my.ports.vaultwarden;
           DOMAIN = "https://${vaultHost}";
 
-          # Security defaults
           SIGNUPS_ALLOWED = false;
           INVITATIONS_ALLOWED = true;
           SHOW_PASSWORD_HINT = false;
           DISABLE_ADMIN_TOKEN = false;
-
-          # Concurrency
-          DATABASE_MAX_CONNS = 10; # WAL mode Concurrency
-
-          # Brute-Force Rate Limiting
+          DATABASE_MAX_CONNS = 10;
           LOGIN_RATELIMIT_MAX_BURST = 10;
           LOGIN_RATELIMIT_SECONDS = 60;
-
           REQUIRE_DEVICE_EMAIL = false;
-
-          # WebSocket-Notifications über Haupt-Socket (ab Vaultwarden 1.29+, kein separater Port mehr)
           WEBSOCKET_ENABLED = true;
-
           LOG_LEVEL = "warn";
           EXTENDED_LOGGING = true;
           LOG_FILE = "/var/log/vaultwarden/vaultwarden.log";
@@ -134,30 +124,29 @@ in
       };
     })
 
-    (lib.mkIf cfgLinkwarden.enable (
+    (lib.mkIf cfgShiori.enable (
       lib.mkMerge [
         {
-          services.linkwarden = {
+          services.shiori = {
             enable = true;
-            inherit (cfgLinkwarden) port;
-            environmentFile = "/var/lib/secrets/linkwarden.env";
-            environment = {
-              NEXTAUTH_URL = "https://${linksHost}/api/v1/auth";
-            };
+            inherit (cfgShiori) port;
+            address = "127.0.0.1";
+            # SHIORI_HTTP_SECRET_KEY ist Pflicht seit NixOS 24.05 — ohne diese Datei startet shiori nicht
+            environmentFile = "/var/lib/secrets/shiori.env";
           };
         }
 
         (factory.mkService {
           inherit config;
-          name = "linkwarden";
-          inherit (cfgLinkwarden) port;
+          name = "shiori";
+          inherit (cfgShiori) port;
           mode = "sso";
           caddyOnly = true;
-          persistDirs = [ "/var/lib/linkwarden" ];
+          persistDirs = [ "/var/lib/shiori" ];
         })
 
         {
-          systemd.services.linkwarden.serviceConfig = {
+          systemd.services.shiori.serviceConfig = {
             OOMScoreAdjust = 300;
             ProtectClock = true;
             ProtectHostname = true;
