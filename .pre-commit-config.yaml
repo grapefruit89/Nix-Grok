@@ -24,3 +24,10 @@ repos:
         files: \.nix$
         exclude: ^stage-nixos/
         pass_filenames: false
+
+      - id: shellcheck
+        name: shellcheck (informational — style-Warnings in Bestandsskripten ignoriert)
+        language: system
+        entry: bash -c 'shellcheck --severity=error scripts/*.sh; true'
+        files: scripts/.*\.sh$
+        pass_filenames: false
