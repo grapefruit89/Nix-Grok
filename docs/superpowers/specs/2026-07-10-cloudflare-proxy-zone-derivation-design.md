@@ -102,7 +102,8 @@ und generiert pro Subdomain einen proxied Record:
 
 ```bash
 # Illustration — genaue Nix/Shell-Verdrahtung im Implementierungsplan
-jq -n --arg zone_id "$ZONE_ID" --arg token "$TOKEN" --arg domain "moritzbaumeister.de" \
+# $domain kommt aus dem Nix-String-Interpolation des Provision-Scripts (ddnsFqdn aus profile.nix)
+jq -n --arg zone_id "$ZONE_ID" --arg token "$TOKEN" --arg domain "$DOMAIN" \
   '{settings: [
     {provider:"cloudflare", zone_identifier:$zone_id, domain:("*."+$domain), proxied:false, ttl:1, token:$token, ip_version:"ipv4"},
     {provider:"cloudflare", zone_identifier:$zone_id, domain:("auth."+$domain),      proxied:true,  ttl:1, token:$token, ip_version:"ipv4"},
@@ -134,15 +135,74 @@ trusted_proxies static private_ranges
 IPv6 weggelassen — System hat IPv6 deaktiviert.  
 Aktuelle CF-IP-Liste: https://www.cloudflare.com/ips-v4
 
+**Nebeneffekt:** Mit `trusted_proxies` sehen CrowdSec und der DSGVO-Accesslog für
+`external`-Services die echten Nutzer-IPs (aus `CF-Connecting-IP`), nicht mehr die
+CF-Datacenter-IPs. CrowdSec-Bans treffen jetzt den richtigen Angreifer.
+
 ### 3. `lib/services-spec.nix`, `lib/caddy-snippets.nix`, Blocky
 
 Keine Änderungen nötig.
 
 ---
 
+## Sicherheitsanalyse: `trusted_proxies` trifft `private_admin`
+
+Das ist der sicherheitskritische Kern — hier ist der vollständige Beweis, dass
+die globale `trusted_proxies`-Erweiterung die `private_admin`-Schutzmechanik
+**nicht beschädigt**:
+
+**Caddy `remote_ip` vs. `client_ip`:**
+
+```
+(private_admin) {
+  @external not remote_ip ${privateCidr} 127.0.0.0/8 ::1/128 ${lanCidr}
+  respond @external "Forbidden" 403
+}
+```
+
+- `remote_ip` = direkte TCP-Verbindungs-IP (Layer 4, nicht manipulierbar über Header)
+- `client_ip` = aus `X-Forwarded-For`/`CF-Connecting-IP` aufgelöste IP (Header-basiert)
+
+`trusted_proxies` beeinflusst nur `client_ip`. `private_admin` nutzt `remote_ip`.
+
+**Warum das für internal-Zone sicher ist:**
+- `internal`-Records sind `proxied: false` → keine CF-Zwischenschicht
+- Caddy sieht immer die direkte TCP-Peer-IP (LAN-IP oder Netbird-IP)
+- `private_admin` prüft genau diese direkte IP → funktioniert korrekt
+
+**Warum `private_admin` NICHT auf `client_ip` umgestellt werden darf:**
+Wäre `private_admin` auf `client_ip` umgestellt, würde es `X-Forwarded-For`-Header lesen.
+Ein Angreifer könnte dann `X-Forwarded-For: 192.168.1.1` mitschicken und `private_admin`
+potentiell umgehen. Die direkte TCP-IP (`remote_ip`) ist Header-immun — das ist die
+sichere Wahl.
+
+**`block_scanners` (caddy-snippets.nix) nutzt ebenfalls `remote_ip`** — gleiche
+Garantie, gleicher Schutz. Keine Änderung nötig.
+
+**Implementierungspflicht:** Vor dem Merge verifizieren: `remote_ip` in der
+laufenden Caddy-Version verhält sich wie dokumentiert (direkte TCP-IP).
+Check: `caddy version` + [Caddy-Docs](https://caddyserver.com/docs/caddyfile/matchers#remote_ip).
+
+---
+
+## Operative Voraussetzungen (außerhalb NixOS-Scope)
+
+Diese müssen im CF-Dashboard gesetzt sein — NixOS kann das nicht erzwingen:
+
+| Einstellung | Wert | Wo | Warum |
+|-------------|------|----|-------|
+| SSL/TLS-Modus | **Full (strict)** | CF Dashboard → SSL/TLS | "Flexible" = CF→Origin unverschlüsselt + Redirect-Loops |
+| ACME-Challenge | **DNS-01** | bereits aktiv via CF-Token | HTTP-01 funktioniert nicht hinter CF-Proxy (oranges Wolken-Icon) |
+
+**CF SSL/TLS prüfen:**  
+CF Dashboard → Domain → SSL/TLS → Overview → Encryption mode = "Full (strict)"  
+(Abschnitt gilt für alle proxied Records — einmal setzen, gilt für die Zone)
+
+---
+
 ## Was gleichbleibt und warum
 
-**Blocky `customDNS`:** Blockt bereits zone-basiert — `moritzbaumeister.de = 192.168.2.73`
+**Blocky `customDNS`:** Blockt bereits zone-basiert — `<domain> = <lanIP>`
 matched ALLE Subdomains für LAN-Clients. LAN-Clients gehen nie durch CF-Proxy, egal
 ob CF-Record proxied oder nicht. Das ist kein Problem, sondern ein Feature — aber wir
 verlassen uns im Design nicht darauf (KISS).
@@ -157,6 +217,16 @@ sich die öffentliche IP ändert. Konsistenz gesichert.
 
 ## Debugging-Schnellreferenz
 
+Alle Befehle setzen `DOMAIN` und `LANIP` zu Beginn aus der NixOS-Config — einmal
+ausführen, dann alle Befehle darunter kopieren:
+
+```bash
+# Variablen aus NixOS-Config lesen (einmalig am Session-Start)
+DOMAIN=$(sudo nix eval --raw /etc/nixos#nixosConfigurations.q958.config.my.configs.identity.domain)
+LANIP=$(sudo nix eval --raw /etc/nixos#nixosConfigurations.q958.config.my.configs.server.lanIP)
+CFTOKEN=$(cat /var/lib/secrets/cloudflare_api_token)
+```
+
 ### Verbindungsproblem: "Komme nicht auf Service X drauf"
 
 ```bash
@@ -164,9 +234,10 @@ sich die öffentliche IP ändert. Konsistenz gesichert.
 grep -A5 "serviceName" /etc/nixos/lib/services-spec.nix
 
 # 2. Welche IP bekommt der Client?
-dig subdomain.moritzbaumeister.de +short
-# → 192.168.2.73  = direkte Verbindung (unproxied oder LAN via Blocky)
-# → 104.16.x.x    = CF-Proxy aktiv
+dig subdomain.$DOMAIN +short
+# → $LANIP     = direkte Verbindung (unproxied oder LAN via Blocky) ✓
+# → 104.16.x.x = CF-Proxy aktiv (erwartet für external-Zone)
+# → 104.16.x.x bei internal/streaming-Zone → Problem! Record ist proxied
 
 # 3. Was sieht Caddy als Client-IP?
 sudo journalctl -u caddy -n 50 --no-pager | grep subdomain
@@ -174,11 +245,9 @@ sudo journalctl -u caddy -n 50 --no-pager | grep subdomain
 # → "remote_ip":"104.16.x.x"   → CF-IP, trusted_proxies greift nicht → Problem!
 # → "remote_ip":"1.2.3.4"      → echte Internet-IP (via CF-Header extrahiert) ✓
 
-# 4. CF-Record-Status prüfen (braucht CF-Token)
-CFTOKEN=$(cat /var/lib/secrets/cloudflare_api_token)
-ZONE_ID=$(curl -sf "https://api.cloudflare.com/client/v4/zones?name=moritzbaumeister.de" \
+# 4. CF-Record-Status prüfen (alle A-Records mit Proxy-Status)
+ZONE_ID=$(curl -sf "https://api.cloudflare.com/client/v4/zones?name=$DOMAIN" \
   -H "Authorization: Bearer $CFTOKEN" | jq -r '.result[0].id')
-# Alle A-Records mit Proxy-Status anzeigen:
 curl -sf "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?type=A&per_page=50" \
   -H "Authorization: Bearer $CFTOKEN" \
   | jq '.result[] | {name: .name, proxied: .proxied, content: .content}'
@@ -188,24 +257,25 @@ curl -sf "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?type=A
 
 ```bash
 # LAN-Client: direkte Verbindung prüfen (muss LAN-IP zeigen, NICHT CF-IP)
-dig subdomain.moritzbaumeister.de +short
-# Wenn CF-IP → Blocky läuft nicht oder LAN-Client nutzt anderen DNS
+dig subdomain.$DOMAIN +short
+# Erwartet: $LANIP — wenn CF-IP kommt → Blocky läuft nicht oder Client nutzt anderen DNS
 sudo systemctl status blocky
 
 # Blocky-Antwort testen (von der Server-Console, simuliert LAN-DNS)
-dig @127.0.0.53 subdomain.moritzbaumeister.de +short
-# → sollte 192.168.2.73 zurückgeben
+dig @127.0.0.53 subdomain.$DOMAIN +short
+# → sollte $LANIP zurückgeben
 ```
 
 ### Problem: "Streaming ruckelt / bricht ab"
 
 ```bash
-# Sicherstellen dass der Streaming-Record NICHT proxied ist
-dig jellyfin.moritzbaumeister.de +short
-# Muss Server-IP (keine CF-IP) sein. CF-IPs: 104.16.0.0/13, 104.24.0.0/14, etc.
-
-# CF-Proxy-Status im CF-Dashboard oder via API (s.o.) verifizieren
-# jellyfin, music, audiobookshelf → proxied: false
+# Streaming-Records müssen UNPROXIED sein
+for sub in jellyfin music audiobookshelf; do
+  ip=$(dig $sub.$DOMAIN +short | head -1)
+  echo "$sub.$DOMAIN → $ip"
+done
+# Erwartet: alle zeigen $LANIP, NICHT 104.16.x.x (CF)
+# Wenn CF-IP → Record ist proxied → secrets-provision neu starten + ddns-updater restart
 ```
 
 ### Problem: "Logs zeigen nur CF-IPs, keine echten Nutzer-IPs"
@@ -234,8 +304,8 @@ sudo journalctl -u ddns-updater -n 20 --no-pager
 sudo systemctl reload caddy
 sudo journalctl -u caddy -n 10 --no-pager
 
-# 4. End-to-end: Service von außen erreichbar?
-curl -sv https://auth.moritzbaumeister.de/health 2>&1 | grep -E "< HTTP|Connected to"
+# 4. End-to-end: Service von außen erreichbar? (DOMAIN aus Schritt oben)
+curl -sv https://auth.$DOMAIN/health 2>&1 | grep -E "< HTTP|Connected to"
 ```
 
 ---
@@ -246,10 +316,16 @@ curl -sv https://auth.moritzbaumeister.de/health 2>&1 | grep -E "< HTTP|Connecte
   Beim Update: `trusted_proxies` in `11-network.nix` anpassen, rebuild.
   Check: https://www.cloudflare.com/ips-v4 vs. aktuelle Config.
 
-- **Kein CF-Proxy für internal-Zone** — bedeutet: Server-IP ist für Anfragen an
-  `grafana.domain`, `dns.domain` etc. im Internet sichtbar (via DNS). Wer absolute
-  IP-Obfuskation will, müsste CF-Tunnel einsetzen (ADR-7005 hat das als Option notiert).
-  Für Homelab akzeptabel.
+- **Wildcard macht internal-Services WAN-DNS-sichtbar.** Der Wildcard-Record bedeutet,
+  dass `grafana.domain`, `dns.domain` etc. per DNS auflösbar und damit von außen
+  erreichbar sind — nur `private_admin` blockt dann den Zugang. Das ist Status Quo
+  und kein Rückschritt, aber `private_admin` ist der einzige Gate.
+
+  **Härtere Alternative:** Wildcard entfernen, `streaming`-Services bekommen eigene
+  unproxied Records (wie `external` proxied Records bekommt). Dann ist `internal`
+  wirklich WAN-DNS-unsichtbar. Kosten: Netbird-Clients ohne Blocky als DNS-Resolver
+  können `internal`-Services nicht mehr auflösen. Für Homelab akzeptabel so wie es ist;
+  Option offen wenn Sicherheitsanforderungen steigen.
 
 - **Netbird-DNS:** Netbird-Clients nutzen ggf. ihren eigenen DNS, nicht Blocky.
   Für `internal`-Services ist das unproblematisch (CF-Record unproxied → Caddy sieht
