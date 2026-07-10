@@ -63,14 +63,15 @@ default = config.my.ports.home-assistant;
 
 ---
 
-### A4 — Boot-Limit Kommentar (`modules/00-core/01-core.nix`)
+### A4 — Boot-Limit: boot-safeguard deadcode entfernt, generationLimit = 15
 
-**Warum:** Zwei Quellen — `boot-safeguard.configurationLimit` (default 5) und `rollout.nix mkForce p.boot.generationLimit` (= 8). Kommentar erklärt Vorrang.
+**Warum:** `boot-safeguard` war toten Code — `rollout.nix lib.mkForce p.boot.generationLimit` hat
+`cfgBoot.configurationLimit` (default 5) immer überschrieben. Die richtige Lösung ist eine Quelle.
 
-```nix
-# machines/q958/rollout.nix setzt lib.mkForce p.boot.generationLimit (= 8) — dieser Wert greift effektiv.
-boot.loader.systemd-boot.configurationLimit = cfgBoot.configurationLimit;
-```
+**Ergebnis:** `boot-safeguard`-Option komplett entfernt aus `01-core.nix`, `default.nix`, `rollout.nix`.
+`profile.nix` ist jetzt alleinige Quelle: `generationLimit = 15` (kalkuliert: 15 × ~50 MB ≈ 750 MB + 77 MB < 1 GB ESP).
+
+**Architektur-Muster:** `profile.nix` → `rollout.nix lib.mkForce` → `boot.loader.systemd-boot.configurationLimit`
 
 ---
 
@@ -184,7 +185,7 @@ rg 'writeShellScript|activationScripts' modules/00-core/
 | Punkt | Priorität | Blocker |
 |-------|-----------|---------|
 | P0: 05-creds.nix exit 1 fail-closed | hoch | google_tts_api_key.cred muss erst provisioniert werden |
-| P2: Boot-Limit eine Quelle | mittel | Entscheidung: boot-safeguard ODER rollout |
+| ~~P2: Boot-Limit eine Quelle~~ | ~~mittel~~ | **ERLEDIGT** — boot-safeguard entfernt, `profile.nix` ist SSoT |
 | P3: 03-uid-registry Port=UID Assertion | niedrig | optional |
 | 06-boot-watchdog entkoppeln | niedrig | architektonisch kohärent wie es ist |
 

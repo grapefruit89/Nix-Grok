@@ -37,13 +37,14 @@ Implizite Entscheidungen verrottten: In drei Jahren weiß niemand mehr warum GRU
 
 | Abgelöst | Ersatz | Grund |
 |----------|--------|-------|
-| GRUB | `systemd-boot` | Einfacher, wartungsärmer, EFI-nativ, kein 2-Stage-Bootloader-Overhead; `configurationLimit = 5` verhindert ESP-Überlauf |
+| GRUB | `systemd-boot` | Einfacher, wartungsärmer, EFI-nativ, kein 2-Stage-Bootloader-Overhead; `configurationLimit` (maschinenspezifisch in `profile.nix`) verhindert ESP-Überlauf |
 | Legacy initrd | systemd-basierter initrd | Schnellere Boot-Sequenz, bessere Fehlerdiagnose über journald |
 
 **NixOS-Konfiguration:**
 ```nix
 boot.loader.systemd-boot.enable = true;
-boot.loader.systemd-boot.configurationLimit = 5;  # ESP-Schutz
+# configurationLimit → machines/<host>/profile.nix (generationLimit) → rollout.nix lib.mkForce
+# q958: 15 Generationen × ~50 MB worst-case = 750 MB + 77 MB belegt < 1 GB ESP
 ```
 
 ---
@@ -158,7 +159,7 @@ Nix-Grok erzwingt folgende Policies zur Build-Zeit:
 ## Offene Punkte (nicht implementiert, aber bekannt)
 
 1. **Security-sysctl fehlen**: Das alte mynixos hatte `kernel.kptr_restrict`, `net.ipv4.conf.all.rp_filter` etc. Nix-Grok hat nur Performance-sysctl. → Zukünftiger ADR.
-2. **/boot-Monitoring**: Script für >85% ESP-Auslastungswarnung. `configurationLimit = 5` ist Prävention, kein Monitoring.
+2. **/boot-Monitoring**: Script für >85% ESP-Auslastungswarnung. `configurationLimit` (via `profile.nix`) ist Prävention, kein Monitoring.
 3. **Binary-Only als explizite Policy**: Das alte mynixos hatte `nix.settings.max-jobs = 0` als Policy-Entscheidung. Nix-Grok verwendet RAM-basiertes max-jobs (erlaubt begrenzte lokale Builds). Das ist pragmatischer aber weniger strikt.
 
 ---

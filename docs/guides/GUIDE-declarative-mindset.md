@@ -68,7 +68,7 @@ meta:
 | `min-free`/`max-free` | Abgeleitet aus `nixStoreGB * 1073741824 / 100` | Skaliert mit Partitionsgröße, in `profile.nix` |
 | `max-jobs`/`cores` | Abgeleitet aus `ramGB` | Bereits RAM-adaptiv |
 | `memoryPercent` (ZRAM) | Abgeleitet aus `ramGB` (75/50/25) | Bereits RAM-adaptiv |
-| `configurationLimit = 5` | Kommentar (ESP-Größe) | Single-Host, ESP = 1 GB auf q958 |
+| `configurationLimit = 15` | `profile.nix → rollout.nix lib.mkForce` | Maschinenspezifisch; 15 × ~50 MB < 1 GB ESP auf q958 |
 | `vm.swappiness = 180` | Kommentar (ZRAM-spezifisch, Bereich 0–200) | Single-Config, erklärt warum 180 |
 | `SystemMaxUse=500M` (journald) | Kommentar | Single-Host-Konstante |
 | `timeout = 3600` | Kommentar | Selten geändert |

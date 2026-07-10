@@ -2,7 +2,7 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Globale Options (Systemschema) + Basis-Systemkonfiguration (Locale, Journald, Boot-Safeguard)
+#   purpose: Globale Options (Systemschema) + Basis-Systemkonfiguration (Locale, Journald)
 #   docs:
 #     - docs/adr/013-flake-portability.md
 #   tags:
