@@ -30,14 +30,14 @@ case "${1:-}" in
     ;;
 esac
 
-# PATH aus Home-Manager nachziehen (neues Terminal)
-if [[ -f "${HOME}/.profile" ]]; then
-  # shellcheck disable=SC1090
-  source "${HOME}/.profile" 2>/dev/null || true
-fi
+# PATH — funktioniert auch ohne Login-Shell (.profile wird oft übersprungen)
+export PATH="${HOME}/.local/bin:${HOME}/.grok/bin${PATH:+:}${PATH}"
 if [[ -f "${HOME}/.bashrc" ]]; then
   # shellcheck disable=SC1090
   source "${HOME}/.bashrc" 2>/dev/null || true
+elif [[ -f "${HOME}/.profile" ]]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.profile" 2>/dev/null || true
 fi
 
 cd "$REPO"

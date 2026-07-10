@@ -21,6 +21,11 @@ let
   stateDir = cfg.stateDirectory;
   context7KeyFile = "${config.home.homeDirectory}/.config/context7/api_key";
   context7Dir = "${config.home.homeDirectory}/.config/context7";
+
+  grokCliWrapper = pkgs.writeShellScript "grok" ''
+    exec "${stateDir}/bin/grok" "$@"
+  '';
+
   setContext7ApiKey = pkgs.writeShellScript "set-context7-api-key" ''
     set -euo pipefail
     KEY_FILE="${context7KeyFile}"
@@ -112,6 +117,11 @@ in
     stateVersion = "23.11";
   };
 
+  home.file.".local/bin/grok" = {
+    source = grokCliWrapper;
+    executable = true;
+  };
+
   home.file.".local/bin/set-context7-api-key" = {
     source = setContext7ApiKey;
     executable = true;
@@ -125,6 +135,9 @@ in
   programs.bash = {
     enable = true;
     bashrcExtra = ''
+      # MCP + Grok CLI (auch in nicht-login Shells)
+      export PATH="${config.home.homeDirectory}/.local/bin:${stateDir}/bin''${PATH:+:}''$PATH"
+
       # Context7 API-Key für Grok MCP
       if [ -f "${context7KeyFile}" ]; then
         export CONTEXT7_API_KEY="$(<"${context7KeyFile}")"
