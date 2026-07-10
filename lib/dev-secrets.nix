@@ -91,7 +91,7 @@ let
 
         • Gatus SSH-Keypair: ${secretsDir}/gatus_ssh_key (einmalig generiert, OK für Dev)
         • Grok Context7 (interaktiv): set-context7-api-key → ~/.config/context7/api_key
-        • Grok MCP: context7 (Key) + mcp-nixos + nixos_docs (sync-nixos-docs-db) — check-grok-mcp
+        • Grok MCP: context7 (Key) + nixos + nixos_docs — check-grok-mcp (DB: nixos-docs-indexer.service)
 
       Dev-Keys zentral: machines/q958/profile.local.nix → secrets.devKeys (gitignored)
       ══════════════════════════════════════════════════════════════════════
