@@ -12,7 +12,7 @@
 | `nixos-docs` | `scripts/nixos-docs-mcp.py` + SQLite FTS5 | keine |
 | `github` | `pkgs.github-mcp-server` | `~/.config/github-mcp/token` |
 | `brave-search` | `npx @modelcontextprotocol/server-brave-search` | `~/.config/brave-search/api_key` |
-| `exa` | `https://mcp.exa.ai/mcp` (nur Hermes) | keine |
+| `exa` | `https://mcp.exa.ai/mcp` (HTTP) | OAuth in Grok CLI (`grok mcp doctor exa` → Browser) |
 
 ## Wo aktiv
 
@@ -20,7 +20,8 @@
 |-------|-------------|-------|
 | **Claude Code (global)** | HM-Activation | `~/.claude/settings.json` |
 | **Claude Code (Projekt)** | systemd oneshot | `/etc/nixos/.mcp.json` |
-| **Grok CLI** | HM `config.toml` | `~/.grok/config.toml` |
+| **Grok CLI (user)** | HM `config.toml` | `~/.grok/config.toml` |
+| **Grok CLI (Projekt)** | systemd oneshot | `/etc/nixos/.grok/config.toml` |
 | **Hermes** | `mcp_servers` | `mcp/lib.nix` → hermes.nix |
 | **Grok Build (Cursor)** | xAI-eingebaute Remote-MCP | siehe unten |
 
@@ -29,7 +30,7 @@
 **Grok Build** (diese IDE-Session) bekommt MCP von xAI/Cursor — nicht aus diesem Repo:
 
 - `nixos`, `grok_com_github`, `cloudflare` (eingebaut)
-- **Kein** `nixos-docs`, `context7`, `brave-search` (stdio-Server aus Nix)
+- **Kein** `nixos-docs`, `context7`, `brave-search`, `exa` (stdio/HTTP-Server aus Nix)
 
 Für volle Parität: **Grok CLI** (`grok mcp doctor`) oder **Claude Code** aus `/etc/nixos` nutzen.
 
@@ -39,6 +40,18 @@ Für volle Parität: **Grok CLI** (`grok mcp doctor`) oder **Claude Code** aus `
 set-context7-api-key      # ~/.config/context7/api_key
 set-github-mcp-token      # ~/.config/github-mcp/token
 set-brave-search-api-key  # ~/.config/brave-search/api_key
+```
+
+## Verifikation
+
+```bash
+# Grok CLI (aus /etc/nixos für Projekt-Scope)
+cd /etc/nixos && grok mcp doctor
+
+# Einzelserver
+grok mcp doctor context7
+grok mcp doctor brave-search
+grok mcp doctor exa   # einmalig OAuth im Browser
 ```
 
 ## Neuen Server hinzufügen

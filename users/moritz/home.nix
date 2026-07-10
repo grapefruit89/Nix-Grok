@@ -21,22 +21,6 @@ let
   stateDir = cfg.stateDirectory;
   context7KeyFile = "${config.home.homeDirectory}/.config/context7/api_key";
   context7Dir = "${config.home.homeDirectory}/.config/context7";
-  mcpLib = import ../../mcp/lib.nix {
-    inherit pkgs lib;
-    user = u.name;
-  };
-
-  context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
-    set -euo pipefail
-    KEY_FILE="${context7KeyFile}"
-    if [ ! -s "$KEY_FILE" ]; then
-      echo "Context7 API-Key fehlt. Bitte: set-context7-api-key" >&2
-      exit 1
-    fi
-    export CONTEXT7_API_KEY="$(<"$KEY_FILE")"
-    exec ${pkgs.context7-mcp}/bin/context7-mcp
-  '';
-
   setContext7ApiKey = pkgs.writeShellScript "set-context7-api-key" ''
     set -euo pipefail
     KEY_FILE="${context7KeyFile}"
@@ -133,19 +117,9 @@ in
     executable = true;
   };
 
-  home.file.".local/bin/context7-mcp" = lib.mkIf cfg.enable {
-    source = context7McpWrapper;
-    executable = true;
-  };
-
   home.file.".local/bin/check-grok-mcp" = lib.mkIf cfg.enable {
     source = checkGrokMcp;
     executable = true;
-  };
-
-  home.file.".grok/config.toml" = lib.mkIf cfg.enable {
-    text = mcpLib.grokConfigToml { homeDirectory = config.home.homeDirectory; };
-    force = true;
   };
 
   programs.bash = lib.mkIf cfg.enable {

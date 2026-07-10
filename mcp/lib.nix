@@ -24,6 +24,7 @@ let
   nixosMcpBin = "${pkgs.mcp-nixos}/bin/mcp-nixos";
   python3 = "${pkgs.python3}/bin/python3";
   nixosDocsScript = "/etc/nixos/scripts/nixos-docs-mcp.py";
+  exaMcpUrl = "https://mcp.exa.ai/mcp";
 
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
     set -euo pipefail
@@ -55,6 +56,7 @@ let
       exit 1
     fi
     export BRAVE_API_KEY="$(<"$KEY_FILE")"
+    export PATH="${pkgs.nodejs_22}/bin:$PATH"
     exec ${pkgs.nodejs_22}/bin/npx -y @modelcontextprotocol/server-brave-search
   '';
 
@@ -133,12 +135,15 @@ let
     brave-search = {
       command = "${braveSearchMcpWrapper}";
     };
+    exa = {
+      url = exaMcpUrl;
+    };
   };
 
   # Hermes agent (stdio + remote URL)
   hermesServers = {
     context7 = {
-      command = "${pkgs.context7-mcp}/bin/context7-mcp";
+      command = "${context7McpWrapper}";
     };
     nixos = {
       command = nixosMcpBin;
@@ -151,17 +156,18 @@ let
       ];
     };
     exa = {
-      url = "https://mcp.exa.ai/mcp";
+      url = exaMcpUrl;
     };
   };
 
-  # Grok CLI ~/.grok/config.toml — gleiche Server wie Claude (ohne exa URL)
+  # Grok CLI ~/.grok/config.toml — gleiche Server wie Claude
   grokServerNames = [
     "context7"
     "nixos"
     "nixos_docs"
     "github"
     "brave-search"
+    "exa"
   ];
 
 in
@@ -187,7 +193,12 @@ in
       cmd =
         name: value:
         if value ? url then
-          ""
+          ''
+            [mcp_servers.${name}]
+            url = "${value.url}"
+            enabled = true
+
+          ''
         else if value ? args then
           ''
             [mcp_servers.${name}]
@@ -219,6 +230,9 @@ in
         "brave-search" = {
           command = "${homeDirectory}/.local/bin/brave-search-mcp";
         };
+        exa = {
+          url = exaMcpUrl;
+        };
       };
     in
     ''
@@ -230,5 +244,5 @@ in
       telemetry = false
 
     ''
-    + lib.concatMapStrings (n: cmd n grokMap.${n}) (lib.attrNames grokMap);
+    + lib.concatMapStrings (n: cmd n grokMap.${n}) grokServerNames;
 }

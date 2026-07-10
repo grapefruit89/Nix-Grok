@@ -16,9 +16,13 @@
 }:
 let
   user = config.my.configs.identity.user;
+  userHome = "/home/${user}";
   mcp = import ./lib.nix { inherit pkgs lib user; };
   claudeJson = builtins.toJSON mcp.claudeServers;
   mcpConfigFile = pkgs.writeText "nixos-mcp.json" claudeJson;
+  grokConfigFile = pkgs.writeText "grok-mcp-config.toml" (
+    mcp.grokConfigToml { homeDirectory = userHome; }
+  );
 
   claudeCodeActivation = ''
     SETTINGS="$HOME/.claude/settings.json"
@@ -61,10 +65,31 @@ in
       };
     };
 
+    systemd.services.grok-config-provision = {
+      description = "Provision /etc/nixos/.grok/config.toml für Grok CLI (Projekt-Scope)";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${pkgs.coreutils}/bin/install -o ${user} -g users -m 0644 ${grokConfigFile} /etc/nixos/.grok/config.toml";
+      };
+    };
+
+    systemd.tmpfiles.rules = [
+      "d /etc/nixos/.grok 0755 ${user} users -"
+    ];
+
     home-manager.users.${user} =
-      { lib, ... }:
+      {
+        config,
+        osConfig,
+        lib,
+        ...
+      }:
       lib.mkMerge [
         {
+          home.file.".local/bin/context7-mcp".source = mcp.context7McpWrapper;
+          home.file.".local/bin/context7-mcp".executable = true;
           home.file.".local/bin/github-mcp".source = mcp.githubMcpWrapper;
           home.file.".local/bin/github-mcp".executable = true;
           home.file.".local/bin/brave-search-mcp".source = mcp.braveSearchMcpWrapper;
@@ -75,8 +100,12 @@ in
           home.file.".local/bin/set-github-mcp-token".executable = true;
           home.file.".local/bin/set-brave-search-api-key".source = mcp.setBraveSearchApiKey;
           home.file.".local/bin/set-brave-search-api-key".executable = true;
+          home.file.".grok/config.toml" = {
+            text = mcp.grokConfigToml { homeDirectory = config.home.homeDirectory; };
+            force = true;
+          };
         }
-        (lib.mkIf config.services.claude-code.enable {
+        (lib.mkIf osConfig.services.claude-code.enable {
           home.activation.claudeCodeMcpServers = lib.hm.dag.entryAfter [
             "writeBoundary"
           ] claudeCodeActivation;
