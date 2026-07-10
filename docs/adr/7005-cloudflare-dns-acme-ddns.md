@@ -150,3 +150,33 @@ Nur in NixOS: Service + Caddy-Vhost hinzufügen → `nixos-rebuild switch`.
 | moritzbaumeister.de | `facfa2e5e9ca3f00a93e145fe7684fd1` |
 | m7c5.de | `d798de6c4cb9415fc7020b7d2eb24964` |
 | Account-ID | `8fcaf7ce1ca84316cba29a1b3f122ffe` |
+
+---
+
+## Bekannte Fallgruben (Community-Recherche 2026-07-10)
+
+Aus nixpkgs-Issues und NixOS-Discourse gesammelt — betreffen uns teilweise nicht mehr
+(behoben), aber relevant für Debugging und Domain-Wechsel:
+
+| Fallgrube | Beschreibung | Unser Status |
+|-----------|-------------|--------------|
+| `defaults.dnsProvider` ignoriert | nixpkgs-Bug [#210807](https://github.com/NixOS/nixpkgs/issues/210807): `security.acme.defaults.dnsProvider` wird **nicht** vererbt. Ohne `dnsProvider` pro cert-Block → HTTP-Challenge-Script wird trotzdem generiert. | ✅ Wir setzen `dnsProvider` direkt im `certs.${domain}`-Block |
+| `webroot`-Konflikt | Wenn `dnsProvider` gesetzt aber `webroot` nicht explizit auf `null` → "two validation methods active". | ✅ Kein `webroot` → kein Konflikt |
+| Falscher Env-Var-Name | Alter Global-API-Key: `CF_API_KEY` + `CF_API_EMAIL`. Korrekter Name für Zone-Token: `CF_DNS_API_TOKEN`. | ✅ Wir nutzen `CF_DNS_API_TOKEN` |
+| `dnsResolver` Pflicht | Ohne expliziten Resolver nutzt lego systemd-resolved → FORMERR oder Propagation-Fehler. Empfehlung Community: `1.1.1.1:53`. Wir brauchen `127.0.0.53:53` wegen Firewall (UDP 53 non-loopback blockiert). | ✅ `dnsResolver = "127.0.0.53:53"` |
+| Secrets im Nix-Store | `pkgs.writeText` für `environmentFile` → Token world-readable im Store. Immer auf runtime-Pfad zeigen. | ✅ `/var/lib/secrets/cloudflare_acme_env` ist runtime-generiert |
+| `email` Pflicht | `security.acme.defaults.email` fehlt → nicht-beschreibender Fehler. | ✅ Gesetzt via `my.security.acme.email` |
+
+---
+
+## Alternativen (nicht umgesetzt — Begründung)
+
+**Cloudflare Tunnel (cloudflared):**
+NixOS: `services.cloudflared.tunnels`. Kein Port-Forwarding, CF übernimmt TLS.
+Nicht geeignet: Streaming-Zone muss CF-unproxied sein (Tunnel = immer proxied),
+`internal`-Zone soll nicht durch CF-Server gehen.
+
+**Zwei Domains gleichzeitig aktiv:**
+Aktuell nur eine "effective domain" (`profile.local.nix`). Beide parallel brauchen
+zwei `security.acme.certs`-Blöcke + zwei DDNS-Konfigurationen. Nicht nötig solange
+eine Domain ausreicht.
