@@ -189,6 +189,11 @@
       default = 51820;
       description = "Netbird WireGuard listen port.";
     };
+    netbird-metrics = lib.mkOption {
+      type = lib.types.port;
+      default = 6061;
+      description = "Netbird management metrics port (6062 = signal, 6060 = pprof builtin).";
+    };
     node-exporter = lib.mkOption {
       type = lib.types.port;
       default = 9100;

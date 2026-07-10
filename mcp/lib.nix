@@ -14,6 +14,7 @@
   pkgs,
   lib,
   user,
+  enableExa ? false,
 }:
 let
   userHome = "/home/${user}";
@@ -141,8 +142,7 @@ let
     echo "Testen: source ~/.bashrc && grok mcp doctor exa"
   '';
 
-  # Claude Code ~/.claude/settings.json und /etc/nixos/.mcp.json
-  claudeServers = {
+  baseClaudeServers = {
     context7 = {
       command = "${context7McpWrapper}";
     };
@@ -162,14 +162,19 @@ let
     brave-search = {
       command = "${braveSearchMcpWrapper}";
     };
+  };
+
+  exaClaudeServer = {
     exa = {
       type = "http";
       url = exaMcpUrl;
     };
   };
 
-  # Hermes agent (stdio + remote URL)
-  hermesServers = {
+  # Claude Code ~/.claude/settings.json und /etc/nixos/.mcp.json
+  claudeServers = baseClaudeServers // lib.optionalAttrs enableExa exaClaudeServer;
+
+  baseHermesServers = {
     context7 = {
       command = "${context7McpWrapper}";
     };
@@ -183,20 +188,26 @@ let
         nixosDocsDb
       ];
     };
+  };
+
+  exaHermesServer = {
     exa = {
       url = exaMcpUrl;
     };
   };
 
-  # Grok CLI ~/.grok/config.toml — gleiche Server wie Claude
+  # Hermes agent (stdio + remote URL)
+  hermesServers = baseHermesServers // lib.optionalAttrs enableExa exaHermesServer;
+
+  # Grok CLI ~/.grok/config.toml — 5 Server standard, exa optional
   grokServerNames = [
     "context7"
     "nixos"
     "nixos_docs"
     "github"
     "brave-search"
-    "exa"
-  ];
+  ]
+  ++ lib.optionals enableExa [ "exa" ];
 
   headersToml =
     headers:

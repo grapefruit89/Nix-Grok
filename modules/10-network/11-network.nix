@@ -1,3 +1,21 @@
+# ---
+# meta:
+#   layer: 3
+#   role: module
+#   purpose: Host-DNS (DoT via resolved), Caddy global config + Snippets, IPv6-Deaktivierung
+#   lib:
+#     - lib/caddy-snippets.nix
+#     - lib/assertions.nix
+#   docs:
+#     - docs/adr/1001-dns-dot-fail-closed.md
+#     - docs/adr/1002-ipv6-homelab-v4-only.md
+#     - docs/adr/1014-caddy-security-headers-trusted-proxies.md
+#     - docs/adr/1018-caddy-dual-log-dsgvo.md
+#   tags:
+#     - dns
+#     - caddy
+#     - network
+# ---
 # Valkey + PostgreSQL → 15-databases.nix
 # Netbird + Privado VPN → 16-vpn.nix
 # Pocket-ID → 17-pocket-id.nix
@@ -12,7 +30,7 @@ let
   caddySnippets = import ../../lib/caddy-snippets.nix {
     pocketIdPort =
       if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id else null;
-    lanCidr = "192.168.0.0/16";
+    lanCidr = builtins.concatStringsSep " " config.my.security.firewall.lanCidrs;
     oauth2proxyPort =
       if config.my.services.oauth2-proxy.enable or false then config.my.ports.oauth2-proxy else null;
     oauth2Domain = config.my.configs.identity.domain;

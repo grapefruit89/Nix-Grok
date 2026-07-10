@@ -23,7 +23,28 @@ let
   context7Dir = "${config.home.homeDirectory}/.config/context7";
 
   grokCliWrapper = pkgs.writeShellScript "grok" ''
-    exec "${stateDir}/bin/grok" "$@"
+    set -euo pipefail
+    REPO="/etc/nixos"
+    HOME_DIR="${config.home.homeDirectory}"
+    GROK_BIN="${stateDir}/bin/grok"
+
+    export PATH="$HOME_DIR/bin:$HOME_DIR/.local/bin:${stateDir}/bin:$PATH"
+    export COLORTERM=truecolor
+    export TERM=xterm-256color
+
+    # API-Keys (MCP-Wrapper lesen teils Dateien, teils Env)
+    if [ -f "$HOME_DIR/.config/context7/api_key" ]; then
+      export CONTEXT7_API_KEY="$(<"$HOME_DIR/.config/context7/api_key")"
+    fi
+    if [ -f "$HOME_DIR/.config/github-mcp/token" ]; then
+      export GITHUB_PERSONAL_ACCESS_TOKEN="$(<"$HOME_DIR/.config/github-mcp/token")"
+    fi
+    if [ -f "$HOME_DIR/.config/brave-search/api_key" ]; then
+      export BRAVE_API_KEY="$(<"$HOME_DIR/.config/brave-search/api_key")"
+    fi
+
+    cd "$REPO"
+    exec "$GROK_BIN" "$@"
   '';
 
   setContext7ApiKey = pkgs.writeShellScript "set-context7-api-key" ''
@@ -110,6 +131,7 @@ in
     ];
 
     sessionPath = [
+      "${config.home.homeDirectory}/bin"
       "${config.home.homeDirectory}/.local/bin"
       "${stateDir}/bin"
     ];
@@ -117,7 +139,7 @@ in
     stateVersion = "23.11";
   };
 
-  home.file.".local/bin/grok" = {
+  home.file."bin/grok" = {
     source = grokCliWrapper;
     executable = true;
   };
@@ -141,6 +163,12 @@ in
       # API-Keys für MCP (headless — kein OAuth-Browser)
       if [ -f "${context7KeyFile}" ]; then
         export CONTEXT7_API_KEY="$(<"${context7KeyFile}")"
+      fi
+      if [ -f "${config.home.homeDirectory}/.config/github-mcp/token" ]; then
+        export GITHUB_PERSONAL_ACCESS_TOKEN="$(<"${config.home.homeDirectory}/.config/github-mcp/token")"
+      fi
+      if [ -f "${config.home.homeDirectory}/.config/brave-search/api_key" ]; then
+        export BRAVE_API_KEY="$(<"${config.home.homeDirectory}/.config/brave-search/api_key")"
       fi
       if [ -f "${config.home.homeDirectory}/.config/exa/api_key" ]; then
         export EXA_API_KEY="$(<"${config.home.homeDirectory}/.config/exa/api_key")"

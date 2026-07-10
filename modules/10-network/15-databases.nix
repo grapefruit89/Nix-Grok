@@ -1,3 +1,22 @@
+# ---
+# meta:
+#   layer: 3
+#   role: module
+#   purpose: Valkey (Redis-Fork) Cache + PostgreSQL — beide nur via Unix-Socket, kein TCP
+#   services:
+#     - valkey
+#     - postgresql
+#   lib:
+#     - lib/unix-sockets.nix
+#     - lib/memory-policy.nix
+#   docs:
+#     - docs/adr/1004-unix-socket-upstreams.md
+#     - docs/adr/1019-uds-first-philosophy.md
+#   tags:
+#     - database
+#     - valkey
+#     - postgresql
+# ---
 {
   config,
   lib,

@@ -17,7 +17,10 @@
 let
   user = config.my.configs.identity.user;
   userHome = "/home/${user}";
-  mcp = import ./lib.nix { inherit pkgs lib user; };
+  mcp = import ./lib.nix {
+    inherit pkgs lib user;
+    enableExa = config.my.mcp.enableExa;
+  };
   claudeServersJson = builtins.toJSON mcp.claudeServers;
   mcpProjectJson = builtins.toJSON { mcpServers = mcp.claudeServers; };
   mcpConfigBase = pkgs.writeText "nixos-mcp-base.json" mcpProjectJson;
@@ -64,6 +67,7 @@ in
 {
   options.my.mcp = {
     enable = lib.mkEnableOption "Zentrale MCP-Server (Claude, Grok CLI, Hermes, .mcp.json)";
+    enableExa = lib.mkEnableOption "Exa search MCP server (benötigt ~/.config/exa/api_key)";
     claudeServers = lib.mkOption {
       type = lib.types.attrs;
       readOnly = true;

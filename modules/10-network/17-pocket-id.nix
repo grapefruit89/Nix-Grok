@@ -1,3 +1,20 @@
+# ---
+# meta:
+#   layer: 3
+#   role: module
+#   purpose: Pocket-ID OIDC Passkey Provider — SSO für interne Services via ADR-1032
+#   services:
+#     - pocket-id
+#   lib:
+#     - lib/memory-policy.nix
+#   docs:
+#     - docs/adr/1025-pocket-id-oidc-provider.md
+#     - docs/adr/1032-internal-zone-sso.md
+#   tags:
+#     - auth
+#     - oidc
+#     - sso
+# ---
 {
   config,
   lib,

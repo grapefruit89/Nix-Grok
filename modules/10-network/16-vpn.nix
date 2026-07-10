@@ -1,3 +1,19 @@
+# ---
+# meta:
+#   layer: 3
+#   role: module
+#   purpose: Netbird Self-Hosted VPN + Privado WireGuard Split-Tunnel (UID-basiert)
+#   services:
+#     - netbird
+#     - privado-vpn
+#   docs:
+#     - docs/adr/2030-networkd-wait-online-headless.md
+#     - docs/adr/1025-pocket-id-oidc-provider.md
+#   tags:
+#     - vpn
+#     - netbird
+#     - wireguard
+# ---
 {
   config,
   lib,
@@ -73,9 +89,9 @@ in
           enableNginx = false;
           domain = cfgNetbird.domain;
           turnDomain = cfgNetbird.domain;
-          # Lokal: pocket-id Port 1001 direkt — hairpin NAT über externe IP nicht möglich
-          oidcConfigEndpoint = "http://127.0.0.1:1001/.well-known/openid-configuration";
-          metricsPort = 6061;
+          # Lokal: pocket-id direkt — hairpin NAT über externe IP nicht möglich
+          oidcConfigEndpoint = "http://127.0.0.1:${toString config.my.ports.pocket-id}/.well-known/openid-configuration";
+          metricsPort = config.my.ports.netbird-metrics;
           settings.DataStoreEncryptionKey._secret = "/var/lib/secrets/netbird-mgmt-encryption-key";
         };
         signal = {
