@@ -52,6 +52,23 @@ let
   oidcNavidrome = local.secrets.oidc.navidrome or { };
   ddnsFqdn = p.network.ddns.fqdn;
   ddnsWildcardFqdn = p.network.ddns.wildcardFqdn;
+  externalSubdomains = [
+    "auth"
+    "seerr"
+    "files"
+    "links"
+    "ai"
+    "paperless"
+    "home"
+    "zigbee"
+    "amp"
+  ];
+  externalJqEntries = lib.concatStringsSep ",\n          " (
+    map (
+      sub:
+      ''{provider: "cloudflare", zone_identifier: $zone_id, domain: "${sub}.${ddnsFqdn}", proxied: true, ttl: 1, token: $token, ip_version: "ipv4"}''
+    ) externalSubdomains
+  );
   oauth2ClientId = (local.secrets.devKeys.oauth2proxy or { }).clientId or "";
   oauth2ClientSecret = (local.secrets.devKeys.oauth2proxy or { }).clientSecret or "";
   googleTtsApiKey = (local.secrets.devKeys.googleTts or { }).apiKey or "";
@@ -196,8 +213,9 @@ let
             --arg wildcard "${ddnsWildcardFqdn}" \
             '{
               settings: [
-                {provider: "cloudflare", zone_identifier: $zone_id, domain: $domain,   ttl: 1, token: $token, ip_version: "ipv4"},
-                {provider: "cloudflare", zone_identifier: $zone_id, domain: $wildcard, ttl: 1, token: $token, ip_version: "ipv4"}
+                {provider: "cloudflare", zone_identifier: $zone_id, domain: $domain,   proxied: false, ttl: 1, token: $token, ip_version: "ipv4"},
+                {provider: "cloudflare", zone_identifier: $zone_id, domain: $wildcard, proxied: false, ttl: 1, token: $token, ip_version: "ipv4"},
+                ${externalJqEntries}
               ]
             }' > ${secretsDir}/ddns-updater-config.json
           chmod 600 ${secretsDir}/ddns-updater-config.json
