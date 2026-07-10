@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: rsync, rclone, restic — NixOS-Risiken und Homelab-Einsatz
+  date: 2026-07-10
+  status: current
   docs:
     - docs/guides/GUIDE-storage-tiers.md
     - docs/adr/1002-ipv6-homelab-v4-only.md

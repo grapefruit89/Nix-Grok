@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide smartd + Scrutiny für Tier-C HDDs
+  date: 2026-07-10
+  status: current
   docs:
     - docs/guides/GUIDE-storage-tiers.md
     - docs/guides/GUIDE-observability.md

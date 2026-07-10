@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide Storage-Tiers, Impermanence, Restic, Pending-Watcher
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/003-oom-cgroup-isolation.md
     - machines/q958/profile.nix

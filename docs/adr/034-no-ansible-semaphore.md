@@ -1,10 +1,9 @@
 ---
 meta:
-  id: ADR-034
-  title: Kein Ansible/Semaphore — Imperativismus verboten
+  role: doc
+  purpose: Kein Ansible/Semaphore — Imperativismus verboten
   status: accepted
   date: 2026-07-06
-  layer: 00-core (Policy)
   tags:
     - policy
     - declarative

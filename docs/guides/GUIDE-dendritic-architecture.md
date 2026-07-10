@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Guide — dendritische Modul-Architektur
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/007-dendritic-one-file-per-service.md
     - AGENTS.md

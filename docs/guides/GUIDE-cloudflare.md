@@ -1,10 +1,19 @@
-# GUIDE: Cloudflare Integration
-
-Betriebsguide für die CF-Integration auf q958 — DNS, ACME, DDNS, Token.
-
-**ADR:** [ADR-7005](../adr/7005-cloudflare-dns-acme-ddns.md)
-
 ---
+meta:
+  role: doc
+  purpose: Cloudflare DNS, ACME, DDNS und Token-Rotation auf q958
+  status: current
+  date: 2026-07-10
+  docs:
+    - docs/adr/7005-cloudflare-dns-acme-ddns.md
+  tags:
+    - cloudflare
+    - dns
+    - acme
+    - ddns
+---
+
+# GUIDE: Cloudflare Integration {#guide-cloudflare}
 
 ## Überblick: Was CF für uns tut
 

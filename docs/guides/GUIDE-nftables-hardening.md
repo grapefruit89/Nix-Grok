@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Guide — nftables L4-Härtung für Homelab q958
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/2008-nftables-l4-hardening.md
     - docs/adr/011-unified-port-uid-schema.md

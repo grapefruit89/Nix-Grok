@@ -54,9 +54,13 @@ KI/LLM liest entweder die Datei direkt oder den aggregierten Index:
 meta:
   role: doc
   purpose: …
+  status: current   # Guides: current | draft | deprecated
+  date: YYYY-MM-DD
   tags: [oom]
 ---
 ```
+
+**Guide-`status`:** `current` (Standard), `draft`, `deprecated` — ADRs nutzen `accepted | superseded | withdrawn | proposed`.
 
 ## Layer (AGENTS.md)
 

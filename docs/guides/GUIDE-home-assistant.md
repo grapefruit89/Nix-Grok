@@ -2,6 +2,7 @@
 meta:
   role: doc
   purpose: GUIDE-home-assistant — Kompletter HA-Stack auf q958 (MQTT, Zigbee, Voice)
+  date: 2026-07-10
   status: current
   docs:
     - docs/adr/7001-loadcredentialencrypted-vs-loadcredential.md

@@ -1,7 +1,15 @@
+---
+meta:
+  role: doc
+  purpose: Backup-Philosophie — nur Unwiederbringliches sichern
+  status: accepted
+  date: 2026-06-30
+  tags:
+    - storage
+    - backup
+    - restic
+---
 # ADR-3023: Backup-Philosophie — Nur Unwiederbringliches sichern
-
-**Status:** Accepted  
-**Datum:** 2026-06-30
 
 ---
 

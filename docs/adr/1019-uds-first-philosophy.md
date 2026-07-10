@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Entscheidung für Unix-Domain-Sockets als primäres IPC-Protokoll zwischen Caddy und Backend-Diensten
+  status: accepted
+  date: 2026-06-30
   tags:
     - unix-socket
     - caddy

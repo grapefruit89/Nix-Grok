@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide DNS (Blocky), Valkey, PostgreSQL
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/1001-dns-dot-fail-closed.md
     - docs/adr/1004-unix-socket-upstreams.md

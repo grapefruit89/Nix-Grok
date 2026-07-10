@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide Sovereign-Unlock, SSH-Härtung, Secrets
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/010-production-ssh-impermanence.md
     - docs/adr/2024-systemd-creds-tpm.md

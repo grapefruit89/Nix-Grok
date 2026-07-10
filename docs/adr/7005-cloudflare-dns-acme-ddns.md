@@ -1,12 +1,22 @@
+---
+meta:
+  role: doc
+  purpose: Cloudflare DNS, ACME DNS-01, DDNS und Token-Management für q958
+  status: accepted
+  date: 2026-07-09
+  tags:
+    - cloudflare
+    - dns
+    - acme
+    - ddns
+---
+
 # ADR-7005: Cloudflare — DNS, ACME, DDNS und Token-Management
 
-**Status:** Accepted  
-**Datum:** 2026-07-09  
 **Kontext:** Zwei Domains (moritzbaumeister.de, m7c5.de) werden über Cloudflare DNS verwaltet.
 NixOS braucht einen CF-API-Token für DDNS (IP-Nachführung) und ACME DNS-01-Challenge
 (Wildcard-Zertifikate). Dieser ADR dokumentiert was wie funktioniert und welche
 Token-Typen es gibt.
-
 ---
 
 ## Entscheidungen

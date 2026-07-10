@@ -1,7 +1,7 @@
 ---
 meta:
   role: doc
-  purpose: "ADR-1031: Caddy-Zonen-Konzept — internal / external / streaming"
+  purpose: Caddy-Zonen-Konzept — internal / external / streaming
   status: accepted
   date: 2026-07-10
   tags:

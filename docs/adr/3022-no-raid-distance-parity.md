@@ -1,9 +1,17 @@
+---
+meta:
+  role: doc
+  purpose: Keine lokale Redundanz — geografische Distanz statt RAID
+  status: accepted
+  date: 2026-06-30
+  tags:
+    - storage
+    - raid
+    - backup
+---
 # ADR-3022: Keine lokale Redundanz — Geografische Distanz statt RAID
 
-**Status:** Accepted  
-**Datum:** 2026-06-30  
 **Quelle:** Knowledge-Base ADR-015 (Distance Parity Mandate)
-
 ---
 
 ## Kontext

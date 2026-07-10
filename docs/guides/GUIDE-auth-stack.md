@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Auth-Stack — Pocket-ID, OAuth2-Proxy, Caddy forward_auth, Jellyfin-Client-Split, Jellyseerr
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/1025-pocket-id-oidc-provider.md
     - docs/adr/1014-caddy-security-headers-trusted-proxies.md

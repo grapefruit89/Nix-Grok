@@ -1,7 +1,9 @@
 ---
 meta:
   role: doc
-  purpose: "ADR-1032: internal Zone — Umbenennung admin-hangar + SSO-Overlay"
+  purpose: internal Zone — Umbenennung admin-hangar + SSO-Overlay
+  status: accepted
+  date: 2026-07-08
   tags:
     - caddy
     - zones

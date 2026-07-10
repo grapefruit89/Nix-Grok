@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide Media-Stack, VPN-NetNS, Config-Sync, QSV
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/007-dendritic-one-file-per-service.md
     - docs/adr/2009-vpn-leak-check.md

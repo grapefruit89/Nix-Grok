@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Server-Landkarte — alle Services mit ID, Port/Socket, UID, Ist-Status
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/011-unified-port-uid-schema.md
     - docs/adr/1004-unix-socket-upstreams.md

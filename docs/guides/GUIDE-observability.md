@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide Gatus, VLG-Logging, CrowdSec, Alerting
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/003-oom-cgroup-isolation.md
     - docs/adr/005-critical-systemd-restart.md

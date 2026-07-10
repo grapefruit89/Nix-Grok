@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Leitfaden für AI-Agenten und Contributor — deklarativer NixOS-Mindset, Escape-Hatch-Regeln, Checkliste
+  date: 2026-07-10
+  status: current
   tags:
     - agents
     - declarative

@@ -1,3 +1,14 @@
+---
+meta:
+  role: doc
+  purpose: SOPS Boot-Timing mit Impermanence — withdrawn zugunsten ADR-2024
+  status: withdrawn
+  date: 2026-06-30
+  tags:
+    - sops
+    - impermanence
+    - withdrawn
+---
 # ADR-2021: SOPS Boot-Timing mit Impermanence — WITHDRAWN
 
 > **WITHDRAWN** — Entfällt mit [ADR-2024: systemd-creds + TPM2](2024-systemd-creds-tpm.md) (2026-07-05).

@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide Kernel-Härtung — Kernel-Slim, sysctl, Systemd Service Isolation
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/2026-kernel-hardening-sysctl.md
     - docs/adr/2027-kernel-slim-module-policy.md

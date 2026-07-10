@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Täglicher Kurzguide — Gatus, Logs, Alerts (ohne Uptime Kuma)
+  date: 2026-07-10
+  status: current
   docs:
     - docs/guides/GUIDE-observability.md
     - docs/adr/003-oom-cgroup-isolation.md

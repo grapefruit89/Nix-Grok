@@ -2,6 +2,7 @@
 meta:
   role: doc
   purpose: ADR-Index — alle Architecture Decision Records
+  date: 2026-07-10
   tags:
     - adr
     - index

@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Flake-Portabilität — System auf neuem Rechner aufsetzen, Offline-Betrieb
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/013-flake-portability.md
   tags:

@@ -1,10 +1,9 @@
 ---
 meta:
-  id: ADR-033
-  title: Kein Cockpit — Angriffsfläche überwiegt Nutzen
+  role: doc
+  purpose: Kein Cockpit — Angriffsfläche überwiegt Nutzen im Ein-Personen-Homelab
   status: accepted
   date: 2026-07-06
-  layer: 60-apps
   tags:
     - security
     - admin-ui

@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Verbotene Muster — Synthese aus nix-hermes Guides
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/007-dendritic-one-file-per-service.md
     - docs/adr/012-modern-cli-tools.md

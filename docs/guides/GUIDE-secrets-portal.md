@@ -2,6 +2,8 @@
 meta:
   role: doc
   purpose: Betriebsguide secrets-portal — Neues Secret hinzufügen, Validator erweitern
+  date: 2026-07-10
+  status: current
   docs:
     - docs/adr/1034-secrets-portal-architecture.md
     - packages/secrets-portal/main.go
