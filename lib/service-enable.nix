@@ -43,6 +43,7 @@ let
         home-assistant = mySvc.home-assistant.enable or false;
         zigbee-stack = mySvc.zigbee-stack.enable or false;
         amp = mySvc.amp.enable or false;
+        secrets-portal = mySvc.secrets-portal.enable or false;
       };
     in
     if builtins.hasAttr name checks then checks.${name} else false;

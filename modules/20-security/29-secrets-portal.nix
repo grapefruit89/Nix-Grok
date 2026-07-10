@@ -90,6 +90,11 @@ let
         default = null;
         description = "Optionaler HTTP-Check der den Key gegen die echte API verifiziert.";
       };
+      restart_services = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "systemd-Services die nach erfolgreichem Versiegeln neu gestartet werden (z.B. ['ddns-updater' 'caddy']).";
+      };
     };
   };
 
@@ -136,12 +141,14 @@ in
           "SECRETS_CONFIG=/etc/secrets-portal/secrets.json"
           "CRED_STORE=${config.my.creds.storeDir}"
           "SYSTEMD_CREDS_BIN=${pkgs.systemd}/bin/systemd-creds"
+          "SYSTEMCTL_BIN=${pkgs.systemd}/bin/systemctl"
         ];
 
         # Phase 1: root nötig für systemd-creds host-key
         # Phase 2: User = "secrets-portal" (UID 2029) mit Unix-Socket Seal-Helper
         User = "root";
-        Group = "root";
+        Group = "caddy";
+        UMask = "0007";
 
         # Socket-Verzeichnis — nur root schreibt, caddy-Gruppe liest
         RuntimeDirectory = "secrets-portal";

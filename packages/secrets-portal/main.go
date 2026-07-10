@@ -18,12 +18,13 @@ import (
 var staticFiles embed.FS
 
 type SecretDef struct {
-	Name        string     `json:"name"`
-	Label       string     `json:"label"`
-	Description string     `json:"description"`
-	Link        string     `json:"link,omitempty"`
-	Regex       string     `json:"regex,omitempty"`
-	Validator   *Validator `json:"validator,omitempty"`
+	Name            string     `json:"name"`
+	Label           string     `json:"label"`
+	Description     string     `json:"description"`
+	Link            string     `json:"link,omitempty"`
+	Regex           string     `json:"regex,omitempty"`
+	Validator       *Validator `json:"validator,omitempty"`
+	RestartServices []string   `json:"restart_services,omitempty"`
 }
 
 type Validator struct {
@@ -42,6 +43,7 @@ type SecretStatus struct {
 var (
 	credStore       string
 	systemdCredsBin string
+	systemctlBin    string
 	secrets         []SecretDef
 	httpClient      = &http.Client{Timeout: 8 * time.Second}
 )
@@ -49,6 +51,7 @@ var (
 func main() {
 	credStore = env("CRED_STORE", "/var/lib/credstore.encrypted")
 	systemdCredsBin = env("SYSTEMD_CREDS_BIN", "systemd-creds")
+	systemctlBin = env("SYSTEMCTL_BIN", "systemctl")
 	configPath := env("SECRETS_CONFIG", "/etc/secrets-portal/secrets.json")
 	listenAddr := env("LISTEN_ADDR", "unix:/run/secrets-portal/secrets-portal.sock")
 
@@ -74,7 +77,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("secrets-portal: cannot listen on %s: %v", listenAddr, err)
 		}
-		// Socket only writable by caddy (group) — systemd RuntimeDirectory handles permissions
 		log.Printf("secrets-portal listening on unix:%s (%d secrets)", sockPath, len(secrets))
 	} else {
 		ln, err = net.Listen("tcp", listenAddr)
@@ -131,6 +133,45 @@ type validateResponse struct {
 	Message string `json:"message"`
 }
 
+type sealResponse struct {
+	Success   bool     `json:"success"`
+	Restarted []string `json:"restarted,omitempty"`
+	Message   string   `json:"message,omitempty"`
+}
+
+// checkValidator runs the HTTP API check for a secret. Returns (valid, message).
+func checkValidator(def *SecretDef, value string) (bool, string) {
+	if def.Validator == nil {
+		return true, "OK"
+	}
+	method := def.Validator.Method
+	if method == "" {
+		method = "GET"
+	}
+	apiReq, err := http.NewRequest(method, def.Validator.URL, nil)
+	if err != nil {
+		return false, "Validator-Konfigurationsfehler"
+	}
+	apiReq.Header.Set(def.Validator.Header, def.Validator.HeaderPrefix+value)
+	apiReq.Header.Set("User-Agent", "secrets-portal/1.0")
+
+	resp, err := httpClient.Do(apiReq)
+	if err != nil {
+		return false, "API nicht erreichbar"
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	expect := def.Validator.ExpectStatus
+	if expect == 0 {
+		expect = 200
+	}
+	if resp.StatusCode != expect && resp.StatusCode != 201 && resp.StatusCode != 202 {
+		return false, fmt.Sprintf("API abgelehnt (HTTP %d)", resp.StatusCode)
+	}
+	return true, "OK"
+}
+
 func handleValidate(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	var req sealRequest
@@ -143,42 +184,9 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown secret", 404)
 		return
 	}
+	valid, msg := checkValidator(def, req.Value)
 	w.Header().Set("Content-Type", "application/json")
-
-	if def.Validator != nil {
-		method := def.Validator.Method
-		if method == "" {
-			method = "GET"
-		}
-		apiReq, err := http.NewRequest(method, def.Validator.URL, nil)
-		if err != nil {
-			json.NewEncoder(w).Encode(validateResponse{Valid: false, Message: "Validator-Konfigurationsfehler"})
-			return
-		}
-		apiReq.Header.Set(def.Validator.Header, def.Validator.HeaderPrefix+req.Value)
-		apiReq.Header.Set("User-Agent", "secrets-portal/1.0")
-
-		resp, err := httpClient.Do(apiReq)
-		if err != nil {
-			json.NewEncoder(w).Encode(validateResponse{Valid: false, Message: "API nicht erreichbar"})
-			return
-		}
-		defer resp.Body.Close()
-		io.Copy(io.Discard, resp.Body)
-
-		expect := def.Validator.ExpectStatus
-		if expect == 0 {
-			expect = 200
-		}
-		if resp.StatusCode != expect && resp.StatusCode != 201 && resp.StatusCode != 202 {
-			json.NewEncoder(w).Encode(validateResponse{
-				Valid:   false,
-				Message: fmt.Sprintf("API abgelehnt (HTTP %d)", resp.StatusCode),
-			})
-			return
-		}
-	}
-	json.NewEncoder(w).Encode(validateResponse{Valid: true, Message: "OK"})
+	json.NewEncoder(w).Encode(validateResponse{Valid: valid, Message: msg})
 }
 
 func handleSeal(w http.ResponseWriter, r *http.Request) {
@@ -193,18 +201,52 @@ func handleSeal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown secret", 404)
 		return
 	}
+
+	// Step 1: validate against real API
+	if valid, msg := checkValidator(def, req.Value); !valid {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		json.NewEncoder(w).Encode(sealResponse{Success: false, Message: msg})
+		return
+	}
+
+	// Step 2: encrypt with systemd-creds
 	credPath := fmt.Sprintf("%s/%s.cred", credStore, def.Name)
 	cmd := exec.Command(systemdCredsBin, "encrypt", "--name="+def.Name, "-", credPath)
 	cmd.Stdin = strings.NewReader(req.Value)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("seal failed for %s: %v — %s", def.Name, err, out)
-		http.Error(w, "systemd-creds encrypt failed", 500)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(sealResponse{Success: false, Message: "systemd-creds encrypt fehlgeschlagen"})
 		return
 	}
-	log.Printf("sealed: %s → %s", def.Name, credPath)
+
+	// Step 3: verify credential file exists and has content
+	info, err := os.Stat(credPath)
+	if err != nil || info.Size() == 0 {
+		log.Printf("seal verify failed for %s: stat=%v size=%d", def.Name, err, info.Size())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(sealResponse{Success: false, Message: "Credential-Datei fehlt nach encrypt"})
+		return
+	}
+	log.Printf("sealed: %s → %s (%d bytes)", def.Name, credPath, info.Size())
+
+	// Step 4: restart associated services
+	var restarted []string
+	for _, svc := range def.RestartServices {
+		if out, err := exec.Command(systemctlBin, "restart", svc).CombinedOutput(); err != nil {
+			log.Printf("restart failed for %s: %v — %s", svc, err, out)
+		} else {
+			log.Printf("restarted: %s", svc)
+			restarted = append(restarted, svc)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+	json.NewEncoder(w).Encode(sealResponse{Success: true, Restarted: restarted})
 }
 
 func findSecret(name string) *SecretDef {

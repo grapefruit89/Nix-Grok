@@ -73,7 +73,7 @@ let
       description = "PostgreSQL";
     };
     valkey = {
-      socket = "/run/redis-valkey/redis.sock";
+      socket = "/run/redis-valkey/valkey.sock";
       zone = "loopback";
       description = "Valkey Cache";
     };
@@ -106,6 +106,12 @@ let
       zone = "internal";
       subdomain = "grafana";
       description = "Metrics UI";
+    };
+    secrets-portal = {
+      socket = "/run/secrets-portal/secrets-portal.sock";
+      zone = "internal";
+      subdomain = "secrets";
+      description = "Credential Rotation Portal";
     };
     sabnzbd = {
       port = ports.sabnzbd;
@@ -206,7 +212,7 @@ let
       description = "Documents";
     };
     home-assistant = {
-      port = 8123;
+      port = ports.home-assistant;
       zone = "external";
       subdomain = "home";
       description = "Home Assistant";

@@ -297,42 +297,29 @@ async function seal(name) {
 
   btn.disabled = true;
   btn.className = 'btn-seal state-checking';
-  btn.textContent = 'Prüfe…';
+  btn.textContent = 'Versiegele…';
   err.textContent = '';
 
   try {
-    const vres = await fetch('/api/validate', {
+    const res = await fetch('/api/seal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, value: val }),
     });
-    const vdata = await vres.json();
+    const data = await res.json();
 
-    if (!vdata.valid) {
-      setBtn(btn, 'state-error', 'Fehler');
-      err.textContent = vdata.message || 'Validierung fehlgeschlagen';
-      setTimeout(() => resetBtn(btn, name, val), 2500);
-      return;
-    }
-
-    btn.textContent = 'Versiegele…';
-
-    const sres = await fetch('/api/seal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, value: val }),
-    });
-
-    if (sres.ok) {
-      setBtn(btn, 'state-success', '✓ Versiegelt');
+    if (data.success) {
+      const label = data.restarted && data.restarted.length > 0
+        ? `✓ Versiegelt — ${data.restarted.join(', ')} neu gestartet`
+        : '✓ Versiegelt';
+      setBtn(btn, 'state-success', label);
       inp.value = '';
       inp.className = '';
       setTimeout(load, 1200);
     } else {
-      const msg = await sres.text();
       setBtn(btn, 'state-error', 'Fehler');
-      err.textContent = msg || 'Versiegeln fehlgeschlagen';
-      setTimeout(() => resetBtn(btn, name, ''), 2500);
+      err.textContent = data.message || 'Versiegeln fehlgeschlagen';
+      setTimeout(() => resetBtn(btn, name, val), 2500);
     }
   } catch (e) {
     setBtn(btn, 'state-error', 'Fehler');
