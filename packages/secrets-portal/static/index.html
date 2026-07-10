@@ -194,7 +194,6 @@
 "use strict";
 
 let secrets = [];
-const autoSubmitTimers = {};
 
 async function load() {
   try {
@@ -275,14 +274,11 @@ function onInput(name) {
   btn.disabled = false;
 
   if (s.regex) {
-    clearTimeout(autoSubmitTimers[name]);
     try {
       const ok = new RegExp(s.regex).test(val);
       inp.className = ok ? 'state-valid' : 'state-invalid';
       err.textContent = ok ? '' : 'Format-Warnung — manuelles Versiegeln weiterhin möglich';
-      if (ok) {
-        autoSubmitTimers[name] = setTimeout(() => seal(name), 300);
-      }
+      if (ok) seal(name);
     } catch {
       inp.className = 'state-valid';
     }
@@ -299,7 +295,6 @@ async function seal(name) {
   const err = document.getElementById('err-' + name);
   const val = inp.value;
 
-  clearTimeout(autoSubmitTimers[name]);
   btn.disabled = true;
   btn.className = 'btn-seal state-checking';
   btn.textContent = 'Prüfe…';
