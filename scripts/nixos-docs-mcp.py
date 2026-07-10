@@ -25,6 +25,16 @@ def get_db():
     return conn
 
 
+def _fts_query(q: str) -> str:
+    """FTS5: Bindestriche sind Operatoren — 'home-assistant' → Spalte 'assistant'."""
+    q = (q or "").strip()
+    if not q:
+        return q
+    if any(c in q for c in '-+*:"()'):
+        return '"' + q.replace('"', '""') + '"'
+    return q
+
+
 TOOLS = [
     {
         "name": "fts_search",
@@ -131,7 +141,7 @@ TOOLS = [
 
 
 def tool_fts_search(args):
-    q = args.get("query", "")
+    q = _fts_query(args.get("query", ""))
     limit = int(args.get("limit", 10))
     conn = get_db()
     try:
@@ -165,7 +175,7 @@ def _chunk_filters(role, status):
 
 
 def tool_search_chunks(args):
-    q = args.get("query", "")
+    q = _fts_query(args.get("query", ""))
     limit = int(args.get("limit", 10))
     role = args.get("role")
     status = args.get("status")
@@ -252,11 +262,11 @@ def _sf_search(query, kind_filter, role_filter, layer_filter, status, tag, limit
     conn = get_db()
     try:
         where_parts = ["source_files_fts MATCH ?"]
-        params = [query]
-        joins = ["JOIN source_files sf ON sf.id = source_files_fts.rowid"]
-
-        if status or tag:
-            joins.append("LEFT JOIN doc_meta dm ON dm.source_file_id = sf.id")
+        params = [_fts_query(query)]
+        joins = [
+            "JOIN source_files sf ON sf.id = source_files_fts.rowid",
+            "LEFT JOIN doc_meta dm ON dm.source_file_id = sf.id",
+        ]
         if tag:
             joins.append("JOIN doc_tags dt ON dt.source_file_id = sf.id")
 
@@ -354,7 +364,7 @@ def handle(msg):
             "id": mid,
             "result": {
                 "protocolVersion": "2024-11-05",
-                "serverInfo": {"name": "nixos-docs-mcp", "version": "1.4.0"},
+                "serverInfo": {"name": "nixos-docs-mcp", "version": "1.4.1"},
                 "capabilities": {"tools": {}},
             },
         })
