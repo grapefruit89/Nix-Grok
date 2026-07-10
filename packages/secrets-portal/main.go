@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -146,14 +145,6 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 
-	if def.Regex != "" {
-		matched, err := regexp.MatchString("(?s)"+def.Regex, req.Value)
-		if err != nil || !matched {
-			json.NewEncoder(w).Encode(validateResponse{Valid: false, Message: "Format ungültig"})
-			return
-		}
-	}
-
 	if def.Validator != nil {
 		method := def.Validator.Method
 		if method == "" {
@@ -202,14 +193,6 @@ func handleSeal(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown secret", 404)
 		return
 	}
-	if def.Regex != "" {
-		matched, _ := regexp.MatchString("(?s)"+def.Regex, req.Value)
-		if !matched {
-			http.Error(w, "format invalid", 400)
-			return
-		}
-	}
-
 	credPath := fmt.Sprintf("%s/%s.cred", credStore, def.Name)
 	cmd := exec.Command(systemdCredsBin, "encrypt", "--name="+def.Name, "-", credPath)
 	cmd.Stdin = strings.NewReader(req.Value)
