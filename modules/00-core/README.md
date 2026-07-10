@@ -16,13 +16,15 @@ Alle anderen Schichten (`10-network`, `50-media`, …) setzen diese voraus.
 
 | Datei | Zweck |
 |-------|-------|
-| `01-core.nix` | **Haupt-Modul**: NixOS-Optionen (`my.*`), system-Packages, Shell-Aliases, Nix-Tuning, ZRAM, Boot-Safeguard, Locale, pre-commit-Hooks |
+| `01-core.nix` | Globale Options-Schema (`my.*`) + Basis-Systemkonfiguration (Locale, Journald, Boot-Safeguard) |
 | `02-nixmeta-ban.nix` | Verbot von `# !type`-NIXMETA-Annotationen (statische Assertion) |
 | `03-uid-registry.nix` | Unified UID=Port=FolderPrefix — zentrale UID-Vergabe (ADR-011) |
 | `04-services-spec.nix` | Service-Spec-Matrix: Ports, Zonen, Subdomains (SSoT für Caddy + DNS) |
-| `05-sops.nix` | SOPS-Stub (Stufe 9+, noch nicht aktiv) |
-| `06-boot-watchdog.nix` | Boot-Watchdog: Panic bei Kernel-Oops / Soft-Lockup |
-| `07-structure-validation.nix` | Strukturvalidierung: Port-Duplikate, Layer-Konsistenz |
+| `05-creds.nix` | systemd-creds Credential-Store + sops-nix-Verbot |
+| `06-boot-watchdog.nix` | Post-Boot Fail-Fast: kritische Dienste nach Grace-Period prüfen (Timer + oneshot) |
+| `07-structure-validation.nix` | Build-Time-Assertions: modules/-Verzeichnisstruktur + default.nix-Vollständigkeit |
+| `08-ports.nix` | Zentrale Port-Registry (`my.ports.*`) |
+| `09-nix-tools.nix` | Nix-Store-Tuning, Dev-CLI-Tools, Shell-Aliases, Pre-Commit, ZRAM-Swap |
 | `default.nix` | Import aller 00-core-Module |
 
 ## Wichtige Optionen (Auszug)
@@ -38,7 +40,7 @@ my.core.zram-swap.enable = erstAb 1;
 my.core.boot-safeguard.enable = erstAb 1;
 ```
 
-## System-Packages (01-core.nix)
+## System-Packages (09-nix-tools.nix)
 
 ### Nix-Toolchain
 - `nixfmt` — Pflicht-Formatter (Pre-commit-Gate, POL-FMT-010)
@@ -56,17 +58,18 @@ my.core.boot-safeguard.enable = erstAb 1;
 - `bat` → `cat` | `eza` → `ls` | `fd` → `find` | `ripgrep` → `grep`
 - `btop` → `top` | `dust` → `du` | `duf` → `df`
 
-## Shell-Aliases
+## Shell-Aliases (09-nix-tools.nix)
 
 Gesetzt via `programs.bash.shellAliases` — nur interaktive Bash-Sitzungen,
 **kein Eingriff in Systemskripte oder Aktivierungsskripte**.
 
 Vollständige Liste: [GUIDE-developer-experience.md](../GUIDE-developer-experience.md)
 
-## Pre-commit-Hooks
+## Pre-commit-Hooks (09-nix-tools.nix)
 
-Nach jedem `nixos-rebuild switch` werden die Pre-commit-Hooks via
-`system.activationScripts.preCommitInstall` automatisch in `.git/hooks/` installiert.
+Einmalig nach Clone: `pre-commit install --config /etc/nixos/.pre-commit-config.yaml`
+
+Git merkt sich die Hooks dauerhaft. Kein activationScript nötig.
 Konfiguration: `/etc/nixos/.pre-commit-config.yaml`.
 
 Hooks (in Reihenfolge):

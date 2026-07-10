@@ -156,26 +156,6 @@ in
       };
     })
 
-    # ── PRE-COMMIT HOOKS (nur development) ───────────────────────────────────
-    # .git/hooks/ liegt außerhalb des Nix-Store — activationScript ist der idiomatische
-    # Escape-Hatch um POL-FMT-010..012 (nixfmt/statix/deadnix) nach jedem switch
-    # automatisch durchzusetzen. Nur in my.mode == "development" sinnvoll;
-    # Produktionsserver haben kein /etc/nixos/.git und keinen Dev-Workflow.
-    (lib.mkIf (cfgNix.enable && config.my.mode == "development") {
-      system.activationScripts.preCommitInstall = {
-        deps = [ ];
-        text = ''
-          if [ -d /etc/nixos/.git ]; then
-            ${pkgs.pre-commit}/bin/pre-commit install \
-              --git-dir /etc/nixos/.git \
-              --work-tree /etc/nixos \
-              --config /etc/nixos/.pre-commit-config.yaml \
-              2>/dev/null || true
-          fi
-        '';
-      };
-    })
-
     # ── ZRAM COMPRESSED SWAP ──────────────────────────────────────────────────
     (lib.mkIf cfgZram.enable {
       zramSwap = {

@@ -5,7 +5,7 @@ meta:
   status: accepted
   date: 2026-06-28
   betrifft:
-    - modules/00-core/01-core.nix
+    - modules/00-core/09-nix-tools.nix
   docs:
     - docs/adr/README.md
     - docs/adr/011-unified-port-uid-schema.md
@@ -40,7 +40,7 @@ meta:
 
 ### Installierte Tools {#tools}
 
-1. **Moderne Ersatz-Tools** via `environment.systemPackages` in `modules/00-core/01-core.nix`:
+1. **Moderne Ersatz-Tools** via `environment.systemPackages` in `modules/00-core/09-nix-tools.nix`:
 
    | Neues Tool | Ersetzt | Vorteil |
    |-----------|---------|---------|
@@ -54,7 +54,7 @@ meta:
    | `nh` | `nixos-rebuild` | UX-Wrapper für menschliche Rebuilds |
    | `nvd` | — | Diff-Output nach jedem Switch |
 
-2. **Shell-Aliases** via `programs.bash.shellAliases` in `modules/00-core/01-core.nix`.
+2. **Shell-Aliases** via `programs.bash.shellAliases` in `modules/00-core/09-nix-tools.nix`.
    Aliases greifen **nur in interaktiven Bash-Sitzungen** (nicht in Systemskripten,
    Aktivierungsskripten oder `pkgs.writeShellScript`-Blöcken).
 

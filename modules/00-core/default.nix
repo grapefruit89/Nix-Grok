@@ -3,7 +3,7 @@
 # domain: "00"
 # status: "active"
 # layer: 4
-# purpose: "Domäne 00-core — aggregiert Bootstrap, UID-Registry, Services-Spec, SOPS, Boot-Watchdog"
+# purpose: "Domäne 00-core — aggregiert Bootstrap, UID-Registry, Services-Spec, Creds, Boot-Watchdog"
 # provides: []
 # requires: []
 # ports: []

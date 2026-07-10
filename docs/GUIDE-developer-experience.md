@@ -14,9 +14,30 @@ meta:
 
 ## Überblick
 
-Alle modernen Tools sind systemweit installiert (via `modules/00-core/01-core.nix`).
+Alle modernen Tools sind systemweit installiert (via `modules/00-core/09-nix-tools.nix`).
 Shell-Aliases sind für interaktive Bash-Sitzungen gesetzt — klassische POSIX-Befehle
 rufen automatisch die moderneren Varianten auf.
+
+## Setup einmalig (nach Clone) {#setup}
+
+Nach jedem frischen Clone — einmalig ausführen:
+
+```bash
+pre-commit install --config /etc/nixos/.pre-commit-config.yaml
+```
+
+Git merkt sich die Hooks dauerhaft in `.git/hooks/`. Kein erneuter Aufruf nach
+`nixos-rebuild switch` nötig (ADR-035).
+
+Verfügbare Hooks:
+
+| Hook | Blocking | Zweck |
+|------|----------|-------|
+| `nixfmt` | ja | RFC-Style Format |
+| `statix` | nein | Linter (repeated_keys = NixOS-Pattern, kein Fehler) |
+| `deadnix` | ja | Keine ungenutzten Bindings |
+
+---
 
 ## Tägliche Rebuilds mit `nh`
 
@@ -143,6 +164,7 @@ besser lesbar ist.
 ## Referenzen
 
 - [ADR-012: Moderne CLI-Tools](adr/012-modern-cli-tools.md)
+- [ADR-035: Pre-commit manuell](adr/035-pre-commit-hooks-manual.md)
 - [bat Dokumentation](https://github.com/sharkdp/bat)
 - [eza Dokumentation](https://github.com/eza-community/eza)
 - [nh Dokumentation](https://github.com/viperML/nh)

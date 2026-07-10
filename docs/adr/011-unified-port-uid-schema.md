@@ -68,7 +68,7 @@ meta:
 
 | Artefakt | Quelle | Zweck |
 |----------|--------|-------|
-| Port-Defaults | `modules/00-core/01-core.nix` → `my.ports.*` | NixOS-Options, Module greifen darauf zu |
+| Port-Defaults | `modules/00-core/08-ports.nix` → `my.ports.*` | NixOS-Options, Module greifen darauf zu |
 | UID/GID | `lib/uid-registry.nix` → `defaultUsers` / `defaultGroups` | Statische UIDs für nftables + Filesystem |
 | UDS-Pfade | `lib/unix-sockets.nix` | Socket-Pfade für Caddy-Upstreams |
 | Server-Landkarte | `lib/server-map.nix` | Maschinenlesbare Doku (kein Config-Input) |
@@ -131,6 +131,7 @@ sudo /etc/nixos/scripts/migrate-arr-uids.sh
 | Datum | Änderung |
 |-------|----------|
 | 2026-06-27 | Initial — KB-Mitnahme, Port/UID-Unification implementiert |
+| 2026-07-10 | Port-Registry vervollständigt: oauth2-proxy (4180), dropbear (2222), netbird-wg (51820), node-exporter (9100), hermes (8787), wyoming-stt (10300), wyoming-tts (10200), wyoming-edge-tts (10201). Consumer-Referenzen auf `config.my.ports.*` umgestellt. |
 
 ## Siehe auch {#siehe-auch}
 
