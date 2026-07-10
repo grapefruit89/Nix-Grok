@@ -116,6 +116,13 @@ let
     nixos = {
       command = nixosMcpBin;
     };
+    nixos-docs = {
+      command = "${pkgs.python3}/bin/python3";
+      args = [
+        "/etc/nixos/scripts/nixos-docs-mcp.py"
+        "/var/lib/nixos-docs-mcp/nixos_docs.sqlite"
+      ];
+    };
     github = {
       command = "${githubMcpWrapper}";
     };
