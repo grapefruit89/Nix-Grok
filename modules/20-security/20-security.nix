@@ -140,6 +140,15 @@ in
         cfgRescue = config.my.security.dropbear-rescue;
       in
       lib.mkIf cfgRescue.enable {
+        # authorized_keys via Symlinks aus NixOS-managed /etc/ssh/authorized_keys.d/
+        # — kein ExecStartPre, kein Runtime-Copy, kein chmod
+        systemd.tmpfiles.rules = [
+          "d /home/${user}/.ssh 0700 ${user} users -"
+          "L+ /home/${user}/.ssh/authorized_keys - - - - /etc/ssh/authorized_keys.d/${user}"
+          "d /root/.ssh 0700 root root -"
+          "L+ /root/.ssh/authorized_keys - - - - /etc/ssh/authorized_keys.d/root"
+        ];
+
         systemd.services.dropbear-rescue = {
           description = "Dropbear emergency rescue SSH server";
           wantedBy = [ "multi-user.target" ];
@@ -147,23 +156,6 @@ in
 
           serviceConfig = {
             Type = "simple";
-            ExecStartPre = pkgs.writeShellScript "dropbear-rescue-prepare" ''
-              USER="${user}"
-              mkdir -p "/home/$USER/.ssh" /root/.ssh
-              chmod 700 "/home/$USER/.ssh" /root/.ssh
-
-              if [ -f "/etc/ssh/authorized_keys.d/$USER" ]; then
-                cp "/etc/ssh/authorized_keys.d/$USER" "/home/$USER/.ssh/authorized_keys"
-                chmod 600 "/home/$USER/.ssh/authorized_keys"
-                chown "$USER:users" "/home/$USER/.ssh/authorized_keys"
-              fi
-
-              if [ -f "/etc/ssh/authorized_keys.d/$USER" ]; then
-                cp "/etc/ssh/authorized_keys.d/$USER" /root/.ssh/authorized_keys
-                chmod 600 /root/.ssh/authorized_keys
-                chown root:root /root/.ssh/authorized_keys
-              fi
-            '';
             ExecStart = "${pkgs.dropbear}/bin/dropbear -F -E -s -p ${toString cfgRescue.port} -r /var/lib/dropbear/dropbear_ed25519_host_key -R";
             Restart = "always";
             RestartSec = "10s";

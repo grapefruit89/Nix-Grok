@@ -18,16 +18,16 @@
 }:
 let
   cfgUnlock = config.my.security.sovereign-unlock;
+  lanIp = config.my.configs.server.lanIP;
 
-  # Emergency QR-Code Script
+  # Emergency QR-Code Script (initrd-bash — akzeptierte Ausnahme: kein Nix-Store in early boot)
   qrFallbackScript = pkgs.writeShellScript "nms-qr-fallback" ''
     set -euo pipefail
     sleep 30
     if [ -e /dev/mapper/sovereign_vault ] 2>/dev/null; then
       exit 0
     fi
-    IP=$(ip -4 addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d/ -f1 | head -1)
-    SSH_CMD="ssh -p ${toString cfgUnlock.sshPort} root@''${IP:-<server-ip>}"
+    SSH_CMD="ssh -p ${toString cfgUnlock.sshPort} root@${lanIp}"
     echo ""
     echo "╔══════════════════════════════════════════════════════════╗"
     echo "║     NMS v4.2 - SOVEREIGN IDENTITY FALLBACK              ║"

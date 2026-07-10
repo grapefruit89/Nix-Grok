@@ -43,10 +43,9 @@
         type = lib.types.enum [
           "nftables-multiport"
           "nftables-allports"
-          "iptables-multiport"
         ];
         default = "nftables-multiport";
-        description = "Default ban action.";
+        description = "Default ban action (nftables only — iptables verboten per ADR-2008).";
       };
       banIncrementEnable = lib.mkOption {
         type = lib.types.bool;

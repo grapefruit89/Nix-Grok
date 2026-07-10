@@ -45,9 +45,6 @@ in
       trustedProxyIP = [ "127.0.0.1" ];
       extraConfig = {
         "skip-provider-button" = "true";
-        # DEV: minica-Zertifikat wird nicht vom Go-Trust-Store erkannt (kein Cloudflare-Token → kein Let's Encrypt).
-        # Entfernen wenn Cloudflare-Token gesetzt und security.acme echte Certs ausgestellt hat.
-        "ssl-insecure-skip-verify" = "true";
       };
     };
 
