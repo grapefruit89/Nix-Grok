@@ -90,15 +90,6 @@ in
           echo "ERROR: smartd.service nicht aktiv"
           exit 1
         '')
-        (pkgs.writeShellScriptBin "check-scrutiny-health" ''
-          set -euo pipefail
-          if ${pkgs.curl}/bin/curl -fsS -m 10 "http://127.0.0.1:${toString scrutinyPort}/health" >/dev/null; then
-            echo "OK: Scrutiny health endpoint"
-            exit 0
-          fi
-          echo "ERROR: Scrutiny nicht erreichbar auf Port ${toString scrutinyPort}"
-          exit 1
-        '')
         (pkgs.writeShellScriptBin "check-hdd-smart" ''
           set -euo pipefail
           SMARTCTL="${pkgs.smartmontools}/bin/smartctl"

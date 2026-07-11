@@ -19,6 +19,10 @@ let
   cfg = config.my.services.storage-automount;
   mediaGroup = "media";
   tierCLabelMatch = lib.concatMapStringsSep " || " (l: "[ \"\$LABEL\" = \"${l}\" ]") cfg.tierCLabels;
+  # Bekannte Tier B/C Labels: werden via fileSystems statisch gemountet.
+  # Automount überspringt sie (Race Condition beim Boot vermeiden).
+  knownLabels = lib.optional (cfg.tierBLabel != "") cfg.tierBLabel ++ cfg.tierCLabels;
+  allSystemLabels = cfg.systemLabels ++ knownLabels;
 in
 {
   options.my.services.storage-automount = {
@@ -73,6 +77,36 @@ in
 
   config = lib.mkIf cfg.enable {
     users.groups.media.gid = config.my.groups.registry.media;
+
+    # Bekannte Labels: statisch deklariert, vor local-fs.target gemountet.
+    # Hotplug-Automount überspringt diese (via allSystemLabels oben).
+    fileSystems = lib.mkMerge [
+      (lib.optionalAttrs (cfg.tierBLabel != "") {
+        "/mnt/tier-b/${cfg.tierBLabel}" = {
+          device = "/dev/disk/by-label/${cfg.tierBLabel}";
+          fsType = "ext4";
+          options = [
+            "noatime"
+            "nofail"
+            "x-systemd.device-timeout=5s"
+          ];
+        };
+      })
+      (lib.listToAttrs (
+        map (label: {
+          name = "/mnt/tier-c/${label}";
+          value = {
+            device = "/dev/disk/by-label/${label}";
+            fsType = "ext4";
+            options = [
+              "noatime"
+              "nofail"
+              "x-systemd.device-timeout=5s"
+            ];
+          };
+        }) cfg.tierCLabels
+      ))
+    ];
 
     services.udev.extraRules = ''
       SUBSYSTEM=="block", ACTION=="add", ENV{DEVTYPE}=="partition", ENV{ID_FS_TYPE}=="?*", TAG+="systemd", ENV{SYSTEMD_WANTS}+="nixhome-automount@%k.service"
@@ -134,7 +168,7 @@ in
           fi
           [ -n "$LABEL" ] || LABEL="disk-$UUID"
 
-          for SYS_LABEL in ${lib.concatStringsSep " " (map (l: "\"${l}\"") cfg.systemLabels)}; do
+          for SYS_LABEL in ${lib.concatStringsSep " " (map (l: "\"${l}\"") allSystemLabels)}; do
             if [ "$LABEL" = "$SYS_LABEL" ]; then
               echo "System partition label $LABEL — skip automount."
               exit 0
