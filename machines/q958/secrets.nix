@@ -54,6 +54,7 @@ let
   ddnsWildcardFqdn = p.network.ddns.wildcardFqdn;
   ddnsInfraZone = p.network.ddns.infraZone or "m7c5.de";
   ddnsInfraHosts = p.network.ddns.infraHosts or [ "wg" "nix" ];
+  infraHostsBash = lib.concatStringsSep " " ddnsInfraHosts;
   infraJqEntries = lib.concatStringsSep ",\n                " (
     map (
       h:
@@ -247,7 +248,7 @@ let
           # Infra-A-Records (wg/nix) in Cloudflare anlegen falls fehlend
           PUBLIC_IP=$(${pkgs.curl}/bin/curl -sf -4 --max-time 15 https://ifconfig.me/ip || true)
           if [ -n "$PUBLIC_IP" ] && [ -n "$INFRA_ZONE_ID" ]; then
-            for HOST in ${ddnsInfraHosts}; do
+            for HOST in ${infraHostsBash}; do
               FQDN="$HOST.${ddnsInfraZone}"
               EXISTS=$(${pkgs.curl}/bin/curl -sf \
                 "https://api.cloudflare.com/client/v4/zones/$INFRA_ZONE_ID/dns_records?name=$FQDN&type=A" \
