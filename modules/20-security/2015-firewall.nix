@@ -206,9 +206,9 @@ in
                 echo "geoip: lade optional $country..."
                 if ${pkgs.curl}/bin/curl --ssl-reqd -fsS -o "$TEMP_DIR/$country.zone" "$URL"; then
                   {
-                    printf 'add element inet filter geoip_allowed {\n'
-                    ${pkgs.gnugrep}/bin/grep -vE '^\s*(#|$)' "$TEMP_DIR/$country.zone" | paste -sd,
-                    printf '\n}\n'
+                    echo 'add element inet filter geoip_allowed {'
+                    grep -vE '^\s*(#|$)' "$TEMP_DIR/$country.zone" | sed 's/$/,/' | sed '$ s/,$//' | sed 's/^/  /'
+                    echo '}'
                   } >> "$NFT_FILE"
                 else
                   echo "WARN: $country übersprungen"
