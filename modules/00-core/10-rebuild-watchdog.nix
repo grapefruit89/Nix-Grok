@@ -21,7 +21,7 @@ let
   switchToConf = "/nix/var/nix/profiles/system/bin/switch-to-configuration";
   realRebuild = "${pkgs.nixos-rebuild}/bin/nixos-rebuild";
   safeScriptSrc = ../../scripts/nixos-rebuild-safe.sh;
-  safeScript = pkgs.writeShellScript "nixos-rebuild-safe" (
+  safeScript = pkgs.writeShellScriptBin "nixos-rebuild-safe" (
     lib.removePrefix "#!/usr/bin/env bash\n" (builtins.readFile safeScriptSrc)
   );
   stormList = lib.concatStringsSep " " cfg.stormPathUnits;
@@ -341,10 +341,10 @@ in
       (pkgs.writeShellScriptBin "nixos-rebuild" ''
         case "''${1:-}" in
           switch|test)
-            exec ${safeScript} "''${1}"
+            exec ${safeScript}/bin/nixos-rebuild-safe "''${1}"
             ;;
           dry|dry-build|--dry)
-            exec ${safeScript} dry
+            exec ${safeScript}/bin/nixos-rebuild-safe dry
             ;;
         esac
         exec ${realRebuild} "$@"
@@ -352,7 +352,7 @@ in
     ];
 
     system.activationScripts.nixosRebuildSafeScript.text = ''
-      install -D -m755 ${safeScript} /etc/nixos/scripts/nixos-rebuild-safe.sh
+      install -D -m755 ${safeScript}/bin/nixos-rebuild-safe /etc/nixos/scripts/nixos-rebuild-safe.sh
     '';
   };
 }
