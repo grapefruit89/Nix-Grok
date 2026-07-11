@@ -27,13 +27,22 @@ let
   allowedCountryList = lib.concatStringsSep " " cfg.allowedCountries;
   ruleset = import ../../lib/nftables-rules.nix { inherit lib config; };
   # DE-Zone: zur Buildzeit aus vendortem File generiert — kein Netz nötig
-  geoipDeNft = pkgs.runCommand "geoip-de.nft" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
-    {
-      printf 'flush set inet filter geoip_allowed\nadd element inet filter geoip_allowed {\n'
-      grep -vE '^\s*(#|$)' ${./geoip-de.zone} | paste -sd,
-      printf '\n}\n'
-    } > $out
-  '';
+  geoipDeNft =
+    pkgs.runCommand "geoip-de.nft"
+      {
+        nativeBuildInputs = [
+          pkgs.gnugrep
+          pkgs.gnused
+        ];
+      }
+      ''
+        {
+          echo 'flush set inet filter geoip_allowed'
+          echo 'add element inet filter geoip_allowed {'
+          grep -vE '^\s*(#|$)' ${./geoip-de.zone} | sed 's/$/,/' | sed '$ s/,$//' | sed 's/^/  /'
+          echo '}'
+        } > $out
+      '';
 in
 {
   options.my.security.firewall = {
@@ -226,8 +235,8 @@ in
           unitConfig = lib.mkMerge [
             rebuildGuard.pathUnitGuard
             {
-            TriggerLimitBurst = 1;
-            TriggerLimitIntervalSec = "2min";
+              TriggerLimitBurst = 1;
+              TriggerLimitIntervalSec = "2min";
             }
           ];
           pathConfig = {
