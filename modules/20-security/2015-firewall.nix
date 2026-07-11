@@ -182,6 +182,7 @@ in
           ];
           wants = [ "network-online.target" ];
           requires = [ "nftables-geoip-de.service" ];
+          wantedBy = [ "multi-user.target" ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = pkgs.writeShellScript "update-geoip-optional" ''
@@ -216,15 +217,20 @@ in
           };
         };
 
-    systemd.timers.nftables-geoip-update =
+    systemd.paths.nftables-geoip-update-switch =
       lib.mkIf (cfg.geoipAutoUpdate.enable && cfg.allowedCountries != [ ])
         {
-          description = "Monatlicher GeoIP-Refresh für optionale Länder (${allowedCountryList})";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "30s";
-            OnUnitActiveSec = "30d";
-            RandomizedDelaySec = "6h";
+          description = "GeoIP-Refresh nach nixos-rebuild switch (Boot via wantedBy am Service)";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig = {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "2min";
+          };
+          pathConfig = {
+            PathExists = "/run/current-system";
+            PathChanged = "/run/current-system";
+            Unit = "nftables-geoip-update.service";
+            MakeDirectory = false;
           };
         };
   };

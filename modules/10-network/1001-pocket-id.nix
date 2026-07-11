@@ -1,4 +1,5 @@
 # ---
+# schema: "100x=Service-Port (ADR-011 Isomorphie)"
 # meta:
 #   layer: 3
 #   role: module
@@ -61,8 +62,10 @@ in
       wants = [ "network-online.target" ];
     };
 
-    # Pocket-ID nutzt Port 1001 (< 1024) ohne Root — Kernel-Schwelle absenken
-    boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = lib.mkDefault 1000;
+    # Port < 1024 ohne Root — Schwelle aus my.ports.pocket-id ableiten (1001 → 1000)
+    boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = lib.mkIf (cfgPocketId.port < 1024) (
+      lib.mkDefault (cfgPocketId.port - 1)
+    );
 
     services.pocket-id = {
       enable = true;

@@ -93,7 +93,7 @@ in
 
       # ── PENDING DISKS WATCHER ─────────────────────────────────────────────────
       services.nixhome-pending-watcher = {
-        description = "Scans for new unlabelled legacy drives";
+        description = "Scans for new unlabelled legacy drives (Boot + udev block-add)";
         wantedBy = [ "multi-user.target" ];
         serviceConfig = {
           Type = "oneshot";
@@ -122,14 +122,11 @@ in
         };
       };
 
-      timers.nixhome-pending-watcher = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = "1min";
-          OnUnitActiveSec = "5min";
-          RandomizedDelaySec = "15";
-        };
-      };
     };
+
+    services.udev.extraRules = lib.mkIf cfgStorage.enable ''
+      # Blockdevice hinzugefügt → pending-watcher (statt 5-min-Timer)
+      ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", TAG+="systemd", ENV{SYSTEMD_WANTS}+="nixhome-pending-watcher.service"
+    '';
   };
 }

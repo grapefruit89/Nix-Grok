@@ -1,4 +1,5 @@
 # ---
+# schema: "109x=Infrastruktur-Band (kein Service-Port)"
 # meta:
 #   layer: 3
 #   role: module
@@ -16,10 +17,10 @@
 #     - caddy
 #     - network
 # ---
-# Valkey + PostgreSQL → 15-databases.nix
-# Netbird + Privado VPN → 16-vpn.nix
-# Pocket-ID → 17-pocket-id.nix
-# Blocky DNS → 12-blocky.nix
+# Valkey + PostgreSQL → 1095-databases.nix
+# Netbird + Privado VPN → 1096-vpn.nix
+# Pocket-ID → 1001-pocket-id.nix
+# Blocky DNS → 1002-blocky.nix
 {
   config,
   lib,
@@ -31,6 +32,7 @@ let
     pocketIdPort =
       if config.my.services.pocket-id.enable or false then config.my.ports.pocket-id else null;
     lanCidr = builtins.concatStringsSep " " config.my.security.firewall.lanCidrs;
+    netbirdCidr = config.my.configs.network.netbirdCidr;
     oauth2proxyPort =
       if config.my.services.oauth2-proxy.enable or false then config.my.ports.oauth2-proxy else null;
     oauth2Domain = config.my.configs.identity.domain;
@@ -104,7 +106,7 @@ in
           code = "DNS-003";
           was = "services.resolved.settings.Resolve.DNS zeigt auf 127.0.0.1 (Blocky/lokaler Forwarder)";
           warum = "Blocky lief früher als lokaler DNS-Forwarder, wurde durch direkte DoT-Verbindung ersetzt (ADR-003). Ein lokaler Forwarder auf 127.0.0.1 würde DoT umgehen.";
-          beheben = "DNS auf DoT-Upstream setzen, z.B. '1.1.1.1#one.one.one.one 1.0.0.1#one.one.one.one'. Wert in modules/10-network/11-network.nix → dnsBootstrap.";
+          beheben = "DNS auf DoT-Upstream setzen, z.B. '1.1.1.1#one.one.one.one 1.0.0.1#one.one.one.one'. Wert in modules/10-network/1090-host-network.nix → dnsBootstrap.";
           assertion = (config.services.resolved.settings.Resolve.DNS or "") != "127.0.0.1";
         })
         (asserts.mkAssert {

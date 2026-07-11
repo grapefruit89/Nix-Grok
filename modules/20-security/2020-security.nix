@@ -18,6 +18,7 @@
   ...
 }:
 let
+  cidrs = import ../../lib/network-cidrs.nix { inherit lib config; };
   cfgSsh = config.my.security.ssh-zerotrust;
   user = config.my.configs.identity.user;
   sshPort = config.my.ports.ssh;
@@ -110,7 +111,7 @@ in
           ];
         };
         extraConfig = lib.mkForce ''
-          Match Address 127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,100.64.0.0/10
+          Match Address ${cidrs.sshMatchAddresses}
             PermitTTY yes
           Match All
             PermitTTY no

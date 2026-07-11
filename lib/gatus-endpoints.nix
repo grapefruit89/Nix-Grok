@@ -254,6 +254,14 @@ let
         port = ports.prowlarr;
       })
     ]
+    ++ lib.optionals (svc.usenet-confinement.enable or false) [
+      (mkSsh {
+        name = "usenet-vpn-egress";
+        group = "media";
+        command = "/run/current-system/sw/bin/usenet-vpn-status";
+        interval = "2m";
+      })
+    ]
     ++ lib.optionals svc.sabnzbd.enable [
       (mkHttp {
         name = "sabnzbd";

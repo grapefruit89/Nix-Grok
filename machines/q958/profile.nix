@@ -68,6 +68,7 @@ in
       systemdNetworkName = "10-lan";
     };
     netbirdIP = "100.64.0.1";
+    netbirdCidr = "100.64.0.0/10";
     sshPort = 22;
     productionSshPort = 53844;
     privado = {

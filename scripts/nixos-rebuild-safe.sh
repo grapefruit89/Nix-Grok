@@ -14,7 +14,7 @@
 #   Dieser Gate stellt sicher dass:
 #     1. Ein dry-build vor jedem switch verifizierten Build nachweist
 #     2. Ein Flag-File als Nachweis des erfolgreichen dry-builds gesetzt wird
-#   SSH-Disconnect: wait-online-Timeout ist via 16-vpn.nix behoben (→ ADR-2030).
+#   SSH-Disconnect: wait-online-Timeout ist via 1096-vpn.nix behoben (→ ADR-2030).
 #   Switch dauert <60s → keine tmux/systemd-run-Kapselung nötig.
 #
 # Usage:

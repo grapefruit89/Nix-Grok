@@ -147,7 +147,7 @@ wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
 - [x] arr-helper.nix + arr.nix: `AUTH__METHOD=External`, `LOG__LEVEL=info`, `UPDATE__BRANCH` per App
 - [x] sabnzbd.nix: `SABNZBD__MISC__TEMP_DIR=/run/sabnzbd-tmp`
 - [x] jellyfin-system.xml: TrickplayOptions, GroupingShows, DisplaySpecials
-- [x] Caddy crash-loop: `ip_mask /24` → `ip_mask 24` in 11-network.nix (**Switch ausstehend**)
+- [x] Caddy crash-loop: `ip_mask /24` → `ip_mask 24` in 1090-host-network.nix (**Switch ausstehend**)
 - [x] Jellyfin crash-loop: preStart CAP_CHOWN → systemd.tmpfiles.rules (**Switch ausstehend**)
 - [x] arr-helper.nix: tmpfiles.rules für metadataDir + MediaCover (fresh-install-safe)
 - [x] lidarr.env + readarr.env erstellt + /mnt/fast_pool/metadata/lidarr → lidarr läuft

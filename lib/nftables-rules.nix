@@ -18,7 +18,8 @@ let
   cfg = config.my.security.firewall;
   ports = config.my.ports;
   uids = config.my.users.registry;
-  lanCidrList = lib.concatStringsSep ", " cfg.lanCidrs;
+  cidrs = import ./network-cidrs.nix { inherit lib config; };
+  lanCidrList = cidrs.lanCidrList;
   lanIf = cfg.lanInterface;
   hasLanIf = lanIf != "";
   sshPort = config.my.ports.ssh;
@@ -28,7 +29,9 @@ let
       (config.my.security ? dropbear-rescue) && config.my.security.dropbear-rescue.enable
     ) config.my.security.dropbear-rescue.port;
   sshPortList = lib.concatStringsSep ", " (map toString sshPorts);
-  netbirdWgPort = "51820";
+  netbirdWgPort = toString ports.netbird-wg;
+  netbirdStunPort = toString ports.netbird-stun;
+  netbirdSignalPort = toString ports.netbird-signal;
   wanIf = cfg.wanInterface;
   hasWanIf = wanIf != "";
 
@@ -41,7 +44,7 @@ let
   skuidArrGuard =
     if cfg.skuidSegmentation.enable then
       ''
-        tcp dport { ${arrPorts} } ct state new ip saddr != { 127.0.0.0/8, ${lanCidrList}, 100.64.0.0/10 } drop comment "arr LAN/VPN only"
+        tcp dport { ${arrPorts} } ct state new ip saddr != { ${cidrs.loopbackV4}, ${lanCidrList}, ${config.my.configs.network.netbirdCidr} } drop comment "arr LAN/VPN only"
       ''
     else
       "";
@@ -49,7 +52,16 @@ let
   cleartextDnsBlock =
     if cfg.blockCleartextDns then
       ''
-        ip daddr != 127.0.0.0/8 meta l4proto { tcp, udp } th dport 53 reject comment "no-cleartext-dns-outbound"
+        ip daddr != ${cidrs.loopbackV4} meta l4proto { tcp, udp } th dport 53 reject comment "no-cleartext-dns-outbound"
+      ''
+    else
+      "";
+
+  # SAB/Prowlarr: Privado-DNS (198.18.0.x:53) — Cleartext, aber nur oifname privado (vor blockCleartextDns).
+  skuidUsenetDnsAllow =
+    if cfg.blockCleartextDns && cfg.skuidSegmentation.enable then
+      ''
+        meta skuid { ${toString uids.prowlarr}, ${toString uids.sabnzbd} } oifname "privado" meta l4proto { tcp, udp } th dport 53 return comment "usenet VPN DNS via privado"
       ''
     else
       "";
@@ -65,7 +77,7 @@ let
   dbInputGuard =
     if cfg.skuidSegmentation.enable then
       ''
-        tcp dport { 5432, 6379 } ip saddr != 127.0.0.0/8 drop comment "DB sockets localhost only"
+        tcp dport { 5432, ${toString ports.valkey} } ip saddr != ${cidrs.loopbackV4} drop comment "DB sockets localhost only"
       ''
     else
       "";
@@ -73,7 +85,7 @@ let
   wanBogon =
     if hasWanIf then
       ''
-        iifname "${wanIf}" ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, 169.254.0.0/16 } drop comment "WAN bogon spoof"
+        iifname "${wanIf}" ip saddr { ${cidrs.wanBogonCidrList} } drop comment "WAN bogon spoof"
       ''
     else
       ''
@@ -201,7 +213,7 @@ lib.concatStringsSep "\n" [
         ip protocol icmp accept
         tcp flags & (syn|ack) == syn ct state new add @portscan { ip saddr limit rate 30/minute burst 5 packets } drop comment "Portscan"
         tcp flags & (syn|ack) == syn limit rate over 20/second burst 40 packets drop comment "SYN flood"
-        udp dport { ${netbirdWgPort}, 3478, 10000 } accept comment "Netbird WireGuard + STUN + Signal"
+        udp dport { ${netbirdWgPort}, ${netbirdStunPort}, ${netbirdSignalPort} } accept comment "Netbird WireGuard + STUN + Signal"
         ip protocol udp ct state new limit rate over 50/second burst 100 packets drop comment "UDP flood"
         ${skuidArrGuard}
         ${dbInputGuard}
@@ -222,6 +234,7 @@ lib.concatStringsSep "\n" [
 
       chain output {
         type filter hook output priority filter; policy accept;
+        ${skuidUsenetDnsAllow}
         ${cleartextDnsBlock}
         ${skuidUsenetGuard}
       }

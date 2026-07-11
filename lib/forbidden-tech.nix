@@ -24,7 +24,7 @@ let
     caddyRatelimit = "caddy-ratelimit verboten — stattdessen: nftables webRateLimit in lib/nftables-rules.nix (L4, ~100/min pro WAN-IP auf 80/443).";
     caddyTransformEncoder = "transform-encoder (Apache-Logs) verboten — stattdessen: JSON-Logs + journald (services.caddy.logFormat, ADR-1018).";
     caddyWol = "caddy-wol verboten — stattdessen: separates WOL-Tooling am NAS/PC (ethtool/wakeonlan), nicht im Ingress.";
-    caddyDnsCloudflare = "caddy-dns/cloudflare verboten — stattdessen: security.acme + lego DNS-01 (modules/20-security/23-acme.nix).";
+    caddyDnsCloudflare = "caddy-dns/cloudflare verboten — stattdessen: security.acme + lego DNS-01 (modules/20-security/2023-acme.nix).";
     caddyInternalAcme = "Caddy-internes ACME verboten — stattdessen: security.acme + useACMEHost (Zertifikate aus /var/lib/acme/).";
     sablier = "Sablier verboten — widerspricht No-Docker-Policy; stattdessen: systemd socket activation oder always-on Services.";
   };

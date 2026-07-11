@@ -57,7 +57,7 @@ in
         };
       };
       zram-swap.enable = lib.mkEnableOption "Aggressive komprimierter ZRAM RAM-swap";
-      # kernel-slim Option lebt jetzt nur noch in modules/20-security/25-kernel-policy.nix (Duplikat entfernt)
+      # kernel-slim Option lebt jetzt nur noch in modules/20-security/2025-kernel-policy.nix (Duplikat entfernt)
     };
 
     mode = lib.mkOption {
@@ -161,6 +161,22 @@ in
             default = true;
             description = "false = keine CrowdSec/nftables IPv6-Regeln (Homelab nur v4 auf LAN).";
           };
+        };
+        netbirdCidr = lib.mkOption {
+          type = lib.types.str;
+          default = "100.64.0.0/10";
+          description = "Netbird-Mesh-CIDR (CGNAT) — private_admin, nftables, systemd IPAddressAllow.";
+        };
+        wanBogonCidrs = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            "10.0.0.0/8"
+            "172.16.0.0/12"
+            "192.168.0.0/16"
+            "127.0.0.0/8"
+            "169.254.0.0/16"
+          ];
+          description = "WAN ingress anti-spoof — RFC1918, loopback, link-local.";
         };
       };
     };

@@ -40,6 +40,8 @@ let
   };
 in
 {
+  imports = [ ./leak-verify.nix ];
+
   options.my.services.usenet-confinement.enable =
     lib.mkEnableOption "Usenet VPN-Sandbox (SABnzbd + Prowlarr via Privado WireGuard)";
 

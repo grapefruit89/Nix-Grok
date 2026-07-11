@@ -24,6 +24,7 @@ Alle anderen Schichten (`10-network`, `50-media`, …) setzen diese voraus.
 | `06-boot-watchdog.nix` | Post-Boot Fail-Fast: kritische Dienste nach Grace-Period prüfen (Timer + oneshot) |
 | `07-structure-validation.nix` | Build-Time-Assertions: modules/-Verzeichnisstruktur + default.nix-Vollständigkeit |
 | `08-ports.nix` | Zentrale Port-Registry (`my.ports.*`) |
+| `09-network-routing.nix` | Routing-Tabellen + UID-Policy-Priority (Privado Split-Tunnel) |
 | `09-nix-tools.nix` | Nix-Store-Tuning, Dev-CLI-Tools, Shell-Aliases, Pre-Commit, ZRAM-Swap |
 | `default.nix` | Import aller 00-core-Module |
 

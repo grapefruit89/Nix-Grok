@@ -21,6 +21,7 @@
     ./06-boot-watchdog.nix
     ./07-structure-validation.nix
     ./08-ports.nix
+    ./09-network-routing.nix
     ./09-nix-tools.nix
   ];
 }

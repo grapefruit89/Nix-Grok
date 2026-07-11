@@ -13,12 +13,12 @@
 # ---
 {
   pocketIdPort ? null,
-  lanCidr ? "192.168.0.0/16",
+  lanCidr,
+  netbirdCidr,
   oauth2proxyPort ? null,
   oauth2Domain ? null,
 }:
 let
-  privateCidr = "100.64.0.0/10";
   ssoSnippet =
     if oauth2proxyPort != null && oauth2Domain != null then
       ''
@@ -76,7 +76,7 @@ in
     }
 
     (private_admin) {
-      @external not remote_ip ${privateCidr} 127.0.0.0/8 ::1/128 ${lanCidr}
+      @external not remote_ip ${netbirdCidr} 127.0.0.0/8 ::1/128 ${lanCidr}
       respond @external "Forbidden" 403
     }
 
@@ -89,7 +89,7 @@ in
       @scanners header User-Agent *shodan* *masscan* *zgrab* *nmap* *python-requests* *censys* *nuclei*
       @no_ua {
         not header User-Agent *
-        not remote_ip private_ranges ${privateCidr} ${lanCidr}
+        not remote_ip private_ranges ${netbirdCidr} ${lanCidr}
       }
       abort @scanners
       abort @no_ua

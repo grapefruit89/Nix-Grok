@@ -33,13 +33,13 @@ Auditor: Grok
 | 15-firewall.nix | ✗ | ✓ timer | ✗ `writeShellScript` 35+ Zeilen | **Hoch** |
 | 20-security.nix | ✗ | — | ✗ `writeShellScript` ExecStartPre | Mittel |
 | 21-sovereign-unlock.nix | ✗ | — | ✗ 3× Shell (QR, initrd-shell) | Mittel* |
-| 22-fail2ban.nix | ✗ | — | ~ Fail2ban selbst | Niedrig |
+| 2022-fail2ban.nix | ✗ | — | ~ Fail2ban selbst | Niedrig |
 | 23-acme.nix | ✗ | — | — | — |
 | 25-kernel-policy.nix | ✗ | — | — | — |
 | 26-kernel-hardening.nix | ✗ | — | ~ `\|/bin/false` | Niedrig |
 | 27-hardened-core.nix | ✗ | — | — | — |
-| 28-oauth2-proxy.nix | ✗ | — | ~ `/var/lib/secrets/` | Mittel |
-| 29-secrets-portal.nix | ✗ | — | — (Go-Binary) | — |
+| 2028-oauth2-proxy.nix | ✗ | — | ~ `/var/lib/secrets/` | Mittel |
+| 2029-secrets-portal.nix | ✗ | — | — (Go-Binary) | — |
 
 \* initrd-Shell teils unvermeidbar (kein Go im initrd), aber QR-Skript refactorbar
 
@@ -124,7 +124,7 @@ Auditor: Grok
 
 ---
 
-### 22-fail2ban.nix
+### 2022-fail2ban.nix
 **Zweck:** Fail2ban Jails (SSH, Caddy JSON, Vaultwarden, Paperless, Recidive) + Auditd execve-Monitoring.
 
 **Bewertung:** ⚠
@@ -181,7 +181,7 @@ Auditor: Grok
 
 **Findings:**
 - Fast vollständig deklarativ — sysctl-Attrset, fileSystems, kernelParams.
-- `ip_unprivileged_port_start = 1001` — kollidiert konzeptuell mit `17-pocket-id.nix` (`mkDefault 1000`). Import-Reihe q958: 20-security vor 10-network → 1001 gewinnt; Pocket-ID Port 1001 passt knapp. Dokumentationslücke.
+- `ip_unprivileged_port_start = 1001` — kollidiert konzeptuell mit `1001-pocket-id.nix` (`mkDefault 1000`). Import-Reihe q958: 20-security vor 10-network → 1001 gewinnt; Pocket-ID Port 1001 passt knapp. Dokumentationslücke.
 - `kernel.core_pattern = "|/bin/false"` — POSIX-Pipe-Trick, üblich für Core-Dump-Verbot.
 - `vpnNeedsForward = false` hardcoded — korrekt für UID-Split-Tunnel statt IP-Forward.
 - `disableIpv6Stack` default false — bewusst (::1 für Jellyfin), LAN-v6 via 10-network aus.
@@ -208,7 +208,7 @@ Auditor: Grok
 
 ---
 
-### 28-oauth2-proxy.nix
+### 2028-oauth2-proxy.nix
 **Zweck:** OIDC Forward-Auth (Pocket-ID als IdP), Caddy vHost `oauth.${domain}`.
 
 **Bewertung:** ⚠
@@ -217,7 +217,7 @@ Auditor: Grok
 - **Deklarativ (gut):** `services.oauth2-proxy` NixOS-Modul, systemd-Abhängigkeit auf `q958-secrets-provision`.
 - **Legacy-Secrets:** `keyFile` + `cookie.secretFile` unter `/var/lib/secrets/` — nicht systemd-creds; provisioning via Shell in `secrets.nix`.
 - **Hardcodierter Port 4180** in Caddy-vHost und oauth2-default — nicht `my.ports`.
-- **Ingress-Split:** Caddy-vHost hier statt `14-ingress.nix` — bewusst (oauth ist kein Spec-Eintrag), aber verteilte Ingress-SSoT.
+- **Ingress-Split:** Caddy-vHost hier statt `1094-ingress.nix` — bewusst (oauth ist kein Spec-Eintrag), aber verteilte Ingress-SSoT.
 - `ssl-insecure-skip-verify = true` — Dev-Workaround, Kommentar sagt entfernen nach ACME.
 
 **Legacy/POSIX:** Secrets-Provisioning extern (POSIX in secrets.nix); Modul selbst ohne Shell.
@@ -226,7 +226,7 @@ Auditor: Grok
 
 ---
 
-### 29-secrets-portal.nix
+### 2029-secrets-portal.nix
 **Zweck:** Web-UI für systemd-creds Rotation (Go-Binary, Unix-Socket).
 
 **Bewertung:** ✓

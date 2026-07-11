@@ -132,6 +132,8 @@ in
 
       systemd.services.process-delete-queue = {
         description = "Process deferred Tier-C deletion queue";
+        startLimitIntervalSec = 0;
+        startLimitBurst = 0;
         unitConfig.ConditionPathIsMountPoint = tierCMount;
         serviceConfig = {
           Type = "oneshot";
@@ -154,12 +156,33 @@ in
         };
       };
 
-      systemd.timers.process-delete-queue = {
-        description = "Hourly deferred deletion queue processor";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "hourly";
-          Persistent = true;
+      systemd.paths.process-delete-queue = {
+        description = "Deferred-Delete bei neuem Queue-Eintrag";
+        wantedBy = [ "multi-user.target" ];
+        unitConfig = {
+          TriggerLimitBurst = 1;
+          TriggerLimitIntervalSec = "10min";
+        };
+        pathConfig = {
+          PathExists = "${cfg.queueDir}";
+          PathChangedGlob = "${cfg.queueDir}/*";
+          Unit = "process-delete-queue.service";
+          MakeDirectory = false;
+        };
+      };
+
+      systemd.paths.process-delete-queue-tierc = {
+        description = "Deferred-Delete wenn Tier-C gemountet wird (HDD spin-up)";
+        wantedBy = [ "multi-user.target" ];
+        unitConfig = {
+          TriggerLimitBurst = 1;
+          TriggerLimitIntervalSec = "10min";
+        };
+        pathConfig = {
+          PathExists = "${tierCMount}";
+          PathChanged = "${tierCMount}";
+          Unit = "process-delete-queue.service";
+          MakeDirectory = false;
         };
       };
 

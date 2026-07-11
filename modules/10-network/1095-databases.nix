@@ -1,4 +1,5 @@
 # ---
+# schema: "109x=Infrastruktur-Band (kein Service-Port)"
 # meta:
 #   layer: 3
 #   role: module
@@ -48,6 +49,13 @@ in
   config = lib.mkMerge [
     # ── VALKEY CACHE DATABASE (Valkey package inside Redis module) ────────────
     (lib.mkIf cfgValkey.enable {
+      assertions = [
+        {
+          assertion = config.services.redis.servers.valkey.unixSocket == sockets.valkey;
+          message = "[VALKEY] unixSocket weicht von lib/unix-sockets.nix ab — Drift in 1095-databases.nix.";
+        }
+      ];
+
       systemd.tmpfiles.rules = [
         "d /var/lib/redis-valkey 0750 redis redis -"
       ];
@@ -124,9 +132,16 @@ in
       };
 
       # PostgreSQL Systemd Sandboxing Härtung
+      systemd.services.postgresql = {
+        startLimitIntervalSec = lib.mkForce 0;
+        startLimitBurst = lib.mkForce 0;
+      };
       systemd.services.postgresql.serviceConfig = lib.mkMerge [
         (memory.postgres ramGB)
         {
+          Restart = lib.mkForce "always";
+          RestartSec = lib.mkForce "5s";
+          TimeoutStopSec = lib.mkForce "30s";
           ProtectSystem = "strict";
           ProtectHome = true;
           PrivateTmp = true;

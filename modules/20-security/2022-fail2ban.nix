@@ -176,7 +176,6 @@
               settings = {
                 enabled = true;
                 filter = "caddy-json";
-                action = cfg.banaction;
                 maxretry = cfg.webJails.caddy.maxretry;
                 inherit (cfg) findtime;
                 backend = "systemd";
@@ -219,7 +218,7 @@
           lib.mkIf config.my.security.firewall.enable ''
             [Definition]
             type = firewall
-            actionstart = nft add set inet filter f2b_blocked_ipv4 { type ipv4_addr \; flags timeout \; timeout 1h \; } 2>/dev/null || true
+            actionstart =
             actionstop =
             actioncheck = nft list set inet filter f2b_blocked_ipv4 >/dev/null 2>&1
             actionban = nft add element inet filter f2b_blocked_ipv4 { <ip> }

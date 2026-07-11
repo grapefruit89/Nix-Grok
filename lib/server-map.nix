@@ -16,7 +16,11 @@
 #   uds:PATH  — Unix Domain Socket (kein TCP, nur lokale IPC)
 #   tcp:PORT  — interner Localhost-Port (hinter Caddy)
 #   ext:PORT  — externer Port (Firewall, IoT, Protokollstandard — NICHT ändern)
-_: {
+{ lib, ... }:
+let
+  s = import ./unix-sockets.nix { inherit lib; };
+in
+{
   services = {
     # ── 10-network ─────────────────────────────────────────────────────────────
     pocket-id = {
@@ -53,7 +57,7 @@ _: {
     # ── 40-observability ───────────────────────────────────────────────────────
     grafana = {
       id = 4001;
-      transport = "uds:/run/grafana/grafana.sock";
+      transport = s.toTransport s.grafana;
       module = "40-observability";
       sso = true;
     };
@@ -208,7 +212,7 @@ _: {
     };
     valkey = {
       id = null;
-      transport = "uds:/run/redis-valkey/valkey.sock";
+      transport = s.toTransport s.valkey;
       module = "00-core";
       sso = false;
       note = "RESP2, Cache";

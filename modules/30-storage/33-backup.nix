@@ -171,6 +171,7 @@ in
           "--keep-weekly 4"
         ];
 
+        # OnCalendar bewusst: Offsite-Backup-Fenster — kein Event-Äquivalent für Wiederherstellungspunkt-Rhythmus.
         timerConfig = {
           OnCalendar = "Sun *-*-* 04:00:00";
           Persistent = true;

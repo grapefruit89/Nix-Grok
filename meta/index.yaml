@@ -125,7 +125,7 @@ entries:
         - readme
         - 00-core
   - |
-    file: modules/10-network/12-blocky.nix
+    file: modules/10-network/1002-blocky.nix
     meta:
       layer: 3
       role: module
@@ -137,7 +137,7 @@ entries:
         - ad-blocking
     ---
   - |
-    file: modules/10-network/13-gateway.nix
+    file: modules/10-network/1003-gateway.nix
     meta:
       id: NIXH-10-GTW-001
       layer: 3
@@ -155,7 +155,7 @@ entries:
         - cloudflare
     ---
   - |
-    file: modules/10-network/14-ingress.nix
+    file: modules/10-network/1094-ingress.nix
     meta:
       id: NIXH-10-ING-001
       layer: 3
@@ -1404,7 +1404,7 @@ entries:
       services: [caddy, blocky, pocket-id]
       betrifft:
         - lib/critical-systemd.nix
-        - modules/10-network/11-network.nix
+        - modules/10-network/1090-host-network.nix
         - modules/60-apps/pocket-id.nix
       docs:
         - docs/adr/README.md
@@ -1600,7 +1600,7 @@ entries:
       date: 2026-07-06
       betrifft:
         - modules/20-security/23-acme.nix
-        - modules/10-network/11-network.nix
+        - modules/10-network/1090-host-network.nix
         - packages/secrets-portal/
       docs:
         - docs/adr/README.md
@@ -1665,8 +1665,8 @@ entries:
       betrifft:
         - machines/q958/profile.nix
         - machines/q958/network.nix
-        - modules/10-network/11-network.nix
-        - modules/10-network/12-blocky.nix
+        - modules/10-network/1090-host-network.nix
+        - modules/10-network/1002-blocky.nix
       docs:
         - docs/adr/README.md
         - docs/adr/1002-ipv6-homelab-v4-only.md
@@ -1688,7 +1688,7 @@ entries:
         - machines/q958/profile.nix
         - machines/q958/network.nix
         - machines/q958/access.nix
-        - modules/10-network/11-network.nix
+        - modules/10-network/1090-host-network.nix
         - modules/15-firewall.nix
         - modules/40-observability/crowdsec.nix
       docs:
@@ -1729,7 +1729,7 @@ entries:
       date: 2026-06-29
       betrifft:
         - lib/caddy-snippets.nix
-        - modules/10-network/11-network.nix
+        - modules/10-network/1090-host-network.nix
       docs:
         - docs/adr/README.md
         - docs/adr/1016-caddy-security-headers-coop-scanners.md
@@ -1797,7 +1797,7 @@ entries:
       quick_fix: "ip_mask 24 statt /24 in Caddyfile (kein Slash!)"
       services: [caddy]
       betrifft:
-        - modules/10-network/11-network.nix
+        - modules/10-network/1090-host-network.nix
       docs:
         - docs/adr/README.md
         - docs/adr/1014-caddy-security-headers-trusted-proxies.md
@@ -1834,7 +1834,7 @@ entries:
       quick_fix: "ENCRYPTION_KEY in /var/lib/secrets/pocket-id.env prüfen; systemctl restart pocket-id"
       services: [pocket-id]
       betrifft:
-        - modules/10-network/17-pocket-id.nix
+        - modules/10-network/1001-pocket-id.nix
         - machines/q958/media-secrets.nix
         - machines/q958/profile.local.nix
       docs:
@@ -1945,7 +1945,7 @@ entries:
       betrifft:
         - machines/q958/secrets.nix
         - machines/q958/profile.local.nix
-        - modules/10-network/11-network.nix
+        - modules/10-network/1090-host-network.nix
       docs:
         - docs/adr/README.md
         - docs/adr/2024-systemd-creds-tpm.md
@@ -1993,7 +1993,7 @@ entries:
       quick_fix: "systemctl status vpn-leak-check; ip -n vpn-netns addr show"
       services: [vpn-leak-check, sabnzbd, prowlarr]
       betrifft:
-        - modules/10-network/vpn-confinement.nix
+        - modules/50-media/57-usenet-confinement/
       docs:
         - docs/adr/README.md
         - docs/guides/GUIDE-media-stack.md
@@ -2121,7 +2121,7 @@ entries:
       services: [systemd-networkd-wait-online]
       betrifft:
         - modules/20-security/27-hardened-core.nix
-        - modules/10-network/16-vpn.nix
+        - modules/10-network/1096-vpn.nix
       docs:
         - docs/adr/2026-kernel-hardening-sysctl.md
         - docs/adr/1033-oauth2-proxy-forward-auth.md
@@ -2638,7 +2638,7 @@ entries:
         - docs/adr/1004-unix-socket-upstreams.md
         - docs/adr/011-unified-port-uid-schema.md
         - docs/adr/1002-ipv6-homelab-v4-only.md
-        - modules/10-network.nix
+        - modules/10-network/default.nix
       tags:
         - network
         - blocky
@@ -2885,7 +2885,7 @@ entries:
         - security
       betrifft:
         - machines/q958/secrets.nix
-        - modules/10-network/11-network.nix
+        - modules/10-network/1090-host-network.nix
         - lib/services-spec.nix
       docs:
         - docs/adr/1031-caddy-zones-konzept.md

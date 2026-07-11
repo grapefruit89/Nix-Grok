@@ -33,6 +33,7 @@ in
     ./61-core.nix
     ./61-homepage.nix
     ./62-libreseerr.nix
+    ./63-on-demand-apps.nix
     ./automation.nix
     ./hermes.nix
     ./gaming.nix

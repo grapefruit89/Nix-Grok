@@ -30,7 +30,7 @@
 # Transcode-Strategie (ADR-1001 Anhang):
 #   - /run/jellyfin-transcode ist ein dediziertes tmpfs (6 GB Limit, RAM-backed)
 #   - Segmente leben nie auf Disk → kein I/O-Wear, kein voll laufender ZFS-Pool
-#   - Cleanup-Timer läuft alle 5 min mit RAM-Druck-Adaption:
+#   - Cleanup event-getrieben (Transcode-Dir + Jellyfin-Stop) mit RAM-Druck-Adaption:
 #       RAM < 65 % voll  → Segmente > 90 min löschen  (Normal)
 #       RAM 65–80 % voll → Segmente > 15 min löschen  (Druck)
 #       RAM > 80 % voll  → ALLES löschen sofort        (Notfall)
@@ -51,6 +51,7 @@ let
     inherit lib;
     ramGB = config.my.configs.hardware.ramGB;
   };
+  cidrs = import ../../lib/network-cidrs.nix { inherit lib config; };
   cfgJellyfin = config.my.services.jellyfin;
   cfgJellyseerr = config.my.services.jellyseerr;
   domain = config.my.configs.identity.domain;
@@ -194,18 +195,25 @@ in
 
           # Cleanup-Timer: alle 5 min, adaptiv nach RAM-Auslastung
           # Normal (<65%): >90 min  |  Druck (65–80%): >15 min  |  Notfall (>80%): alles
-          systemd.timers.jellyfin-transcode-cleanup = {
-            description = "Jellyfin: Transcode-Cleanup (RAM-adaptiv)";
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnBootSec = "10min";
-              OnUnitActiveSec = "5min";
+          systemd.paths.jellyfin-transcode-cleanup = {
+            description = "Jellyfin: Transcode-Cleanup bei Segment-Aktivität (max 1×/5min)";
+            wantedBy = [ "multi-user.target" ];
+            unitConfig = {
+              TriggerLimitBurst = 1;
+              TriggerLimitIntervalSec = "5min";
+            };
+            pathConfig = {
+              PathExists = "/run/jellyfin-transcode";
+              PathChangedGlob = "/run/jellyfin-transcode/*";
               Unit = "jellyfin-transcode-cleanup.service";
+              MakeDirectory = false;
             };
           };
 
           systemd.services.jellyfin-transcode-cleanup = {
             description = "Jellyfin: Transcode-Segmente RAM-adaptiv bereinigen";
+            startLimitIntervalSec = 0;
+            startLimitBurst = 0;
             path = with pkgs; [
               gawk
               findutils
@@ -265,6 +273,10 @@ in
             "media"
           ];
 
+          systemd.services.jellyfin.serviceConfig.ExecStopPost = lib.mkOrder 100 [
+            "+${pkgs.systemd}/bin/systemctl start jellyfin-transcode-cleanup.service"
+          ];
+
           systemd.services.jellyfin.environment = {
             LIBVA_DRIVER_NAME = "iHD";
             LIBVA_DRIVERS_PATH = "${pkgs.intel-media-driver}/lib/dri";
@@ -303,12 +315,7 @@ in
             "/run/opengl-driver"
           ];
           extraSystemd = {
-            IPAddressAllow = lib.mkForce [
-              "127.0.0.0/8"
-              "10.0.0.0/8"
-              "192.168.0.0/16"
-              "100.64.0.0/10"
-            ];
+            IPAddressAllow = lib.mkForce (cidrs.trustedPrivateCidrs ++ [ cidrs.loopbackV4 ]);
             IPAddressDeny = lib.mkForce "any";
             # .NET NetworkChange listener braucht AF_NETLINK für Netzwerk-Änderungsevents.
             # Ohne AF_NETLINK: EAFNOSUPPORT (97) beim Start → FTL crash.

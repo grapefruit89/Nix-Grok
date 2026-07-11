@@ -197,7 +197,27 @@
     netbird-metrics = lib.mkOption {
       type = lib.types.port;
       default = 6061;
-      description = "Netbird management metrics port (6062 = signal, 6060 = pprof builtin).";
+      description = "Netbird management service metrics (pprof im Binary hardcoded 6060).";
+    };
+    netbird-signal-metrics = lib.mkOption {
+      type = lib.types.port;
+      default = 6062;
+      description = "Netbird signal service metrics port.";
+    };
+    netbird-stun = lib.mkOption {
+      type = lib.types.port;
+      default = 3478;
+      description = "Netbird STUN/TURN (IANA 3478).";
+    };
+    netbird-signal = lib.mkOption {
+      type = lib.types.port;
+      default = 10000;
+      description = "Netbird signal relay (UDP/TCP).";
+    };
+    netbird-management = lib.mkOption {
+      type = lib.types.port;
+      default = 33073;
+      description = "Netbird management API (legacy networking.firewall only).";
     };
     node-exporter = lib.mkOption {
       type = lib.types.port;

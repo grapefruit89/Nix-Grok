@@ -21,10 +21,14 @@ let
   lan = p.network.lan;
   secretsDir = p.secrets.dir;
   secretPath = name: "${secretsDir}/${p.secrets.files.${name}}";
+  moritzUser = import ../../users/moritz/profile.nix;
+  blockyAllowlist = import ../../lib/blocky-allowlist.nix { user = moritzUser; };
+  dnsPort = config.my.network.protocol.dns;
 in
 {
   my.configs.network = {
     dnsBootstrap = p.network.dns.bootstrap;
+    netbirdCidr = p.network.netbirdCidr;
     ipv6 = {
       disableOnInterfaces = p.network.ipv6.disableOnInterfaces;
       firewall = p.network.ipv6.firewall;
@@ -34,6 +38,7 @@ in
   my.security.firewall.ipv6 = p.network.ipv6.firewall;
 
   my.services = {
+    blocky.allowlistFile = blockyAllowlist.file;
     netbird.domain = "netbird.${config.my.configs.identity.domain}";
     netbird.setupKeyFile = secretPath "netbirdSetupKey";
     pocket-id.secretsFile = secretPath "pocketId";
@@ -46,11 +51,21 @@ in
     };
   };
 
-  # Blocky DNS für LAN — nur auf eno1, nicht WAN-weit (vor nftables Stufe 8)
   networking.firewall.interfaces.${lan.interface} =
     lib.mkIf (config.my.services.blocky.enable && !config.my.security.firewall.enable)
       {
-        allowedUDPPorts = [ 53 ];
-        allowedTCPPorts = [ 53 ];
+        allowedUDPPorts = [ dnsPort ];
+        allowedTCPPorts = [ dnsPort ];
       };
+
+  systemd.tmpfiles.rules = lib.mkIf config.my.services.blocky.enable [
+    blockyAllowlist.tmpfilesRule
+  ];
+
+  assertions = lib.optionals config.my.services.blocky.enable [
+    {
+      assertion = config.my.services.blocky.allowlistFile == blockyAllowlist.file;
+      message = "[BLOCKY] allowlistFile weicht von lib/blocky-allowlist.nix ab — nur blockyAllowlist.{file,tmpfilesRule} in network.nix verwenden.";
+    }
+  ];
 }

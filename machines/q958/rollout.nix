@@ -61,6 +61,8 @@ in
 
   my.storage.deferred.enable = erstAb 3;
 
+  my.policy.onDemand.enable = erstAb 7;
+
   my.alerting.enable = erstAb 8;
 
   my.observability.enable = erstAb 4;

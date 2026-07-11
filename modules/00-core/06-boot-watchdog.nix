@@ -3,7 +3,7 @@
 #   id: NIXH-05-MOD-006
 #   layer: 3
 #   role: module
-#   purpose: Post-Boot Fail-Fast — kritische Dienste nach Grace-Period prüfen
+#   purpose: Post-Boot Fail-Fast — kritische Dienste nach Grace-Period prüfen (read-only)
 #   docs:
 #     - docs/adr/005-critical-systemd-restart.md
 #   tags:
@@ -19,8 +19,6 @@
 }:
 let
   cfg = config.my.boot-watchdog;
-  # Reiner Health-Check — kein manueller Restart, kein sleep.
-  # Restart-Policies gehören in das jeweilige Service-Modul (wie postgresql unten).
   serviceActive = name: ''
     if ! ${pkgs.systemd}/bin/systemctl is-active --quiet ${name}; then
       echo "[BOOT-WATCHDOG] FEHLER: ${name} nicht aktiv"
@@ -58,60 +56,37 @@ in
         "network-online.target"
       ];
       wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      path = [
+        pkgs.systemd
+        pkgs.coreutils
+      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-      };
-      script = ''
-        set -euo pipefail
-        ${lib.optionalString cfg.requireBlocky (serviceActive "blocky.service")}
-        ${lib.optionalString cfg.requirePostgresql (serviceActive "postgresql.service")}
-        ${lib.optionalString cfg.requireCaddy (serviceActive "caddy.service")}
-        echo "[BOOT-WATCHDOG] OK: kritische Dienste aktiv"
-      '';
-      path = [ pkgs.systemd ];
-    };
-
-    systemd.timers.boot-watchdog = {
-      description = "Run boot-watchdog once after boot";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "${toString cfg.graceSec}s";
-        AccuracySec = "30s";
-      };
-    };
-
-    # PostgreSQL: Restart=always ohne OOM-Konflikt mit memory.postgres (-800)
-    systemd.services.postgresql = lib.mkIf (config.services.postgresql.enable or false) {
-      serviceConfig = {
-        Restart = lib.mkForce "always";
-        RestartSec = lib.mkForce "5s";
-        StartLimitIntervalSec = lib.mkForce 0;
-        StartLimitBurst = lib.mkForce 0;
-        TimeoutStopSec = lib.mkForce "30s";
+        ExecStartPre = pkgs.writeShellScript "boot-watchdog-wait" ''
+          set -euo pipefail
+          DEADLINE=$(($(date +%s) + ${toString cfg.graceSec}))
+          while [ $(date +%s) -lt "$DEADLINE" ]; do
+            READY=true
+            ${lib.optionalString cfg.requireBlocky "systemctl is-active --quiet blocky.service || READY=false"}
+            ${lib.optionalString cfg.requirePostgresql "systemctl is-active --quiet postgresql.service || READY=false"}
+            ${lib.optionalString cfg.requireCaddy "systemctl is-active --quiet caddy.service || READY=false"}
+            if [ "$READY" = true ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+        '';
+        ExecStart = pkgs.writeShellScript "boot-watchdog" ''
+          set -euo pipefail
+          ${lib.optionalString cfg.requireBlocky (serviceActive "blocky.service")}
+          ${lib.optionalString cfg.requirePostgresql (serviceActive "postgresql.service")}
+          ${lib.optionalString cfg.requireCaddy (serviceActive "caddy.service")}
+          echo "[BOOT-WATCHDOG] OK: kritische Dienste aktiv"
+        '';
       };
     };
 
-    # Caddy: Restart-Policy (wenn watchdog überwacht)
-    systemd.services.caddy = lib.mkMerge [
-      (lib.mkIf cfg.requireCaddy {
-        serviceConfig = {
-          Restart = lib.mkDefault "on-failure";
-          RestartSec = lib.mkDefault "5s";
-          StartLimitIntervalSec = lib.mkDefault 0;
-          StartLimitBurst = lib.mkDefault 0;
-        };
-      })
-    ];
-
-    # Blocky: Restart-Policy — watchdog prüft, systemd erholt sich selbst
-    systemd.services.blocky = lib.mkIf cfg.requireBlocky {
-      serviceConfig = {
-        Restart = lib.mkDefault "on-failure";
-        RestartSec = lib.mkDefault "5s";
-        StartLimitIntervalSec = lib.mkDefault 0;
-        StartLimitBurst = lib.mkDefault 0;
-      };
-    };
   };
 }

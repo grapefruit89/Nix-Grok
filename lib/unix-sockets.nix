@@ -2,7 +2,7 @@
 # meta:
 #   layer: 5
 #   role: lib
-#   purpose: Standard-UDS-Pfade und Caddy-Upstream-Konvertierung
+#   purpose: UDS-Pfad-Registry (SSoT) — services-spec, server-map und Module importieren hier
 #   docs:
 #     - docs/adr/1004-unix-socket-upstreams.md
 #     - docs/adr/1019-uds-first-philosophy.md
@@ -13,24 +13,41 @@
 #     - caddy
 # ---
 { lib, ... }:
-{
-  # ── aktiv & implementiert ──────────────────────────────────────────────────
-  valkey = "/run/redis-valkey/valkey.sock";
-  grafana = "/run/grafana/grafana.sock";
-  secrets-portal = "/run/secrets-portal/secrets-portal.sock";
+let
+  paths = {
+    valkey = "/run/redis-valkey/valkey.sock";
+    grafana = "/run/grafana/grafana.sock";
+    secrets-portal = "/run/secrets-portal/secrets-portal.sock";
+    postgresql = "/run/postgresql/.s.PGSQL.5432";
+  };
 
-  # ── PostgreSQL (Standard-Socket, immer aktiv) ──────────────────────────────
-  postgresql = "/run/postgresql/.s.PGSQL.5432";
+  # services-spec-Einträge mit socket-Feld — Drift-Assertion gegen diese Map
+  specSockets = {
+    inherit (paths) postgresql valkey grafana;
+    secrets-portal = paths.secrets-portal;
+  };
 
-  # ── TCP-Dienste (kein UDS möglich oder noch nicht migriert) ───────────────
-  # pocket-id    — NixOS-Modul hat keine socket-Option            → tcp:1001
-  # gatus        — web.address/port Konfiguration, kein UDS       → tcp:4003
-  # loki         — Vector/Grafana-Client ohne http+unix Support   → tcp:4002
-  # homepage     — Node.js listenPort                             → tcp:6002
-  # paperless    — Gunicorn (Django), UDS möglich, ausstehend     → tcp:6003
-  # shiori       — Go HTTP server                               → tcp:6006
-  # libreseerr   — Flask/gunicorn                                → tcp:6010
-  # open-webui   — FastAPI/uvicorn, kein UDS via NixOS-Modul      → tcp:6007
-  # ── helper ─────────────────────────────────────────────────────────────────
+  socketDriftAssertion =
+    spec: registry:
+    let
+      offenders = lib.filter (
+        name:
+        let
+          entry = spec.${name} or { };
+          expected = registry.${name};
+        in
+        (entry.socket or null) != expected
+      ) (lib.attrNames registry);
+    in
+    {
+      assertion = offenders == [ ];
+      message = "[SOCKET-REGISTRY] my.services.spec socket weicht von lib/unix-sockets.nix ab: ${lib.concatStringsSep ", " offenders}";
+    };
+in
+paths
+// {
+  inherit paths specSockets socketDriftAssertion;
+
   toCaddyUpstream = path: "unix/${lib.removePrefix "/" path}";
+  toTransport = path: "uds:${path}";
 }

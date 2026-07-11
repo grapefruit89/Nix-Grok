@@ -94,7 +94,7 @@ Die Architektur ist durchdacht und folgt klaren SSoT-Prinzipien. Die Module sind
   - Subdomain-Abgleich mit `lib/dns-map.nix`
 - `mkDefaultSpec` referenziert `config.my.ports` — saubere Verkettung mit `08-ports.nix`.
 - **Konventionsabweichung:** `home-assistant` in `lib/services-spec.nix` nutzt hardcodiert `port = 8123` statt `ports.home-assistant` aus `08-ports.nix`. Verstößt gegen Projektregel „alle Ports zentral".
-- **Cross-Layer-Abhängigkeit:** Referenziert `config.my.ingress.fromSpec.enable` (definiert in `10-network/14-ingress.nix`). Bewusst erlaubt (lazy eval), aber 00-core hängt von 10-network-Option ab.
+- **Cross-Layer-Abhängigkeit:** Referenziert `config.my.ingress.fromSpec.enable` (definiert in `10-network/1094-ingress.nix`). Bewusst erlaubt (lazy eval), aber 00-core hängt von 10-network-Option ab.
 - `postgresql` in Spec-Matrix, aber `postgresql.enable = false` in rollout — Spec-Eintrag ist trotzdem sinnvoll für künftige Aktivierung.
 
 **Abhängigkeiten:** `lib/services-spec.nix`, `lib/dns-map.nix`, `config.my.configs.identity.domain`, `config.my.ports`, `config.my.ingress.fromSpec` (10-network)
@@ -175,7 +175,7 @@ Die Architektur ist durchdacht und folgt klaren SSoT-Prinzipien. Die Module sind
   - `10200/10201/10300` — Wyoming Voice (`voice-assistant.nix`)
   - `9100` — node-exporter (`44-metrics.nix`)
   - `2222` — Dropbear rescue (`20-security/`)
-  - `51820` — Netbird/WireGuard (`16-vpn.nix`)
+  - `51820` — Netbird/WireGuard (`1096-vpn.nix`)
 - Lücke bei `6004` zwischen paperless (6003) und filebrowser (6005) — vermutlich reserviert, undokumentiert.
 - Keine Duplikat-Assertion hier — liegt korrekt in `04-services-spec.nix` via `portRegistryAssertion`.
 - Options-only — korrekt, keine Config.

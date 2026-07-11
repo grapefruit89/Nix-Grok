@@ -28,6 +28,12 @@ let
 
   mkFqdn = domain: entry: "${entry.subdomain}.${domain}";
 
+  l7GuardImports = ''
+    import block_scanners
+    import block_attack_paths
+    import block_bad_methods
+  '';
+
   genAuthVhost = upstream: ''
     import security_headers
     import upstream_errors
@@ -96,6 +102,7 @@ let
   '';
 
   genSecurityOnlyVhost = upstream: ''
+    ${l7GuardImports}
     import security_headers
     import upstream_errors
     reverse_proxy ${upstream}
@@ -116,6 +123,7 @@ let
       ''
     else if zone == "external" then
       ''
+        ${l7GuardImports}
         import security_headers
         import sso_auth
         import sso_redirect
@@ -124,6 +132,7 @@ let
       ''
     else if zone == "streaming" then
       ''
+        ${l7GuardImports}
         import streamer_headers
         import security_headers
         import sso_auth
@@ -196,5 +205,5 @@ let
     lib.listToAttrs (lib.mapAttrsToList mkHost ingress);
 in
 {
-  inherit genVirtualHosts;
+  inherit genSecurityOnlyVhost genVirtualHosts;
 }

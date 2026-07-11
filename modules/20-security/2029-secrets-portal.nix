@@ -14,7 +14,7 @@
 #     - web
 # ---
 #
-# SCHEMA: 20-security Domäne, Position 29 → UID reserviert = 2029
+# SCHEMA: Dateiname 2029-secrets-portal.nix → UID 2029 (ADR-011 Isomorphie)
 #
 # SICHERHEITSMODELL:
 # Phase 1 (aktuell): Läuft als root — erforderlich da systemd-creds encrypt

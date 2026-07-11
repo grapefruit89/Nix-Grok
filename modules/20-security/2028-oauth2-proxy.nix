@@ -1,4 +1,5 @@
 # ---
+# schema: "20xx=Domäne+Position; Port 4180=Upstream-Ausnahme (nicht 2028)"
 # meta:
 #   layer: 3
 #   role: module
@@ -8,6 +9,7 @@
 #     - oauth2-proxy
 #     - caddy
 # ---
+# schema: "20xx=Domäne+Position; Port 4180=Upstream-Ausnahme (nicht 2028)"
 {
   config,
   lib,
@@ -16,6 +18,9 @@
 let
   cfg = config.my.services.oauth2-proxy;
   domain = config.my.configs.identity.domain;
+  caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
+  ingress = import ../../lib/caddy-ingress.nix { inherit lib caddy; };
+  oauthUpstream = "127.0.0.1:${toString config.my.ports.oauth2-proxy}";
 in
 {
   options.my.services.oauth2-proxy = {
@@ -50,7 +55,7 @@ in
 
     # Öffentlicher Caddy-Endpunkt für Login/Callback-Flow und Sign-in-Redirects
     services.caddy.virtualHosts."oauth.${domain}" = {
-      extraConfig = "reverse_proxy 127.0.0.1:${toString config.my.ports.oauth2-proxy}";
+      extraConfig = ingress.genSecurityOnlyVhost oauthUpstream;
     }
     // lib.optionalAttrs config.my.security.acme.enable {
       useACMEHost = domain;

@@ -20,17 +20,31 @@
 let
   cfg = config.my.creds;
 
-  # Leeres Flag-Argument wenn kein TPM — kein doppeltes Leerzeichen im Befehl
   tpmFlag = lib.optionalString cfg.useTpm "--with-key=tpm2";
 
   sealExample =
     name:
     "printf '%s' 'WERT' | systemd-creds encrypt ${tpmFlag} --name=${name} - ${cfg.storeDir}/${name}.cred";
+
+  credentialCheckScript = pkgs.writeShellScript "credential-store-check" ''
+    set -euo pipefail
+    echo "=== systemd-creds Check (${if cfg.useTpm then "TPM2" else "host key"}) ==="
+    _missing=0
+    ${lib.concatMapStringsSep "\n" (name: ''
+      if [ ! -f "${cfg.storeDir}/${name}.cred" ]; then
+        echo "  FEHLT:  ${cfg.storeDir}/${name}.cred"
+        echo "  Siegel: ${sealExample name}"
+        _missing=1
+      fi
+    '') cfg.keys}
+    if [ "$_missing" -eq 1 ]; then
+      echo "  Fehlende Credentials versiegeln, dann rebuild."
+      exit 0
+    fi
+    echo "  Alle Credentials vorhanden (${lib.optionalString cfg.useTpm "TPM2-gesiegelt"})."
+  '';
 in
 {
-  # ============================================================================
-  # OPTIONS
-  # ============================================================================
   options.my.creds = {
     enable = lib.mkEnableOption "systemd-creds Credential-Store (Production ab Stufe 9)";
 
@@ -54,15 +68,11 @@ in
     keys = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
-      description = "Erwartete Credential-Namen — fehlendes .cred gibt Warnung bei Aktivierung.";
+      description = "Erwartete Credential-Namen — fehlendes .cred blockiert credential-store-check.";
     };
   };
 
-  # ============================================================================
-  # CONFIG
-  # ============================================================================
   config = lib.mkMerge [
-    # Immer aktiv: sops-nix ist für q958 explizit verboten
     {
       assertions = [
         {
@@ -78,33 +88,23 @@ in
     }
 
     (lib.mkIf cfg.enable {
-      # Credential-Store-Verzeichnis anlegen
       systemd.tmpfiles.rules = [
         "d ${cfg.storeDir} 0700 root root -"
       ];
 
-      # Prüfe bei Aktivierung ob alle deklarierten Credentials versiegelt vorliegen
-      system.activationScripts.credentialCheck = {
-        text = ''
-          echo "=== systemd-creds Check (${if cfg.useTpm then "TPM2" else "host key"}) ==="
-          _missing=0
-          ${lib.concatMapStringsSep "\n" (name: ''
-            if [ ! -f "${cfg.storeDir}/${name}.cred" ]; then
-              echo "  FEHLT:  ${cfg.storeDir}/${name}.cred"
-              echo "  Siegel: ${sealExample name}"
-              _missing=1
-            fi
-          '') cfg.keys}
-          if [ "$_missing" -eq 1 ]; then
-            echo "  Fehlende Credentials versiegeln, dann rebuild."
-          else
-            echo "  Alle Credentials vorhanden (${lib.optionalString cfg.useTpm "TPM2-gesiegelt"})."
-          fi
-        '';
-        deps = [ ];
+      # Read-only Verifikation — kein activationScript, kein State-Mutation.
+      # Operator-sealed .cred-Dateien sind Runtime-Zustand, den Nix nicht kennt.
+      systemd.services.credential-store-check = {
+        description = "Verify sealed systemd-creds exist in ${cfg.storeDir}";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "local-fs.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = credentialCheckScript;
+        };
       };
 
-      # tpm2-tss-Pakete nur wenn TPM aktiv
       environment.systemPackages = lib.optionals cfg.useTpm [
         pkgs.tpm2-tss
         pkgs.tpm2-tools

@@ -4,6 +4,7 @@
 # status: "active"
 # layer: 4
 # purpose: "Domäne 10-network — aggregiert Kern-Netzwerk, Gateway, Ingress"
+# schema: "100x=Service-Port, 109x=Infrastruktur (ADR-011 Isomorphie)"
 # provides: []
 # requires: []
 # ports: []
@@ -13,12 +14,12 @@
 { ... }:
 {
   imports = [
-    ./11-network.nix
-    ./12-blocky.nix
-    ./13-gateway.nix
-    ./14-ingress.nix
-    ./15-databases.nix
-    ./16-vpn.nix
-    ./17-pocket-id.nix
+    ./1090-host-network.nix
+    ./1002-blocky.nix
+    ./1003-gateway.nix
+    ./1094-ingress.nix
+    ./1095-databases.nix
+    ./1096-vpn.nix
+    ./1001-pocket-id.nix
   ];
 }

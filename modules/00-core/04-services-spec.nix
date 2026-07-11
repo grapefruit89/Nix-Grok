@@ -10,6 +10,7 @@
 #   lib:
 #     - lib/services-spec.nix
 #     - lib/dns-map.nix
+#     - lib/unix-sockets.nix
 #   tags:
 #     - services-spec
 #     - ports
@@ -21,6 +22,7 @@
 }:
 let
   specLib = import ../../lib/services-spec.nix { inherit lib; };
+  sockets = import ../../lib/unix-sockets.nix { inherit lib; };
   domain = config.my.configs.identity.domain;
   dnsMap = import ../../lib/dns-map.nix { inherit domain; };
 in
@@ -32,11 +34,12 @@ in
   };
 
   config = {
-    my.services.spec = specLib.mkDefaultSpec config.my.ports;
+    my.services.spec = specLib.mkDefaultSpec config.my.ports sockets.specSockets;
 
     assertions = [
       (specLib.portRegistryAssertion config.my.ports)
       (specLib.specPortAssertion config.my.services.spec)
+      (sockets.socketDriftAssertion config.my.services.spec sockets.specSockets)
       {
         assertion =
           !(config.services.caddy.enable or false) || (config.my.ingress.fromSpec.enable or false);

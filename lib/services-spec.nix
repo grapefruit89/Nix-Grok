@@ -65,15 +65,15 @@ let
     in
     dups;
 
-  mkDefaultSpec = ports: {
+  mkDefaultSpec = ports: sockets: {
     # --- loopback (kein Caddy-Ingress) ---
     postgresql = {
-      socket = "/run/postgresql/.s.PGSQL.5432";
+      socket = sockets.postgresql;
       zone = "loopback";
       description = "PostgreSQL";
     };
     valkey = {
-      socket = "/run/redis-valkey/valkey.sock";
+      socket = sockets.valkey;
       zone = "loopback";
       description = "Valkey Cache";
     };
@@ -102,13 +102,13 @@ let
       description = "SMART Disk Health";
     };
     grafana = {
-      socket = "/run/grafana/grafana.sock";
+      socket = sockets.grafana;
       zone = "internal";
       subdomain = "grafana";
       description = "Metrics UI";
     };
     secrets-portal = {
-      socket = "/run/secrets-portal/secrets-portal.sock";
+      socket = sockets.secrets-portal;
       zone = "internal";
       subdomain = "secrets";
       description = "Credential Rotation Portal";

@@ -1,4 +1,5 @@
 # ---
+# schema: "109x=Infrastruktur-Band (kein Service-Port)"
 # meta:
 #   id: NIXH-10-ING-001
 #   layer: 3
