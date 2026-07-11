@@ -53,7 +53,11 @@ let
   ddnsFqdn = p.network.ddns.fqdn;
   ddnsWildcardFqdn = p.network.ddns.wildcardFqdn;
   ddnsInfraZone = p.network.ddns.infraZone or "m7c5.de";
-  ddnsInfraHosts = p.network.ddns.infraHosts or [ "wg" "nix" ];
+  ddnsInfraHosts =
+    p.network.ddns.infraHosts or [
+      "wg"
+      "nix"
+    ];
   infraHostsBash = lib.concatStringsSep " " ddnsInfraHosts;
   infraJqEntries = lib.concatStringsSep ",\n                " (
     map (
@@ -245,6 +249,7 @@ let
           chmod 600 ${secretsDir}/ddns-updater-config.json
           install -d -m 755 -o ddns-updater -g ddns-updater /var/lib/ddns-updater
           install -m 600 -o ddns-updater -g ddns-updater \
+            ${secretsDir}/ddns-updater-config.json /var/lib/ddns-updater/config.json
           # Infra-A-Records (wg/nix) in Cloudflare anlegen falls fehlend
           PUBLIC_IP=$(${pkgs.curl}/bin/curl -sf -4 --max-time 15 https://ifconfig.me/ip || true)
           if [ -n "$PUBLIC_IP" ] && [ -n "$INFRA_ZONE_ID" ]; then
@@ -263,7 +268,6 @@ let
               fi
             done
           fi
-            ${secretsDir}/ddns-updater-config.json /var/lib/ddns-updater/config.json
         fi
 
         # Privado WG — Key aus profile.local.nix → .env + Keyfile für wg-quick
