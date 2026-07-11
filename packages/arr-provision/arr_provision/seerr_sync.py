@@ -11,6 +11,9 @@ from typing import Any, Optional
 
 from arr_provision.common import http_json, read_key_file, wait_for_url
 
+DEFAULT_PROFILE = "German 1080p HEVC"
+FALLBACK_PROFILE = "English 1080p HEVC"
+
 
 def _headers(api_key: Optional[str] = None, cookie: Optional[str] = None) -> dict[str, str]:
     hdrs: dict[str, str] = {}
@@ -146,12 +149,50 @@ def _resolve_api_key(base_url: str, cfg: dict[str, Any]) -> Optional[str]:
     return _initialize_with_jellyfin(base_url, cfg)
 
 
-def _first_profile(test_body: dict[str, Any]) -> tuple[Optional[int], Optional[str]]:
+def _pick_profile(
+    test_body: dict[str, Any],
+    *,
+    preferred: Optional[str] = None,
+    fallback: Optional[str] = None,
+) -> tuple[Optional[int], Optional[str]]:
     profiles = test_body.get("profiles") or []
     if not profiles:
         return None, None
+
+    by_name = {
+        str(item.get("name")): item
+        for item in profiles
+        if isinstance(item, dict) and item.get("name") is not None
+    }
+    for name in (preferred, fallback, DEFAULT_PROFILE, FALLBACK_PROFILE):
+        if name and name in by_name:
+            profile = by_name[name]
+            return profile.get("id"), profile.get("name")
+
     profile = profiles[0]
     return profile.get("id"), profile.get("name")
+
+
+def _sync_locale(base_url: str, api_key: str, cfg: dict[str, Any]) -> None:
+    locale = cfg.get("locale", "de")
+    status, main = http_json("GET", f"{base_url}/api/v1/settings/main", headers=_headers(api_key=api_key))
+    if status >= 400 or not isinstance(main, dict):
+        print(f"Seerr locale: settings/main GET failed (HTTP {status})", file=sys.stderr)
+        return
+    if main.get("locale") == locale:
+        print(f"Seerr locale already {locale}")
+        return
+    main["locale"] = locale
+    put_status, _ = http_json(
+        "POST",
+        f"{base_url}/api/v1/settings/main",
+        headers=_headers(api_key=api_key),
+        body=main,
+    )
+    if put_status < 400:
+        print(f"Seerr locale → {locale}")
+    else:
+        print(f"Seerr locale update failed (HTTP {put_status})", file=sys.stderr)
 
 
 def _configure_arr(
@@ -176,9 +217,13 @@ def _configure_arr(
 
     profile_id = target.get("activeProfileId")
     profile_name = target.get("activeProfileName")
-    if profile_id is None:
-        profile_id, profile_name = _first_profile(test_body)
-    if profile_id is None:
+    if profile_id is None or not profile_name:
+        profile_id, profile_name = _pick_profile(
+            test_body,
+            preferred=target.get("activeProfileName"),
+            fallback=target.get("fallbackProfileName"),
+        )
+    if profile_id is None or not profile_name:
         print(f"Seerr {service}: no quality profile found", file=sys.stderr)
         return
 
@@ -196,31 +241,38 @@ def _configure_arr(
         "is4k": target.get("is4k", False),
         "syncEnabled": target.get("syncEnabled", True),
         "preventSearch": target.get("preventSearch", False),
-        "enableSeasonFolders": target.get("enableSeasonFolders", True),
     }
     if service == "sonarr":
+        server_payload["enableSeasonFolders"] = target.get("enableSeasonFolders", True)
         server_payload["seriesType"] = target.get("seriesType", "standard")
         server_payload["animeSeriesType"] = target.get("animeSeriesType", "anime")
-        server_payload["activeAnimeDirectory"] = target.get("activeAnimeDirectory", server_payload["activeDirectory"])
+        server_payload["activeAnimeDirectory"] = target.get(
+            "activeAnimeDirectory", server_payload["activeDirectory"]
+        )
         server_payload["activeAnimeProfileId"] = int(profile_id)
         server_payload["activeAnimeProfileName"] = profile_name
+    if service == "radarr":
+        server_payload["minimumAvailability"] = target.get("minimumAvailability", "released")
 
     status, existing = http_json("GET", endpoint, headers=headers)
     existing_id = None
     if status < 400 and isinstance(existing, list):
-        existing_id = next((item.get("id") for item in existing if item.get("name") == server_payload["name"]), None)
+        existing_id = next(
+            (item.get("id") for item in existing if item.get("name") == server_payload["name"]),
+            None,
+        )
 
-    if existing_id:
-        status, _ = http_json("PUT", f"{endpoint}/{existing_id}", headers=headers, body=server_payload)
+    if existing_id is not None:
+        status, resp = http_json("PUT", f"{endpoint}/{existing_id}", headers=headers, body=server_payload)
         action = "updated"
     else:
-        status, _ = http_json("POST", endpoint, headers=headers, body=server_payload)
+        status, resp = http_json("POST", endpoint, headers=headers, body=server_payload)
         action = "created"
 
     if status in (200, 201, 204):
-        print(f"Seerr {service}: {action} ({server_payload['name']})")
+        print(f"Seerr {service}: {action} ({server_payload['name']}, profile {profile_name})")
     else:
-        print(f"Seerr {service}: failed to {action} (HTTP {status})", file=sys.stderr)
+        print(f"Seerr {service}: failed to {action} (HTTP {status}): {resp}", file=sys.stderr)
 
 
 def sync_seerr() -> int:
@@ -236,6 +288,8 @@ def sync_seerr() -> int:
     api_key = _resolve_api_key(base_url, cfg)
     if not api_key:
         return 0
+
+    _sync_locale(base_url, api_key, cfg)
 
     for service in ("sonarr", "radarr"):
         target = cfg.get(service)

@@ -24,7 +24,7 @@ in
   options.my.services.blocky = {
     enable = lib.mkEnableOption "Blocky DNS resolver with ad-blocking for LAN clients";
     allowlistFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = ''
         Optionaler Host-Pfad für lokale Ads-Allowlist (nicht im Nix-Store).

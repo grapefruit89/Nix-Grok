@@ -56,6 +56,11 @@ in
       default = "/var/lib/zigbee2mqtt";
       description = "Zigbee2MQTT data folder.";
     };
+    mosquittoDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/mosquitto";
+      description = "Mosquitto data directory.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -111,7 +116,7 @@ in
 
     my.impermanence.extraPaths = [
       cfg.dataDir
-      "/var/lib/mosquitto"
+      cfg.mosquittoDir
     ];
 
     systemd = {
@@ -124,7 +129,7 @@ in
             ProtectHome = true;
             PrivateTmp = true;
             NoNewPrivileges = true;
-            ReadWritePaths = [ "/var/lib/mosquitto" ];
+            ReadWritePaths = [ cfg.mosquittoDir ];
             OOMScoreAdjust = -100;
           };
         };
@@ -151,7 +156,7 @@ in
 
       tmpfiles.rules = [
         "d ${cfg.dataDir} 0750 zigbee2mqtt mqtt -"
-        "d /var/lib/mosquitto 0750 mosquitto mqtt -"
+        "d ${cfg.mosquittoDir} 0750 mosquitto mqtt -"
       ];
     };
 

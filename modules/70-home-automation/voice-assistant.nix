@@ -101,7 +101,7 @@ let
                         wf.setnchannels(self._channels); wf.setsampwidth(self._width); wf.setframerate(self._rate)
                         for c in self._chunks: wf.writeframes(c.audio)
                     try:
-                        text = await asyncio.get_event_loop().run_in_executor(None, _transcribe, buf.getvalue(), self._key)
+                        text = await asyncio.get_running_loop().run_in_executor(None, _transcribe, buf.getvalue(), self._key)
                     except Exception as e:
                         print(f"Groq error: {e}", file=sys.stderr)
                 await self.write_event(Transcript(text=text).event())
@@ -179,7 +179,7 @@ let
             if Synthesize.is_type(event.type):
                 req = Synthesize.from_event(event)
                 try:
-                    pcm = await asyncio.get_event_loop().run_in_executor(
+                    pcm = await asyncio.get_running_loop().run_in_executor(
                         None, _synthesize, req.text, self._voice, self._key)
                 except Exception as e:
                     print(f"Google TTS error: {e}", file=sys.stderr)
@@ -359,6 +359,7 @@ in
     })
 
     (lib.mkIf (cfg.enable && cfg.tts.enable) {
+      networking.firewall.allowedTCPPorts = [ cfg.tts.port ];
       systemd.services.google-tts-wyoming = {
         description = "Google Cloud TTS Wyoming bridge";
         after = [

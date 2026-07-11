@@ -27,7 +27,7 @@ let
       jellyfinUseSsl = false;
       jellyfinUrlBase = "";
       serverType = 2;
-      locale = lib.removeSuffix ".UTF-8" (locale.default or "de_DE.UTF-8");
+      locale = locale.language or "de";
     }
     // lib.optionalAttrs config.my.services.sonarr.enable {
       sonarr = {
@@ -37,6 +37,8 @@ let
         port = ports.sonarr;
         apiKeyFile = "/var/lib/secrets/sonarr_api_key";
         activeDirectory = cfgSync.sonarr.activeDirectory;
+        activeProfileName = cfgSync.sonarr.activeProfileName;
+        fallbackProfileName = cfgSync.sonarr.fallbackProfileName;
         isDefault = true;
         syncEnabled = true;
       };
@@ -49,6 +51,9 @@ let
         port = ports.radarr;
         apiKeyFile = "/var/lib/secrets/radarr_api_key";
         activeDirectory = cfgSync.radarr.activeDirectory;
+        activeProfileName = cfgSync.radarr.activeProfileName;
+        fallbackProfileName = cfgSync.radarr.fallbackProfileName;
+        minimumAvailability = cfgSync.radarr.minimumAvailability;
         isDefault = true;
         syncEnabled = true;
       };
@@ -83,16 +88,45 @@ in
       };
     };
 
-    sonarr.activeDirectory = lib.mkOption {
-      type = lib.types.str;
-      default = "/data/media/tv";
-      description = "Root-Ordner für Serien in Seerr.";
+    sonarr = {
+      activeDirectory = lib.mkOption {
+        type = lib.types.str;
+        default = "/data/media/tv";
+        description = "Root-Ordner für Serien in Seerr.";
+      };
+      activeProfileName = lib.mkOption {
+        type = lib.types.str;
+        default = "German 1080p HEVC";
+        description = "Bevorzugtes Sonarr-Qualitätsprofil in Seerr.";
+      };
+      fallbackProfileName = lib.mkOption {
+        type = lib.types.str;
+        default = "English 1080p HEVC";
+        description = "Fallback Sonarr-Profil wenn German-Profil fehlt.";
+      };
     };
 
-    radarr.activeDirectory = lib.mkOption {
-      type = lib.types.str;
-      default = "/data/media/movies";
-      description = "Root-Ordner für Filme in Seerr.";
+    radarr = {
+      activeDirectory = lib.mkOption {
+        type = lib.types.str;
+        default = "/data/media/movies";
+        description = "Root-Ordner für Filme in Seerr.";
+      };
+      activeProfileName = lib.mkOption {
+        type = lib.types.str;
+        default = "German 1080p HEVC";
+        description = "Bevorzugtes Radarr-Qualitätsprofil in Seerr.";
+      };
+      fallbackProfileName = lib.mkOption {
+        type = lib.types.str;
+        default = "English 1080p HEVC";
+        description = "Fallback Radarr-Profil wenn German-Profil fehlt.";
+      };
+      minimumAvailability = lib.mkOption {
+        type = lib.types.str;
+        default = "released";
+        description = "Radarr minimumAvailability für Seerr.";
+      };
     };
   };
 
@@ -106,6 +140,8 @@ in
         after = [
           "arr-sync-jellyfin.service"
           "arr-sync-keys.service"
+          "arr-sync-profiles.service"
+          "recyclarr.service"
           "seerr.service"
           "jellyfin.service"
         ]
