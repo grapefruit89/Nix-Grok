@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.my.media.sync.settings;
+  cfgSeerr = config.my.media.sync.seerr;
   ports = config.my.ports;
   arrProvision = pkgs.callPackage ../../../packages/arr-provision { };
   anyArr = config.my.services.sonarr.enable || config.my.services.radarr.enable;
@@ -50,6 +51,8 @@ in
           RADARR_PORT = toString ports.radarr;
           SONARR_KEY_FILE = "/var/lib/secrets/sonarr_api_key";
           RADARR_KEY_FILE = "/var/lib/secrets/radarr_api_key";
+          SONARR_ROOT_FOLDER = cfgSeerr.sonarr.activeDirectory;
+          RADARR_ROOT_FOLDER = cfgSeerr.radarr.activeDirectory;
         };
 
         script = lib.getExe arrProvision.arrSettingsSync;

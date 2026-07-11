@@ -174,6 +174,7 @@ in
           "cast"
         ];
         smlightHost = "SLZB-06M.local";
+        renderDevice = "/dev/dri/renderD128";
       };
       voice-assistant = {
         enable = true;
@@ -219,6 +220,10 @@ in
             label = "Google TTS API Key";
             description = "Wyoming Google Cloud TTS Engine";
             regex = "^AIzaSy[A-Za-z0-9_-]{33}$";
+            restart_services = [
+              "google-tts-wyoming"
+              "home-assistant-wyoming-provision"
+            ];
           }
           {
             name = "pocket-id.env";

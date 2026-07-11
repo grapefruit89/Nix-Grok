@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import Any, Optional
 
@@ -20,6 +21,10 @@ def _jellyfin_base() -> str:
     host = os.environ.get("JELLYFIN_HOST", "127.0.0.1")
     port = int(os.environ.get("JELLYFIN_PORT", "8096"))
     return f"http://{host}:{port}"
+
+
+def _auth_headers(token: str) -> dict[str, str]:
+    return {"X-Emby-Authorization": f'{_EMBY_AUTH}, Token="{token}"'}
 
 
 def _public_info(base_url: str) -> dict[str, Any]:
@@ -70,7 +75,7 @@ def _set_password(
         "POST",
         f"{base_url}/Users/{user_id}/Password",
         headers={
-            "X-Emby-Authorization": f'{_EMBY_AUTH}, Token="{token}"',
+            **_auth_headers(token),
             "Content-Type": "application/json",
         },
         body=payload,
@@ -110,6 +115,78 @@ def _complete_startup(base_url: str, username: str, password: str) -> bool:
     return True
 
 
+def _library_has_path(library: dict[str, Any], path: str) -> bool:
+    locations = library.get("Locations") or []
+    return path in locations
+
+
+def _ensure_libraries(base_url: str, token: str) -> None:
+    libraries = [
+        ("Filme", "movies", os.environ.get("JELLYFIN_MOVIES_PATH", "")),
+        ("Serien", "tvshows", os.environ.get("JELLYFIN_TV_PATH", "")),
+    ]
+    desired = [(name, collection_type, path) for name, collection_type, path in libraries if path]
+    if not desired:
+        return
+
+    status, existing = http_json(
+        "GET",
+        f"{base_url}/Library/VirtualFolders",
+        headers=_auth_headers(token),
+    )
+    if status >= 400 or not isinstance(existing, list):
+        print(f"Jellyfin libraries GET failed (HTTP {status})", file=sys.stderr)
+        return
+
+    for name, collection_type, path in desired:
+        match = next(
+            (item for item in existing if isinstance(item, dict) and item.get("Name") == name),
+            None,
+        )
+        if isinstance(match, dict) and _library_has_path(match, path):
+            print(f"Jellyfin library already configured ({name} → {path})")
+            continue
+
+        if isinstance(match, dict):
+            add_status, add_body = http_json(
+                "POST",
+                f"{base_url}/Library/VirtualFolders/Paths",
+                headers=_auth_headers(token),
+                body={"Name": name, "Path": path},
+            )
+            if add_status in (200, 204):
+                print(f"Jellyfin library path added ({name} → {path})")
+            else:
+                print(
+                    f"Jellyfin library path add failed ({name}, HTTP {add_status}): {add_body}",
+                    file=sys.stderr,
+                )
+            continue
+
+        query = urllib.parse.urlencode(
+            {
+                "name": name,
+                "collectionType": collection_type,
+                "refreshLibrary": "false",
+                "paths": path,
+            }
+        )
+        request = urllib.request.Request(
+            f"{base_url}/Library/VirtualFolders?{query}",
+            headers=_auth_headers(token),
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30.0) as response:
+                if response.status in (200, 204):
+                    print(f"Jellyfin library created ({name} → {path})")
+                else:
+                    print(f"Jellyfin library create failed ({name}, HTTP {response.status})", file=sys.stderr)
+        except urllib.error.HTTPError as exc:
+            raw = exc.read().decode("utf-8", errors="replace")
+            print(f"Jellyfin library create failed ({name}, HTTP {exc.code}): {raw}", file=sys.stderr)
+
+
 def setup_jellyfin() -> int:
     base_url = _jellyfin_base()
     username = os.environ.get("JELLYFIN_ADMIN_USER", "admin")
@@ -128,11 +205,17 @@ def setup_jellyfin() -> int:
     if not public.get("StartupWizardCompleted", False):
         if _complete_startup(base_url, username, password):
             print("Jellyfin admin ready for Seerr")
+        auth = _authenticate(base_url, username, password)
+        if auth:
+            token, _ = auth
+            _ensure_libraries(base_url, token)
         return 0
 
     auth = _authenticate(base_url, username, password)
     if auth:
+        token, user_id = auth
         print(f"Jellyfin admin password already valid ({username})")
+        _ensure_libraries(base_url, token)
         return 0
 
     legacy_password = os.environ.get("JELLYFIN_LEGACY_PASSWORD", "")
@@ -142,6 +225,7 @@ def setup_jellyfin() -> int:
             token, user_id = legacy_auth
             if _set_password(base_url, user_id, token, password, current_password=legacy_password):
                 print(f"Jellyfin admin password migrated to declarative secret ({username})")
+            _ensure_libraries(base_url, token)
             return 0
 
     print(

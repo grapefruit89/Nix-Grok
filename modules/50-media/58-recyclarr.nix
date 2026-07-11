@@ -250,6 +250,20 @@ let
       ];
     }
     {
+      # Language: Not English — reverse scoring für English-only Profil
+      trash_ids = [ "0dc8aec3bd1c47cd6c40c46ecd27e846" ];
+      assign_scores_to = [
+        {
+          name = "German 1080p HEVC";
+          score = 0;
+        }
+        {
+          name = "English 1080p HEVC";
+          score = -10000;
+        }
+      ];
+    }
+    {
       # Not German or English: Hindi/andere Sprachen — hard block in beiden Profilen
       trash_ids = [ "4eadb75fb23d09dfc0a8e3f687e72287" ];
       assign_scores_to = [
@@ -310,6 +324,19 @@ let
         {
           name = "German 1080p HEVC";
           score = 10000;
+        }
+        {
+          name = "English 1080p HEVC";
+          score = -10000;
+        }
+      ];
+    }
+    {
+      trash_ids = [ "69aa1e159f97d860440b04cd6d590c4f" ]; # Language: Not English
+      assign_scores_to = [
+        {
+          name = "German 1080p HEVC";
+          score = 0;
         }
         {
           name = "English 1080p HEVC";

@@ -34,6 +34,28 @@ def _set_repacks_do_not_prefer(base: str, api_key: str, label: str) -> None:
         print(f"{label}: mediamanagement PUT failed (HTTP {status})", file=sys.stderr)
 
 
+def _ensure_root_folder(base: str, api_key: str, path: str, label: str) -> None:
+    if not path:
+        return
+    status, folders = http_json("GET", f"{base}/rootfolder", headers=_headers(api_key))
+    if status >= 400 or not isinstance(folders, list):
+        print(f"{label}: rootfolder GET failed (HTTP {status})", file=sys.stderr)
+        return
+    if any(isinstance(item, dict) and item.get("path") == path for item in folders):
+        print(f"{label}: root folder already exists ({path})")
+        return
+    status, body = http_json(
+        "POST",
+        f"{base}/rootfolder",
+        headers=_headers(api_key),
+        body={"path": path},
+    )
+    if status in (200, 201):
+        print(f"{label}: root folder created ({path})")
+    else:
+        print(f"{label}: root folder POST failed (HTTP {status}): {body}", file=sys.stderr)
+
+
 def _set_profiles_language_any(base: str, api_key: str, label: str) -> None:
     status, profiles = http_json("GET", f"{base}/qualityprofile", headers=_headers(api_key))
     if status >= 400 or not isinstance(profiles, list):
@@ -64,12 +86,20 @@ def _set_profiles_language_any(base: str, api_key: str, label: str) -> None:
             )
 
 
-def _sync_app(host: str, port: int, api_key_file: str, label: str) -> None:
+def _sync_app(
+    host: str,
+    port: int,
+    api_key_file: str,
+    label: str,
+    *,
+    root_folder: str = "",
+) -> None:
     api_key = read_key_file(api_key_file)
     if not api_key:
         print(f"{label}: no API key — skipped", file=sys.stderr)
         return
     base = arr_api_base(host, port, "v3")
+    _ensure_root_folder(base, api_key, root_folder, label)
     _set_repacks_do_not_prefer(base, api_key, label)
     _set_profiles_language_any(base, api_key, label)
 
@@ -83,6 +113,7 @@ def sync_arr_settings() -> int:
             int(os.environ["RADARR_PORT"]),
             os.environ["RADARR_KEY_FILE"],
             "Radarr",
+            root_folder=os.environ.get("RADARR_ROOT_FOLDER", ""),
         )
 
     if os.environ.get("SYNC_SONARR", "0") == "1":
@@ -91,6 +122,7 @@ def sync_arr_settings() -> int:
             int(os.environ["SONARR_PORT"]),
             os.environ["SONARR_KEY_FILE"],
             "Sonarr",
+            root_folder=os.environ.get("SONARR_ROOT_FOLDER", ""),
         )
 
     print("Arr settings sync complete.")

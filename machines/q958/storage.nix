@@ -44,6 +44,8 @@ in
   # singleDisk ohne Tier B/C: Media-Pfade als Stub (bis NIXDATA/NIXMEDIA da sind)
   systemd.tmpfiles.rules = lib.mkIf s.singleDisk [
     "d /data/media 2775 root media -"
+    "d /data/media/tv 2775 root media -"
+    "d /data/media/movies 2775 root media -"
     "d /data/downloads 2775 root media -"
     "d /mnt/fast_pool/cache/jellyfin 0775 jellyfin media -"
     "d /mnt/fast_pool/metadata/jellyfin 2775 jellyfin media -"

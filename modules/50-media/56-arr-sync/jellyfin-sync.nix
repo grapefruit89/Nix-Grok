@@ -49,6 +49,8 @@ in
           JELLYFIN_ADMIN_USER = cfgSeerr.jellyfin.adminUsername;
           JELLYFIN_ADMIN_PASSWORD_FILE = cfgSeerr.jellyfin.adminPasswordFile;
           JELLYFIN_LEGACY_PASSWORD = cfg.legacyPassword;
+          JELLYFIN_TV_PATH = cfgSeerr.sonarr.activeDirectory;
+          JELLYFIN_MOVIES_PATH = cfgSeerr.radarr.activeDirectory;
         };
 
         script = lib.getExe arrProvision.jellyfinSetup;
