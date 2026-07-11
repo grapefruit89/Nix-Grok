@@ -24,10 +24,7 @@ let
   sustainTimer = "nixos-rebuild-load-sustain.timer";
   psiFile = "/proc/pressure/cpu";
   psiThreshold =
-    if cfg.loadThresholdRatio != null then
-      cfg.loadThresholdRatio * 100
-    else
-      cfg.psiSomeAvg10Threshold;
+    if cfg.loadThresholdRatio != null then cfg.loadThresholdRatio * 100 else cfg.psiSomeAvg10Threshold;
 
   readPsiSomeAvg10 = "${pkgs.gawk}/bin/gawk 'match($0,/some avg10=([0-9.]+)/,a){print a[1];exit}' ${psiFile}";
   readPsiSomeAvg60 = "${pkgs.gawk}/bin/gawk 'match($0,/avg60=([0-9.]+)/,a){print a[1];exit}' ${psiFile}";
@@ -158,17 +155,27 @@ in
 {
   options.my.core.rebuild-watchdog = {
     enable = lib.mkEnableOption ''
-      Rebuild-Schutz für gesamten dry-build+switch/test: Zeit-Notstop, CPU-Druck (PSI), Sentinel, Rollback.
+      Rebuild-Schutz für switch/test (dry-build ohne Zeit-Watchdog): Zeit-Notstop, CPU-Druck (PSI), Sentinel, Rollback.
     '';
     timeoutSec = lib.mkOption {
       type = lib.types.int;
       default = 480;
-      description = "Max. Sekunden gesamter switch/test inkl. dry-build (Default 8min, max 600).";
+      description = "Max. Sekunden nur switch/test-Phase (dry-build ohne Watchdog). Default 8min, max 600.";
+    };
+    dryBuildTargetSec = lib.mkOption {
+      type = lib.types.int;
+      default = 60;
+      description = "dry-build-Ziel in Sekunden (Hinweis wenn überschritten, kein Abbruch).";
     };
     dryBuildMaxSec = lib.mkOption {
       type = lib.types.int;
       default = 90;
-      description = "dry-build-Ziel <60s; Log-Warnung ab diesem Wert.";
+      description = "Warn-Schwelle — stderr-Warnung + Log ab diesem Wert (Ziel: dryBuildTargetSec).";
+    };
+    dryBuildFailOnExceed = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "dry-build bei Überschreitung von dryBuildMaxSec abbrechen (sonst nur Warnung).";
     };
     loadSustainSec = lib.mkOption {
       type = lib.types.int;
@@ -221,6 +228,14 @@ in
 
     environment.variables.NIXOS_REBUILD_BIN = realRebuild;
 
+    environment.etc."nixos-rebuild/config.env".text = lib.concatStringsSep "\n" [
+      "DRY_BUILD_TARGET=${toString cfg.dryBuildTargetSec}"
+      "DRY_BUILD_MAX=${toString cfg.dryBuildMaxSec}"
+      "DRY_BUILD_STRICT=${if cfg.dryBuildFailOnExceed then "1" else "0"}"
+      "SWITCH_TIMEOUT=${toString cfg.timeoutSec}"
+      ""
+    ];
+
     systemd.tmpfiles.rules = [
       "d /run/nixos 0755 root root -"
       "d /run/nixos-rebuild-watchdog 0755 root root -"
@@ -237,7 +252,7 @@ in
     };
 
     systemd.timers.nixos-rebuild-watchdog = {
-      description = "Zeit-Notstop (dry-build+switch/test gesamt)";
+      description = "Zeit-Notstop (nur switch/test — dry-build ohne Timer)";
       timerConfig = {
         OnActiveSec = "${toString cfg.timeoutSec}s";
         AccuracySec = "10s";
@@ -254,7 +269,11 @@ in
 
     systemd.services.nixos-rebuild-load-watch = {
       description = "CPU-Druck (PSI) prüfen — event-gesteuert";
-      path = with pkgs; [ gawk coreutils systemd ];
+      path = with pkgs; [
+        gawk
+        coreutils
+        systemd
+      ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = loadWatchScript;
@@ -263,7 +282,11 @@ in
 
     systemd.services.nixos-rebuild-load-sustain = {
       description = "CPU-Druck-Beobachtung (nur bei Überschreitung)";
-      path = with pkgs; [ gawk coreutils systemd ];
+      path = with pkgs; [
+        gawk
+        coreutils
+        systemd
+      ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = loadSustainScript;
@@ -281,7 +304,11 @@ in
 
     systemd.services.nixos-rebuild-psi-sampler = {
       description = "PSI-Langzeit-Sampling für Schwellen-Kalibrierung";
-      path = with pkgs; [ gawk coreutils systemd ];
+      path = with pkgs; [
+        gawk
+        coreutils
+        systemd
+      ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = psiSamplerScript;

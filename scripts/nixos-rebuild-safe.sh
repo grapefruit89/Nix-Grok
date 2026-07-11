@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gesamter switch/test inkl. dry-build unter Watchdog (Zeit + CPU-Last via systemd).
+# dry-build: ohne Zeit-Watchdog. switch/test: Watchdog nur in der Switch-Phase.
 set -euo pipefail
 
 FLAKE="/etc/nixos#q958"
@@ -10,7 +10,16 @@ WATCHDOG_SESSION="/run/nixos-rebuild-watchdog/session"
 WATCHDOG_TIMER="nixos-rebuild-watchdog.timer"
 REBUILD_SENTINEL="/run/nixos/rebuild-in-progress"
 LOG_DIR="/var/log/nixos-rebuild"
+SLOW_LOG="/var/log/nixos-rebuild-watchdog/dry-build-slow.log"
+CONFIG_FILE="/etc/nixos-rebuild/config.env"
+
+# Defaults (überschreibbar via /etc/nixos-rebuild/config.env aus Nix)
+DRY_BUILD_TARGET="${DRY_BUILD_TARGET:-60}"
 DRY_BUILD_MAX="${DRY_BUILD_MAX:-90}"
+DRY_BUILD_STRICT="${DRY_BUILD_STRICT:-0}"
+SWITCH_TIMEOUT="${SWITCH_TIMEOUT:-480}"
+
+[[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
 
 _resolve_nixos_rebuild() {
   local cand wrapper path
@@ -56,11 +65,12 @@ _watchdog_arm() {
 action=$action
 started=$(date +%s)
 pid=$$
+phase=switch
 EOF
   rm -f /run/nixos-rebuild-watchdog/high-load-since /run/nixos-rebuild-watchdog/notstop-reason
   systemctl stop "$WATCHDOG_TIMER" 2>/dev/null || true
   systemctl start "$WATCHDOG_TIMER"
-  echo "⏱  Watchdog aktiv (dry-build+${action}, Zeitlimit via nixos-rebuild-watchdog.timer)"
+  echo "⏱  Watchdog aktiv (nur ${action}, Limit ${SWITCH_TIMEOUT}s via nixos-rebuild-watchdog.timer)"
 }
 
 _watchdog_disarm() {
@@ -89,18 +99,46 @@ _storm_paths_resume() {
   rm -f "$STORM_STATE"
 }
 
+_heartbeat_start() {
+  HEARTBEAT_PID=""
+  (
+    while true; do
+      sleep 30
+      echo "⏳ rebuild läuft noch… $(date +%H:%M:%S)" >&2
+    done
+  ) &
+  HEARTBEAT_PID=$!
+}
+
+_heartbeat_stop() {
+  [[ -n "${HEARTBEAT_PID:-}" ]] && kill "$HEARTBEAT_PID" 2>/dev/null || true
+  HEARTBEAT_PID=""
+}
+
 _rebuild_cleanup() {
+  _heartbeat_stop
   _sentinel_off
   _storm_paths_resume
   _watchdog_disarm
 }
 
 _run_dry_build() {
-  local t0=$(date +%s)
+  local t0 elapsed
+  t0=$(date +%s)
+  echo "━━ dry-build ($FLAKE) — Watchdog aus, Ziel <${DRY_BUILD_TARGET}s, Warnung >${DRY_BUILD_MAX}s"
   "$NIX_REBUILD" dry-build --flake "$FLAKE" --impure
-  local elapsed=$(( $(date +%s) - t0 ))
+  elapsed=$(( $(date +%s) - t0 ))
+  echo "✓ dry-build fertig in ${elapsed}s"
   if [ "$elapsed" -gt "$DRY_BUILD_MAX" ]; then
-    echo "⚠  dry-build ${elapsed}s > ${DRY_BUILD_MAX}s (Ziel <60s)" >&2
+    echo "⚠  WARNUNG: dry-build ${elapsed}s > Limit ${DRY_BUILD_MAX}s (Ziel <${DRY_BUILD_TARGET}s)" >&2
+    mkdir -p "$(dirname "$SLOW_LOG")"
+    echo "$(date -Is) git=${GIT_HASH} elapsed=${elapsed}s limit=${DRY_BUILD_MAX}s" >>"$SLOW_LOG"
+    if [ "$DRY_BUILD_STRICT" = "1" ]; then
+      echo "✗ dry-build abgebrochen (dryBuildFailOnExceed=true)" >&2
+      return 1
+    fi
+  elif [ "$elapsed" -gt "$DRY_BUILD_TARGET" ]; then
+    echo "ℹ  Hinweis: dry-build ${elapsed}s > Ziel ${DRY_BUILD_TARGET}s (unter Limit, OK)" >&2
   fi
 }
 
@@ -112,31 +150,36 @@ fi
 
 case "${1:-dry}" in
   dry|--dry)
-    trap _watchdog_disarm EXIT
-    _watchdog_arm dry-only
+    trap '_heartbeat_stop; _sentinel_off' EXIT
     _sentinel_on
-    echo "━━ dry-build ($FLAKE)"
-    _run_dry_build && touch "$FLAG_FILE" && echo "✓ dry-build OK"
+    _heartbeat_start
+    _run_dry_build && touch "$FLAG_FILE" && echo "✓ dry-build OK — Flag $FLAG_FILE"
+    _heartbeat_stop
     _sentinel_off
     ;;
   check)
-    [ -f "$FLAG_FILE" ] && echo "✓ Flag OK" || { echo "✗ kein Flag" >&2; exit 1; }
+    [ -f "$FLAG_FILE" ] && echo "✓ Flag OK ($FLAG_FILE)" || { echo "✗ kein Flag für $GIT_HASH" >&2; exit 1; }
     ;;
   switch|test)
     ACTION="${1}"
     trap _rebuild_cleanup EXIT
-    _watchdog_arm "$ACTION"
     _sentinel_on
-    echo "━━ dry-build + $ACTION ($FLAKE) — bin=$NIX_REBUILD"
+    _heartbeat_start
+    echo "━━ dry-build + $ACTION — bin=$NIX_REBUILD"
     if ! _run_dry_build; then
-      echo "✗ dry-build fehlgeschlagen" >&2; exit 1
+      echo "✗ dry-build fehlgeschlagen" >&2
+      exit 1
     fi
     touch "$FLAG_FILE"
     _storm_paths_pause
+    _watchdog_arm "$ACTION"
+    _heartbeat_start
     REBUILD_EXIT=0
     LOG_FILE="$LOG_DIR/${ACTION}-$(date +%Y%m%d-%H%M%S).log"
+    echo "━━ $ACTION ($FLAKE)"
     CMD=("$NIX_REBUILD" "$ACTION" --flake "$FLAKE" --impure)
     "${CMD[@]}" 2>&1 | tee "$LOG_FILE" || REBUILD_EXIT=$?
+    _heartbeat_stop
     if [ "$REBUILD_EXIT" -ne 0 ]; then
       systemctl is-failed nixos-rebuild-watchdog.service &>/dev/null && \
         echo "⚠  Notstop — /var/log/nixos-rebuild-watchdog/notstop.log" >&2
