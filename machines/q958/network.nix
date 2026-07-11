@@ -38,6 +38,7 @@ in
   my.security.firewall.ipv6 = p.network.ipv6.firewall;
 
   my.services = {
+    ddns-updater.wanInterface = lan.interface;
     blocky.allowlistFile = blockyAllowlist.file;
     netbird.domain = "netbird.${config.my.configs.identity.domain}";
     netbird.setupKeyFile = secretPath "netbirdSetupKey";

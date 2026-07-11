@@ -17,6 +17,7 @@
   ...
 }:
 let
+  rebuildGuard = import ../../../lib/rebuild-guard.nix { inherit lib; };
   cfg = config.my.services.usenet-confinement;
   privado = config.my.services.privado-vpn;
 
@@ -169,6 +170,7 @@ lib.mkIf (cfg.enable && privado.enable) {
   };
 
   systemd.paths.usenet-vpn-carrier = {
+    unitConfig = rebuildGuard.pathUnitGuard;
     description = "Verify Usenet VPN egress when privado carrier changes";
     wantedBy = [ "multi-user.target" ];
     pathConfig = {

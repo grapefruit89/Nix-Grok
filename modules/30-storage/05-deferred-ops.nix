@@ -17,6 +17,7 @@
   ...
 }:
 let
+  rebuildGuard = import ../../lib/rebuild-guard.nix { inherit lib; };
   storage = config.my.configs.storage;
   tierCMount = storage.tierC.mountPoint;
 in
@@ -159,12 +160,16 @@ in
       systemd.paths.process-delete-queue = {
         description = "Deferred-Delete bei neuem Queue-Eintrag";
         wantedBy = [ "multi-user.target" ];
-        unitConfig = {
+        unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
           TriggerLimitBurst = 1;
           TriggerLimitIntervalSec = "10min";
-        };
+            }
+          ];
         pathConfig = {
           PathExists = "${cfg.queueDir}";
+          DirectoryNotEmpty = "${cfg.queueDir}";
           PathChangedGlob = "${cfg.queueDir}/*";
           Unit = "process-delete-queue.service";
           MakeDirectory = false;
@@ -174,10 +179,13 @@ in
       systemd.paths.process-delete-queue-tierc = {
         description = "Deferred-Delete wenn Tier-C gemountet wird (HDD spin-up)";
         wantedBy = [ "multi-user.target" ];
-        unitConfig = {
+        unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
           TriggerLimitBurst = 1;
           TriggerLimitIntervalSec = "10min";
-        };
+            }
+          ];
         pathConfig = {
           PathExists = "${tierCMount}";
           PathChanged = "${tierCMount}";

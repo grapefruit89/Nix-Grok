@@ -15,6 +15,7 @@
   ...
 }:
 let
+  rebuildGuard = import ../../lib/rebuild-guard.nix { inherit lib; };
   cfg = config.my.security.runtime-guard;
 in
 {
@@ -120,10 +121,13 @@ in
     systemd.paths.security-watchdog-switch = {
       description = "Runtime-Guard nach nixos-rebuild switch";
       wantedBy = [ "multi-user.target" ];
-      unitConfig = {
+      unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
         TriggerLimitBurst = 1;
         TriggerLimitIntervalSec = "2min";
-      };
+            }
+          ];
       pathConfig = {
         PathExists = "/run/current-system";
         PathChanged = "/run/current-system";
@@ -132,9 +136,6 @@ in
       };
     };
 
-    systemd.services.nftables.serviceConfig.ExecStartPost = lib.mkIf cfg.enable (
-      lib.mkAfter [ "+${pkgs.systemd}/bin/systemctl start security-watchdog.service" ]
-    );
     systemd.services.fail2ban.serviceConfig.ExecStartPost = lib.mkIf (
       cfg.enable && cfg.requireFail2ban
     ) (lib.mkAfter [ "+${pkgs.systemd}/bin/systemctl start security-watchdog.service" ]);

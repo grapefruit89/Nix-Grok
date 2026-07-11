@@ -21,6 +21,7 @@
   ...
 }:
 let
+  rebuildGuard = import ../../lib/rebuild-guard.nix { inherit lib; };
   cfg = config.my.security.firewall;
   asserts = import ../../lib/assertions.nix { inherit lib; };
   allowedCountryList = lib.concatStringsSep " " cfg.allowedCountries;
@@ -222,10 +223,13 @@ in
         {
           description = "GeoIP-Refresh nach nixos-rebuild switch (Boot via wantedBy am Service)";
           wantedBy = [ "multi-user.target" ];
-          unitConfig = {
+          unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
             TriggerLimitBurst = 1;
             TriggerLimitIntervalSec = "2min";
-          };
+            }
+          ];
           pathConfig = {
             PathExists = "/run/current-system";
             PathChanged = "/run/current-system";

@@ -46,6 +46,7 @@
   ...
 }:
 let
+  rebuildGuard = import ../../lib/rebuild-guard.nix { inherit lib; };
   factory = import ../../lib/service-factory.nix { inherit lib; };
   memory = import ../../lib/memory-policy.nix {
     inherit lib;
@@ -198,10 +199,13 @@ in
           systemd.paths.jellyfin-transcode-cleanup = {
             description = "Jellyfin: Transcode-Cleanup bei Segment-Aktivität (max 1×/5min)";
             wantedBy = [ "multi-user.target" ];
-            unitConfig = {
+            unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
               TriggerLimitBurst = 1;
               TriggerLimitIntervalSec = "5min";
-            };
+            }
+          ];
             pathConfig = {
               PathExists = "/run/jellyfin-transcode";
               PathChangedGlob = "/run/jellyfin-transcode/*";

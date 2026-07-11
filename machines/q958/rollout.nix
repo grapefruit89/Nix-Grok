@@ -117,6 +117,7 @@ in
 
   my.security.runtime-guard.enable = erstAb 8;
   my.boot-watchdog.enable = erstAb 5;
+  my.core.rebuild-watchdog.enable = erstAb 1;
   my.disk-health.enable = erstAb 3;
   my.disk-health.hdIdle.enable = erstAb 3;
   my.media.sync = {
@@ -156,7 +157,10 @@ in
 
   my.creds.enable = erstAb 8; # systemd-creds (host key → useTpm = true für TPM)
 
-  my.services.ddns-updater.enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;
+  my.services.ddns-updater = {
+    enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;
+    eventDriven = lib.mkDefault true;
+  };
   my.services.dns-guard.enable =
     if p.network.ddns.enable && p.domain.nixSubdomain then erstAb 5 else lib.mkForce false;
 

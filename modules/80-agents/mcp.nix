@@ -22,6 +22,7 @@
   ...
 }:
 let
+  rebuildGuard = import ../../lib/rebuild-guard.nix { inherit lib; };
   user = config.my.configs.identity.user;
   userHome = "/home/${user}";
   context7Key = "${userHome}/.config/context7/api_key";
@@ -183,9 +184,14 @@ in
         services.nixos-docs-indexer = {
           description = "Indexiert /etc/nixos in nixos_docs.sqlite (FTS + Meta + Chunks)";
           after = [ "local-fs.target" ];
+          wantedBy = [ "multi-user.target" ];
+          startLimitIntervalSec = 0;
+          startLimitBurst = 0;
           serviceConfig = {
             Type = "oneshot";
+            RemainAfterExit = true;
             ExecStart = "${pkgs.python3}/bin/python3 /etc/nixos/scripts/index-nix-files.py";
+            OnSuccess = [ "nixos-docs-embedder.service" ];
             ProtectSystem = "strict";
             ProtectHome = true;
             PrivateTmp = true;
@@ -201,6 +207,8 @@ in
             "nixos-docs-indexer.service"
           ];
           wants = [ "network-online.target" ];
+          startLimitIntervalSec = 0;
+          startLimitBurst = 0;
           serviceConfig = {
             Type = "oneshot";
             Environment = [
@@ -222,22 +230,57 @@ in
           };
         };
 
-        timers.nixos-docs-indexer = {
-          description = "nixos-docs Indexer Timer";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "2min";
-            Persistent = true;
+        paths.nixos-docs-indexer-switch = {
+          description = "nixos-docs Indexer nach nixos-rebuild switch";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "2min";
+            }
+          ];
+          pathConfig = {
+            PathExists = "/run/current-system";
+            PathChanged = "/run/current-system";
+            Unit = "nixos-docs-indexer.service";
+            MakeDirectory = false;
           };
         };
 
-        timers.nixos-docs-embedder = {
-          description = "nixos-docs Embedder Timer (nach Indexer, wöchentlich)";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "5min";
-            OnUnitActiveSec = "7d";
-            Persistent = true;
+        paths.nixos-docs-indexer-flake = {
+          description = "nixos-docs Indexer bei flake.lock-Änderung";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "5min";
+            }
+          ];
+          pathConfig = {
+            PathExists = "/etc/nixos/flake.lock";
+            PathChanged = "/etc/nixos/flake.lock";
+            Unit = "nixos-docs-indexer.service";
+            MakeDirectory = false;
+          };
+        };
+
+        paths.nixos-docs-embedder-db = {
+          description = "nixos-docs Embedder wenn SQLite-Index aktualisiert wurde";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig = lib.mkMerge [
+            rebuildGuard.pathUnitGuard
+            {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "10min";
+            }
+          ];
+          pathConfig = {
+            PathExists = "/var/lib/nixos-docs-mcp/nixos_docs.sqlite";
+            PathChanged = "/var/lib/nixos-docs-mcp/nixos_docs.sqlite";
+            Unit = "nixos-docs-embedder.service";
+            MakeDirectory = false;
           };
         };
       };

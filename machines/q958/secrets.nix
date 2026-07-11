@@ -52,6 +52,14 @@ let
   oidcNavidrome = local.secrets.oidc.navidrome or { };
   ddnsFqdn = p.network.ddns.fqdn;
   ddnsWildcardFqdn = p.network.ddns.wildcardFqdn;
+  ddnsInfraZone = p.network.ddns.infraZone or "m7c5.de";
+  ddnsInfraHosts = p.network.ddns.infraHosts or [ "wg" "nix" ];
+  infraJqEntries = lib.concatStringsSep ",\n                " (
+    map (
+      h:
+      ''{provider: "cloudflare", zone_identifier: $infra_zone_id, domain: "${h}.${ddnsInfraZone}", proxied: false, ttl: 1, token: $token, ip_version: "ipv4"}''
+    ) ddnsInfraHosts
+  );
   externalSubdomains = [
     "auth"
     "seerr"
@@ -206,21 +214,54 @@ let
             echo "DDNS: Cloudflare Zone ${ddnsZone} nicht gefunden — Token prüfen"
             exit 1
           fi
+          INFRA_ZONE="${ddnsInfraZone}"
+          if [ "$INFRA_ZONE" = "${ddnsZone}" ]; then
+            INFRA_ZONE_ID="$ZONE_ID"
+          else
+            INFRA_ZONE_DATA=$(${pkgs.curl}/bin/curl -sf -X GET \
+              "https://api.cloudflare.com/client/v4/zones?name=$INFRA_ZONE" \
+              -H "Authorization: Bearer ${cfToken}" -H "Content-Type: application/json")
+            INFRA_ZONE_ID=$(${pkgs.jq}/bin/jq -r '.result[0].id // empty' <<< "$INFRA_ZONE_DATA")
+            if [ -z "$INFRA_ZONE_ID" ]; then
+              echo "DDNS: Infra-Zone $INFRA_ZONE nicht gefunden — Token prüfen"
+              exit 1
+            fi
+          fi
           ${pkgs.jq}/bin/jq -n \
             --arg token "${cfToken}" \
             --arg zone_id "$ZONE_ID" \
+            --arg infra_zone_id "$INFRA_ZONE_ID" \
             --arg domain "${ddnsFqdn}" \
             --arg wildcard "${ddnsWildcardFqdn}" \
             '{
               settings: [
                 {provider: "cloudflare", zone_identifier: $zone_id, domain: $domain,   proxied: false, ttl: 1, token: $token, ip_version: "ipv4"},
                 {provider: "cloudflare", zone_identifier: $zone_id, domain: $wildcard, proxied: false, ttl: 1, token: $token, ip_version: "ipv4"},
-                ${externalJqEntries}
+                ${externalJqEntries},
+                ${infraJqEntries}
               ]
             }' > ${secretsDir}/ddns-updater-config.json
           chmod 600 ${secretsDir}/ddns-updater-config.json
           install -d -m 755 -o ddns-updater -g ddns-updater /var/lib/ddns-updater
           install -m 600 -o ddns-updater -g ddns-updater \
+          # Infra-A-Records (wg/nix) in Cloudflare anlegen falls fehlend
+          PUBLIC_IP=$(${pkgs.curl}/bin/curl -sf -4 --max-time 15 https://ifconfig.me/ip || true)
+          if [ -n "$PUBLIC_IP" ] && [ -n "$INFRA_ZONE_ID" ]; then
+            for HOST in ${ddnsInfraHosts}; do
+              FQDN="$HOST.${ddnsInfraZone}"
+              EXISTS=$(${pkgs.curl}/bin/curl -sf \
+                "https://api.cloudflare.com/client/v4/zones/$INFRA_ZONE_ID/dns_records?name=$FQDN&type=A" \
+                -H "Authorization: Bearer ${cfToken}" | ${pkgs.jq}/bin/jq -r '.result | length')
+              if [ "$EXISTS" = "0" ]; then
+                echo "DDNS: lege $FQDN an ($PUBLIC_IP)"
+                ${pkgs.curl}/bin/curl -sf -X POST \
+                  "https://api.cloudflare.com/client/v4/zones/$INFRA_ZONE_ID/dns_records" \
+                  -H "Authorization: Bearer ${cfToken}" -H "Content-Type: application/json" \
+                  --data "{\"type\":\"A\",\"name\":\"$HOST\",\"content\":\"$PUBLIC_IP\",\"ttl\":1,\"proxied\":false}" \
+                  >/dev/null || echo "DDNS: $FQDN anlegen fehlgeschlagen"
+              fi
+            done
+          fi
             ${secretsDir}/ddns-updater-config.json /var/lib/ddns-updater/config.json
         fi
 

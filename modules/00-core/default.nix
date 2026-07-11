@@ -19,6 +19,7 @@
     ./04-services-spec.nix
     ./05-creds.nix
     ./06-boot-watchdog.nix
+    ./10-rebuild-watchdog.nix
     ./07-structure-validation.nix
     ./08-ports.nix
     ./09-network-routing.nix
