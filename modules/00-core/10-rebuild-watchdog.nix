@@ -20,6 +20,10 @@ let
   systemctl = "${pkgs.systemd}/bin/systemctl";
   switchToConf = "/nix/var/nix/profiles/system/bin/switch-to-configuration";
   realRebuild = "${pkgs.nixos-rebuild}/bin/nixos-rebuild";
+  safeScriptSrc = ../../scripts/nixos-rebuild-safe.sh;
+  safeScript = pkgs.writeShellScript "nixos-rebuild-safe" (
+    lib.removePrefix "#!/usr/bin/env bash\n" (builtins.readFile safeScriptSrc)
+  );
   stormList = lib.concatStringsSep " " cfg.stormPathUnits;
   sustainTimer = "nixos-rebuild-load-sustain.timer";
   psiFile = "/proc/pressure/cpu";
@@ -177,6 +181,11 @@ in
       default = false;
       description = "dry-build bei Überschreitung von dryBuildMaxSec abbrechen (sonst nur Warnung).";
     };
+    timingWindow = lib.mkOption {
+      type = lib.types.int;
+      default = 30;
+      description = "Rollierender Durchschnitt: letzte N erfolgreiche Läufe in timings.csv.";
+    };
     loadSustainSec = lib.mkOption {
       type = lib.types.int;
       default = 300;
@@ -233,6 +242,7 @@ in
       "DRY_BUILD_MAX=${toString cfg.dryBuildMaxSec}"
       "DRY_BUILD_STRICT=${if cfg.dryBuildFailOnExceed then "1" else "0"}"
       "SWITCH_TIMEOUT=${toString cfg.timeoutSec}"
+      "TIMING_WINDOW=${toString cfg.timingWindow}"
       ""
     ];
 
@@ -241,6 +251,7 @@ in
       "d /run/nixos-rebuild-watchdog 0755 root root -"
       "d /var/log/nixos-rebuild-watchdog 0755 root root -"
       "d /var/log/nixos-rebuild 0755 root root -"
+      "f /var/log/nixos-rebuild-watchdog/timings.csv 0644 root root - timestamp,git_hash,phase,seconds,exit_code,user"
     ];
 
     systemd.services.nixos-rebuild-watchdog = {
@@ -326,12 +337,22 @@ in
     };
 
     environment.systemPackages = [
+      safeScript
       (pkgs.writeShellScriptBin "nixos-rebuild" ''
-        if [[ "''${1:-}" == "switch" || "''${1:-}" == "test" ]]; then
-          exec /etc/nixos/scripts/nixos-rebuild-safe.sh "''${1}"
-        fi
+        case "''${1:-}" in
+          switch|test)
+            exec ${safeScript} "''${1}"
+            ;;
+          dry|dry-build|--dry)
+            exec ${safeScript} dry
+            ;;
+        esac
         exec ${realRebuild} "$@"
       '')
     ];
+
+    system.activationScripts.nixosRebuildSafeScript.text = ''
+      install -D -m755 ${safeScript} /etc/nixos/scripts/nixos-rebuild-safe.sh
+    '';
   };
 }

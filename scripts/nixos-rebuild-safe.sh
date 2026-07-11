@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# dry-build: ohne Zeit-Watchdog. switch/test: Watchdog nur in der Switch-Phase.
+# Einziger Einstieg für dry-build/switch/test — ohne Extra-Parameter.
+# Zeiten → /var/log/nixos-rebuild-watchdog/timings.csv (Durchschnitt automatisch).
 set -euo pipefail
 
 FLAKE="/etc/nixos#q958"
@@ -10,21 +11,21 @@ WATCHDOG_SESSION="/run/nixos-rebuild-watchdog/session"
 WATCHDOG_TIMER="nixos-rebuild-watchdog.timer"
 REBUILD_SENTINEL="/run/nixos/rebuild-in-progress"
 LOG_DIR="/var/log/nixos-rebuild"
-SLOW_LOG="/var/log/nixos-rebuild-watchdog/dry-build-slow.log"
+TIMINGS_CSV="/var/log/nixos-rebuild-watchdog/timings.csv"
 CONFIG_FILE="/etc/nixos-rebuild/config.env"
 
-# Defaults (überschreibbar via /etc/nixos-rebuild/config.env aus Nix)
-DRY_BUILD_TARGET="${DRY_BUILD_TARGET:-60}"
-DRY_BUILD_MAX="${DRY_BUILD_MAX:-90}"
-DRY_BUILD_STRICT="${DRY_BUILD_STRICT:-0}"
-SWITCH_TIMEOUT="${SWITCH_TIMEOUT:-480}"
+DRY_BUILD_TARGET=60
+DRY_BUILD_MAX=90
+DRY_BUILD_STRICT=0
+SWITCH_TIMEOUT=480
+TIMING_WINDOW=30
 
 [[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
 
 _resolve_nixos_rebuild() {
   local cand wrapper path
   if [ -n "${NIXOS_REBUILD_BIN:-}" ] && [ -x "$NIXOS_REBUILD_BIN" ]; then
-    if ! grep -q 'nixos-rebuild-safe\.sh' "$NIXOS_REBUILD_BIN" 2>/dev/null; then
+    if ! grep -q 'nixos-rebuild-safe' "$NIXOS_REBUILD_BIN" 2>/dev/null; then
       echo "$NIXOS_REBUILD_BIN"
       return 0
     fi
@@ -42,7 +43,7 @@ _resolve_nixos_rebuild() {
     echo "$cand"
     return 0
   fi
-  echo "nixos-rebuild nicht auflösbar (Wrapper-Rekursion)" >&2
+  echo "nixos-rebuild nicht auflösbar" >&2
   return 1
 }
 
@@ -55,8 +56,71 @@ STORM_PATHS=(
   dns-guard-secrets.path dns-guard-ddns-config.path dns-guard-ddns-updates.path
 )
 STORM_STATE="/run/nixos-rebuild-watchdog/storm-paths-active"
+DRY_ELAPSED=0
+SWITCH_ELAPSED=0
 
 mkdir -p "$FLAG_DIR" "$LOG_DIR" /run/nixos /run/nixos-rebuild-watchdog
+
+_timing_init() {
+  mkdir -p "$(dirname "$TIMINGS_CSV")"
+  if [[ ! -f "$TIMINGS_CSV" ]]; then
+    echo "timestamp,git_hash,phase,seconds,exit_code,user" >"$TIMINGS_CSV"
+  fi
+}
+
+_timing_record() {
+  local phase="$1" seconds="$2" exit_code="$3"
+  local user="${SUDO_USER:-${USER:-unknown}}"
+  _timing_init
+  echo "$(date -Is),${GIT_HASH},${phase},${seconds},${exit_code},${user}" >>"$TIMINGS_CSV"
+}
+
+_timing_stats() {
+  local phase="$1"
+  awk -F, -v phase="$phase" -v win="${TIMING_WINDOW}" '
+    NR==1 { next }
+    $3 == phase && $5 == 0 { rows[++n] = $4 + 0 }
+    END {
+      if (n == 0) { print "0 0 0 0"; exit }
+      start = (n > win) ? n - win + 1 : 1
+      sum = 0; min = rows[start]; max = rows[start]
+      for (i = start; i <= n; i++) {
+        sum += rows[i]
+        if (rows[i] < min) min = rows[i]
+        if (rows[i] > max) max = rows[i]
+      }
+      cnt = n - start + 1
+      printf "%d %d %d %d", int(sum / cnt + 0.5), min, max, cnt
+    }
+  ' "$TIMINGS_CSV"
+}
+
+_timing_report() {
+  local phase="$1" elapsed="$2"
+  local avg min max cnt delta
+  read -r avg min max cnt < <(_timing_stats "$phase")
+  if [[ "$cnt" -eq 0 ]]; then
+    echo "  ${phase}: ${elapsed}s (noch keine Vergleichsdaten)"
+    return
+  fi
+  delta=$((elapsed - avg))
+  if [[ "$delta" -gt 15 ]]; then
+    echo "  ${phase}: ${elapsed}s — Ø ${avg}s (min ${min}, max ${max}, n=${cnt}) ⚠ +${delta}s über Normal" >&2
+  else
+    echo "  ${phase}: ${elapsed}s — Ø ${avg}s (min ${min}, max ${max}, n=${cnt})"
+  fi
+}
+
+_timing_summary() {
+  echo "━━ Build-Zeiten (letzte ${TIMING_WINDOW} erfolgreiche Läufe)"
+  [[ "$DRY_ELAPSED" -gt 0 ]] && _timing_report "dry-build" "$DRY_ELAPSED"
+  [[ "$SWITCH_ELAPSED" -gt 0 ]] && _timing_report "switch" "$SWITCH_ELAPSED"
+  if [[ "$DRY_ELAPSED" -gt 0 && "$SWITCH_ELAPSED" -gt 0 ]]; then
+    local total=$((DRY_ELAPSED + SWITCH_ELAPSED))
+    _timing_report "total" "$total"
+  fi
+  echo "   Log: $TIMINGS_CSV"
+}
 
 _watchdog_arm() {
   local action="$1"
@@ -70,7 +134,6 @@ EOF
   rm -f /run/nixos-rebuild-watchdog/high-load-since /run/nixos-rebuild-watchdog/notstop-reason
   systemctl stop "$WATCHDOG_TIMER" 2>/dev/null || true
   systemctl start "$WATCHDOG_TIMER"
-  echo "⏱  Watchdog aktiv (nur ${action}, Limit ${SWITCH_TIMEOUT}s via nixos-rebuild-watchdog.timer)"
 }
 
 _watchdog_disarm() {
@@ -101,12 +164,7 @@ _storm_paths_resume() {
 
 _heartbeat_start() {
   HEARTBEAT_PID=""
-  (
-    while true; do
-      sleep 30
-      echo "⏳ rebuild läuft noch… $(date +%H:%M:%S)" >&2
-    done
-  ) &
+  ( while true; do sleep 30; echo "⏳ … $(date +%H:%M:%S)" >&2; done ) &
   HEARTBEAT_PID=$!
 }
 
@@ -122,24 +180,33 @@ _rebuild_cleanup() {
   _watchdog_disarm
 }
 
+_check_dry_duration() {
+  local elapsed="$1"
+  if [[ "$elapsed" -gt "$DRY_BUILD_MAX" ]]; then
+    echo "⚠  dry-build ${elapsed}s > Limit ${DRY_BUILD_MAX}s (Ziel <${DRY_BUILD_TARGET}s)" >&2
+    [[ "$DRY_BUILD_STRICT" == "1" ]] && return 1
+  elif [[ "$elapsed" -gt "$DRY_BUILD_TARGET" ]]; then
+    echo "ℹ  dry-build ${elapsed}s > Ziel ${DRY_BUILD_TARGET}s (OK)" >&2
+  fi
+  return 0
+}
+
 _run_dry_build() {
   local t0 elapsed
   t0=$(date +%s)
-  echo "━━ dry-build ($FLAKE) — Watchdog aus, Ziel <${DRY_BUILD_TARGET}s, Warnung >${DRY_BUILD_MAX}s"
+  echo "━━ dry-build ($FLAKE)"
   "$NIX_REBUILD" dry-build --flake "$FLAKE" --impure
   elapsed=$(( $(date +%s) - t0 ))
-  echo "✓ dry-build fertig in ${elapsed}s"
-  if [ "$elapsed" -gt "$DRY_BUILD_MAX" ]; then
-    echo "⚠  WARNUNG: dry-build ${elapsed}s > Limit ${DRY_BUILD_MAX}s (Ziel <${DRY_BUILD_TARGET}s)" >&2
-    mkdir -p "$(dirname "$SLOW_LOG")"
-    echo "$(date -Is) git=${GIT_HASH} elapsed=${elapsed}s limit=${DRY_BUILD_MAX}s" >>"$SLOW_LOG"
-    if [ "$DRY_BUILD_STRICT" = "1" ]; then
-      echo "✗ dry-build abgebrochen (dryBuildFailOnExceed=true)" >&2
-      return 1
-    fi
-  elif [ "$elapsed" -gt "$DRY_BUILD_TARGET" ]; then
-    echo "ℹ  Hinweis: dry-build ${elapsed}s > Ziel ${DRY_BUILD_TARGET}s (unter Limit, OK)" >&2
-  fi
+  DRY_ELAPSED=$elapsed
+  echo "✓ dry-build ${elapsed}s"
+  _check_dry_duration "$elapsed"
+}
+
+_normalize_cmd() {
+  case "${1:-dry}" in
+    dry-build|--dry) echo dry ;;
+    *) echo "${1:-dry}" ;;
+  esac
 }
 
 _untracked=$(git -C /etc/nixos ls-files --others --exclude-standard -- '*.nix' 2>/dev/null)
@@ -148,39 +215,57 @@ if [ -n "$_untracked" ]; then
   exit 1
 fi
 
-case "${1:-dry}" in
-  dry|--dry)
+CMD="$(_normalize_cmd "${1:-}")"
+
+case "$CMD" in
+  dry)
     trap '_heartbeat_stop; _sentinel_off' EXIT
     _sentinel_on
     _heartbeat_start
-    _run_dry_build && touch "$FLAG_FILE" && echo "✓ dry-build OK — Flag $FLAG_FILE"
+    if _run_dry_build; then
+      touch "$FLAG_FILE"
+      _timing_record "dry-build" "$DRY_ELAPSED" 0
+      _timing_summary
+      echo "✓ dry-build OK"
+    else
+      _timing_record "dry-build" "$DRY_ELAPSED" 1
+      exit 1
+    fi
     _heartbeat_stop
     _sentinel_off
     ;;
   check)
-    [ -f "$FLAG_FILE" ] && echo "✓ Flag OK ($FLAG_FILE)" || { echo "✗ kein Flag für $GIT_HASH" >&2; exit 1; }
+    [ -f "$FLAG_FILE" ] && echo "✓ Flag OK" || { echo "✗ kein Flag" >&2; exit 1; }
     ;;
   switch|test)
-    ACTION="${1}"
+    ACTION="$CMD"
     trap _rebuild_cleanup EXIT
     _sentinel_on
     _heartbeat_start
-    echo "━━ dry-build + $ACTION — bin=$NIX_REBUILD"
     if ! _run_dry_build; then
-      echo "✗ dry-build fehlgeschlagen" >&2
+      _timing_record "dry-build" "$DRY_ELAPSED" 1
       exit 1
     fi
+    _timing_record "dry-build" "$DRY_ELAPSED" 0
     touch "$FLAG_FILE"
     _storm_paths_pause
     _watchdog_arm "$ACTION"
-    _heartbeat_start
     REBUILD_EXIT=0
     LOG_FILE="$LOG_DIR/${ACTION}-$(date +%Y%m%d-%H%M%S).log"
-    echo "━━ $ACTION ($FLAKE)"
-    CMD=("$NIX_REBUILD" "$ACTION" --flake "$FLAKE" --impure)
-    "${CMD[@]}" 2>&1 | tee "$LOG_FILE" || REBUILD_EXIT=$?
+    local_t0=$(date +%s)
+    echo "━━ $ACTION ($FLAKE) — Watchdog ${SWITCH_TIMEOUT}s"
+    "$NIX_REBUILD" "$ACTION" --flake "$FLAKE" --impure 2>&1 | tee "$LOG_FILE" || REBUILD_EXIT=$?
+    # fix: use array properly
+    SWITCH_ELAPSED=$(( $(date +%s) - local_t0 ))
     _heartbeat_stop
-    if [ "$REBUILD_EXIT" -ne 0 ]; then
+    if [[ "$ACTION" == "switch" ]]; then
+      _timing_record "switch" "$SWITCH_ELAPSED" "$REBUILD_EXIT"
+      _timing_record "total" "$((DRY_ELAPSED + SWITCH_ELAPSED))" "$REBUILD_EXIT"
+    else
+      _timing_record "test" "$SWITCH_ELAPSED" "$REBUILD_EXIT"
+    fi
+    _timing_summary
+    if [[ "$REBUILD_EXIT" -ne 0 ]]; then
       systemctl is-failed nixos-rebuild-watchdog.service &>/dev/null && \
         echo "⚠  Notstop — /var/log/nixos-rebuild-watchdog/notstop.log" >&2
       systemctl reset-failed 2>/dev/null || true
@@ -190,7 +275,7 @@ case "${1:-dry}" in
     echo "✓ $ACTION OK — $LOG_FILE"
     ;;
   *)
-    echo "Usage: $0 [dry|check|switch|test]" >&2
+    echo "Usage: nixos-rebuild-safe [dry|switch|test|check]" >&2
     exit 1
     ;;
 esac

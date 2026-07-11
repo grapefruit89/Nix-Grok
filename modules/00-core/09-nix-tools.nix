@@ -143,8 +143,9 @@ in
         top = "btop";
         noogle = "noogle-search"; # Nix lib.*-Funktionen + builtins interaktiv suchen
         # NixOS Rebuild-Workflow — immer via Safe-Script (dry-build-Gate + Log nach /tmp/nixos-switch.log)
-        nsw = "sudo /etc/nixos/scripts/nixos-rebuild-safe.sh switch";
-        ntest = "sudo /etc/nixos/scripts/nixos-rebuild-safe.sh test";
+        ndry = "sudo nixos-rebuild-safe dry";
+        nsw = "sudo nixos-rebuild-safe switch";
+        ntest = "sudo nixos-rebuild-safe test";
         nup = "cd /etc/nixos && nix flake update";
         nclean = "sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +5 && sudo nix-store --gc";
       };
