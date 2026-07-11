@@ -38,7 +38,8 @@ let
     IFACE=privado
     CHECK_URL="https://api.ipify.org"
     STATE_FILE=${stateFile}
-    CACHE_TTL=300
+    CACHE_TTL=60
+    ${pkgs.coreutils}/bin/mkdir -p ${stateDir}
 
     # Parallele Trigger (path units + ExecStartPre) — frisches OK wiederverwenden
     if [[ -r "$STATE_FILE" ]] && ${pkgs.jq}/bin/jq -e '.ok == true' "$STATE_FILE" >/dev/null 2>&1; then
@@ -107,7 +108,6 @@ let
       exit 1
     fi
 
-    mkdir -p ${stateDir}
     ${pkgs.jq}/bin/jq -n \
       --arg host "$HOST_IP" \
       --arg vpn "$USENET_IP" \

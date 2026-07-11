@@ -192,17 +192,7 @@ in
         # Privado ist optional (Key fehlt auf niedrigen Stufen) — nicht für network-online zählen.
         systemd.network.wait-online.ignoredInterfaces = lib.mkAfter [ "privado" ];
 
-        # networkd.nix hängt wait-online an network-online.target — ohne Fix: 2min Timeout beim switch.
-        # Ohne diesen Fix: 2min Timeout bei jedem nixos-rebuild switch. (→ ADR-2030)
-        systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
-
-        # Regression-Schutz: Assertion schlägt beim dry-build fehl wenn wantedBy nicht leer ist.
-        # Fängt nixpkgs-Updates oder versehentliches Entfernen des mkForce [] sofort ab.
         assertions = [
-          {
-            assertion = config.systemd.services."systemd-networkd-wait-online".wantedBy == [ ];
-            message = "[ADR-2030] systemd-networkd-wait-online.wantedBy ist nicht leer — nixos-rebuild switch würde 2min blockieren. Fix: mkForce [] in modules/10-network/1096-vpn.nix prüfen.";
-          }
           {
             assertion = cfgPrivado.ipAddress != "";
             message = "my.services.privado-vpn.ipAddress fehlt — machines/<host>/profile.nix → p.network.privado.address.";

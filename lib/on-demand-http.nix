@@ -16,7 +16,6 @@
   internalOffset,
 }:
 let
-  inherit (lib) mkForce;
   bindAddr = "127.0.0.1";
   proxyBin = "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd";
   systemctl = "${pkgs.systemd}/bin/systemctl";
@@ -70,7 +69,7 @@ in
         requires = lib.mkForce [ "${name}.socket" ];
         after = lib.mkForce [ "${name}.socket" ];
         partOf = lib.mkForce [ "${name}.socket" ];
-        wantedBy = mkForce [ ];
+        wantedBy = lib.mkForce [ ];
         environment = lib.mkForce { };
         unitConfig = {
           StartLimitIntervalSec = lib.mkForce 0;

@@ -21,7 +21,7 @@ in
 {
   options.my.security.runtime-guard = {
     enable = lib.mkEnableOption "Runtime security watchdog (Build ≠ Runtime)";
-    # Kein periodischer Timer — Auslöser: Boot, nixos-switch, Security-Service-Restarts.
+    # Auslöser: Boot, nixos-switch (+ periodischer Fallback), Security-Service-Restarts.
     requireNftables = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -133,6 +133,18 @@ in
         PathChanged = "/run/current-system";
         Unit = "security-watchdog.service";
         MakeDirectory = false;
+      };
+    };
+
+    # PathChanged auf /run/current-system ist unzuverlässig bei symlink-rename (IN_MOVED_TO auf parent).
+    # Periodischer Fallback fängt verpasste Trigger auf.
+    systemd.timers.security-watchdog-periodic = {
+      description = "Periodischer Fallback für Runtime-Guard (PathChanged auf Symlink-Rename unzuverlässig)";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "*:0/30";
+        Persistent = true;
+        Unit = "security-watchdog.service";
       };
     };
 

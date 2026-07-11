@@ -39,7 +39,7 @@ let
     '') cfg.keys}
     if [ "$_missing" -eq 1 ]; then
       echo "  Fehlende Credentials versiegeln, dann rebuild."
-      exit 0
+      exit 1
     fi
     echo "  Alle Credentials vorhanden (${lib.optionalString cfg.useTpm "TPM2-gesiegelt"})."
   '';

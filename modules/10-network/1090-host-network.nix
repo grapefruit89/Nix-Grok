@@ -189,5 +189,17 @@ in
         "d /var/log/caddy 0750 caddy caddy -"
       ];
     }
+
+    {
+      # Bedingungslos hier statt in 1096-vpn.nix (privado.enable-abhängig wäre fragil) — ADR-2030.
+      systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
+
+      assertions = [
+        {
+          assertion = config.systemd.services."systemd-networkd-wait-online".wantedBy == [ ];
+          message = "[ADR-2030] systemd-networkd-wait-online.wantedBy ist nicht leer — nixos-rebuild switch würde 2min blockieren. Fix: mkForce [] in modules/10-network/1090-host-network.nix prüfen.";
+        }
+      ];
+    }
   ];
 }

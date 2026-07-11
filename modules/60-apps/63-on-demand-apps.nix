@@ -272,7 +272,6 @@ in
           package = pkgs.callPackage ../../packages/libreseerr { };
         in
         lib.mkMerge [
-          { systemd.services.libreseerr.wantedBy = lib.mkForce [ ]; }
           (mkBackend {
             name = "libreseerr";
             unit = {
