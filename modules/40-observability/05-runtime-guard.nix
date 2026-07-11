@@ -122,12 +122,12 @@ in
       description = "Runtime-Guard nach nixos-rebuild switch";
       wantedBy = [ "multi-user.target" ];
       unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-        TriggerLimitBurst = 1;
-        TriggerLimitIntervalSec = "2min";
-            }
-          ];
+        rebuildGuard.pathUnitGuard
+        {
+          TriggerLimitBurst = 1;
+          TriggerLimitIntervalSec = "2min";
+        }
+      ];
       pathConfig = {
         PathExists = "/run/current-system";
         PathChanged = "/run/current-system";
@@ -138,9 +138,9 @@ in
 
     systemd.services.fail2ban.serviceConfig.ExecStartPost = lib.mkIf (
       cfg.enable && cfg.requireFail2ban
-    ) (lib.mkAfter [ "+${pkgs.systemd}/bin/systemctl start security-watchdog.service" ]);
+    ) (lib.mkAfter [ "+${pkgs.systemd}/bin/systemctl start --no-block security-watchdog.service" ]);
     systemd.services.crowdsec.serviceConfig.ExecStartPost = lib.mkIf (
       cfg.enable && cfg.requireCrowdsec
-    ) (lib.mkAfter [ "+${pkgs.systemd}/bin/systemctl start security-watchdog.service" ]);
+    ) (lib.mkAfter [ "+${pkgs.systemd}/bin/systemctl start --no-block security-watchdog.service" ]);
   };
 }

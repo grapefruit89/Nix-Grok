@@ -158,8 +158,7 @@ in
           printf '%s' "$CURRENT" > "$STATE"
           ${systemctl} start ddns-trigger.service
         '';
-        period =
-          if cfgDdns.eventDriven then cfgDdns.fallbackPeriod else cfgDdns.period;
+        period = if cfgDdns.eventDriven then cfgDdns.fallbackPeriod else cfgDdns.period;
       in
       {
         services.ddns-updater = {
@@ -193,7 +192,11 @@ in
 
         systemd.services.ddns-stale-sync = lib.mkIf cfgDdns.eventDriven {
           description = "DDNS updates.json — veraltete IPs bereinigen";
-          path = with pkgs; [ curl jq coreutils ];
+          path = with pkgs; [
+            curl
+            jq
+            coreutils
+          ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = ddnsStaleSyncScript;
@@ -254,13 +257,17 @@ in
           description = "DDNS nach Config-Änderung anwenden";
           serviceConfig = {
             Type = "oneshot";
-            ExecStart = "${systemctl} start ddns-stale-sync.service; ${systemctl} start ddns-trigger.service";
+            ExecStart = "${pkgs.bash}/bin/bash -c '${systemctl} start ddns-stale-sync.service; ${systemctl} start ddns-trigger.service'";
           };
         };
 
         systemd.services.ddns-public-ip-check = lib.mkIf cfgDdns.eventDriven {
           description = "Öffentliche IP prüfen (NAT-Blind-Spot)";
-          path = with pkgs; [ curl coreutils systemd ];
+          path = with pkgs; [
+            curl
+            coreutils
+            systemd
+          ];
           serviceConfig = {
             Type = "oneshot";
             ExecStart = ddnsPublicIpCheckScript;
