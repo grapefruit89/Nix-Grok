@@ -200,12 +200,12 @@ in
             description = "Jellyfin: Transcode-Cleanup bei Segment-Aktivität (max 1×/5min)";
             wantedBy = [ "multi-user.target" ];
             unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-              TriggerLimitBurst = 1;
-              TriggerLimitIntervalSec = "5min";
-            }
-          ];
+              rebuildGuard.pathUnitGuard
+              {
+                TriggerLimitBurst = 1;
+                TriggerLimitIntervalSec = "5min";
+              }
+            ];
             pathConfig = {
               PathExists = "/run/jellyfin-transcode";
               PathChangedGlob = "/run/jellyfin-transcode/*";

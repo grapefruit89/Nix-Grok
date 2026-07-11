@@ -7,7 +7,7 @@
 #     - rebuild
 #     - guard
 # ---
-{ lib }:
+{ }:
 {
   sentinel = "/run/nixos/rebuild-in-progress";
   pathUnitGuard = {

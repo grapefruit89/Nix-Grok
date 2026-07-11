@@ -1,4 +1,5 @@
 #!/nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash
+#!/nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash
 # Einziger Einstieg für dry-build/switch/test — ohne Extra-Parameter.
 # Zeiten → /var/log/nixos-rebuild-watchdog/timings.csv (Durchschnitt automatisch).
 set -euo pipefail

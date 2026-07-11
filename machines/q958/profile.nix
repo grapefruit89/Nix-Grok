@@ -129,7 +129,10 @@ in
       fqdn = domainEffective;
       wildcardFqdn = "*.${domainEffective}";
       infraZone = "m7c5.de";
-      infraHosts = [ "wg" "nix" ];
+      infraHosts = [
+        "wg"
+        "nix"
+      ];
       enable = ((local.secrets.cloudflare or { }).apiToken or "") != "";
     };
   };

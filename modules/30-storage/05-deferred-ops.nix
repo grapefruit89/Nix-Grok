@@ -161,12 +161,12 @@ in
         description = "Deferred-Delete bei neuem Queue-Eintrag";
         wantedBy = [ "multi-user.target" ];
         unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-          TriggerLimitBurst = 1;
-          TriggerLimitIntervalSec = "10min";
-            }
-          ];
+          rebuildGuard.pathUnitGuard
+          {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "10min";
+          }
+        ];
         pathConfig = {
           PathExists = "${cfg.queueDir}";
           DirectoryNotEmpty = "${cfg.queueDir}";
@@ -180,12 +180,12 @@ in
         description = "Deferred-Delete wenn Tier-C gemountet wird (HDD spin-up)";
         wantedBy = [ "multi-user.target" ];
         unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-          TriggerLimitBurst = 1;
-          TriggerLimitIntervalSec = "10min";
-            }
-          ];
+          rebuildGuard.pathUnitGuard
+          {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "10min";
+          }
+        ];
         pathConfig = {
           PathExists = "${tierCMount}";
           PathChanged = "${tierCMount}";

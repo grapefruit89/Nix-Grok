@@ -130,6 +130,17 @@ in
         duf # df-Ersatz (schöner Output)
       ];
 
+      # Git-Wrapper: blockiert commit/push --no-verify (interaktive Shells)
+      programs.bash.interactiveShellInit = lib.mkBefore ''
+        git() {
+          if [[ -x /etc/nixos/scripts/git ]]; then
+            /etc/nixos/scripts/git "''${@}"
+          else
+            command git "''${@}"
+          fi
+        }
+      '';
+
       # Moderne Shell-Aliases: NUR für interaktive Shells (nicht für Skripte/Aktivierungen)
       programs.bash.shellAliases = {
         cat = "bat --paging=never";

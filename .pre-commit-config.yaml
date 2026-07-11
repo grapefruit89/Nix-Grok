@@ -25,9 +25,33 @@ repos:
         exclude: ^stage-nixos/
         pass_filenames: false
 
+      - id: nixmeta-ban
+        name: NIXMETA-Verbot (# !type — schneller Check, Build-Gate bleibt 02-nixmeta-ban.nix)
+        language: system
+        entry: python3 /etc/nixos/tools/validate_headers.py
+        files: \.nix$
+        exclude: ^stage-nixos/
+        pass_filenames: false
+
+      - id: nix-parse
+        name: nix-instantiate --parse (Syntax)
+        language: system
+        entry: bash -c 'for f in "$@"; do nix-instantiate --parse "$f" >/dev/null || exit 1; done' --
+        files: \.nix$
+        exclude: ^stage-nixos/
+        pass_filenames: true
+
       - id: shellcheck
         name: shellcheck (informational — style-Warnings in Bestandsskripten ignoriert)
         language: system
         entry: bash -c 'shellcheck --severity=error scripts/*.sh; true'
         files: scripts/.*\.sh$
+        pass_filenames: false
+
+      - id: nixos-dry-build
+        name: nixos dry-build gate (pre-push — fängt auch commit --no-verify)
+        stages: [pre-push]
+        language: system
+        entry: sudo /etc/nixos/scripts/nixos-rebuild-safe.sh dry
+        always_run: true
         pass_filenames: false

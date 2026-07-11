@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Git-Wrapper: --no-verify bei commit/push verboten (NixOS-Policy).
+# Echter git liegt unter GIT_REAL_BIN oder /run/current-system/sw/bin/git.
+set -euo pipefail
+
+_real_git() {
+  if [[ -n "${GIT_REAL_BIN:-}" && -x "$GIT_REAL_BIN" ]]; then
+    printf '%s\n' "$GIT_REAL_BIN"
+    return 0
+  fi
+  if [[ -x /run/current-system/sw/bin/git ]]; then
+    printf '%s\n' /run/current-system/sw/bin/git
+    return 0
+  fi
+  command -v -- git 2>/dev/null || true
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  subcmd="${1:-}"
+  if [[ "$subcmd" == "commit" || "$subcmd" == "push" ]]; then
+    for arg in "$@"; do
+      case "$arg" in
+        --no-verify | --no-verify=* | -n)
+          echo "FEHLER: git $subcmd --no-verify ist verboten (Hooks sind Pflicht)." >&2
+          echo "  Fix: pre-commit run --all-files && sudo nixos-rebuild-safe.sh dry" >&2
+          exit 1
+          ;;
+      esac
+    done
+  fi
+  exec "$(_real_git)" "$@"
+fi

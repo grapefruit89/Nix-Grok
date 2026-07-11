@@ -236,8 +236,8 @@ in
           unitConfig = lib.mkMerge [
             rebuildGuard.pathUnitGuard
             {
-            TriggerLimitBurst = 1;
-            TriggerLimitIntervalSec = "2min";
+              TriggerLimitBurst = 1;
+              TriggerLimitIntervalSec = "2min";
             }
           ];
           pathConfig = {
@@ -254,8 +254,8 @@ in
           unitConfig = lib.mkMerge [
             rebuildGuard.pathUnitGuard
             {
-            TriggerLimitBurst = 1;
-            TriggerLimitIntervalSec = "5min";
+              TriggerLimitBurst = 1;
+              TriggerLimitIntervalSec = "5min";
             }
           ];
           pathConfig = {
@@ -272,8 +272,8 @@ in
           unitConfig = lib.mkMerge [
             rebuildGuard.pathUnitGuard
             {
-            TriggerLimitBurst = 1;
-            TriggerLimitIntervalSec = "10min";
+              TriggerLimitBurst = 1;
+              TriggerLimitIntervalSec = "10min";
             }
           ];
           pathConfig = {
