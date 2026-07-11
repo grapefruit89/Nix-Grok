@@ -17,6 +17,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -24,6 +25,13 @@ let
   hardening = import ../../lib/systemd-hardening.nix { inherit lib; };
   crowdsecCredFile = "/var/lib/crowdsec/local_api_credentials.yaml";
   crowdsecPort = config.my.ports.crowdsec;
+  fixEtcPerms = pkgs.writeShellScript "crowdsec-fix-etc-perms" ''
+    set -euo pipefail
+    if [ -d /etc/crowdsec ]; then
+      chown -R crowdsec:crowdsec /etc/crowdsec
+      chmod 0750 /etc/crowdsec
+    fi
+  '';
 in
 {
   options.my.security.crowdsec = {
@@ -31,16 +39,24 @@ in
   };
 
   config = lib.mkIf cfgCrowdsec.enable {
+    # etc/ war fälschlich acme:acme (700) — cscli permission denied
+    systemd.tmpfiles.rules = [
+      "Z /etc/crowdsec 0750 crowdsec crowdsec -"
+    ];
+
     systemd.services = {
-      crowdsec.serviceConfig = lib.mkMerge [
-        (hardening.mkHardened {
-          rw = [ "/var/lib/crowdsec" ];
-          mdwx = false;
-        })
-        {
-          StateDirectory = "crowdsec";
-        }
-      ];
+      crowdsec = {
+        preStart = lib.mkBefore "${fixEtcPerms}";
+        serviceConfig = lib.mkMerge [
+          (hardening.mkHardened {
+            rw = [ "/var/lib/crowdsec" ];
+            mdwx = false;
+          })
+          {
+            StateDirectory = "crowdsec";
+          }
+        ];
+      };
       crowdsec-firewall-bouncer.serviceConfig = hardening.mkHardened {
         caps = [ "CAP_NET_ADMIN" ];
         mdwx = false;
