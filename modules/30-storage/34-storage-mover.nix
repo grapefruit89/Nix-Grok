@@ -18,12 +18,10 @@
 let
   cfgMover = config.my.services.storage-mover;
 
-  # Tier-C-Devices aus deklarativem storage-automount-Konfig (+ Legacy-Globs im Shell-Script)
   tierCDevPaths = lib.concatStringsSep " " (
     map (l: "/dev/disk/by-label/${l}") config.my.services.storage-automount.tierCLabels
   );
 
-  # rclone-Exclude-Flags: Built-in + User-Erweiterungen
   excludeFlags = lib.concatMapStringsSep " \\\n            " (p: "--exclude \"${p}\"") (
     [
       "**/incomplete/**"
@@ -91,32 +89,44 @@ in
   # CONFIG
   # ============================================================================
   config = lib.mkIf cfgMover.enable {
+    assertions = [
+      {
+        assertion = cfgMover.sourceDir != "";
+        message = "my.services.storage-mover.sourceDir muss gesetzt sein (z. B. in machines/<host>/default.nix).";
+      }
+      {
+        assertion = cfgMover.targetDir != "";
+        message = "my.services.storage-mover.targetDir muss gesetzt sein (z. B. in machines/<host>/default.nix).";
+      }
+    ];
+
     systemd.services.nixhome-storage-mover = {
       description = "Precision Storage Cache Mover (rclone local engine)";
-      # PrivateNetwork=true → network.target als Abhängigkeit sinnlos
       after = [ "local-fs.target" ];
+
+      # Systemd-native guards: überspringen statt scheitern wenn Pool nicht gemountet.
+      # lib.dirOf: "/mnt/fast_pool/downloads" → "/mnt/fast_pool" (der echte Mountpoint).
+      unitConfig.ConditionPathIsMountPoint = [
+        (lib.dirOf cfgMover.sourceDir)
+        (lib.dirOf cfgMover.targetDir)
+      ];
 
       serviceConfig = {
         Type = "oneshot";
+        # Daten-Migration kann Stunden dauern — kein Start-Timeout.
+        TimeoutStartSec = "infinity";
+
         ExecStart = pkgs.writeShellScript "storage-mover" ''
           set -euo pipefail
 
-          # Guard: Ziel-Mountpoint muss gemountet sein — sonst landet alles auf der SSD
-          if ! mountpoint -q "${cfgMover.targetDir}" 2>/dev/null; then
-            echo "Ziel ${cfgMover.targetDir} ist kein Mountpoint — Migration übersprungen."
-            exit 0
-          fi
+          # SSD-Cache-Auslastung: --output=pcent → eine Spalte, kein awk/sed nötig
+          CACHE_USAGE=$(df --output=pcent "${cfgMover.sourceDir}" | tail -1 | tr -d ' %')
 
-          # SSD-Cache-Auslastung ermitteln
-          CACHE_USAGE=$(df -h "${cfgMover.sourceDir}" | awk 'NR==2 {print $5}' | sed 's/%//')
-
-          # Prüfen ob Tier-C-HDDs bereits drehen
-          # Deklarative Labels (storage-automount.tierCLabels) + Legacy-Globs als Fallback
+          # Prüfen ob Tier-C-HDDs bereits drehen (CAP_SYS_RAWIO → HDIO_DRIVE_CMD ioctl)
           disks_spinning=false
           shopt -s nullglob
           for dev in ${tierCDevPaths} /dev/disk/by-label/TIER_C_* /dev/disk/by-label/DISK_STORAGE_*; do
             [ -e "$dev" ] || continue
-            # Benötigt CAP_SYS_RAWIO (HDIO_DRIVE_CMD ioctl); schlägt still fehl → kein Spin erkannt
             if ${pkgs.hdparm}/bin/hdparm -C "$dev" 2>/dev/null | grep -q "active/idle"; then
               disks_spinning=true
               break
@@ -142,7 +152,7 @@ in
             --checkers=${toString cfgMover.rcloneCheckers} \
             ${excludeFlags} \
             -v \
-            --log-file=/var/log/rclone-mover.log
+            --log-file=/var/log/nixhome-storage-mover/rclone.log
 
           # Setgid auf neu angelegten Verzeichnissen erzwingen
           find "${cfgMover.targetDir}" -type d ! -perm -g+s -exec chmod g+s {} + 2>/dev/null || true
@@ -153,6 +163,7 @@ in
         ProtectHome = true;
         PrivateTmp = true;
         PrivateNetwork = true;
+        NoNewPrivileges = true;
         CapabilityBoundingSet = [
           "CAP_CHOWN"
           "CAP_FOWNER"
@@ -162,8 +173,14 @@ in
         ReadWritePaths = [
           cfgMover.sourceDir
           cfgMover.targetDir
-          "/var/log"
+          "/var/log/nixhome-storage-mover"
         ];
+        LogsDirectory = "nixhome-storage-mover";
+
+        # Hintergrund-Job: Idle I/O + CPU → kein Impact auf interaktive Nutzung
+        IOSchedulingClass = "idle";
+        IOSchedulingPriority = 7;
+        Nice = 19;
       };
     };
 
