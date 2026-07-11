@@ -212,10 +212,10 @@ in
           };
         };
 
-        # Kein pathUnitGuard: Path bleibt active(waiting) während Rebuild; Sentinel-Check im Trigger.
         systemd.paths.ddns-network-events = lib.mkIf cfgDdns.eventDriven {
           description = "DDNS bei Netzwerk-Events (Link, ${wan})";
           wantedBy = [ "multi-user.target" ];
+          unitConfig = rebuildGuard.pathUnitGuard;
           pathConfig = {
             PathExists = [
               "/sys/class/net/${wan}"
@@ -245,6 +245,7 @@ in
         systemd.paths.ddns-config-changed = lib.mkIf cfgDdns.eventDriven {
           description = "DDNS bei config.json-Änderung (stale-sync + trigger)";
           wantedBy = [ "multi-user.target" ];
+          unitConfig = rebuildGuard.pathUnitGuard;
           pathConfig = {
             PathExists = "/var/lib/ddns-updater/config.json";
             PathChanged = "/var/lib/ddns-updater/config.json";

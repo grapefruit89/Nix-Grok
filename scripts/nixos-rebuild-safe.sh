@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/nix/store/gik3rh1vz2jlgnifb9dh6vc6sxwwz9jj-bash-5.3p9/bin/bash
 # Einziger Einstieg für dry-build/switch/test — ohne Extra-Parameter.
 # Zeiten → /var/log/nixos-rebuild-watchdog/timings.csv (Durchschnitt automatisch).
 set -euo pipefail
@@ -54,8 +54,10 @@ STORM_PATHS=(
   nftables-geoip-update-switch.path process-delete-queue.path process-delete-queue-tierc.path
   jellyfin-transcode-cleanup.path usenet-vpn-carrier.path usenet-vpn-operstate.path
   dns-guard-secrets.path dns-guard-ddns-config.path dns-guard-ddns-updates.path
+  ddns-network-events.path ddns-config-changed.path
 )
 STORM_STATE="/run/nixos-rebuild-watchdog/storm-paths-active"
+REBUILD_LOCK="/run/nixos-rebuild-watchdog/lock"
 DRY_ELAPSED=0
 SWITCH_ELAPSED=0
 
@@ -98,7 +100,7 @@ _timing_stats() {
 _timing_report() {
   local phase="$1" elapsed="$2"
   local avg min max cnt delta
-  read -r avg min max cnt < <(_timing_stats "$phase")
+  read -r avg min max cnt <<<"$(_timing_stats "$phase")"
   if [[ "$cnt" -eq 0 ]]; then
     echo "  ${phase}: ${elapsed}s (noch keine Vergleichsdaten)"
     return
@@ -120,6 +122,36 @@ _timing_summary() {
     _timing_report "total" "$total"
   fi
   echo "   Log: $TIMINGS_CSV"
+}
+
+_timing_show_all() {
+  _timing_init
+  echo "━━ Build-Zeiten — Historie (letzte ${TIMING_WINDOW} erfolgreiche Läufe)"
+  local phase avg min max cnt last delta flag
+  for phase in dry-build switch test total; do
+    read -r avg min max cnt <<<"$(_timing_stats "$phase")"
+    if [[ "$cnt" -eq 0 ]]; then
+      echo "  ${phase}: keine Daten"
+      continue
+    fi
+    last=$(awk -F, -v p="$phase" '$3==p {v=$4} END{print v+0}' "$TIMINGS_CSV")
+    delta=$((last - avg))
+    flag=""
+    [[ "$delta" -gt 15 ]] && flag=" ⚠ letzter +${delta}s über Ø"
+    echo "  ${phase}: Ø ${avg}s (min ${min}, max ${max}, n=${cnt}, zuletzt ${last}s)${flag}"
+  done
+  echo ""
+  echo "Letzte Einträge:"
+  tail -10 "$TIMINGS_CSV"
+  echo "   Vollständig: $TIMINGS_CSV"
+}
+
+_rebuild_exclusive() {
+  exec 9>"$REBUILD_LOCK"
+  if ! flock -n 9; then
+    echo "⚠  anderer Rebuild läuft — warte …" >&2
+    flock 9
+  fi
 }
 
 _watchdog_arm() {
@@ -204,10 +236,16 @@ _run_dry_build() {
 
 _normalize_cmd() {
   case "${1:-dry}" in
+    timings|stats) echo timings ;;
     dry-build|--dry) echo dry ;;
     *) echo "${1:-dry}" ;;
   esac
 }
+
+if [[ "${1:-}" == "timings" || "${1:-}" == "stats" ]]; then
+  _timing_show_all
+  exit 0
+fi
 
 _untracked=$(git -C /etc/nixos ls-files --others --exclude-standard -- '*.nix' 2>/dev/null)
 if [ -n "$_untracked" ]; then
@@ -219,6 +257,7 @@ CMD="$(_normalize_cmd "${1:-}")"
 
 case "$CMD" in
   dry)
+    _rebuild_exclusive
     trap '_heartbeat_stop; _sentinel_off' EXIT
     _sentinel_on
     _heartbeat_start
@@ -238,6 +277,7 @@ case "$CMD" in
     [ -f "$FLAG_FILE" ] && echo "✓ Flag OK" || { echo "✗ kein Flag" >&2; exit 1; }
     ;;
   switch|test)
+    _rebuild_exclusive
     ACTION="$CMD"
     trap _rebuild_cleanup EXIT
     _sentinel_on
@@ -255,7 +295,6 @@ case "$CMD" in
     local_t0=$(date +%s)
     echo "━━ $ACTION ($FLAKE) — Watchdog ${SWITCH_TIMEOUT}s"
     "$NIX_REBUILD" "$ACTION" --flake "$FLAKE" --impure 2>&1 | tee "$LOG_FILE" || REBUILD_EXIT=$?
-    # fix: use array properly
     SWITCH_ELAPSED=$(( $(date +%s) - local_t0 ))
     _heartbeat_stop
     if [[ "$ACTION" == "switch" ]]; then
@@ -275,7 +314,7 @@ case "$CMD" in
     echo "✓ $ACTION OK — $LOG_FILE"
     ;;
   *)
-    echo "Usage: nixos-rebuild-safe [dry|switch|test|check]" >&2
+    echo "Usage: nixos-rebuild-safe [dry|switch|test|timings|check]" >&2
     exit 1
     ;;
 esac

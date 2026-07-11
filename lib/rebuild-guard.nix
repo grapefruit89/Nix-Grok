@@ -27,5 +27,7 @@
     "dns-guard-secrets.path"
     "dns-guard-ddns-config.path"
     "dns-guard-ddns-updates.path"
+    "ddns-network-events.path"
+    "ddns-config-changed.path"
   ];
 }

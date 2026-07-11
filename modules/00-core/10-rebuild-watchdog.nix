@@ -340,7 +340,7 @@ in
       safeScript
       (pkgs.writeShellScriptBin "nixos-rebuild" ''
         case "''${1:-}" in
-          switch|test)
+          switch|test|timings|stats)
             exec ${safeScript}/bin/nixos-rebuild-safe "''${1}"
             ;;
           dry|dry-build|--dry)
