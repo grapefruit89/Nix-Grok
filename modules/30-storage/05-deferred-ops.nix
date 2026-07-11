@@ -124,7 +124,7 @@ in
         STAMP=$(date +%s)
         BASENAME=$(basename "$TARGET")
         echo "$TARGET" > "$QUEUE_DIR/''${STAMP}-''${BASENAME}.queue"
-            echo "Queued for deferred delete: $TARGET"
+          echo "Queued for deferred delete: $TARGET"
       '';
     in
     {

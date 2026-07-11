@@ -111,11 +111,9 @@ in
             -v \
             --log-file=/var/log/rclone-mover.log
 
-          # Apply GID 169 Setgid inheritance on target directories to avoid permission drift
-          echo "Applying media group permissions to target directories..."
-          find "${cfgMover.targetDir}" -type d -exec chmod g+s {} + || true
-          chown -R root:media "${cfgMover.targetDir}" || true
-          chmod -R 775 "${cfgMover.targetDir}" || true
+          # Setgid auf neu angelegten Verzeichnissen erzwingen — nur Dirs, kein rekursives chown/chmod.
+          # Bestehende Dateien bleiben unangetastet; Setgid vom Automount-Service vererbt sich auf neue Files.
+          find "${cfgMover.targetDir}" -type d ! -perm -g+s -exec chmod g+s {} + 2>/dev/null || true
         '';
 
         # Härtung & Sandboxing
