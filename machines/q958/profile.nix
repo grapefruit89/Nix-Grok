@@ -295,6 +295,7 @@ in
       mqttPort = 1883;
       zigbeePort = 8075;
       adapter = "ember";
+      panId = 6699;
     };
   };
 

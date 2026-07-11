@@ -8,12 +8,11 @@ let
   cfgProwlarr = config.my.services.prowlarr;
   cfgSync = config.my.media.sync.prowlarr;
   ports = config.my.ports;
+  arrProvision = pkgs.callPackage ../../../packages/arr-provision { };
 
   prowlarrHost = "127.0.0.1";
   hostBridgeAddr = "127.0.0.1";
-  prowlarrInVpn = false;
 
-  # Arr-Applications die automatisch in Prowlarr registriert werden.
   autoApps = lib.filterAttrs (_: v: v.enabled) {
     sonarr = {
       enabled = config.my.services.sonarr.enable;
@@ -56,9 +55,6 @@ let
 
 in
 {
-  # ============================================================================
-  # OPTIONS
-  # ============================================================================
   options.my.media.sync.prowlarr = {
     enable = lib.mkEnableOption "Deklarativer Prowlarr-Sync (Indexer + Application-Registrierungen)";
 
@@ -153,11 +149,7 @@ in
     };
   };
 
-  # ============================================================================
-  # CONFIG
-  # ============================================================================
   config = lib.mkMerge [
-    # Auto-Enable: mkDefault true wenn Prowlarr aktiv — überschreibbar mit mkForce false
     (lib.mkIf cfgProwlarr.enable {
       my.media.sync.prowlarr.enable = lib.mkDefault true;
     })
@@ -168,16 +160,9 @@ in
           "prowlarr.service"
         ]
         ++ lib.optional config.my.services.sonarr.enable "sonarr.service"
-        ++ lib.optional config.my.services.radarr.enable "radarr.service"
-        ++ lib.optional prowlarrInVpn "vpn-netns@prowlarr.service";
+        ++ lib.optional config.my.services.radarr.enable "radarr.service";
         wants = [ "prowlarr.service" ];
         wantedBy = [ "multi-user.target" ];
-
-        path = with pkgs; [
-          curl
-          jq
-          coreutils
-        ];
 
         startLimitIntervalSec = 600;
 
@@ -188,7 +173,6 @@ in
           Restart = "on-failure";
           RestartSec = "30s";
           StartLimitBurst = 5;
-
         };
 
         environment = {
@@ -202,225 +186,7 @@ in
           BACKUP_INDEXERS_JSON = backupIndexersJson;
         };
 
-        script = ''
-          # Prowlarr-API-Key prüfen
-          if [ ! -f "$PROWLARR_KEY_FILE" ]; then
-            echo "Prowlarr API-Key-Datei fehlt: $PROWLARR_KEY_FILE — Sync übersprungen."
-            exit 0
-          fi
-          PROWLARR_KEY=$(cat "$PROWLARR_KEY_FILE")
-
-          # Prowlarr-Erreichbarkeit prüfen (max 60s warten)
-          API="http://$PROWLARR_HOST:$PROWLARR_PORT"
-          echo "Warte auf Prowlarr bei $API..."
-          for i in $(seq 1 30); do
-            if curl -sf --max-time 5 \
-                 -H "X-Api-Key: $PROWLARR_KEY" \
-                 "$API/api/v1/system/status" >/dev/null 2>&1; then
-              echo "Prowlarr erreichbar (Versuch $i)."
-              break
-            fi
-            [ "$i" -eq 30 ] && {
-              echo "Prowlarr nicht erreichbar nach 60s — Sync übersprungen."
-              echo "Tipp: VPN aktiv? Prowlarr läuft? (usenet-confinement: ${lib.boolToString prowlarrInVpn})"
-              exit 0
-            }
-            sleep 2
-          done
-
-          # ── INDEXER REGISTRIEREN ──────────────────────────────────────────────
-          echo "=== Prowlarr: Indexer-Registrierung ==="
-          CURRENT_INDEXERS=$(curl -sf -H "X-Api-Key: $PROWLARR_KEY" "$API/api/v1/indexer")
-
-          echo "$INDEXERS_JSON" | ${pkgs.jq}/bin/jq -c '.[]' | while read -r indexer; do
-            NAME=$(echo "$indexer" | ${pkgs.jq}/bin/jq -r '.name')
-            EXISTS=$(echo "$CURRENT_INDEXERS" | ${pkgs.jq}/bin/jq -r --arg n "$NAME" \
-              '.[] | select(.name == $n) | .id // empty')
-
-            if [ -z "$EXISTS" ]; then
-              APIKEY_FILE=$(echo "$indexer" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
-              APIKEY=""
-              [ -n "$APIKEY_FILE" ] && [ -f "$APIKEY_FILE" ] && APIKEY=$(cat "$APIKEY_FILE")
-
-              PAYLOAD=$(echo "$indexer" | ${pkgs.jq}/bin/jq \
-                --arg key "$APIKEY" \
-                '{
-                  name: .name,
-                  enable: true,
-                  protocol: .protocol,
-                  implementation: .implementation,
-                  configContract: .configContract,
-                  fields: [
-                    { name: "baseUrl", value: .baseUrl },
-                    { name: "apiKey", value: $key }
-                  ]
-                }')
-
-              if curl -sf -X POST \
-                   -H "X-Api-Key: $PROWLARR_KEY" \
-                   -H "Content-Type: application/json" \
-                   -d "$PAYLOAD" \
-                   "$API/api/v1/indexer" >/dev/null; then
-                echo "Indexer $NAME registriert."
-              else
-                echo "Fehler beim Registrieren von Indexer $NAME." >&2
-              fi
-            else
-              echo "Indexer $NAME bereits vorhanden (ID: $EXISTS) — übersprungen."
-            fi
-          done
-
-          # ── ARR-APPLICATIONS REGISTRIEREN ────────────────────────────────────
-          echo "=== Prowlarr: Application-Registrierung ==="
-          CURRENT_APPS=$(curl -sf -H "X-Api-Key: $PROWLARR_KEY" "$API/api/v1/applications")
-
-          echo "$APPS_JSON" | ${pkgs.jq}/bin/jq -c '.[]' | while read -r app; do
-            NAME=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.name')
-            IMPL=$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c1 | tr '[:lower:]' '[:upper:]')
-            IMPL="$IMPL$(echo "$NAME" | ${pkgs.coreutils}/bin/cut -c2-)"
-
-            EXISTS=$(echo "$CURRENT_APPS" | ${pkgs.jq}/bin/jq -r --arg n "$IMPL" \
-              '.[] | select(.name == $n) | .id // empty')
-
-            if [ -z "$EXISTS" ]; then
-              APIKEY_FILE=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
-              if [ ! -f "$APIKEY_FILE" ]; then
-                echo "API-Key-Datei fehlt: $APIKEY_FILE — $IMPL übersprungen."
-                continue
-              fi
-              APIKEY=$(cat "$APIKEY_FILE")
-              PORT=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.port')
-              HOST=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.host')
-
-              echo "Registriere Application: $IMPL (http://$HOST:$PORT)"
-
-              PAYLOAD=$(${pkgs.jq}/bin/jq -n \
-                --arg name "$IMPL" \
-                --arg impl "$IMPL" \
-                --arg prowlarrUrl "$API" \
-                --arg baseUrl "http://$HOST:$PORT" \
-                --arg apikey "$APIKEY" \
-                --arg syncLevel "$SYNC_LEVEL" \
-                '{
-                  name: $name,
-                  enable: true,
-                  implementation: $impl,
-                  implementationName: $impl,
-                  configContract: "\($impl)Settings",
-                  syncLevel: $syncLevel,
-                  fields: [
-                    { name: "prowlarrUrl", value: $prowlarrUrl },
-                    { name: "baseUrl", value: $baseUrl },
-                    { name: "apiKey", value: $apikey }
-                  ]
-                }')
-
-              if curl -sf -X POST \
-                   -H "X-Api-Key: $PROWLARR_KEY" \
-                   -H "Content-Type: application/json" \
-                   -d "$PAYLOAD" \
-                   "$API/api/v1/applications" >/dev/null; then
-                echo "Application $IMPL registriert."
-              else
-                echo "Fehler beim Registrieren von Application $IMPL." >&2
-              fi
-            else
-              echo "Application $IMPL bereits vorhanden (ID: $EXISTS) — übersprungen."
-            fi
-          done
-
-          # ── APPLICATION SYNC TRIGGERN ─────────────────────────────────────────
-          echo "=== Prowlarr: Application-Sync triggern ==="
-          curl -sf -X POST \
-            -H "X-Api-Key: $PROWLARR_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"name":"ApplicationsSync"}' \
-            "$API/api/v1/command" >/dev/null
-          echo "Application-Sync-Command gesendet."
-
-          # ── BACKUP-INDEXER DIREKT IN ARR-APPS REGISTRIEREN (disabled) ─────────
-          if [ "$BACKUP_INDEXERS_JSON" = "[]" ]; then
-            echo "Prowlarr-Sync abgeschlossen."
-            exit 0
-          fi
-
-          echo "=== Backup-Indexer in Arr-Apps registrieren (disabled) ==="
-          echo "$BACKUP_INDEXERS_JSON" | ${pkgs.jq}/bin/jq -c '.[]' | while read -r bidx; do
-            BIDX_NAME=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.name')
-            BIDX_URL=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.baseUrl')
-            BIDX_KEYFILE=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
-            BIDX_CATS=$(echo "$bidx" | ${pkgs.jq}/bin/jq -c '.categories')
-            BIDX_TARGETS=$(echo "$bidx" | ${pkgs.jq}/bin/jq -r '.targetApps | join(",")')
-            BIDX_KEY=""
-            [ -n "$BIDX_KEYFILE" ] && [ -f "$BIDX_KEYFILE" ] && BIDX_KEY=$(cat "$BIDX_KEYFILE")
-
-            # Apps filtern: wenn targetApps leer → alle autoApps, sonst nur gelistete
-            FILTERED_APPS=$(echo "$APPS_JSON" | ${pkgs.jq}/bin/jq -c \
-              --arg t "$BIDX_TARGETS" \
-              'if $t == "" then .[] else .[] | select(.name as $n | $t | split(",") | any(. == $n)) end')
-
-            echo "$FILTERED_APPS" | while read -r app; do
-              APP_NAME=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.name')
-              APP_PORT=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.port')
-              APP_HOST=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.host')
-              APP_APIVER=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.apiVersion')
-              APP_KEYFILE=$(echo "$app" | ${pkgs.jq}/bin/jq -r '.apiKeyFile')
-              [ ! -f "$APP_KEYFILE" ] && { echo "$APP_NAME: API-Key fehlt — übersprungen."; continue; }
-              APP_KEY=$(cat "$APP_KEYFILE")
-              ARR_API="http://$APP_HOST:$APP_PORT/api/$APP_APIVER"
-
-              # Erreichbarkeit kurz prüfen
-              if ! curl -sf --max-time 5 \
-                   -H "X-Api-Key: $APP_KEY" \
-                   "$ARR_API/system/status" >/dev/null 2>&1; then
-                echo "$APP_NAME: nicht erreichbar — Backup-Indexer übersprungen."
-                continue
-              fi
-
-              EXISTING=$(curl -sf -H "X-Api-Key: $APP_KEY" "$ARR_API/indexer" | \
-                ${pkgs.jq}/bin/jq -r --arg n "$BIDX_NAME" \
-                '.[] | select(.name == $n) | .id // empty')
-
-              if [ -z "$EXISTING" ]; then
-                PAYLOAD=$(${pkgs.jq}/bin/jq -n \
-                  --arg name "$BIDX_NAME" \
-                  --arg url "$BIDX_URL" \
-                  --arg key "$BIDX_KEY" \
-                  --argjson cats "$BIDX_CATS" \
-                  '{
-                    name: $name,
-                    enable: false,
-                    protocol: "usenet",
-                    priority: 50,
-                    supportsRss: true,
-                    supportsSearch: true,
-                    implementation: "Newznab",
-                    implementationName: "Newznab",
-                    configContract: "NewznabSettings",
-                    fields: [
-                      { name: "baseUrl", value: $url },
-                      { name: "apiKey", value: $key },
-                      { name: "categories", value: $cats }
-                    ]
-                  }')
-
-                if curl -sf -X POST \
-                     -H "X-Api-Key: $APP_KEY" \
-                     -H "Content-Type: application/json" \
-                     -d "$PAYLOAD" \
-                     "$ARR_API/indexer" >/dev/null; then
-                  echo "$APP_NAME: Backup-Indexer '$BIDX_NAME' (disabled) registriert."
-                else
-                  echo "$APP_NAME: Fehler beim Registrieren von '$BIDX_NAME'." >&2
-                fi
-              else
-                echo "$APP_NAME: Backup-Indexer '$BIDX_NAME' bereits vorhanden (ID: $EXISTING) — übersprungen."
-              fi
-            done
-          done
-
-          echo "Prowlarr-Sync abgeschlossen."
-        '';
+        script = lib.getExe arrProvision.prowlarrSync;
       };
     })
   ];

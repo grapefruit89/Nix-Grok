@@ -44,8 +44,8 @@ let
     from wyoming.server import AsyncEventHandler, AsyncServer
 
     GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
-    MODEL    = "whisper-large-v3-turbo"
-    LANGUAGE = "de"
+    MODEL    = "${cfg.model}"
+    LANGUAGE = "${cfg.language}"
     PORT     = ${toString cfg.port}
 
     def _transcribe(wav: bytes, key: str) -> str:
@@ -296,6 +296,16 @@ in
       type = lib.types.port;
       default = 10300;
       description = "Wyoming STT port.";
+    };
+    language = lib.mkOption {
+      type = lib.types.str;
+      default = "de";
+      description = "BCP-47 Sprache für Groq Whisper STT (z. B. de, en, fr).";
+    };
+    model = lib.mkOption {
+      type = lib.types.str;
+      default = "whisper-large-v3-turbo";
+      description = "Groq Whisper-Modell-ID.";
     };
     tts = {
       enable = lib.mkEnableOption "Google Cloud TTS Wyoming bridge";

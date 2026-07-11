@@ -228,6 +228,11 @@ in
       ];
       description = "List of trusted upstream proxies.";
     };
+    renderDevice = lib.mkOption {
+      type = lib.types.str;
+      default = "/dev/dri/renderD128";
+      description = "GPU render node for VA-API (leer = kein GPU-Zugriff).";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -258,6 +263,7 @@ in
           internal_url = "http://localhost:${toString cfg.port}";
         };
         http = {
+          server_port = cfg.port;
           use_x_forwarded_for = true;
           trusted_proxies = cfg.trustedProxies;
         };
@@ -305,11 +311,14 @@ in
         MemoryDenyWriteExecute = lib.mkForce false;
         ReadWritePaths = lib.mkAfter [ cfg.cacheDir ];
         PrivateDevices =
-          if (lib.hasPrefix "/dev/" cfg.zigbeeDevice) || cfg.bluetooth then lib.mkForce false else true;
+          if (lib.hasPrefix "/dev/" cfg.zigbeeDevice) || cfg.bluetooth || (cfg.renderDevice != "") then
+            lib.mkForce false
+          else
+            true;
         DeviceAllow =
           (lib.optional (lib.hasPrefix "/dev/" cfg.zigbeeDevice) "${cfg.zigbeeDevice} rw")
           ++ (lib.optional cfg.bluetooth "/dev/rfkill rw")
-          ++ [ "/dev/dri/renderD128 rw" ];
+          ++ (lib.optional (cfg.renderDevice != "") "${cfg.renderDevice} rw");
       };
       after = lib.mkAfter (
         [

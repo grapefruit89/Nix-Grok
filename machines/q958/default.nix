@@ -16,6 +16,15 @@ let
   p = import ./profile.nix;
   moritzUser = import ../../users/moritz/profile.nix;
   zigbeeSocket = "socket://${p.iot.zigbeeCoordinator.host}:${toString p.iot.zigbeeCoordinator.port}";
+  localPath =
+    if builtins.pathExists ./profile.local.nix then
+      ./profile.local.nix
+    else if builtins.pathExists /etc/nixos/machines/q958/profile.local.nix then
+      /etc/nixos/machines/q958/profile.local.nix
+    else
+      null;
+  local = if localPath != null then import localPath else { };
+  oauth2ClientId = (local.secrets.devKeys.oauth2proxy or { }).clientId or "setup-pending";
 in
 {
   imports = [
@@ -63,7 +72,10 @@ in
       "pocket-id.env"
       "vaultwarden.env"
       "groq_api_key"
-      "google_tts_api_key"
+      "oauth2-proxy-client-secret"
+      "oauth2-proxy-cookie-secret"
+      "CF_DNS_API_TOKEN_FILE"
+      "cloudflare_api_token"
     ];
 
     core = {
@@ -173,7 +185,9 @@ in
         zigbeePort = p.iot.zigbeeStack.zigbeePort;
         zigbeeDevice = zigbeeSocket;
         adapter = p.iot.zigbeeStack.adapter;
+        panId = p.iot.zigbeeStack.panId;
       };
+      oauth2-proxy.clientId = oauth2ClientId;
       secrets-portal = {
         enable = true;
         secrets = [
@@ -223,6 +237,26 @@ in
             label = "Zigbee2MQTT Env";
             description = "Zigbee2MQTT Umgebungsvariablen (vollständige .env-Datei)";
             restart_services = [ "zigbee2mqtt" ];
+          }
+          {
+            name = "oauth2-proxy-client-secret";
+            label = "oauth2-proxy Client Secret";
+            description = "OIDC Client Secret (Client ID in profile.local.nix)";
+            restart_services = [ "oauth2-proxy" ];
+          }
+          {
+            name = "oauth2-proxy-cookie-secret";
+            label = "oauth2-proxy Cookie Secret";
+            description = "32-Byte AES-256 Session-Cookie-Seed";
+            regex = "^.{32}$";
+            restart_services = [ "oauth2-proxy" ];
+          }
+          {
+            name = "CF_DNS_API_TOKEN_FILE";
+            label = "Cloudflare ACME Token";
+            description = "CF DNS API Token (Rohwert) für Let's Encrypt DNS-01";
+            regex = "^[A-Za-z0-9_-]{40,}$";
+            restart_services = [ "acme-${p.domain.effective}" ];
           }
         ];
       };

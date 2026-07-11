@@ -219,6 +219,26 @@
       default = 33073;
       description = "Netbird management API (legacy networking.firewall only).";
     };
+    exportarr-sonarr = lib.mkOption {
+      type = lib.types.port;
+      default = 4070;
+      description = "Exportarr metrics port for Sonarr.";
+    };
+    exportarr-radarr = lib.mkOption {
+      type = lib.types.port;
+      default = 4071;
+      description = "Exportarr metrics port for Radarr.";
+    };
+    exportarr-prowlarr = lib.mkOption {
+      type = lib.types.port;
+      default = 4072;
+      description = "Exportarr metrics port for Prowlarr.";
+    };
+    exportarr-lidarr = lib.mkOption {
+      type = lib.types.port;
+      default = 4073;
+      description = "Exportarr metrics port for Lidarr.";
+    };
     node-exporter = lib.mkOption {
       type = lib.types.port;
       default = 9100;

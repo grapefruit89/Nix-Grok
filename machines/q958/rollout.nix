@@ -96,6 +96,7 @@ in
     prowlarr.enable = erstAb 6;
     sabnzbd.enable = erstAb 6;
     lidarr.enable = erstAb 6;
+    recyclarr.enable = erstAb 6;
 
     vaultwarden.enable = erstAb 7;
     homepage.enable = erstAb 7;
@@ -155,7 +156,7 @@ in
   my.ports.ssh =
     if stufe >= 9 then lib.mkForce p.network.productionSshPort else lib.mkForce p.network.sshPort;
 
-  my.creds.enable = erstAb 8; # systemd-creds (host key → useTpm = true für TPM)
+  my.creds.enable = erstAb 5; # oauth2-proxy + ACME (Stufe 5); host key → useTpm für TPM
 
   my.services.ddns-updater = {
     enable = if p.network.ddns.enable then erstAb 5 else lib.mkForce false;

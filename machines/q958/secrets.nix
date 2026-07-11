@@ -25,6 +25,7 @@ let
       null;
   local = if localPath != null then import localPath else { };
   secretsDir = p.secrets.dir;
+  credStore = "/var/lib/credstore.encrypted";
   dk = p.secrets.devKeys;
   privadoKey = local.secrets.privado.privateKey or "";
   resticS3 = local.secrets.restic or { };
@@ -82,7 +83,6 @@ let
       ''{provider: "cloudflare", zone_identifier: $zone_id, domain: "${sub}.${ddnsFqdn}", proxied: true, ttl: 1, token: $token, ip_version: "ipv4"}''
     ) externalSubdomains
   );
-  oauth2ClientId = (local.secrets.devKeys.oauth2proxy or { }).clientId or "";
   oauth2ClientSecret = (local.secrets.devKeys.oauth2proxy or { }).clientSecret or "";
   googleTtsApiKey = (local.secrets.devKeys.googleTts or { }).apiKey or "";
   googleTtsVoice = (local.secrets.devKeys.googleTts or { }).voice or "";
@@ -209,8 +209,13 @@ let
         if [ -n "${cfToken}" ]; then
           printf '%s' "${cfToken}" > ${secretsDir}/cloudflare_api_token
           chmod 600 ${secretsDir}/cloudflare_api_token
-          printf 'CF_DNS_API_TOKEN=%s\n' "${cfToken}" > ${secretsDir}/cloudflare_acme_env
-          chmod 600 ${secretsDir}/cloudflare_acme_env
+          install -d -m 700 ${credStore}
+          printf '%s' "${cfToken}" | \
+            ${pkgs.systemd}/bin/systemd-creds encrypt --name=CF_DNS_API_TOKEN_FILE - \
+              ${credStore}/CF_DNS_API_TOKEN_FILE.cred
+          printf '%s' "${cfToken}" | \
+            ${pkgs.systemd}/bin/systemd-creds encrypt --name=cloudflare_api_token - \
+              ${credStore}/cloudflare_api_token.cred
           ZONE_DATA=$(${pkgs.curl}/bin/curl -sf -X GET \
             "https://api.cloudflare.com/client/v4/zones?name=${ddnsZone}" \
             -H "Authorization: Bearer ${cfToken}" -H "Content-Type: application/json")
@@ -294,30 +299,28 @@ let
           chmod 600 ${secretsDir}/privado.netns.conf
         fi
 
-        # oauth2-proxy OIDC-Client (Pocket-ID App-Registrierung)
-        # In profile.local.nix setzen: secrets.devKeys.oauth2proxy = { clientId = "..."; clientSecret = "..."; }
-        if [ -n "${oauth2ClientId}" ] && [ -n "${oauth2ClientSecret}" ]; then
-          printf 'OAUTH2_PROXY_CLIENT_ID=%s\nOAUTH2_PROXY_CLIENT_SECRET=%s\n' \
-            "${oauth2ClientId}" "${oauth2ClientSecret}" > ${secretsDir}/oauth2-proxy.env
-        elif [ ! -f ${secretsDir}/oauth2-proxy.env ]; then
-          # Placeholder damit oauth2-proxy starten kann — wird durch echte Credentials ersetzt
-          printf 'OAUTH2_PROXY_CLIENT_ID=setup-pending\nOAUTH2_PROXY_CLIENT_SECRET=setup-pending\n' \
-            > ${secretsDir}/oauth2-proxy.env
+        # oauth2-proxy → credstore only (clientId in Nix, secret versiegelt)
+        install -d -m 700 ${credStore}
+        printf '%s' '${if oauth2ClientSecret != "" then oauth2ClientSecret else "setup-pending"}' | \
+          ${pkgs.systemd}/bin/systemd-creds encrypt --name=client-secret - \
+            ${credStore}/oauth2-proxy-client-secret.cred
+        _cookie_len=0
+        if [ -f ${credStore}/oauth2-proxy-cookie-secret.cred ]; then
+          _cookie_len=$(${pkgs.systemd}/bin/systemd-creds decrypt --name=cookie-secret \
+            ${credStore}/oauth2-proxy-cookie-secret.cred - 2>/dev/null | wc -c)
         fi
-        chmod 600 ${secretsDir}/oauth2-proxy.env
-        # Cookie-Secret — einmalig generiert, nie überschrieben.
-        # Muss exakt 32 Bytes sein (AES-256). openssl rand -base64 24 → 32 Chars, kein Newline.
-        if [ ! -f ${secretsDir}/oauth2-proxy-cookie-secret ] || \
-           [ "$(wc -c < ${secretsDir}/oauth2-proxy-cookie-secret)" != "32" ]; then
-          ${pkgs.openssl}/bin/openssl rand -base64 24 | tr -d '\n' > ${secretsDir}/oauth2-proxy-cookie-secret
-          chmod 600 ${secretsDir}/oauth2-proxy-cookie-secret
+        if [ ! -f ${credStore}/oauth2-proxy-cookie-secret.cred ] || [ "$_cookie_len" != "32" ]; then
+          ${pkgs.openssl}/bin/openssl rand -base64 24 | tr -d '\n' | \
+            ${pkgs.systemd}/bin/systemd-creds encrypt --name=cookie-secret - \
+              ${credStore}/oauth2-proxy-cookie-secret.cred
         fi
+        unset _cookie_len
 
         # Google Cloud TTS — API Key versiegeln + Voice-Name in env-Datei
         # Eintragen in profile.local.nix: secrets.devKeys.googleTts = { apiKey = "AIza..."; voice = "de-DE-Chirp3-HD-Aoede"; };
         if [ -n "${googleTtsApiKey}" ]; then
           printf '%s' "${googleTtsApiKey}" | \
-            ${pkgs.systemd}/lib/systemd/systemd-creds encrypt --name=google_tts_api_key - \
+            ${pkgs.systemd}/bin/systemd-creds encrypt --name=google_tts_api_key - \
               /var/lib/credstore.encrypted/google_tts_api_key.cred
           printf 'GOOGLE_TTS_VOICE=%s\n' "${googleTtsVoice}" > ${secretsDir}/google-tts.env
           chmod 600 ${secretsDir}/google-tts.env

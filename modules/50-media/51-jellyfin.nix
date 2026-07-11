@@ -114,6 +114,7 @@ let
       ${./data/jellyfin-system.xml} > $out/system.xml
     ${pkgs.gnused}/bin/sed \
       -e 's|@JELLYFIN_URL@|${jellyfinUrl}|g' \
+      -e 's|@JELLYFIN_PORT@|${toString portJellyfin}|g' \
       ${./data/jellyfin-network.xml} > $out/network.xml
     # encoding.xml: VAAPI-Konfiguration für Intel iHD (i3-9100, Gen 9)
     cp ${./data/jellyfin-encoding.xml} $out/encoding.xml
@@ -352,6 +353,9 @@ in
           readWritePaths = [ "/var/lib/seerr" ];
         })
         {
+          systemd.services.seerr.serviceConfig.EnvironmentFile = lib.mkForce [
+            "-/var/lib/secrets/jellyseerr.env"
+          ];
           systemd.services.seerr.serviceConfig.ExecStartPre =
             let
               walScript = pkgs.writeShellScript "seerr-wal-pragma" ''

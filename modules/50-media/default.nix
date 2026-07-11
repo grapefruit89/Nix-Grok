@@ -17,9 +17,10 @@
     ./55-navidrome.nix
     ./56-arr-sync
     ./57-usenet-confinement
+    ./58-recyclarr.nix
+    ./59-exportarr.nix
   ];
 
-  # Centralized options declaration for domain 50
   options.my.services = {
     jellyfin.enable = lib.mkEnableOption "Jellyfin Media Server with Intel QuickSync";
     jellyseerr.enable = lib.mkEnableOption "Jellyseerr Request Manager";

@@ -52,12 +52,14 @@
       };
       grok-cli = pkgs.callPackage ./packages/grok-cli { };
       secrets-portal = pkgs.callPackage ./packages/secrets-portal { };
+      arr-provision = pkgs.callPackage ./packages/arr-provision { };
       claude-code-pkg = llm-agents.packages.${system}.claude-code;
     in
     {
       packages.${system} = {
         inherit grok-cli;
         inherit secrets-portal;
+        inherit arr-provision;
         # Lokale Optionsreferenz: `nix build .#docs && cat result`
         # Generiert JSON-Dokumentation aller my.* Optionen aus dem evaluierten q958-System.
         # Benötigt profile.local.nix (secrets). Nur auf dem Host sinnvoll nutzbar.

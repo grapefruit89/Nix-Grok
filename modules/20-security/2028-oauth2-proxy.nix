@@ -9,7 +9,6 @@
 #     - oauth2-proxy
 #     - caddy
 # ---
-# schema: "20xx=Domäne+Position; Port 4180=Upstream-Ausnahme (nicht 2028)"
 {
   config,
   lib,
@@ -18,6 +17,7 @@
 let
   cfg = config.my.services.oauth2-proxy;
   domain = config.my.configs.identity.domain;
+  credStore = config.my.creds.storeDir;
   caddy = import ../../lib/caddy-helpers.nix { inherit lib; };
   ingress = import ../../lib/caddy-ingress.nix { inherit lib caddy; };
   oauthUpstream = "127.0.0.1:${toString config.my.ports.oauth2-proxy}";
@@ -25,35 +25,46 @@ in
 {
   options.my.services.oauth2-proxy = {
     enable = lib.mkEnableOption "oauth2-proxy OIDC Forward-Auth (Pocket-ID als IdP)";
+    clientId = lib.mkOption {
+      type = lib.types.str;
+      default = "setup-pending";
+      description = "OIDC Client ID (Pocket-ID App) — aus profile.local.nix via machines/q958.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = config.my.creds.enable;
+        message = ''
+          oauth2-proxy requires my.creds.enable — client-secret + cookie-secret via systemd-creds.
+        '';
+      }
+    ];
+
     services.oauth2-proxy = {
       enable = true;
       provider = "oidc";
-      # Wird durch OAUTH2_PROXY_CLIENT_ID in keyFile überschrieben (secrets.nix aus profile.local.nix)
-      clientID = "placeholder";
-      keyFile = "/var/lib/secrets/oauth2-proxy.env";
+      clientID = cfg.clientId;
+      clientSecretFile = "${credStore}/oauth2-proxy-client-secret.cred";
       redirectURL = "https://oauth.${domain}/oauth2/callback";
       oidcIssuerUrl = "https://auth.${domain}";
-      upstream = "static://202"; # Auth-only Modus: Caddy übernimmt das eigentliche Proxying
+      upstream = "static://202";
       setXauthrequest = true;
       httpAddress = "http://127.0.0.1:${toString config.my.ports.oauth2-proxy}";
       cookie = {
-        secretFile = "/var/lib/secrets/oauth2-proxy-cookie-secret";
+        secretFile = "${credStore}/oauth2-proxy-cookie-secret.cred";
         domain = ".${domain}";
         secure = true;
       };
       email.domains = [ "*" ];
       reverseProxy = true;
-      # Caddy ist der einzige Proxy — nur localhost darf X-Forwarded-* setzen
       trustedProxyIP = [ "127.0.0.1" ];
       extraConfig = {
         "skip-provider-button" = "true";
       };
     };
 
-    # Öffentlicher Caddy-Endpunkt für Login/Callback-Flow und Sign-in-Redirects
     services.caddy.virtualHosts."oauth.${domain}" = {
       extraConfig = ingress.genSecurityOnlyVhost oauthUpstream;
     }
@@ -61,10 +72,22 @@ in
       useACMEHost = domain;
     };
 
-    # Startet erst nach Secrets-Provisioning (keyFile + cookie.secretFile müssen existieren)
     systemd.services.oauth2-proxy = {
-      after = [ "q958-secrets-provision.service" ];
-      wants = [ "q958-secrets-provision.service" ];
+      serviceConfig = {
+        LoadCredential = lib.mkForce [ ];
+        LoadCredentialEncrypted = [
+          "client-secret:${credStore}/oauth2-proxy-client-secret.cred"
+          "cookie-secret:${credStore}/oauth2-proxy-cookie-secret.cred"
+        ];
+      };
+      after = [
+        "q958-secrets-provision.service"
+        "credential-store-check.service"
+      ];
+      wants = [
+        "q958-secrets-provision.service"
+        "credential-store-check.service"
+      ];
     };
   };
 }

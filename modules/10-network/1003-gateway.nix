@@ -29,6 +29,8 @@ let
   factory = import ../../lib/service-factory.nix { inherit lib; };
   portDdns = config.my.ports.ddns-updater;
   ddnsCfg = config.my.configs.ddns;
+  credStore = config.my.creds.storeDir;
+  useCreds = config.my.creds.enable;
 in
 {
   options.my = {
@@ -305,47 +307,55 @@ in
         after = [
           "network-online.target"
           "q958-secrets-provision.service"
-        ];
-        wants = [ "network-online.target" ];
+        ]
+        ++ lib.optional useCreds "credential-store-check.service";
+        wants = [ "network-online.target" ] ++ lib.optional useCreds "credential-store-check.service";
         wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          StateDirectory = "dns-guard";
-          ExecStart = pkgs.writeShellScript "dns-guard" ''
-            set -euo pipefail
-            LOCK_FILE=/run/lock/dns-guard.lock
-            ${pkgs.coreutils}/bin/mkdir -p /run/lock
-            exec 9>"$LOCK_FILE"
-            ${pkgs.util-linux}/bin/flock -w 60 9 || {
-              echo "dns-guard: lock timeout after 60s"
-              exit 1
-            }
-            TOKEN_FILE="/var/lib/secrets/cloudflare_api_token"
-            if [ ! -s "$TOKEN_FILE" ]; then
-              echo "dns-guard: kein Cloudflare-Token — überspringe"
-              exit 0
-            fi
-            TOKEN=$(cat "$TOKEN_FILE")
-            ZONE_DATA=$(${pkgs.curl}/bin/curl -sf -X GET \
-              "https://api.cloudflare.com/client/v4/zones?name=${ddnsCfg.zone}" \
-              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json")
-            ZONE_ID=$(${pkgs.jq}/bin/jq -r '.result[0].id // empty' <<< "$ZONE_DATA")
-            if [ -z "$ZONE_ID" ]; then
-              echo "dns-guard: Zone ${ddnsCfg.zone} nicht gefunden"
-              exit 1
-            fi
-            WILDCARD="${ddnsCfg.record}.${ddnsCfg.zone}"
-            CONFLICT=$(${pkgs.curl}/bin/curl -sf \
-              "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=*.$WILDCARD" \
-              -H "Authorization: Bearer $TOKEN" | ${pkgs.jq}/bin/jq -r '.result | length')
-            if [ "$CONFLICT" != "0" ]; then
-              echo "dns-guard: WARNUNG — Wildcard *.$WILDCARD existiert (Caddy-Ingress-Konflikt möglich)"
-              exit 0
-            fi
-            echo "dns-guard: ok — kein Wildcard-Konflikt für *.$WILDCARD"
-          '';
-        };
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            StateDirectory = "dns-guard";
+            ExecStart = pkgs.writeShellScript "dns-guard" ''
+              set -euo pipefail
+              LOCK_FILE=/run/lock/dns-guard.lock
+              ${pkgs.coreutils}/bin/mkdir -p /run/lock
+              exec 9>"$LOCK_FILE"
+              ${pkgs.util-linux}/bin/flock -w 60 9 || {
+                echo "dns-guard: lock timeout after 60s"
+                exit 1
+              }
+              if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/cloudflare_api_token" ]; then
+                TOKEN=$(cat "''${CREDENTIALS_DIRECTORY}/cloudflare_api_token")
+              elif [ -s /var/lib/secrets/cloudflare_api_token ]; then
+                TOKEN=$(cat /var/lib/secrets/cloudflare_api_token)
+              else
+                echo "dns-guard: kein Cloudflare-Token — überspringe"
+                exit 0
+              fi
+              ZONE_DATA=$(${pkgs.curl}/bin/curl -sf -X GET \
+                "https://api.cloudflare.com/client/v4/zones?name=${ddnsCfg.zone}" \
+                -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json")
+              ZONE_ID=$(${pkgs.jq}/bin/jq -r '.result[0].id // empty' <<< "$ZONE_DATA")
+              if [ -z "$ZONE_ID" ]; then
+                echo "dns-guard: Zone ${ddnsCfg.zone} nicht gefunden"
+                exit 1
+              fi
+              WILDCARD="${ddnsCfg.record}.${ddnsCfg.zone}"
+              CONFLICT=$(${pkgs.curl}/bin/curl -sf \
+                "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=*.$WILDCARD" \
+                -H "Authorization: Bearer $TOKEN" | ${pkgs.jq}/bin/jq -r '.result | length')
+              if [ "$CONFLICT" != "0" ]; then
+                echo "dns-guard: WARNUNG — Wildcard *.$WILDCARD existiert (Caddy-Ingress-Konflikt möglich)"
+                exit 0
+              fi
+              echo "dns-guard: ok — kein Wildcard-Konflikt für *.$WILDCARD"
+            '';
+          }
+          (lib.mkIf useCreds {
+            LoadCredentialEncrypted = "cloudflare_api_token:${credStore}/cloudflare_api_token.cred";
+          })
+        ];
         path = with pkgs; [
           curl
           jq

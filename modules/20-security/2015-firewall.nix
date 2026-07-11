@@ -21,14 +21,24 @@
   ...
 }:
 let
-  rebuildGuard = import ../../lib/rebuild-guard.nix { inherit lib; };
   cfg = config.my.security.firewall;
   asserts = import ../../lib/assertions.nix { inherit lib; };
-  allowedCountryList = lib.concatStringsSep " " cfg.allowedCountries;
   ruleset = import ../../lib/nftables-rules.nix { inherit lib config; };
-  # DE-Zone: zur Buildzeit aus vendortem File generiert — kein Netz nötig
-  geoipDeNft =
-    pkgs.runCommand "geoip-de.nft"
+
+  optionalCountryZones = {
+    at = ./geoip-at.zone;
+    lt = ./geoip-lt.zone;
+  };
+
+  activeOptionalCountries = lib.filter (c: lib.hasAttr c optionalCountryZones) cfg.allowedCountries;
+
+  mkGeoipNft =
+    {
+      country,
+      zoneFile,
+      flushSet ? false,
+    }:
+    pkgs.runCommand "geoip-${country}.nft"
       {
         nativeBuildInputs = [
           pkgs.gnugrep
@@ -37,12 +47,48 @@ let
       }
       ''
         {
-          echo 'flush set inet filter geoip_allowed'
+          ${lib.optionalString flushSet "echo 'flush set inet filter geoip_allowed'"}
           echo 'add element inet filter geoip_allowed {'
-          grep -vE '^\s*(#|$)' ${./geoip-de.zone} | sed 's/$/,/' | sed '$ s/,$//' | sed 's/^/  /'
+          grep -vE '^\s*(#|$)' ${zoneFile} | sed 's/$/,/' | sed '$ s/,$//' | sed 's/^/  /'
           echo '}'
         } > $out
       '';
+
+  geoipDeNft = mkGeoipNft {
+    country = "de";
+    zoneFile = ./geoip-de.zone;
+    flushSet = true;
+  };
+
+  geoipOptionalNft =
+    country:
+    mkGeoipNft {
+      inherit country;
+      zoneFile = optionalCountryZones.${country};
+    };
+
+  mkGeoipService =
+    {
+      description,
+      nftFile,
+      after ? [ "nftables.service" ],
+      requires ? [ "nftables.service" ],
+    }:
+    {
+      inherit description after requires;
+      partOf = [ "nftables.service" ];
+      wantedBy = [ "nftables.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${pkgs.nftables}/bin/nft -f ${nftFile}";
+        CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+      };
+    };
 in
 {
   options.my.security.firewall = {
@@ -74,9 +120,9 @@ in
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = ''
-        Optional: zusätzliche Länder zur Laufzeit nachladen (ISO-2: "at", "lt").
-        DE ist immer deklarativ im Store — kein Eintrag nötig.
-        AT + LT hier eintragen wenn Netbird/Reisen abgedeckt sein sollen.
+        Optional: zusätzliche Länder aus vendorten Zone-Files im Nix-Store (ISO-2: "at", "lt").
+        DE ist immer deklarativ geladen — kein Eintrag nötig.
+        Aktualisierung: geoip-*.zone im Repo bumpen und rebuilden (kein Runtime-Fetch).
       '';
     };
 
@@ -113,17 +159,6 @@ in
     skuidSegmentation = {
       enable = lib.mkEnableOption "meta skuid Micro-Segmentation (UID-Registry, Stufe 8+)";
     };
-
-    geoipAutoUpdate = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        # Kontrolliert optionalen Runtime-Fetch für AT/LT via ipdeny.com.
-        # DE ist immer geladen (nftables-geoip-de.service, Nix-Store, kein Netz).
-        # false = nur DE aktiv, AT/LT-Timer deaktiviert.
-        description = "AT/LT GeoIP-Refresh via ipdeny.com (Boot+Monatlich). DE ist unabhängig immer geladen.";
-      };
-    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -158,93 +193,38 @@ in
         umgehung = "my.security.firewall.skuidSegmentation.enable = false; bis Registry vollständig ist.";
         assertion = !(cfg.skuidSegmentation.enable && !config.my.users.registry ? prowlarr);
       })
+      {
+        assertion = lib.all (c: lib.hasAttr c optionalCountryZones) cfg.allowedCountries;
+        message = ''
+          FIREWALL-004: Unbekannte allowedCountries — nur vendorte Zonen verfügbar: ${lib.concatStringsSep ", " (lib.attrNames optionalCountryZones)}.
+          Eintrag in my.security.firewall.allowedCountries prüfen oder geoip-<cc>.zone ergänzen.
+        '';
+      }
     ];
 
-    # DE-Zone immer geladen: aus dem Nix-Store, kein Netz, kein Timer.
-    # partOf nftables.service → bei jedem Firewall-Reload automatisch neu geladen.
-    systemd.services.nftables-geoip-de = {
-      description = "GeoIP DE-Basis aus Nix-Store laden (kein Netz)";
-      after = [ "nftables.service" ];
-      requires = [ "nftables.service" ];
-      partOf = [ "nftables.service" ];
-      wantedBy = [ "nftables.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${pkgs.nftables}/bin/nft -f ${geoipDeNft}";
-        CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
+    systemd.services = {
+      nftables-geoip-de = mkGeoipService {
+        description = "GeoIP DE-Basis aus Nix-Store laden (kein Netz)";
+        nftFile = geoipDeNft;
       };
-    };
-
-    # AT/LT optional: nur wenn allowedCountries gesetzt + geoipAutoUpdate aktiv.
-    # Fügt IPs per `add element` hinzu — DE-Basis bleibt erhalten.
-    systemd.services.nftables-geoip-update =
-      lib.mkIf (cfg.geoipAutoUpdate.enable && cfg.allowedCountries != [ ])
-        {
-          description = "GeoIP optionale Länder nachladen (${allowedCountryList} → nftables geoip_allowed)";
-          after = [
-            "network-online.target"
-            "nftables-geoip-de.service"
-          ];
-          wants = [ "network-online.target" ];
-          requires = [ "nftables-geoip-de.service" ];
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = pkgs.writeShellScript "update-geoip-optional" ''
-              set -euo pipefail
-              TEMP_DIR=$(mktemp -d)
-              trap 'rm -rf "$TEMP_DIR"' EXIT
-              NFT_FILE="$TEMP_DIR/optional.nft"
-              : > "$NFT_FILE"
-              for country in ${allowedCountryList}; do
-                URL="https://www.ipdeny.com/ipblocks/data/aggregated/$country-aggregated.zone"
-                echo "geoip: lade optional $country..."
-                if ${pkgs.curl}/bin/curl --ssl-reqd -fsS -o "$TEMP_DIR/$country.zone" "$URL"; then
-                  {
-                    echo 'add element inet filter geoip_allowed {'
-                    grep -vE '^\s*(#|$)' "$TEMP_DIR/$country.zone" | sed 's/$/,/' | sed '$ s/,$//' | sed 's/^/  /'
-                    echo '}'
-                  } >> "$NFT_FILE"
-                else
-                  echo "WARN: $country übersprungen"
-                fi
-              done
-              if [ -s "$NFT_FILE" ]; then
-                ${pkgs.nftables}/bin/nft -f "$NFT_FILE"
-                echo "geoip_allowed: optionale Länder geladen"
-              fi
-            '';
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            PrivateDevices = true;
-            CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
-          };
-        };
-
-    systemd.paths.nftables-geoip-update-switch =
-      lib.mkIf (cfg.geoipAutoUpdate.enable && cfg.allowedCountries != [ ])
-        {
-          description = "GeoIP-Refresh nach nixos-rebuild switch (Boot via wantedBy am Service)";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-              TriggerLimitBurst = 1;
-              TriggerLimitIntervalSec = "2min";
-            }
-          ];
-          pathConfig = {
-            PathExists = "/run/current-system";
-            PathChanged = "/run/current-system";
-            Unit = "nftables-geoip-update.service";
-            MakeDirectory = false;
-          };
-        };
+    }
+    // lib.genAttrs (map (c: "nftables-geoip-${c}") activeOptionalCountries) (
+      name:
+      let
+        country = lib.removePrefix "nftables-geoip-" name;
+      in
+      mkGeoipService {
+        description = "GeoIP ${lib.toUpper country} aus Nix-Store nachladen (kein Netz)";
+        nftFile = geoipOptionalNft country;
+        after = [
+          "nftables.service"
+          "nftables-geoip-de.service"
+        ];
+        requires = [
+          "nftables.service"
+          "nftables-geoip-de.service"
+        ];
+      }
+    );
   };
 }

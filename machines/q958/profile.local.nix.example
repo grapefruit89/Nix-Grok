@@ -40,6 +40,7 @@
         readarr.apiKey   = ""; # leer = kein readarr_api_key
         # Media-Apps (für sync-script.sh falls benötigt)
         jellyfin.apiKey  = ""; # leer = kein jellyfin_api_key
+        jellyfin.adminPassword = ""; # für Seerr-Initial-Setup (arr-sync-seerr)
         jellyseerr.apiKey = ""; # leer = kein jellyseerr_api_key
         # Indexer
         treasuremaps.apiKey = "CHANGE_ME";

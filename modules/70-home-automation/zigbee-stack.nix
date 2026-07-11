@@ -46,6 +46,11 @@ in
       default = "ember";
       description = "Ember adapter type.";
     };
+    panId = lib.mkOption {
+      type = lib.types.int;
+      default = 6699;
+      description = "Zigbee PAN ID — Netzwerk-Identität; NICHT ändern auf laufendem Netz (alle Geräte verlieren Pairing).";
+    };
     dataDir = lib.mkOption {
       type = lib.types.str;
       default = "/var/lib/zigbee2mqtt";
@@ -98,7 +103,7 @@ in
           };
           advanced = {
             log_directory = "${cfg.dataDir}/log";
-            pan_id = 6699;
+            pan_id = cfg.panId;
           };
         };
       };
@@ -150,6 +155,7 @@ in
       ];
     };
 
+    users.groups.mqtt = { };
     users.users.zigbee2mqtt.extraGroups = [
       "mqtt"
       "dialout"
