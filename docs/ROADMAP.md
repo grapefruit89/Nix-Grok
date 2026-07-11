@@ -27,7 +27,7 @@ Quelle: Portierung bewährter Patterns ohne 5-Schichten-Bruch. **`.enable` bleib
 | 4 | `mkService` + `persistDirs` | [x] | `lib/service-factory.nix` → `impermanence.extraPaths`; `tierAStatic` nur Infra |
 | 5 | Caddy-Ingress aus Spec (keine Fallback-vHosts) | [x] | `lib/caddy-ingress.nix` inkl. Jellyfin/Vaultwarden |
 | 6 | `runtime-guard.nix` ab Stufe 8 | [x] | lockdown + fail2ban + crowdsec live checks |
-| 7 | VPN-NetNS Usenet-Stack | [x] | `modules/10-vpn-confinement.nix` (Stufe 6+, ersetzt UID-Routing) |
+| 7 | VPN-NetNS Usenet-Stack | [x] | `modules/50-media/57-usenet-confinement/` (Stufe 6+, ersetzt UID-Routing) |
 | 8 | `mkStreamer` Jellyfin | [x] | `lib/service-factory.nix`, `jellyfin.nix` |
 | 9 | ~~SOPS nach v5-Muster~~ → **systemd-creds** | [x] | `modules/00-core/05-creds.nix` — sops-nix ist Anti-Pattern ([ADR-2024](adr/2024-systemd-creds-tpm.md)) |
 
@@ -194,7 +194,7 @@ Lösungen: graue Wolke (DNS-only) **oder** Geo-Regeln in Cloudflare Dashboard.
 
 Bereits aktiv (Stufe 2):
 
-- [x] Split-DNS / Rewrites (`*.nix.m7c5.de` → LAN-IP) — `modules/10-network.nix`
+- [x] Split-DNS / Rewrites (`*.nix.m7c5.de` → LAN-IP) — `modules/10-network/default.nix`
 - [x] Bootstrap 1.1.1.1 (unabhängig von sich selbst)
 - [x] `before caddy`, Restart=always, Gatus critical
 

@@ -8,7 +8,7 @@ meta:
   quick_fix: "journalctl -u oauth2-proxy -n 30; systemctl reset-failed oauth2-proxy; systemctl start oauth2-proxy"
   services: [oauth2-proxy]
   betrifft:
-    - modules/20-security/28-oauth2-proxy.nix
+    - modules/20-security/2028-oauth2-proxy.nix
     - machines/q958/secrets.nix
     - machines/q958/profile.local.nix
   docs:
@@ -52,7 +52,7 @@ damit sie beim nächsten Setup oder Rebuild sofort erkannt werden.
 **oauth2-proxy im Forward-Auth-Modus (`upstream = "static://202"`)** — Caddy übernimmt das
 eigentliche Proxying; oauth2-proxy prüft nur die Session und gibt `200` oder `401` zurück.
 
-Modul: `modules/20-security/28-oauth2-proxy.nix`
+Modul: `modules/20-security/2028-oauth2-proxy.nix`
 Port: 4180 (Default, `http://127.0.0.1:4180`)
 Mode: Auth-Only (`static://202` Upstream = statische 202-Antwort für authed Requests)
 
@@ -305,7 +305,7 @@ systemctl cat oauth2-proxy | grep ExecStart
 
 | Artefakt | Pfad |
 |----------|------|
-| oauth2-proxy NixOS-Modul | `modules/20-security/28-oauth2-proxy.nix` |
+| oauth2-proxy NixOS-Modul | `modules/20-security/2028-oauth2-proxy.nix` |
 | Secret-Generierung | `machines/q958/secrets.nix` |
 | OIDC-Client-Credentials | `machines/q958/profile.local.nix` (gitignored) |
 

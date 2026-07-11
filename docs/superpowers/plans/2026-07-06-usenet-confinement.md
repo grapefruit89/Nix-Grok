@@ -4,7 +4,7 @@
 
 **Goal:** POSIX-NetNS-Infrastruktur restlos entfernen und durch modernes host-basiertes UID-Sandbox-Modul ersetzen — atomic in einem Commit + einem `nixos-rebuild switch`.
 
-**Architecture:** Neues Modul `57-usenet-confinement/default.nix` kapselt VPN-Killswitch (BindsTo), DNS-Isolation (BindReadOnlyPaths) und zusätzliches systemd-Hardening für SABnzbd + Prowlarr. Drei Verteidigungsschichten: systemd BPF → nftables skuid → UID-Routing (bereits aktiv in 16-vpn.nix).
+**Architecture:** Neues Modul `57-usenet-confinement/default.nix` kapselt VPN-Killswitch (BindsTo), DNS-Isolation (BindReadOnlyPaths) und zusätzliches systemd-Hardening für SABnzbd + Prowlarr. Drei Verteidigungsschichten: systemd BPF → nftables skuid → UID-Routing (bereits aktiv in 1096-vpn.nix).
 
 **Tech Stack:** NixOS 26.05, systemd, nftables, WireGuard (privado interface)
 
@@ -672,12 +672,12 @@ Datei `/etc/nixos/modules/10-network/default.nix` vollständig ersetzen:
 { ... }:
 {
   imports = [
-    ./11-network.nix
-    ./13-gateway.nix
-    ./14-ingress.nix
-    ./15-databases.nix
-    ./16-vpn.nix
-    ./17-pocket-id.nix
+    ./1090-host-network.nix
+    ./1003-gateway.nix
+    ./1094-ingress.nix
+    ./1095-databases.nix
+    ./1096-vpn.nix
+    ./1001-pocket-id.nix
   ];
 }
 ```

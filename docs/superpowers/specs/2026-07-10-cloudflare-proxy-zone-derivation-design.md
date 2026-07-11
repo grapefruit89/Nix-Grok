@@ -12,7 +12,7 @@ meta:
     - security
   betrifft:
     - machines/q958/secrets.nix
-    - modules/10-network/11-network.nix
+    - modules/10-network/1090-host-network.nix
     - lib/services-spec.nix
   docs:
     - docs/adr/1031-caddy-zones-konzept.md
@@ -24,7 +24,7 @@ meta:
 
 **Status:** accepted  
 **Datum:** 2026-07-10  
-**Betrifft:** `secrets.nix`, `11-network.nix`
+**Betrifft:** `secrets.nix`, `1090-host-network.nix`
 
 ---
 
@@ -117,7 +117,7 @@ explizit `"proxied": false` (bisher nicht gesetzt, Default war ohnehin false —
 jetzt zur Klarheit explizit). Der Bare-Domain-Record wird weiterhin von ddns-updater
 gepflegt, hat aber keine Caddy-vHost dahinter.
 
-### 2. `modules/10-network/11-network.nix`
+### 2. `modules/10-network/1090-host-network.nix`
 
 `trusted_proxies` wird um CF-IPv4-Ranges erweitert. Nötig damit Caddy für
 `external`-Services die echte IP aus `CF-Connecting-IP` zieht — für korrekte Logs,
@@ -313,7 +313,7 @@ curl -sv https://auth.$DOMAIN/health 2>&1 | grep -E "< HTTP|Connected to"
 ## Bekannte Einschränkungen
 
 - **CF-IP-Ranges können sich ändern.** CF gibt Änderungen bekannt, passiert selten.
-  Beim Update: `trusted_proxies` in `11-network.nix` anpassen, rebuild.
+  Beim Update: `trusted_proxies` in `1090-host-network.nix` anpassen, rebuild.
   Check: https://www.cloudflare.com/ips-v4 vs. aktuelle Config.
 
 - **Wildcard macht internal-Services WAN-DNS-sichtbar.** Der Wildcard-Record bedeutet,
@@ -336,7 +336,7 @@ curl -sv https://auth.$DOMAIN/health 2>&1 | grep -E "< HTTP|Connected to"
 
 ## Implementierungsreihenfolge
 
-1. `11-network.nix` — `trusted_proxies` erweitern
+1. `1090-host-network.nix` — `trusted_proxies` erweitern
 2. `secrets.nix` — External-Subdomains ableiten + DDNS-Config erweitern
 3. `nixos-rebuild switch`
 4. `sudo systemctl restart q958-secrets-provision`

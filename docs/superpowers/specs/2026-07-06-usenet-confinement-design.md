@@ -23,7 +23,7 @@ veth-Bridges und manuelle WireGuard-Konfiguration. Dieser Ansatz war:
 - Unnötig komplex: `lib/vpn-connection.nix` löste zur Laufzeit immer zu `127.0.0.1` auf
 - Dead code: `vpn-confinement.enable` war nie auf `true` gesetzt
 
-Der modernere Ansatz (`16-vpn.nix` UID-Routing + `RestrictNetworkInterfaces`) war bereits aktiv,
+Der modernere Ansatz (`1096-vpn.nix` UID-Routing + `RestrictNetworkInterfaces`) war bereits aktiv,
 aber nicht vollständig implementiert (fehlende DNS-Isolation, legacy nftables-Regeln).
 
 ---
@@ -168,7 +168,7 @@ sandboxAttrs = {
 
 Falls `my.security.firewall.blockCleartextDns = true` künftig aktiviert wird: Die usenet-Dienste
 senden DNS an 198.18.0.1 via privado. Diese Regel würde das abfangen. In diesem Fall braucht
-`skuidUsenetGuard` eine DNS-Ausnahme für privado. Aktuell kein Problem (nicht aktiv).
+`skuidUsenetGuard` eine DNS-Ausnahme für privado. Umgesetzt in `lib/nftables-rules.nix` (`skuidUsenetDnsAllow`).
 
 ---
 

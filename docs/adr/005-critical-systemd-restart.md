@@ -9,7 +9,7 @@ meta:
   services: [caddy, blocky, pocket-id]
   betrifft:
     - lib/critical-systemd.nix
-    - modules/10-network/11-network.nix
+    - modules/10-network/1090-host-network.nix
     - modules/60-apps/pocket-id.nix
   docs:
     - docs/adr/README.md
@@ -90,7 +90,7 @@ grep -n "Restart\|StartLimit" /etc/nixos/lib/critical-systemd.nix
 | Artefakt | Pfad |
 |----------|------|
 | Preset | `lib/critical-systemd.nix` |
-| Nutzer | `modules/10-network/11-network.nix`, `modules/60-apps/pocket-id.nix` |
+| Nutzer | `modules/10-network/1090-host-network.nix`, `modules/60-apps/pocket-id.nix` |
 | Audit | `docs/AUDIT-blocky-caddy-ipv6.md` §10 |
 
 ## Alternativen verworfen {#alternativen}

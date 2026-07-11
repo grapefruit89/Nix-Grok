@@ -8,7 +8,7 @@ meta:
   quick_fix: "ENCRYPTION_KEY in /var/lib/secrets/pocket-id.env prüfen; systemctl restart pocket-id"
   services: [pocket-id]
   betrifft:
-    - modules/10-network/17-pocket-id.nix
+    - modules/10-network/1001-pocket-id.nix
     - machines/q958/media-secrets.nix
     - machines/q958/profile.local.nix
   docs:
@@ -45,7 +45,7 @@ Dienste (Jellyfin, *arr, Paperless, n8n, Vaultwarden etc.). Anforderungen:
 
 **Pocket-ID** wird als einziger OIDC Provider auf q958 eingesetzt.
 
-Modul: `modules/10-network/17-pocket-id.nix`
+Modul: `modules/10-network/1001-pocket-id.nix`
 Port: 1411 (aus `my.ports.pocket-id`)
 State: `/var/lib/pocket-id` (SQLite Default)
 
@@ -100,7 +100,7 @@ Scopes: openid profile email
 
 ## Hardening (NixOS-Modul) {#hardening-nixos-modul}
 
-Das Modul `17-pocket-id.nix` setzt:
+Das Modul `1001-pocket-id.nix` setzt:
 - `ProtectSystem = "strict"` + `ProtectHome = true`
 - `NoNewPrivileges`, `PrivateTmp`, `PrivateDevices`
 - `ProtectKernelTunables/Modules/ControlGroups`

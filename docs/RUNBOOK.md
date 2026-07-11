@@ -44,7 +44,7 @@ journalctl -u caddy -n 20 --no-pager | grep -i error
 
 **Fix:**
 ```bash
-# In modules/10-network/11-network.nix:
+# In modules/10-network/1090-host-network.nix:
 #   ip_mask /24  →  ip_mask 24
 #   ip_mask /48  →  ip_mask 48
 grep -rn "ip_mask" /etc/nixos/modules/

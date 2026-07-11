@@ -58,7 +58,7 @@ meta:
 |---------|-------|--------|
 | Daten | `machines/q958/profile.nix` | `network.blocky.upstream`, `network.dns.bootstrap`, `network.lan.dns` |
 | Verdrahtung | `machines/q958/network.nix` | `my.services.blocky.upstreamDns`, `my.configs.network.dnsBootstrap` |
-| Modul | `modules/10-network.nix` | Blocky-Settings, systemd, Assertions |
+| Modul | `modules/10-network/1002-blocky.nix` | Blocky-Settings, systemd |
 | Policy | `lib/dns-policy.nix` | `isEncryptedUpstream`, Build-Assertions |
 | Aktivierung | `machines/q958/rollout.nix` | `blocky.enable = erstAb 2` |
 
@@ -99,7 +99,7 @@ bootstrap = [ "tcp-tls:1.1.1.1:853" "tcp-tls:9.9.9.9:853" ];
 
 ### 2.6 Assertions (Build bricht bei Regression)
 
-In `modules/10-network.nix` (wenn Blocky aktiv):
+In `modules/10-network/1002-blocky.nix` (wenn Blocky aktiv):
 
 - Upstreams müssen verschlüsselt sein (`tcp-tls:`, `https://`, …)
 - Bootstrap verschlüsselt
@@ -114,7 +114,7 @@ In `machines/q958/access.nix`:
 
 ### 2.7 systemd — Crash-Resilienz
 
-Datei: `lib/critical-systemd.nix` + `modules/10-network.nix`
+Datei: `lib/critical-systemd.nix` + `modules/10-network/1002-blocky.nix`
 
 | Parameter | Blocky-Wert |
 |-----------|-------------|
@@ -174,7 +174,7 @@ Datei: `lib/critical-systemd.nix` + `modules/10-network.nix`
 |---------|-------|
 | Aktivierung | `machines/q958/rollout.nix` → `services.caddy.enable = erstAb 5` |
 | Hardening | `modules/60-apps/default.nix` |
-| vHosts | verteilt in `modules/10-network.nix`, `40-observability.nix`, `50-media/`, `60-apps/`, `70-forge.nix` |
+| vHosts | `1094-ingress.nix` (spec) + `40-observability.nix`, `50-media/`, `60-apps/`, `70-forge.nix` |
 | Snippets | `lib/caddy-snippets.nix` (`sso_auth`, `tailscale_admin`, `security_headers`) |
 | Proxy-Helper | `lib/caddy-helpers.nix` (TCP + Unix-Socket-Upstreams) |
 
@@ -282,13 +282,13 @@ Verdrahtung: `machines/q958/network.nix` → `my.configs.network.ipv6` + `my.sec
 
 | Schicht | Datei | Maßnahme |
 |---------|-------|----------|
-| **sysctl** | `modules/10-network.nix` | `disable_ipv6=1`, `accept_ra=0`, `autoconf=0` auf `eno1` |
+| **sysctl** | `modules/10-network/1090-host-network.nix` | `disable_ipv6=1`, `accept_ra=0`, `autoconf=0` auf `eno1` |
 | **systemd-networkd** | `machines/q958/access.nix` | `IPv6AcceptRA = no` auf LAN |
 | **nftables** | `modules/15-firewall.nix` | Kein `crowdsec_blocked_ipv6`; Drop `iifname eno1 + nfproto ipv6` |
 | **CrowdSec** | `modules/40-observability.nix` | `nftables.ipv6.enabled = false` |
-| **Blocky** | `modules/10-network.nix` | `connectIPVersion=v4`, `filtering.queryTypes=[AAAA]` |
-| **Blocky sandbox** | `modules/10-network.nix` | `RestrictAddressFamilies` ohne `AF_INET6` |
-| **Assertion** | `modules/10-network.nix` | `ipv6.firewall == false` |
+| **Blocky** | `modules/10-network/1002-blocky.nix` | `connectIPVersion=v4`, `filtering.queryTypes=[AAAA]` |
+| **Blocky sandbox** | `modules/10-network/1002-blocky.nix` | `RestrictAddressFamilies` ohne `AF_INET6` |
+| **Assertion** | `modules/10-network/1090-host-network.nix` | `ipv6.firewall == false` |
 
 ### 5.4 Was NICHT abgeschaltet ist
 
@@ -346,7 +346,8 @@ machines/q958/
   gatus-endpoints.yaml # critical: blocky-dns, caddy-ingress
 
 modules/
-  10-network.nix       # Blocky, DoT, resolv.conf, IPv6 sysctl, Assertions
+  1090-host-network.nix  # DoT, resolv.conf, IPv6 sysctl, Caddy global
+  1002-blocky.nix        # Blocky DNS
   15-firewall.nix      # nftables v4-only + eno1 v6 drop
   40-observability.nix # CrowdSec ohne v6, Gatus, Grafana-UDS
   60-apps/default.nix  # Caddy hardening + Start-Reihenfolge

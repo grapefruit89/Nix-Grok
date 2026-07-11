@@ -8,8 +8,8 @@ meta:
   quick_fix: "journalctl -b | grep -iE 'lockdown|module.*denied|sysctl.*fail'"
   services: []
   betrifft:
-    - modules/20-security/26-kernel-hardening.nix
-    - modules/20-security/27-hardened-core.nix
+    - modules/20-security/2026-kernel-hardening.nix
+    - modules/20-security/2027-hardened-core.nix
     - machines/q958/rollout.nix
   docs:
     - docs/adr/2027-kernel-slim-module-policy.md
@@ -49,7 +49,7 @@ meta:
 ### sysctl — Speicher und Introspektion {#sysctl-memory}
 
 ```nix
-# modules/20-security/26-kernel-hardening.nix {#modules20-security26-kernel-hardeningnix}
+# modules/20-security/2026-kernel-hardening.nix {#modules20-security26-kernel-hardeningnix}
 boot.kernel.sysctl = {
   "kernel.dmesg_restrict"        = 1;   # Nur root liest dmesg
   "kernel.kptr_restrict"         = 2;   # Kernel-Pointer nie an Userspace
@@ -110,7 +110,7 @@ fileSystems."/run/lock" = { options = [ "noexec" "nosuid" "nodev" ]; };
 ### Kernel-Lockdown (Stufe 9) {#lockdown}
 
 ```nix
-# modules/20-security/27-hardened-core.nix — aktiv wenn hardened.enable = true {#modules20-security27-hardened-corenix-aktiv-wenn-hardenedenable-true}
+# modules/20-security/2027-hardened-core.nix — aktiv wenn hardened.enable = true {#modules20-security27-hardened-corenix-aktiv-wenn-hardenedenable-true}
 security.lockKernelModules = true;   # modules_disabled=1 nach dem Boot
 boot.kernelParams = [ "lockdown=confidentiality" ];
 ```bash
@@ -180,8 +180,8 @@ cat /proc/sys/kernel/modules_disabled     # → 1 (nur Stufe 9)
 
 | Artefakt | Pfad |
 |----------|------|
-| sysctl + Mount + Boot-Params | `modules/20-security/26-kernel-hardening.nix` |
-| lockKernelModules + Dienst-Slimming | `modules/20-security/27-hardened-core.nix` |
+| sysctl + Mount + Boot-Params | `modules/20-security/2026-kernel-hardening.nix` |
+| lockKernelModules + Dienst-Slimming | `modules/20-security/2027-hardened-core.nix` |
 | Rollout-Aktivierung | `machines/q958/rollout.nix` (`erstAb 8`, `erstAb 9`) |
 
 ### Verifikation {#verifikation}

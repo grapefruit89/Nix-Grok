@@ -8,7 +8,7 @@ meta:
   betrifft:
     - packages/secrets-portal/main.go
     - packages/secrets-portal/static/index.html
-    - modules/20-security/29-secrets-portal.nix
+    - modules/20-security/2029-secrets-portal.nix
     - machines/q958/default.nix
     - lib/services-spec.nix
   docs:

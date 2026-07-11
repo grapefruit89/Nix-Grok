@@ -8,7 +8,7 @@ meta:
   quick_fix: "ip_mask 24 statt /24 in Caddyfile (kein Slash!)"
   services: [caddy]
   betrifft:
-    - modules/10-network/11-network.nix
+    - modules/10-network/1090-host-network.nix
   docs:
     - docs/adr/README.md
     - docs/adr/1014-caddy-security-headers-trusted-proxies.md
@@ -118,7 +118,7 @@ journalctl -u caddy -n 30 --no-pager | grep -iE "error|fail|strconv|ip_mask"
 # Syntaxfehler: /24 → 24 (kein Slash bei ip_mask!) {#syntaxfehler-24-24-kein-slash-bei-ip_mask}
 grep -rn "ip_mask" /etc/nixos/modules/
 
-# Fix in modules/10-network/11-network.nix: {#fix-in-modules10-network11-networknix}
+# Fix in modules/10-network/1090-host-network.nix: {#fix-in-modules10-network11-networknix}
 # ip_mask { ipv4 /24 → ip_mask { ipv4 24 {#ip_mask-ipv4-24-ip_mask-ipv4-24}
 # ip_mask { ipv6 /48 → ip_mask { ipv6 48 {#ip_mask-ipv6-48-ip_mask-ipv6-48}
 

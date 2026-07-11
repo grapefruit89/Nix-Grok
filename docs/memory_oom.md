@@ -98,7 +98,7 @@ systemd.services.paperless-web.serviceConfig = lib.mkMerge [
 
 | Dienst | MemoryMax | MemoryHigh | OOMScore | Datei |
 |--------|-----------|------------|----------|-------|
-| `postgresql` | ~10G @ 32GB RAM | ~8G | -800 | `modules/10-network.nix` |
+| `postgresql` | ~10G @ 32GB RAM | ~8G | -800 | `modules/10-network/default.nix` |
 | `jellyfin` | 6G | 4G | +100 | `modules/50-media/jellyfin.nix` |
 | `sabnzbd` | 2G | 1536M | +300 | `modules/50-media/sabnzbd.nix` |
 | `loki` | 1G | 768M | +300 | `modules/40-observability.nix` |
@@ -114,7 +114,7 @@ Paperless-Units in der Slice: `paperless-web`, `paperless-scheduler`, `paperless
 |--------|-----------|------------|----------|-------|
 | `sonarr` / `radarr` / `readarr` / `prowlarr` | 512M | 384M | +200 | `modules/50-media/arr-helper.nix` |
 | `caddy` | 768M | 512M | -900 (critical-systemd) | `modules/60-apps/default.nix` |
-| `pocket-id` | 256M | 192M | -900 | `modules/10-network.nix` |
+| `pocket-id` | 256M | 192M | -900 | `modules/10-network/default.nix` |
 | `vector` | 512M | 384M | +200 | `modules/40-observability.nix` |
 | `grafana` | 512M | 384M | +200 | `modules/40-observability.nix` |
 
@@ -136,8 +136,8 @@ Ohne Helper müsste dasselbe fünfmal in `sonarr.nix`, `radarr.nix`, … stehen.
 | Komponente | Setting | Datei |
 |------------|---------|-------|
 | ZRAM | 25 % RAM, zstd, swappiness 180 | `modules/00-core.nix` |
-| Blocky | Max 500M, OOM -1000 | `modules/10-network.nix` + `critical-systemd.nix` |
-| Valkey | App `maxmemory 256mb` | `modules/10-network.nix` |
+| Blocky | Max 500M, OOM -1000 | `modules/10-network/default.nix` + `critical-systemd.nix` |
+| Valkey | App `maxmemory 256mb` | `modules/10-network/default.nix` |
 | Home Assistant | Max 2G, OOM +300 | `modules/60-apps/iot.nix` |
 | Caddy | Max 768M, OOM -900 | `modules/60-apps/default.nix` |
 

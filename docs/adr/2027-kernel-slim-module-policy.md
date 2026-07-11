@@ -13,7 +13,7 @@ meta:
     - lib/kernel/blacklist-global.nix
     - lib/kernel/blacklist-homelab-headless.nix
     - lib/kernel/whitelist-homelab.nix
-    - modules/20-security/25-kernel-policy.nix
+    - modules/20-security/2025-kernel-policy.nix
     - machines/q958/kernel-slim.nix
   docs:
     - docs/adr/2026-kernel-hardening-sysctl.md
@@ -155,7 +155,7 @@ sudo bash /etc/nixos/scripts/nixos-rebuild-safe.sh
 | Filesystem-Blacklist | `lib/kernel/blacklist-filesystems.nix` |
 | Homelab-Headless-Blacklist (Audio/BT/WiFi) | `lib/kernel/blacklist-homelab-headless.nix` |
 | Hardware-Whitelist | `lib/kernel/whitelist-homelab.nix` |
-| NixOS-Option-Modul | `modules/20-security/25-kernel-policy.nix` |
+| NixOS-Option-Modul | `modules/20-security/2025-kernel-policy.nix` |
 | Host-Verdrahtung | `machines/q958/kernel-slim.nix` |
 
 ### Verifikation {#verifikation}

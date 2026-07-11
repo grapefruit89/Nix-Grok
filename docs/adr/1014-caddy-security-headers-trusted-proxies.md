@@ -6,7 +6,7 @@ meta:
   date: 2026-06-29
   betrifft:
     - lib/caddy-snippets.nix
-    - modules/10-network/11-network.nix
+    - modules/10-network/1090-host-network.nix
   docs:
     - docs/adr/README.md
     - docs/adr/1016-caddy-security-headers-coop-scanners.md
@@ -56,7 +56,7 @@ X-Frame-Options "SAMEORIGIN"     # war: "DENY"
 Permissions-Policy "geolocation=(), microphone=(), camera=()"  # neu
 ```
 
-### `modules/10-network/11-network.nix` {#network-config}
+### `modules/10-network/1090-host-network.nix` {#network-config}
 
 ```nix
 services.caddy.globalConfig = lib.mkIf config.services.caddy.enable ''

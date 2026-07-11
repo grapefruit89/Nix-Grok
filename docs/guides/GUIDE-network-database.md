@@ -9,7 +9,7 @@ meta:
     - docs/adr/1004-unix-socket-upstreams.md
     - docs/adr/011-unified-port-uid-schema.md
     - docs/adr/1002-ipv6-homelab-v4-only.md
-    - modules/10-network.nix
+    - modules/10-network/default.nix
   tags:
     - network
     - blocky
@@ -58,7 +58,7 @@ Valkey nutzt UDS `/run/redis-valkey/valkey.sock` — kein TCP-Port ([ADR-1004](.
 ## Blocky {#blocky}
 
 - Upstreams: `machines/q958/profile.nix` → `network.blocky.upstream`
-- Denylists / Client-Groups: `modules/10-network.nix`
+- Denylists / Client-Groups: `modules/10-network/default.nix`
 - LAN-Clients: DNS = Host-IP (`192.168.2.73`), Port 53
 
 ```bash

@@ -4,7 +4,7 @@
 
 **Goal:** Wildcard-DNS-Record bleibt unproxied; `external`-Zone-Services bekommen individuelle CF-Records mit `proxied: true`; Caddy erhält CF-IPv4-Ranges in `trusted_proxies` für korrekte IP-Extraktion.
 
-**Architecture:** Zwei Datei-Änderungen in NixOS. `11-network.nix` erweitert `trusted_proxies` global um 15 CF-Ranges (nur `client_ip`-Auflösung betroffen, `remote_ip`/`private_admin` bleibt unberührt). `secrets.nix` generiert DDNS-Config mit 9 proxied External-Records zusätzlich zu den bestehenden 2 unproxied Records (Bare-Domain + Wildcard).
+**Architecture:** Zwei Datei-Änderungen in NixOS. `1090-host-network.nix` erweitert `trusted_proxies` global um 15 CF-Ranges (nur `client_ip`-Auflösung betroffen, `remote_ip`/`private_admin` bleibt unberührt). `secrets.nix` generiert DDNS-Config mit 9 proxied External-Records zusätzlich zu den bestehenden 2 unproxied Records (Bare-Domain + Wildcard).
 
 **Tech Stack:** NixOS, Caddy (Caddyfile global config), qdm12/ddns-updater, Cloudflare API v4, jq, Nix-String-Interpolation.
 
@@ -35,7 +35,7 @@ Wenn dieser Schritt übersprungen wird und der Modus auf "Flexible" steht: proxi
 ## Task 1: trusted_proxies um CF-IPv4-Ranges erweitern
 
 **Files:**
-- Modify: `modules/10-network/11-network.nix:124`
+- Modify: `modules/10-network/1090-host-network.nix:124`
 
 **Was und warum:** Caddy's globale `trusted_proxies`-Liste bestimmt, welchen Proxy-IPs Caddy beim Extrahieren der echten Client-IP via `CF-Connecting-IP`/`X-Forwarded-For` vertraut. Ohne CF-Ranges sieht Caddy für proxied Records immer die CF-Datacenter-IP statt der echten Nutzer-IP — CrowdSec und DSGVO-Log sind dann wertlos für External-Services.
 
@@ -44,13 +44,13 @@ Wenn dieser Schritt übersprungen wird und der Modus auf "Flexible" steht: proxi
 - [ ] **Schritt 1: Aktuelle Zeile in Scratchpad ansehen**
 
 ```bash
-grep -n "trusted_proxies" /etc/nixos/modules/10-network/11-network.nix
+grep -n "trusted_proxies" /etc/nixos/modules/10-network/1090-host-network.nix
 ```
 Erwartete Ausgabe: `124:          trusted_proxies static private_ranges`
 
 - [ ] **Schritt 2: Datei lesen (Pflicht vor Edit)**
 
-`modules/10-network/11-network.nix` Zeilen 120–132 lesen.
+`modules/10-network/1090-host-network.nix` Zeilen 120–132 lesen.
 
 - [ ] **Schritt 3: trusted_proxies-Zeile ersetzen**
 
@@ -81,7 +81,7 @@ Erwartete Ausgabe: alle 15 CF-Ranges sichtbar in der evaluierten Config.
 
 ```bash
 cd /etc/nixos
-sudo git add modules/10-network/11-network.nix
+sudo git add modules/10-network/1090-host-network.nix
 sudo git commit -m "$(cat <<'EOF'
 feat(caddy): trusted_proxies um CF-IPv4-Ranges erweitern
 

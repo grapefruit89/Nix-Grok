@@ -203,7 +203,7 @@ EnvironmentFile = [ "%d/${name}.env" ];
 | 3 | `55-navidrome.nix` | navidrome | EnvironmentFile optional |
 | 4 | `42-logging.nix` | grafana | EnvironmentFile optional |
 | 5 | `61-core.nix` | vaultwarden (2x!), shiori | EnvironmentFile |
-| 6 | `28-oauth2-proxy.nix` | oauth2-proxy | keyFile + secretFile |
+| 6 | `2028-oauth2-proxy.nix` | oauth2-proxy | keyFile + secretFile |
 | 7 | `33-backup.nix` | restic (3 Credentials) | passwordFile, environmentFile |
 | 8 | `70-home-automation/zigbee-stack.nix` | zigbee2mqtt | EnvironmentFile |
 
@@ -220,11 +220,11 @@ API_KEY=$(cat /var/lib/secrets/api_key)
 ```
 
 Betroffene Dateien (nach Aufwand):
-1. `13-gateway.nix` — cloudflare_api_token in Shell-Script
+1. `1003-gateway.nix` — cloudflare_api_token in Shell-Script
 2. `51-jellyfin.nix` — jellyfin-oidc.env (grep in Activation-Script)
 3. `hermes.nix` — context7.env, nvidia_nim_api_key
 4. `41-gatus.nix` — gatus_ssh_key (SSH-Key wird in activation kopiert)
-5. `16-vpn.nix` — privado_private_key, netbird_setup_key
+5. `1096-vpn.nix` — privado_private_key, netbird_setup_key
 6. `70-home-automation/home-assistant.nix` — homeassistant_mqtt_password (Python-Path)
 7. `56-arr-sync/` (3 Dateien) — apiKeyFile-Pfade in Sync-Scripts
 

@@ -35,19 +35,18 @@ meta:
 
 `.enable` nur in `machines/q958/rollout.nix` (ab Stufe 6) — Konvention aus [GUIDE-dendritic-architecture.md](GUIDE-dendritic-architecture.md).
 
-## VPN-NetNS {#vpn-netns}
+## VPN-Sandbox (Usenet-Egress only) {#vpn-sandbox}
 
-- Namespace `usenet`: WireGuard + nftables Kill-Switch
-- veth-Bridge: Host `192.168.15.5` ↔ NS `192.168.15.1`
-- Prowlarr/SABnzbd im NS; Sonarr/Radarr auf Host
-- Leak-Check: [ADR-2009 — VPN-Leak-Check](../adr/2009-vpn-leak-check.md)
+- **VPN-pflichtig:** SABnzbd + Prowlarr ([ADR-5031](../adr/5031-usenet-vpn-sandbox.md))
+- **Off-VPN:** Sonarr, Radarr, Readarr, Lidarr — LAN/API only ([ADR-5032](../adr/5032-arr-off-vpn.md))
+- Schichten: `RestrictNetworkInterfaces` + nftables `skuid` + UID-Routing + event-driven Leak-Verify
 
 ```bash
-systemctl status usenet.service
-systemctl start vpn-netns-test    # wenn vpnTest.enable
-journalctl -u vpn-leak-check.service -n 20
-```nix
-
+systemctl status wg-quick-privado --no-pager
+systemctl show sabnzbd prowlarr -p RestrictNetworkInterfaces,BindsTo
+usenet-vpn-status   # Gatus-State, kein HTTP-Polling
+journalctl -u usenet-vpn-verify -n 20
+```
 ## Jellyfin {#jellyfin}
 
 - Config-Seeds: `modules/50-media/data/jellyfin-{system,network}.xml` (nur wenn fehlend)

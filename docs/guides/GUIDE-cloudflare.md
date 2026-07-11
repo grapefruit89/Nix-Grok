@@ -185,7 +185,7 @@ Caddy ist bei uns **nur Ingress** — TLS, DDNS und Rate-Limits liegen woanders:
 
 | Thema | Lösung | Wo |
 |---|---|---|
-| DDNS | `ddns-updater` + Cloudflare API | `13-gateway.nix` |
+| DDNS | `ddns-updater` + Cloudflare API | `1003-gateway.nix` |
 | TLS | `security.acme` + lego DNS-01 | `23-acme.nix` |
 | `caddy-dns/cloudflare` | lego (nicht Caddy-Plugin) | `23-acme.nix` |
 | `caddy-ratelimit` | nftables `webRateLimit` (L4) | `lib/nftables-rules.nix` |

@@ -37,7 +37,7 @@ Die IP ist bereits in `profile.nix` definiert.
 
 ---
 
-## Fix 3 — Fail2ban: iptables aus Enum entfernen (`22-fail2ban.nix`)
+## Fix 3 — Fail2ban: iptables aus Enum entfernen (`2022-fail2ban.nix`)
 
 **Problem:** `banaction`-Enum enthält `iptables-multiport` und `iptables-allports`,
 obwohl `lib.mkForce "nftables-f2b-set"` diese bei aktivierter Firewall immer überschreibt.
@@ -46,7 +46,7 @@ obwohl `lib.mkForce "nftables-f2b-set"` diese bei aktivierter Firewall immer üb
 
 ---
 
-## Fix 4 — oauth2-proxy: ssl-insecure-skip-verify entfernen (`28-oauth2-proxy.nix`)
+## Fix 4 — oauth2-proxy: ssl-insecure-skip-verify entfernen (`2028-oauth2-proxy.nix`)
 
 **Problem:** Dev-Workaround für nicht vorhandenes Let's Encrypt Cert.
 

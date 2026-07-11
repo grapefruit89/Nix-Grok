@@ -8,8 +8,8 @@ meta:
   quick_fix: "Nach switch: systemctl reset-failed; der Timeout tritt während switch auf, nicht danach"
   services: [systemd-networkd-wait-online]
   betrifft:
-    - modules/20-security/27-hardened-core.nix
-    - modules/10-network/16-vpn.nix
+    - modules/20-security/2027-hardened-core.nix
+    - modules/10-network/1096-vpn.nix
   docs:
     - docs/adr/2026-kernel-hardening-sysctl.md
     - docs/adr/1033-oauth2-proxy-forward-auth.md
@@ -72,7 +72,7 @@ erst nach network-online.target) → wait-online wartet 120 Sekunden → Timeout
 **Zwei NixOS-Optionen kombinieren**, beide sind nötig:
 
 ```nix
-# modules/20-security/27-hardened-core.nix {#modules20-security27-hardened-corenix}
+# modules/20-security/2027-hardened-core.nix {#modules20-security27-hardened-corenix}
 systemd.network.wait-online.enable = false;
 systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
 ```nix
@@ -150,14 +150,14 @@ cat /etc/systemd/system/systemd-networkd-wait-online.service.d/overrides.conf 2>
 ## Fix {#fix}
 
 ```nix
-# modules/10-network/16-vpn.nix — innerhalb lib.mkIf config.my.services.privado-vpn.enable { ... } {#modules10-network16-vpnnix-innerhalb-libmkif-configmyservicesprivado-vpnenable}
+# modules/10-network/1096-vpn.nix — innerhalb lib.mkIf config.my.services.privado-vpn.enable { ... } {#modules10-network16-vpnnix-innerhalb-libmkif-configmyservicesprivado-vpnenable}
 systemd.services."systemd-networkd-wait-online".wantedBy = lib.mkForce [ ];
 ```nix
 
 **Wichtig: Wo der Fix NICHT hingehört (und warum):**
 - `27-hardened-core.nix` ist falsch: dort ist der Block in `lib.mkIf cfg.enable` eingebettet, wobei
   `cfg.enable = hardened.enable = erstAb 9`. Bei Stufe 8 = `lib.mkIf false {}` → toter Code.
-- `16-vpn.nix` ist korrekt: `privado-vpn.enable = erstAb 6`, bei Stufe 8 aktiv. Ursache und Fix
+- `1096-vpn.nix` ist korrekt: `privado-vpn.enable = erstAb 6`, bei Stufe 8 aktiv. Ursache und Fix
   im gleichen Modul → klar und wartbar.
 
 ```bash
@@ -208,8 +208,8 @@ Bei der Suche nach tmux-Alternativen wurden drei Varianten versucht, die alle sc
 
 | Artefakt | Pfad |
 |----------|------|
-| **Fix (aktiv)** | `modules/10-network/16-vpn.nix` — innerhalb `privado-vpn.enable` Block |
-| Toter Code (entfernt) | `modules/20-security/27-hardened-core.nix` — war in `mkIf (erstAb 9)` = false |
+| **Fix (aktiv)** | `modules/10-network/1096-vpn.nix` — innerhalb `privado-vpn.enable` Block |
+| Toter Code (entfernt) | `modules/20-security/2027-hardened-core.nix` — war in `mkIf (erstAb 9)` = false |
 | Root Cause (nixpkgs) | `nixos/modules/services/networking/wg-quick.nix` Zeile 457 |
 | Root Cause (nixpkgs) | `nixos/modules/system/boot/networkd.nix` Zeile 4196-4203 |
 
@@ -240,7 +240,7 @@ ls /etc/systemd/system/network-online.target.wants/ | grep -c wait-online
 | Datum | Änderung |
 |-------|----------|
 | 2026-07-08 | Initial — Root Cause im nixpkgs-Source analysiert, 4 Fehlversuche dokumentiert |
-| 2026-07-08 | Fix von 27-hardened-core.nix → 16-vpn.nix verschoben (erstAb-9-Bug) |
+| 2026-07-08 | Fix von 27-hardened-core.nix → 1096-vpn.nix verschoben (erstAb-9-Bug) |
 | 2026-07-08 | Rebuild-Script: tmux/systemd-run entfernt — direkter switch nach wait-online-Fix |
 
 ---

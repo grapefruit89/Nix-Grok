@@ -7,7 +7,7 @@ meta:
   docs:
     - docs/adr/1034-secrets-portal-architecture.md
     - packages/secrets-portal/main.go
-    - modules/20-security/29-secrets-portal.nix
+    - modules/20-security/2029-secrets-portal.nix
     - machines/q958/default.nix
   tags:
     - secrets

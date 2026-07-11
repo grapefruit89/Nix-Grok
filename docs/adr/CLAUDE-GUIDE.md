@@ -107,7 +107,7 @@ journalctl -u caddy -n 20 --no-pager | grep -i error
 ## Fix {#fix}
 
 ```bash
-# modules/10-network/11-network.nix: ipv4 /24 → ipv4 24, ipv6 /48 → ipv6 48
+# modules/10-network/1090-host-network.nix: ipv4 /24 → ipv4 24, ipv6 /48 → ipv6 48
 sudo scripts/nixos-rebuild-safe.sh
 # dann switch in tmux
 ```

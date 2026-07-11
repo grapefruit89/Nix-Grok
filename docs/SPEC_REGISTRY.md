@@ -37,7 +37,7 @@ meta:
 | NIXH-05-MOD-004 | `modules/05-runtime-guard.nix` | Runtime-Watchdog |
 | NIXH-05-MOD-005 | `modules/05-sops.nix` | [006](adr/2006-sops-migration-path.md) |
 | NIXH-10-ING-001 | `modules/10-ingress.nix` | Spec-Ingress |
-| NIXH-10-VPN-001 | `modules/10-vpn-confinement.nix` | NetNS Usenet |
+| NIXH-10-VPN-001 | `modules/50-media/57-usenet-confinement/` | NetNS Usenet |
 
 ## Gateway & Policy
 

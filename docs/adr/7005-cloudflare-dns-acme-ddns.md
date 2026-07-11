@@ -205,8 +205,8 @@ Plugins aus dem Caddy-Ökosystem werden durch NixOS-native Bausteine ersetzt:
 
 | Caddy-Plugin / Feature | Stattdessen auf q958 | Modul / Referenz |
 |---|---|---|
-| DDNS | `ddns-updater` (qdm12) + Cloudflare API | `modules/10-network/13-gateway.nix` |
-| TLS / ACME DNS-01 | `security.acme` + lego + Cloudflare | `modules/20-security/23-acme.nix` |
+| DDNS | `ddns-updater` (qdm12) + Cloudflare API | `modules/10-network/1003-gateway.nix` |
+| TLS / ACME DNS-01 | `security.acme` + lego + Cloudflare | `modules/20-security/2023-acme.nix` |
 | `caddy-dns/cloudflare` | lego `dnsProvider = "cloudflare"` | [ADR-7005 §3](#3-acme-via-dns-01-kein-http-01) |
 | `caddy-ratelimit` | nftables WAN-Rate-Limit (L4) | `lib/nftables-rules.nix` — `webRateLimit` (default 100/min pro WAN-IP auf 80/443) |
 | `transform-encoder` (Apache-Logs) | JSON + journald | [ROADMAP](../ROADMAP.md) |

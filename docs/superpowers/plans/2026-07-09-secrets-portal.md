@@ -25,7 +25,7 @@
 |---|---|
 | `packages/secrets-portal/main.go` | ProfilePattern/ProfileType in SecretDef, writeProfile(), rebuildTimer, /api/rebuild/* Endpoints, PROVISION_SERVICE + REBUILD_FLAKE Env |
 | `packages/secrets-portal/static/index.html` | Button nie initial disabled, auto-submit bei Regex-Match (500ms debounce), Rebuild-Countdown UI |
-| `modules/20-security/29-secrets-portal.nix` | profilePattern/profileType Optionen in secretDefType, PROFILE_LOCAL_PATH + PROVISION_SERVICE + REBUILD_FLAKE in Environment, ReadWritePaths erweitern |
+| `modules/20-security/2029-secrets-portal.nix` | profilePattern/profileType Optionen in secretDefType, PROFILE_LOCAL_PATH + PROVISION_SERVICE + REBUILD_FLAKE in Environment, ReadWritePaths erweitern |
 | `lib/services-spec.nix` | secrets-portal Eintrag (socket + internal zone) |
 | `machines/q958/default.nix` | secrets-portal.enable + vollständige secrets-Liste |
 | `machines/q958/rollout.nix` | my.services.secrets-portal.enable = erstAb 1 |
@@ -471,10 +471,10 @@ sudo git commit -m "feat(secrets-portal): rebuild debounce timer (3 min) + count
 
 ---
 
-## Task 4: NixOS-Modul erweitern (29-secrets-portal.nix)
+## Task 4: NixOS-Modul erweitern (2029-secrets-portal.nix)
 
 **Files:**
-- Modify: `modules/20-security/29-secrets-portal.nix`
+- Modify: `modules/20-security/2029-secrets-portal.nix`
 
 **Interfaces:**
 - Consumes: profile.local.nix Pfad, Provision-Service-Name, Rebuild-Flake
@@ -559,7 +559,7 @@ Erwartung: `✓ Dry-build erfolgreich`
 
 ```bash
 cd /etc/nixos
-sudo git add modules/20-security/29-secrets-portal.nix
+sudo git add modules/20-security/2029-secrets-portal.nix
 sudo git commit -m "feat(secrets-portal): profilePattern/Type Options, PROFILE_LOCAL_PATH/PROVISION_SERVICE/REBUILD_FLAKE"
 ```
 

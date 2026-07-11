@@ -22,7 +22,7 @@ meta:
 | Schicht | Aufgabe | Modul |
 |---------|---------|-------|
 | L4 Filter | Geo, Rate, SYN/UDP, skuid, Fail2ban | `15-firewall.nix` |
-| DNS Adblock | StevenBlack, Easyprivacy | Blocky (`10-network.nix`) |
+| DNS Adblock | StevenBlack, Easyprivacy | Blocky (`1002-blocky.nix`) |
 | L7 Auth | SSO, Streaming | Caddy |
 
 **Kein Geo in Caddy** — eine Wahrheit in nftables ([ADR-2008 — Entscheidung](../adr/2008-nftables-l4-hardening.md#entscheidung)).

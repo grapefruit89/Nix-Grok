@@ -61,7 +61,7 @@ meta:
 
 | Service | ID | UID | Transport | SSO | Modul |
 |---------|:--:|:---:|-----------|:---:|-------|
-| [pocket-id](../../modules/10-network/11-network.nix) | 1001 | — | `⚠️ TCP-W :1001` → Ziel: `🎯 UDS /run/pocket-id/pocket-id.sock` | ja | OIDC-Provider |
+| [pocket-id](../../modules/10-network/1090-host-network.nix) | 1001 | — | `⚠️ TCP-W :1001` → Ziel: `🎯 UDS /run/pocket-id/pocket-id.sock` | ja | OIDC-Provider |
 | blocky | 1002 | — | `🔵 TCP-L :1002 (HTTP/Metrics)` | nein | LAN-DNS + Ad-Blocking |
 | ddns-updater | 1003 | — | `🔵 TCP-L :1003` | nein | Cloudflare DDNS |
 | blocky/DNS | — | — | `🌐 ext :53` | nein | IANA-Standard (LAN-Clients) |

@@ -8,8 +8,8 @@ meta:
     - docs/adr/2026-kernel-hardening-sysctl.md
     - docs/adr/2027-kernel-slim-module-policy.md
     - docs/adr/028-systemd-service-isolation.md
-    - modules/20-security/26-kernel-hardening.nix
-    - modules/20-security/27-hardened-core.nix
+    - modules/20-security/2026-kernel-hardening.nix
+    - modules/20-security/2027-hardened-core.nix
     - lib/kernel/policy.nix
     - lib/systemd-hardening.nix
   tags:

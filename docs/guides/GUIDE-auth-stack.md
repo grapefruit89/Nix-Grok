@@ -46,7 +46,7 @@ Entscheidung: [ADR-1025 — Pocket-ID als OIDC Provider](../adr/1025-pocket-id-o
 
 ### Konfiguration {#pocket-id-config}
 
-Modul: `modules/10-network/17-pocket-id.nix`
+Modul: `modules/10-network/1001-pocket-id.nix`
 Canonical URL: `https://auth.<domain>` — **kein** `forward_auth` auf diesem vHost (Deadlock).
 
 Pflicht-Secrets:

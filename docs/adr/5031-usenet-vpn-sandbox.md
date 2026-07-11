@@ -48,7 +48,7 @@ meta:
 - Die alte Lösung (`12-vpn-confinement.nix`) nutzte POSIX-Network-Namespaces (netns), veth-Bridges und imperativem Shell-Code
 - `vpn-confinement.enable` war nie auf `true` gesetzt — die Infrastruktur war dead code
 - `lib/vpn-connection.nix` löste zur Laufzeit immer zu `127.0.0.1` auf (netns-Abstraktion ohne Funktion)
-- Das moderne UID-basierte Routing (`16-vpn.nix`, `RestrictNetworkInterfaces`) war bereits aktiv, aber unvollständig (kein DNS-Leak-Schutz, legacy nftables)
+- Das moderne UID-basierte Routing (`1096-vpn.nix`, `RestrictNetworkInterfaces`) war bereits aktiv, aber unvollständig (kein DNS-Leak-Schutz, legacy nftables)
 
 ## Entscheidung {#entscheidung}
 
@@ -88,7 +88,7 @@ Positive Whitelist statt Negativliste. Entfernt alle Legacy-Referenzen (`veth-us
 ### Schicht 3: UID-Routing (Policy Routing) {#routing-layer}
 
 ```bash
-# 16-vpn.nix (postUp) {#16-vpnnix-postup}
+# 1096-vpn.nix (postUp) {#16-vpnnix-postup}
 ip rule add uidrange 5006-5006 lookup 51820 priority 95006
 ip rule add uidrange 5007-5007 lookup 51820 priority 95007
 ip route add default dev privado table 51820
@@ -184,7 +184,7 @@ systemctl show sabnzbd -p RestrictNetworkInterfaces,BindsTo
 - **Schwächere Prozess-Isolation als POSIX-NetNS:** Ein echter Network-Namespace isoliert den Prozess auf Kernel-Ebene vollständig vom Host-Netzwerk-Stack. `RestrictNetworkInterfaces` arbeitet per BPF und blockiert Socket-Operationen auf unerlaubten Interfaces — ist aber kein vollständiger Namespace. Für Homelab-Threat-Model (kein adversarial Code) akzeptabel. Bei höherem Threat-Model: NetNS oder Container.
 - `PrivateIPC` + `RestrictNamespaces` könnten mit ungewöhnlichen Plugin-Funktionen interferieren (bisher kein Problem bei SABnzbd/Prowlarr)
 - DNS-Isolation via statische Datei: bei DNS-IP-Änderung von Privado braucht's `nixos-rebuild` (akzeptabel, da selten)
-- Wenn `blockCleartextDns` künftig aktiviert wird: skuid-DNS-Ausnahme für DNS-Traffic via privado nötig
+- Usenet-DNS-Ausnahme in `skuidUsenetDnsAllow` (nftables output, vor `blockCleartextDns`)
 
 ### Implementierung {#implementierung}
 
@@ -226,11 +226,30 @@ nft list ruleset | grep "usenet VPN-only"
 | Datum | Änderung |
 |-------|----------|
 | 2026-07-06 | Initial — ersetzt ADR-2009 |
+| 2026-07-11 | Event-driven Leak-Verify (path + ExecStartPre, kein Timer) |
 
 ## Siehe auch {#siehe-auch}
 
 - [ADR-2008 — nftables L4-Härtung](2008-nftables-l4-hardening.md) — skuid-Segmentierung die dieser ADR ergänzt
 - [ADR-2009 — VPN-NetNS-Leak-Check](2009-vpn-leak-check.md) — superseded by this ADR
 - [ADR-011 — UID-Schema](011-unified-port-uid-schema.md) — UID 5006/5007 für prowlarr/sabnzbd
+- [ADR-5032 — *arr off-VPN](5032-arr-off-vpn.md) — Sonarr/Radarr/Readarr/Lidarr bewusst ohne VPN
 - [ADR-028 — systemd Service Isolation](028-systemd-service-isolation.md) — Hardening-Grundlagen
 - [Design-Spec](../superpowers/specs/2026-07-06-usenet-confinement-design.md) — vollständige Implementierungsdetails
+
+### Egress-Verifikation (event-driven, kein Timer) {#egress-verifikation-event-driven}
+
+ADR-2009 (15-Min-Timer im NetNS) bleibt superseded. Statt Polling:
+
+| Trigger | Mechanismus |
+|---------|-------------|
+| VPN kommt hoch | `wg-quick-privado` `ExecStartPost` → `usenet-vpn-verify.service` |
+| Link-State ändert sich | `systemd.path` auf `privado/carrier` + `operstate` |
+| SAB/Prowlarr starten | `ExecStartPre` — kein Start ohne OK-Egress |
+| VPN weg | `BindsTo privado.device` (bestehend) — kein Timer nötig |
+
+Bei Leak (Host-IP == Usenet-UID-IP): `sabnzbd` + `prowlarr` stoppen, `alerting-onfailure`.
+
+Gatus liest nur `/var/lib/usenet-vpn/verify.json` via `usenet-vpn-status` — kein HTTP-Polling.
+
+Implementierung: `modules/50-media/57-usenet-confinement/leak-verify.nix`

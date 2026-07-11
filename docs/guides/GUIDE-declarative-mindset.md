@@ -146,7 +146,7 @@ Sicherheitskritische Module: Firewall, SSH, LUKS-Unlock, Kernel-Hardening, Fail2
 | `15-firewall.nix` `nftables-geoip-update` Service+Timer | `writeShellScript` + `curl` + `nft -f` wöchentlich | Kontrollierter Escape-Hatch für externe Blocklisten. Runtime-Abhängigkeit auf ipdeny.com. Hinter `my.security.firewall.geoipAutoUpdate.enable` (default: true) deaktivierbar. |
 | `20-security.nix` `dropbear-rescue` `ExecStartPre` | `writeShellScript` für `authorized_keys` Prep | Akzeptabel: `StateDirectory = "dropbear"` bereits gesetzt, Prep ist minimal und idempotent. |
 | `21-sovereign-unlock.nix` `qrFallbackScript` | `writeShellScript` QR-Code auf TTY im initrd | Notfall-Fallback im frühen Boot. Akzeptabel und gut isoliert. |
-| `22-fail2ban.nix` `environment.etc."fail2ban/..." .text` | Deklaratives Droppen von Filter/Action-Config | **Musterbeispiel** — kein Imperativismus, `environment.etc` ist der richtige Weg. |
+| `2022-fail2ban.nix` `environment.etc."fail2ban/..." .text` | Deklaratives Droppen von Filter/Action-Config | **Musterbeispiel** — kein Imperativismus, `environment.etc` ist der richtige Weg. |
 
 **Neue Agentenregel**: `writeShellScript` in `ExecStart`/`ExecStartPre` → prüfen ob persistenter State mutiert wird. Wenn ja: dokumentieren + Deaktivierungsoption.
 

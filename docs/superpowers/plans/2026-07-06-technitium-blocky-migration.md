@@ -97,12 +97,12 @@ sudo git -C /etc/nixos commit -m "refactor: rename technitium-dns port → block
 ### Task 2: Blocky-Modul erstellen + importieren
 
 **Files:**
-- Create: `modules/10-network/12-blocky.nix`
+- Create: `modules/10-network/1002-blocky.nix`
 - Modify: `modules/10-network/default.nix:15-22`
 
 **Interfaces:**
 - Consumes: `config.my.ports.blocky` (Task 1), `config.my.configs.network.dnsBootstrap`, `config.my.configs.identity.domain`, `config.my.configs.server.lanIP`
-- Produces: `config.my.services.blocky.enable` (bool) — wird von Task 3 (11-network.nix extraHosts), Task 5 (rollout.nix, access.nix), Task 6 (policy) referenziert
+- Produces: `config.my.services.blocky.enable` (bool) — wird von Task 3 (1090-host-network.nix extraHosts), Task 5 (rollout.nix, access.nix), Task 6 (policy) referenziert
 
 - [ ] **Step 1: Allowlist-Datei initial erstellen**
 
@@ -112,9 +112,9 @@ echo "# Blocky persönliche Allowlist — eine Domain pro Zeile" >> /home/moritz
 echo "# Beispiel: doubleclick.net" >> /home/moritz/blocky-allowlist.txt
 ```
 
-- [ ] **Step 2: 12-blocky.nix erstellen**
+- [ ] **Step 2: 1002-blocky.nix erstellen**
 
-Erstelle `/etc/nixos/modules/10-network/12-blocky.nix` mit diesem Inhalt:
+Erstelle `/etc/nixos/modules/10-network/1002-blocky.nix` mit diesem Inhalt:
 
 ```nix
 # ---
@@ -212,14 +212,14 @@ in
 ```nix
 # ALT:
   imports = [
-    ./11-network.nix
-    ./13-gateway.nix
+    ./1090-host-network.nix
+    ./1003-gateway.nix
 
 # NEU:
   imports = [
-    ./11-network.nix
-    ./12-blocky.nix
-    ./13-gateway.nix
+    ./1090-host-network.nix
+    ./1002-blocky.nix
+    ./1003-gateway.nix
 ```
 
 - [ ] **Step 4: Dry-build verifizieren**
@@ -229,21 +229,21 @@ sudo scripts/nixos-rebuild-safe.sh
 ```
 Expected: `✓ Dry-build erfolgreich`
 
-Typischer Fehler: `attribute 'blocky' missing in my.services` → Option-Definition in 12-blocky.nix prüfen.
+Typischer Fehler: `attribute 'blocky' missing in my.services` → Option-Definition in 1002-blocky.nix prüfen.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-sudo git -C /etc/nixos add modules/10-network/12-blocky.nix modules/10-network/default.nix
+sudo git -C /etc/nixos add modules/10-network/1002-blocky.nix modules/10-network/default.nix
 sudo git -C /etc/nixos commit -m "feat: add Blocky DNS module with ad-blocking and split-horizon"
 ```
 
 ---
 
-### Task 3: 11-network.nix — Technitium-Block entfernen
+### Task 3: 1090-host-network.nix — Technitium-Block entfernen
 
 **Files:**
-- Modify: `modules/10-network/11-network.nix` (275 Zeilen → ~130 Zeilen)
+- Modify: `modules/10-network/1090-host-network.nix` (275 Zeilen → ~130 Zeilen)
 
 **Was weg:**
 - `cfgTechnitium` let-Binding (Zeile 11)
@@ -260,15 +260,15 @@ sudo git -C /etc/nixos commit -m "feat: add Blocky DNS module with ad-blocking a
 **Interfaces:**
 - Consumes: `config.my.services.blocky.enable` (Task 2)
 
-- [ ] **Step 1: 11-network.nix komplett neu schreiben**
+- [ ] **Step 1: 1090-host-network.nix komplett neu schreiben**
 
-Ersetze den gesamten Inhalt von `/etc/nixos/modules/10-network/11-network.nix` mit:
+Ersetze den gesamten Inhalt von `/etc/nixos/modules/10-network/1090-host-network.nix` mit:
 
 ```nix
-# Valkey + PostgreSQL → 15-databases.nix
-# Netbird + Privado VPN → 16-vpn.nix
-# Pocket-ID → 17-pocket-id.nix
-# Blocky DNS → 12-blocky.nix
+# Valkey + PostgreSQL → 1095-databases.nix
+# Netbird + Privado VPN → 1096-vpn.nix
+# Pocket-ID → 1001-pocket-id.nix
+# Blocky DNS → 1002-blocky.nix
 {
   config,
   lib,
@@ -433,8 +433,8 @@ sudo grep -rn "technitium-dns-server" /etc/nixos/ --include="*.nix" | grep -v ".
 - [ ] **Step 3: Commit**
 
 ```bash
-sudo git -C /etc/nixos add modules/10-network/11-network.nix
-sudo git -C /etc/nixos commit -m "refactor: remove Technitium from 11-network.nix, promote resolved/extraHosts/assertions to unconditional"
+sudo git -C /etc/nixos add modules/10-network/1090-host-network.nix
+sudo git -C /etc/nixos commit -m "refactor: remove Technitium from 1090-host-network.nix, promote resolved/extraHosts/assertions to unconditional"
 ```
 
 ---
@@ -822,9 +822,9 @@ Expected: Push zu GitHub erfolgreich
 |---|---|---|
 | `modules/00-core/08-ports.nix` | `technitium-dns → blocky` | 1 |
 | `modules/00-core/06-boot-watchdog.nix` | `requireTechnitium → requireBlocky` | 1 |
-| `modules/10-network/12-blocky.nix` | **NEU** | 2 |
+| `modules/10-network/1002-blocky.nix` | **NEU** | 2 |
 | `modules/10-network/default.nix` | import hinzufügen | 2 |
-| `modules/10-network/11-network.nix` | ~170 Zeilen Technitium raus | 3 |
+| `modules/10-network/1090-host-network.nix` | ~170 Zeilen Technitium raus | 3 |
 | `lib/services-spec.nix` | Entry umbenennen | 4 |
 | `lib/server-map.nix` | Entry umbenennen | 4 |
 | `lib/dns-map.nix` | Entry umbenennen | 4 |

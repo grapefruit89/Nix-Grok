@@ -190,7 +190,7 @@ meta:
 - [`#kontext`](adr/1014-caddy-security-headers-trusted-proxies.md#kontext) — Kontext
 - [`#entscheidung`](adr/1014-caddy-security-headers-trusted-proxies.md#entscheidung) — Entscheidung
   - [`#snippets`](adr/1014-caddy-security-headers-trusted-proxies.md#snippets) — `lib/caddy-snippets.nix`
-  - [`#network-config`](adr/1014-caddy-security-headers-trusted-proxies.md#network-config) — `modules/10-network/11-network.nix`
+  - [`#network-config`](adr/1014-caddy-security-headers-trusted-proxies.md#network-config) — `modules/10-network/1090-host-network.nix`
 - [`#konsequenzen`](adr/1014-caddy-security-headers-trusted-proxies.md#konsequenzen) — Konsequenzen
 - [`#alternativen`](adr/1014-caddy-security-headers-trusted-proxies.md#alternativen) — Alternativen verworfen
 - [`#siehe-auch`](adr/1014-caddy-security-headers-trusted-proxies.md#siehe-auch) — Siehe auch

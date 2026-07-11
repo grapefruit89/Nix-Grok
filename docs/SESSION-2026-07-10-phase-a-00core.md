@@ -84,14 +84,14 @@ default = config.my.ports.home-assistant;
 **Consumer-Updates:**
 | Datei | Änderung |
 |-------|---------|
-| `28-oauth2-proxy.nix` | `reverse_proxy 127.0.0.1:4180` → `${toString config.my.ports.oauth2-proxy}` |
-| `28-oauth2-proxy.nix` | `# httpAddress default...` → explizites `httpAddress = "http://127.0.0.1:..."` |
+| `2028-oauth2-proxy.nix` | `reverse_proxy 127.0.0.1:4180` → `${toString config.my.ports.oauth2-proxy}` |
+| `2028-oauth2-proxy.nix` | `# httpAddress default...` → explizites `httpAddress = "http://127.0.0.1:..."` |
 | `20-security.nix` | `default = 2222` → `default = config.my.ports.dropbear` |
 | `21-sovereign-unlock.nix` | `default = 2222` → `default = config.my.ports.dropbear` |
-| `16-vpn.nix` | `port = 51820` → `port = config.my.ports.netbird-wg` |
-| `11-network.nix` | `oauth2proxyPort = ... 4180` → `config.my.ports.oauth2-proxy` |
+| `1096-vpn.nix` | `port = 51820` → `port = config.my.ports.netbird-wg` |
+| `1090-host-network.nix` | `oauth2proxyPort = ... 4180` → `config.my.ports.oauth2-proxy` |
 
-**Bewusst nicht geändert:** `vpnTable = "51820"` in `16-vpn.nix` — Routing-Tabellen-ID, kein Listen-Port.
+**Bewusst nicht geändert:** `vpnTable = "51820"` in `1096-vpn.nix` — Routing-Tabellen-ID, kein Listen-Port.
 
 **Verifiziert live:** oauth2-proxy `--http-address=http://127.0.0.1:4180` ✓
 
@@ -104,7 +104,7 @@ Diese Fixes wurden in der Vorsitzung implementiert und sind live:
 | Fix | Datei | Details |
 |-----|-------|---------|
 | Valkey socket drift | `lib/services-spec.nix` | `redis.sock` → `valkey.sock` |
-| Socket-Permissions | `modules/20-security/29-secrets-portal.nix` | `Group=caddy`, `UMask=0007` → Socket `0660 root:caddy` |
+| Socket-Permissions | `modules/20-security/2029-secrets-portal.nix` | `Group=caddy`, `UMask=0007` → Socket `0660 root:caddy` |
 | Caddy vHost gap | `lib/service-enable.nix` | `secrets-portal = mySvc.secrets-portal.enable or false` |
 
 **Live-Stand:** `https://secrets.moritzbaumeister.de` → 200 OK, Socket `srwxrwx--- root caddy` ✓

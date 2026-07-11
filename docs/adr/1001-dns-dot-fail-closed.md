@@ -10,8 +10,8 @@ meta:
   betrifft:
     - machines/q958/profile.nix
     - machines/q958/network.nix
-    - modules/10-network/11-network.nix
-    - modules/10-network/12-blocky.nix
+    - modules/10-network/1090-host-network.nix
+    - modules/10-network/1002-blocky.nix
   docs:
     - docs/adr/README.md
     - docs/adr/1002-ipv6-homelab-v4-only.md
@@ -63,7 +63,7 @@ HOST split-horizon:
   Jeder Dienst aus services.spec bekommt automatisch einen Eintrag.
 
 LAN split-horizon:
-  Blocky customDNS.mapping: *.domain → LAN-IP (deklarativ in 12-blocky.nix)
+  Blocky customDNS.mapping: *.domain → LAN-IP (deklarativ in 1002-blocky.nix)
 ```
 
 ### Implementierungsdetails {#implementierung-details}
@@ -146,9 +146,9 @@ grep -r "nameservers" /etc/nixos/machines/q958/
 |---------|-------|
 | Daten / DoT-Server | `machines/q958/profile.nix` (`network.dns.bootstrap`) |
 | Verdrahtung | `machines/q958/network.nix` |
-| Modul Host-DNS | `modules/10-network/11-network.nix` |
-| Modul Blocky LAN-DNS | `modules/10-network/12-blocky.nix` |
-| Host split-horizon | `networking.extraHosts` (in 11-network.nix, aus services.spec) |
+| Modul Host-DNS | `modules/10-network/1090-host-network.nix` |
+| Modul Blocky LAN-DNS | `modules/10-network/1002-blocky.nix` |
+| Host split-horizon | `networking.extraHosts` (in 1090-host-network.nix, aus services.spec) |
 
 ## Verifikation {#verifikation}
 

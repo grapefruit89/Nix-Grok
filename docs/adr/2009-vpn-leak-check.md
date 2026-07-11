@@ -8,7 +8,7 @@ meta:
   quick_fix: "systemctl status vpn-leak-check; ip -n vpn-netns addr show"
   services: [vpn-leak-check, sabnzbd, prowlarr]
   betrifft:
-    - modules/10-network/vpn-confinement.nix
+    - modules/50-media/57-usenet-confinement/
   docs:
     - docs/adr/README.md
     - docs/guides/GUIDE-media-stack.md
@@ -42,7 +42,7 @@ Die nftables-Firewall ([ADR-2008](2008-nftables-l4-hardening.md)) schützt auf L
 2. Bei Gleichheit: **Notstopp** von `sabnzbd` und `prowlarr`, Exit-Code 1.
 3. **`vpn-leak-check.timer`**: Standard `*:0/15` (alle 15 Minuten), `RandomizedDelaySec = 2m`.
 4. Aktivierung nur über **`machines/q958/rollout.nix`** (`leakCheck.enable`, ab Stufe 6).
-5. Implementierung: `modules/10-network/vpn-confinement.nix` — Timer in `systemd.timers`, nicht in `systemd.services`.
+5. Implementierung: `modules/50-media/57-usenet-confinement/` — Timer in `systemd.timers`, nicht in `systemd.services`.
 
 ## Diagnose {#diagnose}
 

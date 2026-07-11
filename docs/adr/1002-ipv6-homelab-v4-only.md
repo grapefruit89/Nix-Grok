@@ -8,7 +8,7 @@ meta:
     - machines/q958/profile.nix
     - machines/q958/network.nix
     - machines/q958/access.nix
-    - modules/10-network/11-network.nix
+    - modules/10-network/1090-host-network.nix
     - modules/15-firewall.nix
     - modules/40-observability/crowdsec.nix
   docs:
@@ -77,7 +77,7 @@ meta:
 |---------|-------|
 | Daten | `machines/q958/profile.nix` |
 | Verdrahtung | `machines/q958/network.nix` |
-| Netzwerk | `modules/10-network/11-network.nix` |
+| Netzwerk | `modules/10-network/1090-host-network.nix` |
 | Firewall | `modules/15-firewall.nix` |
 | CrowdSec | `modules/40-observability/crowdsec.nix` |
 | LAN | `machines/q958/access.nix` |

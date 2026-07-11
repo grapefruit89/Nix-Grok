@@ -5,8 +5,8 @@ meta:
   status: accepted
   date: 2026-07-06
   betrifft:
-    - modules/20-security/23-acme.nix
-    - modules/10-network/11-network.nix
+    - modules/20-security/2023-acme.nix
+    - modules/10-network/1090-host-network.nix
     - packages/secrets-portal/
   docs:
     - docs/adr/README.md
@@ -97,9 +97,9 @@ security.acme.certs."m7c5.de" = {
 ### Implementierung {#implementierung}
 
 ```
-modules/20-security/23-acme.nix    → security.acme config (lego)
+modules/20-security/2023-acme.nix    → security.acme config (lego)
 machines/q958/secrets.nix          → CF_DNS_API_TOKEN in /var/lib/secrets/cloudflare_acme_env
-modules/10-network/14-ingress.nix  → Caddy liest /var/lib/acme/m7c5.de/{cert,key}.pem
+modules/10-network/1094-ingress.nix  → Caddy liest /var/lib/acme/m7c5.de/{cert,key}.pem
 ```nix
 
 ## Weitere Anwendungen des Prinzips {#weitere-anwendungen}
@@ -110,7 +110,7 @@ modules/10-network/14-ingress.nix  → Caddy liest /var/lib/acme/m7c5.de/{cert,k
 | DNS-Verschlüsselung | Caddy-DNS-Proxy | `systemd-resolved` DoT + Technitium |
 | Secrets-Verschlüsselung | sops-nix, Vault | `systemd-creds` + TPM2 ([ADR-2024](2024-systemd-creds-tpm.md)) |
 | Backup | Borg-Plugin, rclone-Plugin | `restic` (spezialisiert, eigenständig) |
-| Secrets-Portal | Vaultwarden-Workflow | `modules/20-security/29-secrets-portal.nix` (Go + systemd-creds) |
+| Secrets-Portal | Vaultwarden-Workflow | `modules/20-security/2029-secrets-portal.nix` (Go + systemd-creds) |
 
 ## Heuristik für neue Entscheidungen {#heuristik}
 

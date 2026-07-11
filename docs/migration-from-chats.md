@@ -72,7 +72,7 @@ Nix-Dateien bleiben autoritativ; diese Notiz ist die menschliche Destillation.
 |-------|--------|
 | `sso_auth` + Keepalive | ✓ `lib/caddy-snippets.nix` |
 | Forward-Auth-Cache 5min | offen (Phase 4) |
-| Blocky before Caddy | ✓ `10-network.nix` + `60-apps/default.nix` |
+| Blocky before Caddy | ✓ `modules/10-network/` + `60-apps/default.nix` |
 | Gatus blocky-dns | ✓ Gruppe `critical` |
 | Tailscale MagicDNS | ✓ `--accept-dns=false` |
 | Jellyfin Client-Split (X-Emby-Authorization) | ✓ `jellyfin.nix` |
@@ -93,7 +93,7 @@ Nix-Dateien bleiben autoritativ; diese Notiz ist die menschliche Destillation.
 | fwknop ablehnen | Grok | ✓ nicht implementiert | zu komplex |
 | Admin via Tailscale | Grok | ✓ `tailscale_admin` | passt `tailscaleIP` |
 
-**Implementiert in:** `lib/caddy-snippets.nix`, `modules/10-network.nix`, `40-observability.nix`, `50-media/`
+**Implementiert in:** `lib/caddy-snippets.nix`, `modules/10-network/default.nix`, `40-observability.nix`, `50-media/`
 
 ---
 
@@ -120,7 +120,7 @@ Nix-Dateien bleiben autoritativ; diese Notiz ist die menschliche Destillation.
 
 | Idee | Quelle | Status |
 |------|--------|--------|
-| Blocky: `RestrictNamespaces`, `~@mount` | Grok audit | ✓ `10-network.nix` |
+| Blocky: `RestrictNamespaces`, `~@mount` | Grok audit | ✓ `modules/10-network/` |
 | Pocket-ID systemd-hardening | Grok | ✓ erweitert |
 | Statische UID-Registry | Grok | Roadmap Stufe 8 |
 

@@ -8,7 +8,7 @@ meta:
   betrifft:
     - machines/q958/secrets.nix
     - machines/q958/profile.local.nix
-    - modules/10-network/11-network.nix
+    - modules/10-network/1090-host-network.nix
   docs:
     - docs/adr/README.md
     - docs/adr/2024-systemd-creds-tpm.md

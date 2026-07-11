@@ -39,7 +39,7 @@ Host (q958 selbst)
 
 ### Invarianten (bleiben erhalten)
 - Host-DNS läuft via `resolved → DoT` — unabhängig von Blocky
-- Assertions in `11-network.nix` (resolved.dnsovertls = "yes", kein 127.0.0.1 als resolved-DNS)
+- Assertions in `1090-host-network.nix` (resolved.dnsovertls = "yes", kein 127.0.0.1 als resolved-DNS)
 - Port 53 bleibt auf `127.0.0.1` (kein öffentlicher DNS)
 - `90-policy.nix` Assertion: Firewall → Blocky.enable (Technitium-Zweig entfällt)
 
@@ -47,7 +47,7 @@ Host (q958 selbst)
 
 ## 2. Blocky-Konfiguration
 
-Modul: `modules/10-network/12-blocky.nix`
+Modul: `modules/10-network/1002-blocky.nix`
 
 ```nix
 services.blocky.settings = {
@@ -129,19 +129,19 @@ auch Subdomains (`*.domain`) wenn `filterUnmappedTypes = false`. Funktional iden
 ### Neu
 | Datei | Aktion |
 |---|---|
-| `modules/10-network/12-blocky.nix` | **NEU** — Blocky-Modul (Slot frei seit vpn-confinement-Löschung) |
+| `modules/10-network/1002-blocky.nix` | **NEU** — Blocky-Modul (Slot frei seit vpn-confinement-Löschung) |
 
 ### Stark geändert
 | Datei | Was weg? |
 |---|---|
-| `modules/10-network/11-network.nix` | ~170 Zeilen Technitium-Block inkl. 122-Zeilen-API-Script |
+| `modules/10-network/1090-host-network.nix` | ~170 Zeilen Technitium-Block inkl. 122-Zeilen-API-Script |
 
 ### Umbenennungen / Kleinänderungen
 | Datei | Was ändert sich? |
 |---|---|
 | `modules/00-core/08-ports.nix` | `technitium-dns → blocky` (Wert bleibt 1002) |
 | `modules/00-core/06-boot-watchdog.nix` | `requireTechnitium → requireBlocky`, Option + Script-Zeile |
-| `modules/10-network/default.nix` | `./12-blocky.nix` hinzufügen |
+| `modules/10-network/default.nix` | `./1002-blocky.nix` hinzufügen |
 | `modules/30-storage/33-backup.nix` | 3 Stellen: Technitium-Path + Stop/Start → Blocky |
 | `modules/60-apps/default.nix` | 2 Stellen: Caddy `after`/`wants`: Technitium → Blocky |
 | `modules/90-policy/90-policy.nix` | Assertion: nur noch `blocky.enable` (Technitium-Zweig weg) |
@@ -175,8 +175,8 @@ Keine neuen Ports, kein Konflikt.
 
 ## 5. Was NICHT ändert sich
 
-- `systemd-resolved` mit DoT (strict) — bleibt komplett unverändert in `11-network.nix`
-- Alle Assertions in `11-network.nix` über resolved/DoT — bleiben erhalten
+- `systemd-resolved` mit DoT (strict) — bleibt komplett unverändert in `1090-host-network.nix`
+- Alle Assertions in `1090-host-network.nix` über resolved/DoT — bleiben erhalten
 - Port-53-Firewall-Regel (nur 127.0.0.1) — bleibt
 - `lib/dns-policy.nix` — bleibt (Host-DNS-Policy betrifft resolved, nicht Blocky)
 

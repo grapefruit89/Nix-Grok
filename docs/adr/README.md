@@ -79,6 +79,8 @@ meta:
 |-----|-------|--------|-------|
 | [5030](5030-media-stack-factory-hardening.md) | Media-Stack Inventory — was bereits implementiert war | accepted | 2026-07-05 |
 | [5031](5031-usenet-vpn-sandbox.md) | Usenet-Dienste VPN-Sandbox (host-basiert) | accepted | 2026-07-06 |
+| [5032](5032-arr-off-vpn.md) | *arr-Manager off-VPN (Sonarr/Radarr/Readarr/Lidarr) | accepted | 2026-07-11 |
+| [5033](5033-systemd-socket-on-demand.md) | On-demand HTTP via systemd socket-proxyd | accepted | 2026-07-11 |
 
 ### 70-home-automation — Home Assistant, MQTT, IoT
 
