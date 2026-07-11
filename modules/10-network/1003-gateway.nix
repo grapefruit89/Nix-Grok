@@ -235,7 +235,7 @@ in
           after = [ "network-online.target" ];
           serviceConfig = {
             Type = "oneshot";
-            ExecStart = "${systemctl} reset-failed ddns-network-events.path 2>/dev/null || true; ${systemctl} start ddns-network-events.path";
+            ExecStart = "${pkgs.bash}/bin/bash -c '${systemctl} reset-failed ddns-network-events.path 2>/dev/null || true; ${systemctl} start ddns-network-events.path'";
           };
         };
 
