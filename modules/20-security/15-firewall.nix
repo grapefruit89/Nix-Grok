@@ -25,6 +25,14 @@ let
   asserts = import ../../lib/assertions.nix { inherit lib; };
   allowedCountryList = lib.concatStringsSep " " cfg.allowedCountries;
   ruleset = import ../../lib/nftables-rules.nix { inherit lib config; };
+  # DE-Zone: zur Buildzeit aus vendortem File generiert — kein Netz nötig
+  geoipDeNft = pkgs.runCommand "geoip-de.nft" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
+    {
+      printf 'flush set inet filter geoip_allowed\nadd element inet filter geoip_allowed {\n'
+      grep -vE '^\s*(#|$)' ${./geoip-de.zone} | paste -sd,
+      printf '\n}\n'
+    } > $out
+  '';
 in
 {
   options.my.security.firewall = {
@@ -56,8 +64,8 @@ in
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = ''
-        Imperativ freigeschaltete Länder zusätzlich zu DE (ISO-2: "at", "lt").
-        DE ist immer hardcoded im Service — kein Eintrag nötig.
+        Optional: zusätzliche Länder zur Laufzeit nachladen (ISO-2: "at", "lt").
+        DE ist immer deklarativ im Store — kein Eintrag nötig.
         AT + LT hier eintragen wenn Netbird/Reisen abgedeckt sein sollen.
       '';
     };
@@ -100,10 +108,10 @@ in
       enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
-        # Kontrollierter Escape-Hatch: lädt bei Boot (30s) + wöchentlich GeoIP-Whitelists von
-        # ipdeny.com und befüllt nftables-Set geoip_allowed via `nft -f`. DE immer, AT/LT optional.
-        # Ohne diesen Service bleibt geoip_allowed leer → alles außer RFC1918 wird geblockt.
-        description = "Boot+Weekly GeoIP-Whitelist-Update (ipdeny.com → nftables geoip_allowed). DE immer, AT/LT via allowedCountries.";
+        # Kontrolliert optionalen Runtime-Fetch für AT/LT via ipdeny.com.
+        # DE ist immer geladen (nftables-geoip-de.service, Nix-Store, kein Netz).
+        # false = nur DE aktiv, AT/LT-Timer deaktiviert.
+        description = "AT/LT GeoIP-Refresh via ipdeny.com (Boot+Monatlich). DE ist unabhängig immer geladen.";
       };
     };
   };
@@ -142,58 +150,82 @@ in
       })
     ];
 
-    systemd.services.nftables-geoip-update = lib.mkIf cfg.geoipAutoUpdate.enable {
-      description = "Geo-IP whitelist → nftables set geoip_allowed (DE immer + optional AT/LT)";
-      after = [
-        "network-online.target"
-        "nftables.service"
-      ];
-      wants = [ "network-online.target" ];
+    # DE-Zone immer geladen: aus dem Nix-Store, kein Netz, kein Timer.
+    # partOf nftables.service → bei jedem Firewall-Reload automatisch neu geladen.
+    systemd.services.nftables-geoip-de = {
+      description = "GeoIP DE-Basis aus Nix-Store laden (kein Netz)";
+      after = [ "nftables.service" ];
+      requires = [ "nftables.service" ];
+      partOf = [ "nftables.service" ];
+      wantedBy = [ "nftables.service" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = pkgs.writeShellScript "update-geoip-allowed" ''
-          set -euo pipefail
-          TEMP_DIR=$(mktemp -d)
-          trap 'rm -rf "$TEMP_DIR"' EXIT
-          IP_FILE="$TEMP_DIR/ips.txt"
-          touch "$IP_FILE"
-          # DE ist immer Pflicht (deklarativ hardcoded) — AT/LT via allowedCountries optional
-          for country in de ${allowedCountryList}; do
-            URL="https://www.ipdeny.com/ipblocks/data/aggregated/$country-aggregated.zone"
-            echo "geoip-whitelist: lade $country..."
-            ${pkgs.curl}/bin/curl --ssl-reqd -fsS -o "$TEMP_DIR/$country.zone" "$URL" \
-              && cat "$TEMP_DIR/$country.zone" >> "$IP_FILE" \
-              || echo "WARN: $country übersprungen"
-          done
-          ${pkgs.gnugrep}/bin/grep -v -E '^\s*(#|$)' "$IP_FILE" > "$TEMP_DIR/clean_ips.txt" || true
-          if [ ! -s "$TEMP_DIR/clean_ips.txt" ]; then
-            echo "ERROR: keine Prefixes geladen — DE-Zone nicht erreichbar"
-            exit 1
-          fi
-          NFT_FILE="$TEMP_DIR/rules.nft"
-          echo "flush set inet filter geoip_allowed" > "$NFT_FILE"
-          echo "add element inet filter geoip_allowed {" >> "$NFT_FILE"
-          paste -sd, "$TEMP_DIR/clean_ips.txt" >> "$NFT_FILE"
-          echo "}" >> "$NFT_FILE"
-          ${pkgs.nftables}/bin/nft -f "$NFT_FILE"
-          echo "geoip_allowed aktualisiert ($(wc -l < "$TEMP_DIR/clean_ips.txt") Prefixes)"
-        '';
+        RemainAfterExit = true;
+        ExecStart = "${pkgs.nftables}/bin/nft -f ${geoipDeNft}";
+        CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateTmp = true;
         PrivateDevices = true;
-        CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
       };
     };
 
-    systemd.timers.nftables-geoip-update = lib.mkIf cfg.geoipAutoUpdate.enable {
-      description = "Monatlicher GeoIP-Whitelist-Refresh (DE+AT+LT → geoip_allowed)";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "30s";
-        OnUnitActiveSec = "30d";
-        RandomizedDelaySec = "6h";
-      };
-    };
+    # AT/LT optional: nur wenn allowedCountries gesetzt + geoipAutoUpdate aktiv.
+    # Fügt IPs per `add element` hinzu — DE-Basis bleibt erhalten.
+    systemd.services.nftables-geoip-update =
+      lib.mkIf (cfg.geoipAutoUpdate.enable && cfg.allowedCountries != [ ])
+        {
+          description = "GeoIP optionale Länder nachladen (${allowedCountryList} → nftables geoip_allowed)";
+          after = [
+            "network-online.target"
+            "nftables-geoip-de.service"
+          ];
+          wants = [ "network-online.target" ];
+          requires = [ "nftables-geoip-de.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = pkgs.writeShellScript "update-geoip-optional" ''
+              set -euo pipefail
+              TEMP_DIR=$(mktemp -d)
+              trap 'rm -rf "$TEMP_DIR"' EXIT
+              NFT_FILE="$TEMP_DIR/optional.nft"
+              : > "$NFT_FILE"
+              for country in ${allowedCountryList}; do
+                URL="https://www.ipdeny.com/ipblocks/data/aggregated/$country-aggregated.zone"
+                echo "geoip: lade optional $country..."
+                if ${pkgs.curl}/bin/curl --ssl-reqd -fsS -o "$TEMP_DIR/$country.zone" "$URL"; then
+                  {
+                    printf 'add element inet filter geoip_allowed {\n'
+                    ${pkgs.gnugrep}/bin/grep -vE '^\s*(#|$)' "$TEMP_DIR/$country.zone" | paste -sd,
+                    printf '\n}\n'
+                  } >> "$NFT_FILE"
+                else
+                  echo "WARN: $country übersprungen"
+                fi
+              done
+              if [ -s "$NFT_FILE" ]; then
+                ${pkgs.nftables}/bin/nft -f "$NFT_FILE"
+                echo "geoip_allowed: optionale Länder geladen"
+              fi
+            '';
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            PrivateTmp = true;
+            PrivateDevices = true;
+            CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
+          };
+        };
+
+    systemd.timers.nftables-geoip-update =
+      lib.mkIf (cfg.geoipAutoUpdate.enable && cfg.allowedCountries != [ ])
+        {
+          description = "Monatlicher GeoIP-Refresh für optionale Länder (${allowedCountryList})";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "30s";
+            OnUnitActiveSec = "30d";
+            RandomizedDelaySec = "6h";
+          };
+        };
   };
 }
