@@ -21,12 +21,27 @@ let
   # WEB-only 1080p: kein Bluray (typ. 10–20 GB). Ziel ~6 GB/100 min via preferred.
   # min ≤ preferred ≤ max: bevorzugt ~50 MB/min, Fallback bis 75 MB/min wenn nichts Kleineres existiert.
   web1080pSizeLimits = [
-    { name = "WEBDL-1080p"; min = 12.5; preferred = 50; max = 75; }
-    { name = "WEBRip-1080p"; min = 12.5; preferred = 50; max = 75; }
+    {
+      name = "WEBDL-1080p";
+      min = 12.5;
+      preferred = 50;
+      max = 75;
+    }
+    {
+      name = "WEBRip-1080p";
+      min = 12.5;
+      preferred = 50;
+      max = 75;
+    }
   ];
-  movieQualityDefinition = { type = "movie"; qualities = web1080pSizeLimits; };
-  seriesQualityDefinition = { type = "series"; qualities = web1080pSizeLimits; };
-
+  movieQualityDefinition = {
+    type = "movie";
+    qualities = web1080pSizeLimits;
+  };
+  seriesQualityDefinition = {
+    type = "series";
+    qualities = web1080pSizeLimits;
+  };
 
   # Zwei Profile: Deutsch-primär (min 10k → nur German/German-DL passiert),
   # Englisch-sekundär (min 0 → pure English passiert, German/andere abgestraft).

@@ -46,26 +46,28 @@ let
         default = "";
       };
       homepage = lib.mkOption {
-        type = lib.types.nullOr (lib.types.submodule {
-          options = {
-            name = lib.mkOption {
-              type = lib.types.str;
-              description = "Display name on the dashboard.";
+        type = lib.types.nullOr (
+          lib.types.submodule {
+            options = {
+              name = lib.mkOption {
+                type = lib.types.str;
+                description = "Display name on the dashboard.";
+              };
+              group = lib.mkOption {
+                type = lib.types.str;
+                description = "Dashboard group/section.";
+              };
+              description = lib.mkOption {
+                type = lib.types.str;
+                default = "";
+              };
+              icon = lib.mkOption {
+                type = lib.types.str;
+                default = "";
+              };
             };
-            group = lib.mkOption {
-              type = lib.types.str;
-              description = "Dashboard group/section.";
-            };
-            description = lib.mkOption {
-              type = lib.types.str;
-              default = "";
-            };
-            icon = lib.mkOption {
-              type = lib.types.str;
-              default = "";
-            };
-          };
-        });
+          }
+        );
         default = null;
         description = "Homepage dashboard metadata. null = not shown on dashboard.";
       };

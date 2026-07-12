@@ -39,15 +39,17 @@ in
       '';
     };
     extraUsers = lib.mkOption {
-      type = lib.types.listOf (lib.types.submodule {
-        options = {
-          name = lib.mkOption { type = lib.types.str; };
-          passwordFile = lib.mkOption {
-            type = lib.types.str;
-            description = "Path to file containing the user password.";
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            name = lib.mkOption { type = lib.types.str; };
+            passwordFile = lib.mkOption {
+              type = lib.types.str;
+              description = "Path to file containing the user password.";
+            };
           };
-        };
-      });
+        }
+      );
       default = [ ];
       description = "Additional Jellyfin users to provision declaratively.";
     };
@@ -89,7 +91,10 @@ in
           JELLYFIN_METADATA_LANGUAGE = locale.language or "de";
           JELLYFIN_METADATA_COUNTRY = lib.toUpper (lib.substring 3 2 (locale.default or "de_DE.UTF-8"));
           JELLYFIN_EXTRA_USERS_JSON = builtins.toJSON (
-            map (u: { name = u.name; password_file = u.passwordFile; }) cfg.extraUsers
+            map (u: {
+              name = u.name;
+              password_file = u.passwordFile;
+            }) cfg.extraUsers
           );
         };
 

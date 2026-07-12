@@ -44,11 +44,7 @@ in
     };
     lokiRetentionHours = lib.mkOption {
       type = lib.types.ints.positive;
-      default =
-        if ramGB <= 16 then
-          72
-        else
-          168;
+      default = if ramGB <= 16 then 72 else 168;
       description = "Loki log retention in hours (shorter on <=16 GB RAM hosts).";
     };
   };

@@ -84,11 +84,16 @@ let
     name: app:
     let
       dataDir = "/var/lib/${name}";
-      useOnDemand =
-        config.my.policy.onDemand.enable && (name == "lidarr" || name == "readarr");
+      useOnDemand = config.my.policy.onDemand.enable && (name == "lidarr" || name == "readarr");
     in
     lib.mkIf config.my.services.${name}.enable (
-      arrHelper.mkArrService ({ inherit name dataDir; onDemand = useOnDemand; } // app)
+      arrHelper.mkArrService (
+        {
+          inherit name dataDir;
+          onDemand = useOnDemand;
+        }
+        // app
+      )
     );
 in
 {

@@ -22,14 +22,13 @@ let
   withHomepage = lib.filterAttrs (_: e: e.homepage != null) spec;
   specByGroup = lib.groupBy (e: e.homepage.group) (lib.attrValues withHomepage);
 
-  mkSpecEntry =
-    entry:
-    {
-      ${entry.homepage.name} = {
-        href = "https://${entry.subdomain}.${domain}";
-        description = entry.homepage.description;
-      } // lib.optionalAttrs (entry.homepage.icon != "") { icon = entry.homepage.icon; };
-    };
+  mkSpecEntry = entry: {
+    ${entry.homepage.name} = {
+      href = "https://${entry.subdomain}.${domain}";
+      description = entry.homepage.description;
+    }
+    // lib.optionalAttrs (entry.homepage.icon != "") { icon = entry.homepage.icon; };
+  };
 
   extraEntries = {
     "Medien & Player" = [
@@ -100,12 +99,9 @@ let
     "KI & Agenten"
   ];
 
-  groups = map (
-    group:
-    {
-      ${group} = (map mkSpecEntry (specByGroup.${group} or [])) ++ (extraEntries.${group} or []);
-    }
-  ) groupOrder;
+  groups = map (group: {
+    ${group} = (map mkSpecEntry (specByGroup.${group} or [ ])) ++ (extraEntries.${group} or [ ]);
+  }) groupOrder;
 in
 {
   config = lib.mkIf cfgHomepage.enable {

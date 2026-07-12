@@ -209,8 +209,7 @@ let
     fi
   '';
 
-  mcpAgentsEnabled =
-    config.services.claude-code.enable || config.my.services.grok.enable;
+  mcpAgentsEnabled = config.services.claude-code.enable || config.my.services.grok.enable;
 in
 {
   config = lib.mkMerge [
