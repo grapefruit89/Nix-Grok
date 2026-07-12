@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Nix-CLI-Wrapper — blockiert destruktives disko auf live q958 (tier-A).
+# Real binary: /run/current-system/sw/bin/nix (nie dieses Skript rekursiv).
+set -euo pipefail
+
+GUARD_LIB=/etc/nixos/scripts/lib/nix-disko-guard.sh
+REAL_NIX=/run/current-system/sw/bin/nix
+
+if [[ -r "$GUARD_LIB" ]]; then
+  # shellcheck source=/dev/null
+  source "$GUARD_LIB"
+  if nix_disko_guard_live_system && nix_disko_guard_should_block "$@"; then
+    nix_disko_guard_block_message
+    exit 99
+  fi
+fi
+
+if [[ ! -x "$REAL_NIX" ]]; then
+  REAL_NIX="$(command -v nix 2>/dev/null || true)"
+fi
+if [[ -z "$REAL_NIX" || ! -x "$REAL_NIX" ]]; then
+  echo "FEHLER: nix binary nicht gefunden" >&2
+  exit 127
+fi
+
+exec "$REAL_NIX" "$@"

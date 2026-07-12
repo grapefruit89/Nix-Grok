@@ -124,10 +124,15 @@ Implementiert auf Branch `emergency/disko-accident-2026-07-12` (nach Recovery au
 
 | # | Guard | Wirkung |
 |---|-------|---------|
-| 1 | `machines/q958/.live-system-no-destructive-disko` | Marker: laufendes System, kein destruktives disko |
-| 2 | `scripts/disko-q958.sh` | Auf Live-Root nur `plan` (`--dry-run`) und `vm` — alles andere **exit 99** |
-| 3 | `profile.d/50-disko-live-guard.sh` | Blockiert `nix run … disko … script/destroy` in der Shell |
-| 4 | `docs/EMERGENCY-RECOVERY.md` | Diese Datei |
+| 1 | `machines/q958/.live-system-no-destructive-disko` | Marker: Live-System auf Tier-A |
+| 2 | **`scripts/nix` + `nix.package`** | **Systemweiter nix-Wrapper** — blockiert `script`/`destroy` auch unter `sudo` und bei `/run/current-system/sw/bin/nix` |
+| 3 | `scripts/lib/nix-disko-guard.sh` | Gemeinsame Block-Logik (Quelle der Wahrheit) |
+| 4 | `scripts/disko-q958.sh` | Auf Live-Root nur `plan` und `vm` — alles andere **exit 99** |
+| 5 | `profile.d/50-nix-live-guard-path.sh` | `/etc/nixos/scripts` vorne im PATH |
+| 6 | `security.sudo.extraConfig` | `secure_path` enthält Wrapper — `sudo nix` geschützt |
+| 7 | `docs/EMERGENCY-RECOVERY.md` | Diese Datei |
+
+**Nach `nixos-rebuild switch`:** Selbst `sudo /run/current-system/sw/bin/nix run … disko -- script` wird mit **exit 99** abgebrochen.
 
 ### Verboten auf q958 (laufendes System)
 

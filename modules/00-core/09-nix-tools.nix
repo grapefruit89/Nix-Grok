@@ -21,11 +21,37 @@ let
   nixStoreGB = config.my.configs.hardware.nixStoreGB;
   isLowRam = ramGB <= 4;
   isMidRam = ramGB > 4 && ramGB <= 8;
+
+  # System-nix ersetzen: auch /run/current-system/sw/bin/nix blockiert destruktives disko
+  realNixPkg = pkgs.nix;
+  nixGuardWrapper = pkgs.writeShellScriptBin "nix" ''
+    set -euo pipefail
+    GUARD_LIB=/etc/nixos/scripts/lib/nix-disko-guard.sh
+    REAL_NIX=${realNixPkg}/bin/nix
+    if [[ -r "''${GUARD_LIB}" ]]; then
+      # shellcheck source=/dev/null
+      source "''${GUARD_LIB}"
+      if nix_disko_guard_live_system && nix_disko_guard_should_block "''${@}"; then
+        nix_disko_guard_block_message
+        exit 99
+      fi
+    fi
+    exec "''${REAL_NIX}" "''${@}"
+  '';
+  guardedNixPkg = pkgs.symlinkJoin {
+    name = "nix-with-disko-guard";
+    paths = [ realNixPkg ];
+    postBuild = ''
+      rm -f $out/bin/nix
+      cp ${nixGuardWrapper}/bin/nix $out/bin/nix
+    '';
+  };
 in
 {
   config = lib.mkMerge [
     # ── NIX STORE TUNING ──────────────────────────────────────────────────────
     (lib.mkIf cfgNix.enable {
+      nix.package = lib.mkForce guardedNixPkg;
       nix = {
         settings = {
           substituters = [
@@ -143,21 +169,14 @@ in
             command git "''${@}"
           fi
         }
-        # disko: Live-System — kein destruktives disko (EMERGENCY-RECOVERY.md)
-        if [[ -f /etc/nixos/machines/q958/.live-system-no-destructive-disko ]] \
-           && findmnt -rn / -o SOURCE 2>/dev/null | grep -q '/dev/sda'; then
-          nix() {
-            local cmd="$*"
-            if [[ "$cmd" == *"nix-community/disko"* ]] && [[ "$cmd" != *"--dry-run"* ]]; then
-              if [[ "$cmd" == *" script"* ]] || [[ "$cmd" == *"--mode destroy"* ]] \
-                 || [[ "$cmd" == *"--mode disko"* ]] || [[ "$cmd" == *"destroy,format,mount"* ]]; then
-                echo "BLOCKED [disko-live-guard]: Nur disko-q958.sh plan|vm auf Live-System!" >&2
-                return 99
-              fi
-            fi
-            command nix "$@"
-          }
-        fi
+        # disko: systemweiter nix-Wrapper (scripts/nix) — auch unter sudo
+        nix() {
+          if [[ -x /etc/nixos/scripts/nix ]]; then
+            /etc/nixos/scripts/nix "''${@}"
+          else
+            command nix "''${@}"
+          fi
+        }
         disko-q958() {
           if [[ "''${1:-}" == "disko" ]]; then
             echo "FEHLER: 'disko' deprecated — nutze: disko-plan / disko-vm" >&2
@@ -167,25 +186,35 @@ in
         }
       '';
 
-      environment.etc."profile.d/50-disko-live-guard.sh" = {
+      # PATH: nix-Wrapper vor echtem nix (blockiert disko script/destroy auf Live-q958)
+      environment.etc."profile.d/50-nix-live-guard-path.sh" = {
         text = ''
-          # q958 Live-System: direktes "nix run disko" mit script/destroy blockieren
-          if [[ -f /etc/nixos/machines/q958/.live-system-no-destructive-disko ]] \
-             && findmnt -rn / -o SOURCE 2>/dev/null | grep -q '/dev/sda'; then
-            nix() {
-              local cmd="$*"
-              if [[ "$cmd" == *"nix-community/disko"* ]] && [[ "$cmd" != *"--dry-run"* ]]; then
-                if [[ "$cmd" == *" script"* ]] || [[ "$cmd" == *"--mode destroy"* ]] \
-                   || [[ "$cmd" == *"--mode disko"* ]] || [[ "$cmd" == *"destroy,format,mount"* ]]; then
-                  echo "BLOCKED [disko-live-guard]: docs/EMERGENCY-RECOVERY.md" >&2
-                  return 99
-                fi
-              fi
-              command nix "$@"
-            }
+          if [[ -d /etc/nixos/scripts ]]; then
+            case ":''${PATH}:" in
+              *:/etc/nixos/scripts:*) ;;
+              *) export PATH="/etc/nixos/scripts:''${PATH}" ;;
+            esac
           fi
         '';
       };
+
+      environment.etc."profile.d/51-nix-live-guard-shell.sh" = {
+        text = ''
+          # Bash/Zsh login: nix() → Wrapper (zusätzlich zu PATH)
+          nix() {
+            if [[ -x /etc/nixos/scripts/nix ]]; then
+              /etc/nixos/scripts/nix "$@"
+            else
+              command nix "$@"
+            fi
+          }
+        '';
+      };
+
+      # sudo nutzt secure_path — ohne diesen Eintrag umgeht sudo den Wrapper
+      security.sudo.extraConfig = lib.mkOrder 900 ''
+        Defaults secure_path = /etc/nixos/scripts:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/run/wrappers/bin:/home/moritz/.nix-profile/bin
+      '';
 
       # Moderne Shell-Aliases: NUR für interaktive Shells (nicht für Skripte/Aktivierungen)
       programs.bash.shellAliases = {
@@ -250,12 +279,7 @@ in
             180
         );
         "vm.page-cluster" = lib.mkDefault 0;
-        "vm.vfs_cache_pressure" = lib.mkDefault (
-          if ramGB <= 16 then
-            120
-          else
-            150
-        );
+        "vm.vfs_cache_pressure" = lib.mkDefault (if ramGB <= 16 then 120 else 150);
       };
     })
   ];
