@@ -24,10 +24,20 @@ Nach jedem frischen Clone — einmalig ausführen:
 
 ```bash
 pre-commit install --config /etc/nixos/.pre-commit-config.yaml
+pre-commit install --hook-type pre-push --config /etc/nixos/.pre-commit-config.yaml
 ```
 
 Git merkt sich die Hooks dauerhaft in `.git/hooks/`. Kein erneuter Aufruf nach
 `nixos-rebuild switch` nötig (ADR-035).
+
+Hygiene + Hooks:
+
+| Schritt | Wann | Tool |
+|---------|------|------|
+| 1 | pre-commit | statix (info) |
+| 2 | pre-commit | deadnix |
+| 3 | pre-commit | nixfmt |
+| 4 | pre-commit (bei `modules/`/`lib/`) | module-graph |
 
 Verfügbare Hooks:
 
@@ -36,6 +46,10 @@ Verfügbare Hooks:
 | `nixfmt` | ja | RFC-Style Format |
 | `statix` | nein | Linter (repeated_keys = NixOS-Pattern, kein Fehler) |
 | `deadnix` | ja | Keine ungenutzten Bindings |
+| `module-graph` | ja (bei `modules/`/`lib/`) | Modul-Import-Graph → `docs/diagrams/*.mm` (NixoScope) |
+
+Bei Änderungen in `modules/` oder `lib/` regeneriert der Hook die Diagramme automatisch — `git add docs/diagrams/` mit committen. Manuell: `ngraph`.
+
 
 ---
 

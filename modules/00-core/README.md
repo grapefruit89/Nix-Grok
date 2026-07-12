@@ -60,6 +60,9 @@ my.core.zram-swap.enable = erstAb 1;
 
 ## Shell-Aliases (09-nix-tools.nix)
 
+**disko Tier-A (ADR-3024):** `disko-plan`, `disko-install`, `disko-mount`, `disko-format` —
+niemals Subbefehl `disko` (deprecated). Shell-Funktion `disko-q958` blockiert das ebenfalls.
+
 Gesetzt via `programs.bash.shellAliases` — nur interaktive Bash-Sitzungen,
 **kein Eingriff in Systemskripte oder Aktivierungsskripte**.
 
@@ -76,6 +79,7 @@ Hooks (in Reihenfolge):
 1. `nixfmt` (blocking) — RFC-Style-Format
 2. `statix` (informational) — `repeated_keys` ist NixOS-Modul-Pattern, kein Fehler
 3. `deadnix` (blocking) — keine ungenutzten Bindings
+4. `module-graph` (blocking bei modules/lib) — docs/diagrams/*.mm aktuell
 
 ## Referenzen
 

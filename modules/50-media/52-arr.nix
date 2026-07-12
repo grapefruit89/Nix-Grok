@@ -63,6 +63,10 @@ let
       metadataDir = "/mnt/fast_pool/metadata/prowlarr";
       extraEnv = {
         PROWLARR__UPDATE__BRANCH = "master";
+      }
+      // lib.optionalAttrs config.my.services.usenet-confinement.enable {
+        # VPN-Sandbox: kein Internet → Built-in-Updater und Definition-Fetch würden spammen.
+        PROWLARR__UPDATE__MECHANISM = lib.mkForce "External";
       };
     };
     lidarr = {
@@ -80,9 +84,11 @@ let
     name: app:
     let
       dataDir = "/var/lib/${name}";
+      useOnDemand =
+        config.my.policy.onDemand.enable && (name == "lidarr" || name == "readarr");
     in
     lib.mkIf config.my.services.${name}.enable (
-      arrHelper.mkArrService ({ inherit name dataDir; } // app)
+      arrHelper.mkArrService ({ inherit name dataDir; onDemand = useOnDemand; } // app)
     );
 in
 {

@@ -17,6 +17,7 @@
     ./55-navidrome.nix
     ./56-arr-sync
     ./57-usenet-confinement
+    ./58-arr-on-demand.nix
     ./58-recyclarr.nix
     ./59-exportarr.nix
   ];

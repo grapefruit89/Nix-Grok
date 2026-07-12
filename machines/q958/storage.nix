@@ -3,10 +3,13 @@
 #   layer: 2
 #   role: machine
 #   purpose: Storage-Tier-Assertions und Automount-Optionen q958
+#   docs:
+#     - docs/adr/3024-disko-tier-a-provisioning.md
 #   tags:
 #     - storage
 #     - tier-policy
 # ---
+# relabelTierALabels: nur Legacy-Platte (BOOT→NIXBOOT). Nach disko-Reinstall via prune entfernen.
 {
   lib,
   pkgs,
@@ -16,6 +19,7 @@ let
   p = import ./profile.nix;
   s = p.storage;
   tp = s.tierPolicy;
+  diskoManaged = s.tierA.diskoManaged or false;
 in
 {
   assertions = [
@@ -63,23 +67,27 @@ in
     tierCLabels = s.tierC.labels;
   };
 
-  # Einmal-Migration: BOOT/NIXHOME_PERSIST → NIXBOOT/NIXPERSIST
-  system.activationScripts.relabelTierALabels = lib.stringAfter [ "specialfs" ] ''
-    boot_dev="${s.tierA.device}1"
-    persist_dev="${s.tierA.device}2"
-    if [ -b "$boot_dev" ]; then
-      boot_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$boot_dev" 2>/dev/null || true)
-      if [ "$boot_label" = "BOOT" ]; then
-        echo "relabelTierALabels: BOOT → NIXBOOT on $boot_dev"
-        ${pkgs.dosfstools}/bin/fatlabel "$boot_dev" NIXBOOT
+  # DEPRECATED-DISKO-START: storage-relabel-tier-a
+  # Einmal-Migration: BOOT/NIXHOME_PERSIST → NIXBOOT/NIXPERSIST (nur Legacy-Platte)
+  system.activationScripts.relabelTierALabels = lib.mkIf (!diskoManaged) (
+    lib.stringAfter [ "specialfs" ] ''
+      boot_dev="${s.tierA.device}1"
+      persist_dev="${s.tierA.device}2"
+      if [ -b "$boot_dev" ]; then
+        boot_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$boot_dev" 2>/dev/null || true)
+        if [ "$boot_label" = "BOOT" ]; then
+          echo "relabelTierALabels: BOOT → NIXBOOT on $boot_dev"
+          ${pkgs.dosfstools}/bin/fatlabel "$boot_dev" NIXBOOT
+        fi
       fi
-    fi
-    if [ -b "$persist_dev" ]; then
-      persist_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$persist_dev" 2>/dev/null || true)
-      if [ "$persist_label" = "NIXHOME_PERSIST" ]; then
-        echo "relabelTierALabels: NIXHOME_PERSIST → NIXPERSIST on $persist_dev"
-        ${pkgs.e2fsprogs}/bin/e2label "$persist_dev" NIXPERSIST
+      if [ -b "$persist_dev" ]; then
+        persist_label=$(${pkgs.util-linux}/bin/lsblk -no LABEL "$persist_dev" 2>/dev/null || true)
+        if [ "$persist_label" = "NIXHOME_PERSIST" ]; then
+          echo "relabelTierALabels: NIXHOME_PERSIST → NIXPERSIST on $persist_dev"
+          ${pkgs.e2fsprogs}/bin/e2label "$persist_dev" NIXPERSIST
+        fi
       fi
-    fi
-  '';
+    ''
+  );
+  # DEPRECATED-DISKO-END: storage-relabel-tier-a
 }

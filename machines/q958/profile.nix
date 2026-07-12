@@ -49,7 +49,9 @@ in
   boot = {
     menuName = "Basics_erfolgreich";
     sortKey = "0_basis";
-    # 15 rollierende NixOS-Generationen × ~50 MB worst-case = 750 MB + ~77 MB belegt → 827 MB < 1 GB ESP
+    # Menü-Einträge (je ~4 KB) — NICHT ESP-Belegung pro Generation!
+    # ESP wächst nur bei neuer Kernel-Version (~50 MB/Paar). Siehe GUIDE-boot-esp.md.
+    # Dev: 15 Rollbacks bei gleichem Kernel OK. Production optional 5–7 (aufgeräumtes Menü).
     generationLimit = 15;
     pinnedGenerations = [
       85
@@ -138,7 +140,7 @@ in
   };
 
   hardware = {
-    ramGB = 32;
+    ramGB = 16;
     nixStoreGB = 468; # /dev/sda2 (NIXPERSIST), Stand 2026-07
     cpu = {
       model = "i3-9100";
@@ -193,10 +195,15 @@ in
     ];
 
     tierA = {
+      # Nach disko-Reinstall auf true → verify → prune (ADR-3024 / disko-deprecations.json)
+      diskoManaged = false;
       device = "/dev/sda";
+      # disko DR: stabiler Pfad (nicht von Kernel-Reihenfolge abhängig)
+      deviceById = "/dev/disk/by-id/ata-MTFDDAK512TDL-1AW1ZABFA_19432490DAF2";
       bus = "sata";
       boot = {
         label = "NIXBOOT";
+        espSize = "512M";
         fsType = "vfat";
         fmask = "0022";
         dmask = "0022";
@@ -205,7 +212,9 @@ in
         label = "NIXPERSIST";
         fsType = "ext4";
         mountPoint = "/";
+        # DEPRECATED-DISKO-START: profile-persist-disk-by-label
         disk = "/dev/disk/by-label/NIXPERSIST";
+        # DEPRECATED-DISKO-END: profile-persist-disk-by-label
       };
     };
 
@@ -276,7 +285,7 @@ in
     stufe = 8;
   };
 
-  # i3-9100: 4 Kerne, 32 GB — 4 parallele Jobs, je 1 Kern (volle CPU, kein idle-daemon)
+  # i3-9100: 4 Kerne, 16 GB — 4 parallele Jobs, je 1 Kern (volle CPU, kein idle-daemon)
   nix = {
     maxJobs = 4;
     cores = 1;

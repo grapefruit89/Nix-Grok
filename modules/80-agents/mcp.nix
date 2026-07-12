@@ -2,18 +2,18 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Zentrale MCP-Server-Definition fuer Claude Code und Hermes Agent
+#   purpose: Zentrale MCP-Server-Definition fuer Claude Code, Grok und Hermes Agent
 #   tags:
 #     - mcp
 #     - claude-code
 #     - hermes
+#     - nixos-docs
 # ---
 #
 # Architektur:
-#   - mcp-nixos:  ein Pfad, beide Konsumenten (kein Key noetig)
-#   - context7:   unterschiedliche Key-Quellen je Kontext
-#       Claude Code (moritz):  Wrapper liest ~/.config/context7/api_key
-#       Hermes (hermes-user):  pkgs.context7-mcp direkt, Key via environmentFiles
+#   - mcp-nixos:     nixpkgs live (Optionen, Pakete)
+#   - nixos-docs:    nixos_docs.sqlite FTS5 (ADRs, Module, error_pattern)
+#   - context7:      externe Doku — Key aus ~/.config/context7/api_key
 #
 {
   config,
@@ -29,7 +29,15 @@ let
   githubMcpToken = "${userHome}/.config/github-mcp/token";
   braveSearchApiKey = "${userHome}/.config/brave-search/api_key";
 
-  # Wrapper fuer Claude Code (laeuft als moritz-User)
+  nixosMcpBin = "${pkgs.mcp-nixos}/bin/mcp-nixos";
+  nixosDocsDb = "/var/lib/nixos-docs-mcp/nixos_docs.sqlite";
+  nixosDocsMcpScript = "/etc/nixos/scripts/nixos-docs-mcp.py";
+
+  nixosDocsMcpWrapper = pkgs.writeShellScript "nixos-docs-mcp" ''
+    set -euo pipefail
+    exec ${pkgs.python3}/bin/python3 ${nixosDocsMcpScript} ${nixosDocsDb}
+  '';
+
   context7McpWrapper = pkgs.writeShellScript "context7-mcp" ''
     set -euo pipefail
     KEY_FILE="${context7Key}"
@@ -107,15 +115,22 @@ let
     echo "Gespeichert: $KEY_FILE (chmod 600)"
   '';
 
-  nixosMcpBin = "${pkgs.mcp-nixos}/bin/mcp-nixos";
+  mcpWrappers = {
+    "context7-mcp" = context7McpWrapper;
+    "github-mcp" = githubMcpWrapper;
+    "brave-search-mcp" = braveSearchMcpWrapper;
+    "nixos-docs-mcp" = nixosDocsMcpWrapper;
+  };
 
-  # JSON fuer ~/.claude/settings.json — store-pfade, immer verfuegbar
   claudeCodeMcpJson = builtins.toJSON {
     context7 = {
       command = "${context7McpWrapper}";
     };
     nixos = {
       command = nixosMcpBin;
+    };
+    "nixos-docs" = {
+      command = "${nixosDocsMcpWrapper}";
     };
     github = {
       command = "${githubMcpWrapper}";
@@ -125,7 +140,63 @@ let
     };
   };
 
-  # Shell-String fuer HM-Activation (aussen berechnet, kein lib-Konflikt im HM-Scope)
+  repoMcpJson = builtins.toJSON {
+    mcpServers = {
+      context7 = {
+        command = "${context7McpWrapper}";
+      };
+      nixos = {
+        command = nixosMcpBin;
+      };
+      "nixos-docs" = {
+        command = "${nixosDocsMcpWrapper}";
+      };
+      github = {
+        command = "${githubMcpWrapper}";
+      };
+      "brave-search" = {
+        command = "${braveSearchMcpWrapper}";
+      };
+    };
+  };
+
+  grokMcpConfigToml = pkgs.writeText "grok-mcp-config.toml" ''
+    [cli]
+    auto_update = false
+    installer = "nixos"
+
+    [features]
+    telemetry = false
+
+    [mcp_servers.context7]
+    command = "${context7McpWrapper}"
+    enabled = true
+
+    [mcp_servers.nixos]
+    command = "${nixosMcpBin}"
+    enabled = true
+
+    [mcp_servers.nixos-docs]
+    command = "${nixosDocsMcpWrapper}"
+    enabled = true
+
+    [mcp_servers.github]
+    command = "${githubMcpWrapper}"
+    enabled = true
+
+    [mcp_servers.brave-search]
+    command = "${braveSearchMcpWrapper}"
+    enabled = true
+
+    [ui]
+    permission_mode = "always-approve"
+    theme = "grokday"
+    yolo = false
+    compact_mode = false
+    max_thoughts_width = 120
+    fork_secondary_model = "grok-build"
+  '';
+
   claudeCodeActivation = ''
     SETTINGS="$HOME/.claude/settings.json"
     mkdir -p "$HOME/.claude"
@@ -137,34 +208,48 @@ let
       ${pkgs.jq}/bin/jq -n --argjson mcp "$MCP" '{ mcpServers: $mcp }' > "$SETTINGS"
     fi
   '';
+
+  mcpAgentsEnabled =
+    config.services.claude-code.enable || config.my.services.grok.enable;
 in
 {
   config = lib.mkMerge [
-    # ── Claude Code: global ~/.claude/settings.json ──────────────────────────
-    # HM-Activation als Funktion — lib-Argument ist HM-lib (hat lib.hm.dag)
-    (lib.mkIf config.services.claude-code.enable {
+    (lib.mkIf mcpAgentsEnabled {
       home-manager.users.${user} =
         { lib, ... }:
         {
-          home.activation.claudeCodeMcpServers = lib.hm.dag.entryAfter [
-            "writeBoundary"
-          ] claudeCodeActivation;
+          home.file = lib.mkMerge [
+            (lib.mapAttrs' (name: wrapper: {
+              name = ".local/bin/${name}";
+              value = {
+                source = wrapper;
+                executable = true;
+              };
+            }) mcpWrappers)
+            {
+              ".local/bin/set-github-mcp-token" = {
+                source = setGithubMcpToken;
+                executable = true;
+              };
+              ".local/bin/set-brave-search-api-key" = {
+                source = setBraveSearchApiKey;
+                executable = true;
+              };
+            }
+            (lib.mkIf config.my.services.grok.enable {
+              ".grok/config.toml" = {
+                source = grokMcpConfigToml;
+                force = true;
+              };
+            })
+          ];
 
-          home.file.".local/bin/set-github-mcp-token" = {
-            source = setGithubMcpToken;
-            executable = true;
-          };
-
-          home.file.".local/bin/set-brave-search-api-key" = {
-            source = setBraveSearchApiKey;
-            executable = true;
-          };
+          home.activation.claudeCodeMcpServers = lib.mkIf config.services.claude-code.enable (
+            lib.hm.dag.entryAfter [ "writeBoundary" ] claudeCodeActivation
+          );
         };
     })
 
-    # ── Hermes Agent: mcp_servers in settings ────────────────────────────────
-    # context7-mcp direkt (kein Wrapper); Key kommt aus environmentFiles
-    #   /var/lib/hermes/env <- hermes-env-provision <- /var/lib/secrets/context7.env
     (lib.mkIf config.services.hermes-agent.enable {
       services.hermes-agent.settings.mcp_servers = {
         context7 = {
@@ -173,115 +258,74 @@ in
         nixos = {
           command = nixosMcpBin;
         };
+        "nixos-docs" = {
+          command = "${nixosDocsMcpWrapper}";
+        };
       };
     })
 
-    # ── nixos-docs: SQLite FTS5 + sqlite-vec (kein DuckDB) ──
-    # Indexer: source_files, doc_meta, doc_chunks, doc_links
-    # Embedder: chat_insights + doc_chunk_embeddings (Ollama, inkrementell)
     {
-      systemd = {
-        services.nixos-docs-indexer = {
-          description = "Indexiert /etc/nixos in nixos_docs.sqlite (FTS + Meta + Chunks)";
-          after = [ "local-fs.target" ];
-          wantedBy = [ "multi-user.target" ];
-          startLimitIntervalSec = 0;
-          startLimitBurst = 0;
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = "${pkgs.python3}/bin/python3 /etc/nixos/scripts/index-nix-files.py";
-            OnSuccess = [ "nixos-docs-embedder.service" ];
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            ReadOnlyPaths = [ "/etc/nixos" ];
-            ReadWritePaths = [ "/var/lib/nixos-docs-mcp" ];
-          };
-        };
+      systemd.tmpfiles.rules = [
+        "d /var/lib/nixos-docs-mcp 0750 root root -"
+      ];
 
-        services.nixos-docs-embedder = {
-          description = "Embeddings für nixos_docs.sqlite (insights + Markdown-Chunks)";
-          after = [
-            "network-online.target"
-            "nixos-docs-indexer.service"
-          ];
-          wants = [ "network-online.target" ];
-          startLimitIntervalSec = 0;
-          startLimitBurst = 0;
-          serviceConfig = {
-            Type = "oneshot";
-            Environment = [
-              "OLLAMA_HOST=http://127.0.0.1:11434"
-              "OLLAMA_EMBED_MODEL=nomic-embed-text"
-            ];
-            ExecStart = "${pkgs.python3}/bin/python3 /etc/nixos/tools/build_nixos_knowledge_db.py --target /var/lib/nixos-docs-mcp/nixos_docs.sqlite --skip-seed";
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            ReadOnlyPaths = [
-              "/etc/nixos"
-              "/nix/store"
-            ];
-            ReadWritePaths = [
-              "/var/lib/nixos-docs-mcp"
-              "/tmp"
-            ];
-          };
-        };
+      system.activationScripts.nixosDocsMcpJson = lib.mkIf mcpAgentsEnabled ''
+        MCP_JSON=${lib.escapeShellArg repoMcpJson}
+        ${pkgs.jq}/bin/jq . <<< "$MCP_JSON" > /etc/nixos/.mcp.json
+        chmod 644 /etc/nixos/.mcp.json
+      '';
 
-        paths.nixos-docs-indexer-switch = {
-          description = "nixos-docs Indexer nach nixos-rebuild switch";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-              TriggerLimitBurst = 1;
-              TriggerLimitIntervalSec = "2min";
-            }
-          ];
-          pathConfig = {
-            PathExists = "/run/current-system";
-            PathChanged = "/run/current-system";
-            Unit = "nixos-docs-indexer.service";
-            MakeDirectory = false;
-          };
+      systemd.services.nixos-docs-indexer = {
+        description = "Indexiert /etc/nixos in nixos_docs.sqlite (FTS + Meta + Chunks + module_import)";
+        after = [ "local-fs.target" ];
+        wantedBy = [ "multi-user.target" ];
+        startLimitIntervalSec = 0;
+        startLimitBurst = 0;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${pkgs.python3}/bin/python3 /etc/nixos/scripts/index-nix-files.py";
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          ReadOnlyPaths = [ "/etc/nixos" ];
+          ReadWritePaths = [ "/var/lib/nixos-docs-mcp" ];
         };
+      };
 
-        paths.nixos-docs-indexer-flake = {
-          description = "nixos-docs Indexer bei flake.lock-Änderung";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-              TriggerLimitBurst = 1;
-              TriggerLimitIntervalSec = "5min";
-            }
-          ];
-          pathConfig = {
-            PathExists = "/etc/nixos/flake.lock";
-            PathChanged = "/etc/nixos/flake.lock";
-            Unit = "nixos-docs-indexer.service";
-            MakeDirectory = false;
-          };
+      systemd.paths.nixos-docs-indexer-switch = {
+        description = "nixos-docs Indexer nach nixos-rebuild switch";
+        wantedBy = [ "multi-user.target" ];
+        unitConfig = lib.mkMerge [
+          rebuildGuard.pathUnitGuard
+          {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "2min";
+          }
+        ];
+        pathConfig = {
+          PathExists = "/run/current-system";
+          PathChanged = "/run/current-system";
+          Unit = "nixos-docs-indexer.service";
+          MakeDirectory = false;
         };
+      };
 
-        paths.nixos-docs-embedder-db = {
-          description = "nixos-docs Embedder wenn SQLite-Index aktualisiert wurde";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig = lib.mkMerge [
-            rebuildGuard.pathUnitGuard
-            {
-              TriggerLimitBurst = 1;
-              TriggerLimitIntervalSec = "10min";
-            }
-          ];
-          pathConfig = {
-            PathExists = "/var/lib/nixos-docs-mcp/nixos_docs.sqlite";
-            PathChanged = "/var/lib/nixos-docs-mcp/nixos_docs.sqlite";
-            Unit = "nixos-docs-embedder.service";
-            MakeDirectory = false;
-          };
+      systemd.paths.nixos-docs-indexer-flake = {
+        description = "nixos-docs Indexer bei flake.lock-Änderung";
+        wantedBy = [ "multi-user.target" ];
+        unitConfig = lib.mkMerge [
+          rebuildGuard.pathUnitGuard
+          {
+            TriggerLimitBurst = 1;
+            TriggerLimitIntervalSec = "5min";
+          }
+        ];
+        pathConfig = {
+          PathExists = "/etc/nixos/flake.lock";
+          PathChanged = "/etc/nixos/flake.lock";
+          Unit = "nixos-docs-indexer.service";
+          MakeDirectory = false;
         };
       };
     }

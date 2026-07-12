@@ -1,0 +1,218 @@
+{
+  "uid": "q958-host-health",
+  "title": "q958 Host Health",
+  "tags": ["q958", "memory", "homelab"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-7d", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Load (1m)",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [{ "expr": "node_load1", "legendFormat": "load1" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 2 },
+              { "color": "red", "value": 3.5 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Load / Kerne",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [{ "expr": "q958_load_ratio * 100", "legendFormat": "%" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "RAM belegt",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [{ "expr": "q958_memory_used_ratio * 100", "legendFormat": "%" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Swap belegt (zram)",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [{ "expr": "q958_swap_used_ratio * 100", "legendFormat": "%" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 40 },
+              { "color": "red", "value": 60 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "PSI Memory (some avg10)",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [{ "expr": "q958_psi_memory_some_avg10", "legendFormat": "psi" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 25 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "CPU Temp (Package)",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [{ "expr": "q958_cpu_package_temp_celsius", "legendFormat": "°C" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Load & Swap-Druck (7 Tage)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [
+        { "expr": "node_load1", "legendFormat": "load1" },
+        { "expr": "q958_load_ratio * 4", "legendFormat": "load_ratio × cores" },
+        { "expr": "q958_swap_used_ratio * 100", "legendFormat": "swap %" }
+      ],
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineWidth": 1 } } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "RAM & PSI Memory",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [
+        { "expr": "q958_memory_used_ratio * 100", "legendFormat": "RAM %" },
+        { "expr": "q958_psi_memory_some_avg10", "legendFormat": "PSI mem some" },
+        { "expr": "q958_psi_memory_full_avg10", "legendFormat": "PSI mem full" }
+      ],
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineWidth": 1 } } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "ffmpeg Transcodes & Temperatur",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [
+        { "expr": "q958_ffmpeg_processes", "legendFormat": "ffmpeg" },
+        { "expr": "q958_cpu_package_temp_celsius", "legendFormat": "CPU °C" }
+      ],
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineWidth": 1 } } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "User RSS (moritz = AI-Sessions)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [
+        { "expr": "q958_user_rss_bytes{user=\"moritz\"}", "legendFormat": "moritz" },
+        { "expr": "q958_user_rss_bytes{user=\"amp\"}", "legendFormat": "amp" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "lineWidth": 1 } }
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Homelab-Services RSS",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "name": "VictoriaMetrics" },
+      "targets": [
+        { "expr": "q958_service_rss_bytes", "legendFormat": "{{service}}" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "lineWidth": 1 } }
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] } }
+    }
+  ]
+}

@@ -7,5 +7,6 @@
     ./42-logging.nix
     ./43-crowdsec.nix
     ./44-metrics.nix
+    ./45-host-health.nix
   ];
 }

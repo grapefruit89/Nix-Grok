@@ -25,6 +25,13 @@ repos:
         exclude: ^stage-nixos/
         pass_filenames: false
 
+      - id: module-graph
+        name: module-graph (Hygiene — docs/diagrams bei modules/lib-Änderung)
+        language: system
+        entry: bash -c 'sudo /etc/nixos/tools/gen-module-graph.sh && git -C /etc/nixos diff --quiet docs/diagrams/ || { echo FEHLER-docs-diagrams-veraltet; exit 1; }'
+        files: ^(modules|lib)/|^tools/(gen-module-graph\.sh|filter-module-graph\.py)$
+        pass_filenames: false
+
       - id: nixmeta-ban
         name: NIXMETA-Verbot (# !type — schneller Check, Build-Gate bleibt 02-nixmeta-ban.nix)
         language: system
@@ -46,6 +53,14 @@ repos:
         language: system
         entry: bash -c 'shellcheck --severity=error scripts/*.sh; true'
         files: scripts/.*\.sh$
+        pass_filenames: false
+
+      - id: module-graph-push
+        name: module-graph push-gate (fängt commit --no-verify)
+        stages: [pre-push]
+        language: system
+        entry: bash -c 'sudo /etc/nixos/tools/gen-module-graph.sh && git -C /etc/nixos diff --quiet docs/diagrams/ || { echo FEHLER-docs-diagrams-vor-push; exit 1; }'
+        files: ^(modules|lib)/|^tools/(gen-module-graph\.sh|filter-module-graph\.py)$
         pass_filenames: false
 
       - id: nixos-dry-build

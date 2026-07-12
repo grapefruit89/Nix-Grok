@@ -346,7 +346,7 @@ in
     };
     renderDevice = lib.mkOption {
       type = lib.types.str;
-      default = "";
+      default = config.my.configs.hardware.renderDevice;
       description = "GPU render node for VA-API. Leer = kein GPU-Zugriff (PrivateDevices bleibt an).";
     };
     purgeKeepDays = lib.mkOption {

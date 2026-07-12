@@ -14,11 +14,19 @@
   lib,
   pkgs,
   internalOffset,
+  idleTimeoutSec ? 1800,
 }:
 let
   bindAddr = "127.0.0.1";
   proxyBin = "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd";
   systemctl = "${pkgs.systemd}/bin/systemctl";
+  ss = "${pkgs.iproute2}/bin/ss";
+  grep = "${pkgs.gnugrep}/bin/grep";
+  date = "${pkgs.coreutils}/bin/date";
+  sleep = "${pkgs.coreutils}/bin/sleep";
+  mkdir = "${pkgs.coreutils}/bin/mkdir";
+  rm = "${pkgs.coreutils}/bin/rm";
+  cat = "${pkgs.coreutils}/bin/cat";
 
   internalPort = publicPort: publicPort + internalOffset;
 
@@ -30,13 +38,13 @@ let
     pkgs.writeShellScript "start-${backend}" ''
       ${systemctl} start ${backend}.service
       i=0
-      while [ "$i" -lt 60 ]; do
+      while [ "$i" -lt 300 ]; do
         if ${pkgs.curl}/bin/curl -fsS --max-time 1 "http://${bindAddr}:${toString port}/" >/dev/null 2>&1 \
-          || ${pkgs.iproute2}/bin/ss -H -tln "sport = :${toString port}" | grep -q .; then
+          || ${ss} -H -tln "sport = :${toString port}" | ${grep} -q .; then
           exit 0
         fi
         i=$((i + 1))
-        ${pkgs.coreutils}/bin/sleep 0.2
+        ${sleep} 0.2
       done
       echo "timeout waiting for backend ${backend} on :${toString port}" >&2
       exit 1
@@ -119,6 +127,68 @@ in
           ProtectSystem = lib.mkForce false;
           ProtectHome = lib.mkForce false;
           RestrictAddressFamilies = lib.mkForce [ ];
+        };
+      };
+    };
+
+  mkIdleStop =
+    {
+      name,
+      publicPort,
+    }:
+    let
+      backend = "${name}-backend";
+      iPort = internalPort publicPort;
+      stampDir = "/run/${name}-idle";
+      idleStopScript = pkgs.writeShellScript "${name}-idle-stop" ''
+        set -euo pipefail
+        BACKEND="${backend}.service"
+        PROXY="${name}.service"
+        STAMP="${stampDir}/last_activity"
+
+        if ! ${systemctl} is-active --quiet "$BACKEND"; then
+          exit 0
+        fi
+
+        ${mkdir} -p "${stampDir}"
+
+        if ${ss} -H -tn state established "( sport = :${toString iPort} or sport = :${toString publicPort} )" | ${grep} -q .; then
+          ${date} +%s > "$STAMP"
+          exit 0
+        fi
+
+        NOW=$(${date} +%s)
+        if [ -f "$STAMP" ]; then
+          LAST=$(${cat} "$STAMP")
+        else
+          ENTER=$(${systemctl} show "$BACKEND" -p ActiveEnterTimestamp --value)
+          LAST=$(${date} -d "$ENTER" +%s 2>/dev/null || echo "$NOW")
+        fi
+
+        if [ "$((NOW - LAST))" -lt ${toString idleTimeoutSec} ]; then
+          exit 0
+        fi
+
+        ${systemctl} stop "$PROXY" "$BACKEND" || true
+        ${rm} -f "$STAMP"
+      '';
+    in
+    {
+      systemd.services."${name}-idle-stop" = {
+        description = "Stop ${name} backend after ${toString idleTimeoutSec}s without connections";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = idleStopScript;
+        };
+      };
+
+      systemd.timers."${name}-idle-stop" = {
+        description = "Check ${name} backend idle every 5 minutes";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "10min";
+          OnUnitActiveSec = "5min";
+          AccuracySec = "1min";
         };
       };
     };
