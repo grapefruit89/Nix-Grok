@@ -294,7 +294,7 @@ in
     enable = lib.mkEnableOption "Voice Assistant (Groq STT Wyoming bridge)";
     port = lib.mkOption {
       type = lib.types.port;
-      default = 10300;
+      default = config.my.ports.wyoming-stt;
       description = "Wyoming STT port.";
     };
     language = lib.mkOption {
@@ -311,7 +311,7 @@ in
       enable = lib.mkEnableOption "Google Cloud TTS Wyoming bridge";
       port = lib.mkOption {
         type = lib.types.port;
-        default = 10200;
+        default = config.my.ports.wyoming-tts;
         description = "Wyoming TTS port.";
       };
     };
@@ -319,7 +319,7 @@ in
       enable = lib.mkEnableOption "Microsoft Edge TTS Wyoming bridge (kein API Key)";
       port = lib.mkOption {
         type = lib.types.port;
-        default = 10201;
+        default = config.my.ports.wyoming-edge-tts;
         description = "Wyoming TTS port für Edge TTS.";
       };
       voice = lib.mkOption {

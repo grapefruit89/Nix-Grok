@@ -13,10 +13,14 @@
 # ---
 """NixOS-Docs MCP Server — FTS5 über stdio (JSON-RPC 2.0). Keine Embeddings auf q958."""
 import json
+import re
 import sqlite3
+import subprocess
 import sys
 
 DB_PATH = sys.argv[1] if len(sys.argv) > 1 else "/var/lib/nixos-docs-mcp/nixos_docs.sqlite"
+NIXOS_ROOT = "/etc/nixos"
+CONFIG_ATTR = f"{NIXOS_ROOT}#nixosConfigurations.q958.config"
 
 
 def get_db():
@@ -77,7 +81,7 @@ TOOLS = [
     },
     {
         "name": "list_doc_links",
-        "description": "Link-Graph: meta.docs, betrifft, siehe_auch",
+        "description": "Link-Graph: meta.docs, betrifft, siehe_auch, module_import",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -85,6 +89,29 @@ TOOLS = [
                 "direction": {"type": "string", "enum": ["from", "to", "both"], "default": "both"},
             },
             "required": ["path"],
+        },
+    },
+    {
+        "name": "get_meta",
+        "description": "Frontmatter + Tags + purpose/error_pattern für einen Repo-Pfad",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string"},
+            },
+            "required": ["path"],
+        },
+    },
+    {
+        "name": "triage_error",
+        "description": "journalctl-Zeile gegen ADR error_pattern matchen → quick_fix",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "line": {"type": "string"},
+                "limit": {"type": "integer", "default": 5},
+            },
+            "required": ["line"],
         },
     },
     {
@@ -135,6 +162,29 @@ TOOLS = [
                 "limit": {"type": "integer", "default": 15},
             },
             "required": ["query"],
+        },
+    },
+    {
+        "name": "query_manix",
+        "description": "Shell: manix — nixpkgs/NixOS/HM Options-Doku (Agent-Fallback)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string"},
+                "source": {"type": "string"},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "eval_config",
+        "description": "Live eval config auf q958 — attr unter config (z.B. services.caddy.enable)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "attr": {"type": "string"},
+            },
+            "required": ["attr"],
         },
     },
 ]
@@ -196,6 +246,80 @@ def tool_search_chunks(args):
             f"WHERE {' AND '.join(where)} ORDER BY rank LIMIT ?"
         )
         return [dict(r) for r in conn.execute(sql, params).fetchall()]
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
+def _normalize_path(path: str) -> str:
+    path = (path or "").strip()
+    for prefix in ("/etc/nixos/", "etc/nixos/"):
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+    return path.lstrip("/")
+
+
+def tool_get_meta(args):
+    path = _normalize_path(args.get("path", ""))
+    if not path:
+        return {"error": "path fehlt"}
+    conn = get_db()
+    try:
+        row = conn.execute(
+            """
+            SELECT sf.path, sf.kind, sf.layer, sf.module_role, sf.purpose,
+                   dm.role, dm.status, dm.doc_date, dm.error_pattern, dm.quick_fix,
+                   dm.meta_json
+            FROM source_files sf
+            LEFT JOIN doc_meta dm ON dm.source_file_id = sf.id
+            WHERE sf.path = ?
+            """,
+            (path,),
+        ).fetchone()
+        if row is None:
+            return {"error": f"Pfad nicht indexiert: {path}"}
+        result = dict(row)
+        file_id = conn.execute("SELECT id FROM source_files WHERE path = ?", (path,)).fetchone()[0]
+        tags = [r[0] for r in conn.execute(
+            "SELECT tag FROM doc_tags WHERE source_file_id = ? ORDER BY tag", (file_id,)
+        ).fetchall()]
+        result["tags"] = tags
+        if result.get("meta_json"):
+            try:
+                result["meta"] = json.loads(result["meta_json"])
+            except json.JSONDecodeError:
+                result["meta"] = None
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
+def tool_triage_error(args):
+    line = args.get("line", "") or args.get("text", "")
+    limit = int(args.get("limit", 5))
+    if not line.strip():
+        return {"error": "line fehlt"}
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """
+            SELECT path, error_pattern, quick_fix, purpose, status
+            FROM doc_meta
+            WHERE error_pattern IS NOT NULL AND error_pattern != ''
+            """
+        ).fetchall()
+        matches = []
+        for row in rows:
+            pattern = row["error_pattern"]
+            try:
+                if re.search(pattern, line, re.IGNORECASE):
+                    matches.append(dict(row))
+            except re.error:
+                continue
+        return matches[:limit]
     except Exception as e:
         return {"error": str(e)}
     finally:
@@ -338,15 +462,70 @@ def tool_search_all(args):
     )
 
 
+
+
+def tool_query_manix(args):
+    query = (args.get("query") or "").strip()
+    if not query:
+        return {"error": "query fehlt"}
+    cmd = ["manix"]
+    source = args.get("source")
+    if source:
+        cmd.extend(["--source", str(source)])
+    cmd.append(query)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        return {
+            "stdout": proc.stdout,
+            "stderr": proc.stderr,
+            "exit_code": proc.returncode,
+        }
+    except FileNotFoundError:
+        return {"error": "manix nicht im PATH"}
+    except subprocess.TimeoutExpired:
+        return {"error": "manix timeout"}
+
+
+def _run_nix_eval(attr: str):
+    expr = f"{CONFIG_ATTR}.{attr}"
+    last_err = ""
+    for cmd in (
+        ["nix", "eval", "--impure", "--json", expr],
+        ["sudo", "nix", "eval", "--impure", "--json", expr],
+    ):
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120, cwd=NIXOS_ROOT
+        )
+        if proc.returncode == 0:
+            return json.loads(proc.stdout)
+        last_err = (proc.stderr or proc.stdout or "").strip()
+    return {"error": last_err or "nix eval fehlgeschlagen"}
+
+
+def tool_eval_config(args):
+    attr = (args.get("attr") or args.get("path") or "").strip()
+    if not attr:
+        return {"error": "attr fehlt (z.B. services.openssh.enable)"}
+    if not re.match(r"^[a-zA-Z0-9_.]+$", attr):
+        return {"error": f"ungültiger attrpath: {attr}"}
+    try:
+        return _run_nix_eval(attr)
+    except json.JSONDecodeError as e:
+        return {"error": f"JSON: {e}"}
+
 TOOL_HANDLERS = {
     "fts_search": tool_fts_search,
     "search_chunks": tool_search_chunks,
     "list_insights": tool_list_insights,
     "list_doc_links": tool_list_doc_links,
+    "get_meta": tool_get_meta,
+    "triage_error": tool_triage_error,
     "query": tool_query,
     "search_nix": tool_search_nix,
     "search_docs": tool_search_docs,
     "search_all": tool_search_all,
+    "query_manix": tool_query_manix,
+    "eval_config": tool_eval_config,
 }
 
 
@@ -364,7 +543,7 @@ def handle(msg):
             "id": mid,
             "result": {
                 "protocolVersion": "2024-11-05",
-                "serverInfo": {"name": "nixos-docs-mcp", "version": "1.4.1"},
+                "serverInfo": {"name": "nixos-docs-mcp", "version": "1.6.0"},
                 "capabilities": {"tools": {}},
             },
         })

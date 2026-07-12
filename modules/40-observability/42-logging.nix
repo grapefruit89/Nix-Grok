@@ -25,13 +25,14 @@
 }:
 let
   cfgObs = config.my.observability;
+  ramGB = config.my.configs.hardware.ramGB;
   memory = import ../../lib/memory-policy.nix {
-    inherit lib;
-    ramGB = config.my.configs.hardware.ramGB;
+    inherit lib ramGB;
   };
   sockets = import ../../lib/unix-sockets.nix { inherit lib; };
   hardening = import ../../lib/systemd-hardening.nix { inherit lib; };
   domain = config.my.configs.identity.domain;
+  lokiRetentionHours = cfgObs.lokiRetentionHours;
 in
 {
   options.my.observability = {
@@ -40,6 +41,15 @@ in
       type = lib.types.port;
       default = config.my.ports.loki;
       description = "Port for the Loki API server.";
+    };
+    lokiRetentionHours = lib.mkOption {
+      type = lib.types.ints.positive;
+      default =
+        if ramGB <= 16 then
+          72
+        else
+          168;
+      description = "Loki log retention in hours (shorter on <=16 GB RAM hosts).";
     };
   };
 
@@ -65,15 +75,19 @@ in
                 store: inmemory
           limits_config:
             reject_old_samples: true
-            reject_old_samples_max_age: 168h
+            reject_old_samples_max_age: ${toString lokiRetentionHours}h
             creation_grace_period: 10m
-            retention_period: 168h
+            retention_period: ${toString lokiRetentionHours}h
+            ingestion_rate_mb: 4
+            ingestion_burst_size_mb: 8
+            max_streams_per_user: 0
+            max_global_streams_per_user: 5000
           compactor:
             working_directory: /var/lib/loki/compactor
             compaction_interval: 10m
             retention_enabled: true
             retention_delete_delay: 2h
-            retention_delete_worker_count: 150
+            retention_delete_worker_count: 50
             delete_request_store: filesystem
           schema_config:
             configs:

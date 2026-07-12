@@ -62,11 +62,13 @@ in
   my.storage.deferred.enable = erstAb 3;
 
   my.policy.onDemand.enable = erstAb 7;
+  my.policy.memoryPressure.enable = erstAb 8;
 
   my.alerting.enable = erstAb 8;
 
   my.observability.enable = erstAb 4;
   my.observability.victoriametrics.enable = erstAb 7;
+  my.observability.hostHealth.enable = erstAb 7;
   my.impermanence.enable = erstAb 9;
 
   my.services = {

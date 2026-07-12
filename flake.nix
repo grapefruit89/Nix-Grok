@@ -32,6 +32,11 @@
       url = "github:numtide/llm-agents.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -42,6 +47,7 @@
       home-manager,
       hermes-agent,
       llm-agents,
+      disko,
       ...
     }:
     let
@@ -69,6 +75,11 @@
           }).optionsJSON;
       };
 
+      diskoConfigurations.q958 = import ./machines/q958/disko.nix;
+
+      # Lern-VM: disko destroy/format/mount sicher in QEMU (kein profile.local nötig)
+      diskoConfigurations.q958-disko-vm = import ./machines/q958/disko-vm.nix;
+
       nixosConfigurations = {
         q958 = nixpkgs.lib.nixosSystem {
           inherit system;
@@ -77,14 +88,25 @@
               self
               grok-cli
               claude-code-pkg
+              disko
               ;
           };
           modules = [
             { nixpkgs.config.allowUnfree = true; }
             ./machines/q958/default.nix
+            ./machines/q958/disko-enabled.nix
             impermanence.nixosModules.impermanence
             home-manager.nixosModules.home-manager
             hermes-agent.nixosModules.default
+          ];
+        };
+
+        q958-disko-vm = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            disko.nixosModules.disko
+            ./machines/q958/disko-vm.nix
+            ./machines/q958/disko-vm-minimal.nix
           ];
         };
       };

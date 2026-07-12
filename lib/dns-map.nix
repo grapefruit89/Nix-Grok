@@ -29,7 +29,7 @@ let
     lidarr = fqdn "lidarr";
 
     vaultwarden = fqdn "vault";
-    homepage = fqdn "dashboard";
+    homepage = fqdn "homepage";
     filebrowser = fqdn "files";
     shiori = fqdn "links";
     libreseerr = fqdn "libreseerr";

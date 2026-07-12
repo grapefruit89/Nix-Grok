@@ -44,6 +44,7 @@ in
       metadataDir ? null,
       upstreamHost ? "127.0.0.1",
       extraEnv ? { },
+      onDemand ? false,
     }:
     let
       nameUpper = lib.strings.toUpper name;
@@ -68,35 +69,37 @@ in
         };
       }
 
-      {
+      (lib.mkIf (!onDemand) {
         systemd.services.${name}.environment = {
           "${nameUpper}__AUTH__METHOD" = lib.mkForce "External";
           "${nameUpper}__LOG__LEVEL" = lib.mkDefault "info";
         }
         // extraEnv;
-      }
-
-      (factory.mkService {
-        inherit config;
-        inherit name port upstreamHost;
-        mode = "sso";
-        hardeningProfile = "dotnet";
-        persistDirs = [ dataDir ];
-        readWritePaths = [
-          dataDir
-          "/data/downloads"
-          "/data/media"
-        ];
-        readOnlyPaths = [ ];
-        memoryPolicy = memory.arr { };
-        extraSystemd = {
-          UMask = lib.mkForce "0002";
-          EnvironmentFile = [ "/var/lib/secrets/${name}.env" ];
-          BindPaths = lib.mkIf (metadataDir != null) [
-            "${metadataDir}:/var/lib/${name}/MediaCover"
-          ];
-        };
       })
+
+      (lib.mkIf (!onDemand) (
+        factory.mkService {
+          inherit config;
+          inherit name port upstreamHost;
+          mode = "sso";
+          hardeningProfile = "dotnet";
+          persistDirs = [ dataDir ];
+          readWritePaths = [
+            dataDir
+            "/data/downloads"
+            "/data/media"
+          ];
+          readOnlyPaths = [ ];
+          memoryPolicy = memory.arr { };
+          extraSystemd = {
+            UMask = lib.mkForce "0002";
+            EnvironmentFile = [ "/var/lib/secrets/${name}.env" ];
+            BindPaths = lib.mkIf (metadataDir != null) [
+              "${metadataDir}:/var/lib/${name}/MediaCover"
+            ];
+          };
+        }
+      ))
 
       (lib.mkIf (metadataDir != null) {
         systemd.tmpfiles.rules = [

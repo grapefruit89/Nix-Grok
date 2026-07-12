@@ -23,6 +23,7 @@ Usage:
 import argparse
 import hashlib
 import json
+import re
 import sqlite3
 import sys
 import time
@@ -316,6 +317,67 @@ def upsert_doc_links(conn, rel: str, kind: str, meta: dict, md_content: str | No
             add_link(target, "siehe_auch", anchor)
 
 
+def _normalize_module_path(raw: str) -> str | None:
+    raw = raw.strip().strip("`")
+    if not raw:
+        return None
+    if raw == "flake.nix":
+        return raw
+    if raw.startswith(("modules/", "lib/", "machines/", "scripts/", "tools/", "packages/")):
+        return raw
+    return None
+
+
+def index_module_graph(conn, root: str, dry_run: bool = False) -> int:
+    """Import-Kanten aus docs/diagrams/*.mm (NixoScope) → doc_links link_type=module_import."""
+    diagrams = Path(root) / "docs" / "diagrams"
+    if not diagrams.is_dir():
+        return 0
+
+    node_paths: dict[str, str] = {}
+    edges: list[tuple[str, str]] = []
+
+    node_re = re.compile(r'^\s+(\w+)\["`\*\*(.+?)\*\*', re.MULTILINE)
+    edge_re = re.compile(r"^\s+(\w+)\s+-->\s+(\w+)\s*$", re.MULTILINE)
+
+    for mm_file in sorted(diagrams.glob("*.mm")):
+        try:
+            content = mm_file.read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            print(f"  SKIP {mm_file}: {e}", file=sys.stderr)
+            continue
+
+        local_nodes: dict[str, str] = {}
+        for node_id, label in node_re.findall(content):
+            path = _normalize_module_path(label.split("\n", 1)[0])
+            if path:
+                local_nodes[node_id] = path
+                node_paths[node_id] = path
+
+        for src_id, dst_id in edge_re.findall(content):
+            src = local_nodes.get(src_id) or node_paths.get(src_id)
+            dst = local_nodes.get(dst_id) or node_paths.get(dst_id)
+            if src and dst:
+                edges.append((src, dst))
+
+    if dry_run:
+        print(f"  DRY module_import: {len(edges)} Kanten aus {diagrams}")
+        return len(edges)
+
+    conn.execute("DELETE FROM doc_links WHERE link_type = 'module_import'")
+    count = 0
+    for src, dst in edges:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO doc_links (from_path, to_path, link_type, anchor)
+            VALUES (?, ?, 'module_import', '')
+            """,
+            (src, dst),
+        )
+        count += 1
+    return count
+
+
 def index_file(conn, path: Path, root: str, dry_run: bool = False) -> bool:
     rel = relative_path(str(path), root)
     kind = KIND_MAP.get(path.suffix, "other")
@@ -388,6 +450,8 @@ def main():
         if index_file(conn, path, args.root, dry_run=args.dry_run):
             ok += 1
 
+    graph_edges = index_module_graph(conn, args.root, dry_run=args.dry_run)
+
     if not args.dry_run:
         conn.commit()
 
@@ -413,7 +477,10 @@ def main():
             "SELECT COUNT(*) FROM source_files WHERE kind='md' AND purpose IS NOT NULL AND purpose != ''"
         ).fetchone()[0]
         print(f"\nFertig: {ok}/{total} Dateien in {time.time()-t0:.1f}s")
-        print(f"source_files={sf} doc_meta={dm} doc_chunks={dc} doc_links={dl} md_with_purpose={md_purpose}")
+        print(
+            f"source_files={sf} doc_meta={dm} doc_chunks={dc} doc_links={dl} "
+            f"module_import={graph_edges} md_with_purpose={md_purpose}"
+        )
     else:
         print(f"\nDRY-RUN: {ok}/{total} Dateien würden indexiert")
 

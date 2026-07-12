@@ -106,6 +106,11 @@ in
           type = lib.types.int;
           description = "Nix-Store-Partition-Größe in GB — bestimmt GC-Trigger (min-free/max-free).";
         };
+        renderDevice = lib.mkOption {
+          type = lib.types.str;
+          default = "";
+          description = "GPU render node for VA-API (e.g. /dev/dri/renderD128). Empty = no VA-API consumers.";
+        };
       };
       server = {
         lanIP = lib.mkOption {

@@ -45,6 +45,30 @@ let
         type = lib.types.str;
         default = "";
       };
+      homepage = lib.mkOption {
+        type = lib.types.nullOr (lib.types.submodule {
+          options = {
+            name = lib.mkOption {
+              type = lib.types.str;
+              description = "Display name on the dashboard.";
+            };
+            group = lib.mkOption {
+              type = lib.types.str;
+              description = "Dashboard group/section.";
+            };
+            description = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+            };
+            icon = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+            };
+          };
+        });
+        default = null;
+        description = "Homepage dashboard metadata. null = not shown on dashboard.";
+      };
     };
   };
 
@@ -94,18 +118,36 @@ let
       zone = "internal";
       subdomain = "gatus";
       description = "Health Dashboard";
+      homepage = {
+        name = "Gatus";
+        group = "System";
+        description = "Service-Status";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/gatus.svg";
+      };
     };
     scrutiny = {
       port = ports.scrutiny;
       zone = "internal";
       subdomain = "scrutiny";
       description = "SMART Disk Health";
+      homepage = {
+        name = "Scrutiny";
+        group = "System";
+        description = "SMART Disk Health";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/scrutiny.svg";
+      };
     };
     grafana = {
       socket = sockets.grafana;
       zone = "internal";
       subdomain = "grafana";
       description = "Metrics UI";
+      homepage = {
+        name = "Grafana";
+        group = "System";
+        description = "Metriken";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grafana.svg";
+      };
     };
     secrets-portal = {
       socket = sockets.secrets-portal;
@@ -118,6 +160,12 @@ let
       zone = "internal";
       subdomain = "sabnzbd";
       description = "Usenet (VPN-confined)";
+      homepage = {
+        name = "SABnzbd";
+        group = "Downloads & Arrs";
+        description = "Usenet-Downloader";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/sabnzbd.svg";
+      };
     };
     blocky = {
       port = ports.blocky;
@@ -130,30 +178,60 @@ let
       zone = "internal";
       subdomain = "ddns";
       description = "Cloudflare DDNS";
+      homepage = {
+        name = "DDNS Updater";
+        group = "System";
+        description = "Dynamisches DNS";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/cloudflare.svg";
+      };
     };
     sonarr = {
       port = ports.sonarr;
       zone = "internal";
       subdomain = "sonarr";
       description = "TV";
+      homepage = {
+        name = "Sonarr";
+        group = "Downloads & Arrs";
+        description = "Serien";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/sonarr.svg";
+      };
     };
     radarr = {
       port = ports.radarr;
       zone = "internal";
       subdomain = "radarr";
       description = "Movies";
+      homepage = {
+        name = "Radarr";
+        group = "Downloads & Arrs";
+        description = "Filme";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg";
+      };
     };
     readarr = {
       port = ports.readarr;
       zone = "internal";
       subdomain = "readarr";
       description = "Books";
+      homepage = {
+        name = "Readarr";
+        group = "Downloads & Arrs";
+        description = "Bücher";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/readarr.svg";
+      };
     };
     prowlarr = {
       port = ports.prowlarr;
       zone = "internal";
       subdomain = "prowlarr";
       description = "Indexers";
+      homepage = {
+        name = "Prowlarr";
+        group = "Downloads & Arrs";
+        description = "Indexer";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/prowlarr.svg";
+      };
     };
     lidarr = {
       port = ports.lidarr;
@@ -166,11 +244,17 @@ let
       zone = "internal";
       subdomain = "vault";
       description = "Passwords";
+      homepage = {
+        name = "Vaultwarden";
+        group = "Tools";
+        description = "Passwörter";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/vaultwarden.svg";
+      };
     };
     homepage = {
       port = ports.homepage;
       zone = "internal";
-      subdomain = "dashboard";
+      subdomain = "homepage";
       description = "Dashboard";
     };
 
@@ -180,48 +264,96 @@ let
       zone = "external";
       subdomain = "auth";
       description = "Identity Provider";
+      homepage = {
+        name = "Pocket ID";
+        group = "Tools";
+        description = "Authentifizierung";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/pocket-id.svg";
+      };
     };
     seerr = {
       port = ports.jellyseerr;
       zone = "external";
       subdomain = "seerr";
       description = "Media Requests";
+      homepage = {
+        name = "Seerr";
+        group = "Medien & Player";
+        description = "Medienanfragen";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/jellyseerr.svg";
+      };
     };
     filebrowser = {
       port = ports.filebrowser;
       zone = "external";
       subdomain = "files";
       description = "Files";
+      homepage = {
+        name = "Filebrowser";
+        group = "Tools";
+        description = "Dateiverwaltung";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/filebrowser.svg";
+      };
     };
     shiori = {
       port = ports.shiori;
       zone = "external";
       subdomain = "links";
       description = "Bookmarks";
+      homepage = {
+        name = "Shiori";
+        group = "Tools";
+        description = "Lesezeichen";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/shiori.svg";
+      };
     };
     libreseerr = {
       port = ports.libreseerr;
       zone = "external";
       subdomain = "libreseerr";
       description = "Book Requests";
+      homepage = {
+        name = "Libreseerr";
+        group = "Medien & Player";
+        description = "Buch-Anfragen";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/readarr.svg";
+      };
     };
     open-webui = {
       port = ports.open-webui;
       zone = "external";
       subdomain = "ai";
       description = "LLM UI";
+      homepage = {
+        name = "Open WebUI";
+        group = "Tools";
+        description = "KI-Interface";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/open-webui.svg";
+      };
     };
     paperless = {
       port = ports.paperless;
       zone = "external";
       subdomain = "paperless";
       description = "Documents";
+      homepage = {
+        name = "Paperless";
+        group = "Tools";
+        description = "Dokumente";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/paperless-ngx.svg";
+      };
     };
     home-assistant = {
       port = ports.home-assistant;
       zone = "external";
       subdomain = "home";
       description = "Home Assistant";
+      homepage = {
+        name = "Home Assistant";
+        group = "Tools";
+        description = "Heimautomatisierung";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg";
+      };
     };
     zigbee-stack = {
       port = ports.zigbee2mqtt;
@@ -242,6 +374,12 @@ let
       zone = "streaming";
       subdomain = "jellyfin";
       description = "Media";
+      homepage = {
+        name = "Jellyfin";
+        group = "Medien & Player";
+        description = "Filme & Serien";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/jellyfin.svg";
+      };
     };
     navidrome = {
       port = ports.navidrome;
@@ -254,6 +392,12 @@ let
       zone = "streaming";
       subdomain = "audiobookshelf";
       description = "Audiobooks";
+      homepage = {
+        name = "Audiobookshelf";
+        group = "Medien & Player";
+        description = "Hörbücher & Podcasts";
+        icon = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/audiobookshelf.svg";
+      };
     };
   };
 in

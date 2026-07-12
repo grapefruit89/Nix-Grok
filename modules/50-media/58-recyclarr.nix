@@ -18,9 +18,19 @@ let
   ports = config.my.ports;
   secretsDir = "/var/lib/secrets";
 
+  # WEB-only 1080p: kein Bluray (typ. 10–20 GB). Ziel ~6 GB/100 min via preferred.
+  # min ≤ preferred ≤ max: bevorzugt ~50 MB/min, Fallback bis 75 MB/min wenn nichts Kleineres existiert.
+  web1080pSizeLimits = [
+    { name = "WEBDL-1080p"; min = 12.5; preferred = 50; max = 75; }
+    { name = "WEBRip-1080p"; min = 12.5; preferred = 50; max = 75; }
+  ];
+  movieQualityDefinition = { type = "movie"; qualities = web1080pSizeLimits; };
+  seriesQualityDefinition = { type = "series"; qualities = web1080pSizeLimits; };
+
+
   # Zwei Profile: Deutsch-primär (min 10k → nur German/German-DL passiert),
   # Englisch-sekundär (min 0 → pure English passiert, German/andere abgestraft).
-  # Qualitäten zu einer Gruppe gemergt → Sprach-Upgrades ohne Quality-Blocker.
+  # WEB-only (kein Bluray). Qualitäten gemergt → Sprach-Upgrades ohne Quality-Blocker.
   germanProfile = {
     name = "German 1080p HEVC";
     min_format_score = 10000;
@@ -34,7 +44,6 @@ let
       {
         name = "1080p";
         qualities = [
-          "Bluray-1080p"
           "WEBDL-1080p"
           "WEBRip-1080p"
         ];
@@ -56,7 +65,6 @@ let
       {
         name = "1080p";
         qualities = [
-          "Bluray-1080p"
           "WEBDL-1080p"
           "WEBRip-1080p"
         ];
@@ -408,7 +416,7 @@ in
             base_url = "http://127.0.0.1:${toString ports.sonarr}";
             api_key._secret = "${secretsDir}/sonarr_api_key";
             delete_old_custom_formats = true;
-            quality_definition.type = "series";
+            quality_definition = seriesQualityDefinition;
             quality_profiles = [
               germanProfile
               englishProfile
@@ -421,7 +429,7 @@ in
             base_url = "http://127.0.0.1:${toString ports.radarr}";
             api_key._secret = "${secretsDir}/radarr_api_key";
             delete_old_custom_formats = true;
-            quality_definition.type = "movie";
+            quality_definition = movieQualityDefinition;
             quality_profiles = [
               germanProfile
               englishProfile

@@ -2,10 +2,11 @@
 # meta:
 #   layer: 3
 #   role: module
-#   purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy + Pocket-ID SSO-Plugin
+#   purpose: Jellyfin QuickSync + Jellyseerr hinter Caddy forward_auth
 #   docs:
 #     - docs/memory_oom.md
 #     - docs/adr/1001-dns-dot-fail-closed.md
+#     - docs/adr/1031-caddy-zones-konzept.md
 #   lib:
 #     - lib/memory-policy.nix
 #   services:
@@ -14,16 +15,11 @@
 #   tags:
 #     - media
 #     - jellyfin
-#     - oidc
 # ---
 #
-# Jellyfin SSO (jellyfin-plugin-sso v4.0.0.3):
-#   1. Pocket-ID → Applications → New → Name: "Jellyfin"
-#      Callback URL: https://jellyfin.DOMAIN/sso/OID/redirect/PocketID
-#   2. client_id + client_secret in profile.local.nix:
-#        secrets.oidc.jellyfin = { clientId = "…"; clientSecret = "…"; };
-#   3. nixos-rebuild switch → /var/lib/secrets/jellyfin-oidc.env + SSO-Auth.xml erscheinen
-#   4. In Jellyfin → Dashboard → Plugins → SSO-Auth: Provider "PocketID" sollte aktiv sein
+# Web-UI-Auth: Caddy forward_auth → Pocket-ID/oauth2-proxy (lib/caddy-ingress.nix).
+# Native Apps (Infuse, iOS, Android) umgehen SSO via X-Emby-Authorization-Header.
+# Kein jellyfin-plugin-sso — Repo archiviert (Mai 2026).
 #
 # Jellyseerr nutzt Jellyfin-Auth → benötigt kein eigenes OIDC.
 #
@@ -64,46 +60,7 @@ let
   localeUi = lib.replaceStrings [ "_" ] [ "-" ] (locale.default or "de_DE.UTF-8");
   localeCc = lib.toUpper (lib.substring 3 2 localeUi);
   jellyfinUrl = "https://${dnsMap.host "jellyfin"}";
-
-  # SSO-Plugin v4.0.0.3 — als Nix-Derivation aus GitHub-Release
-  jellyfinSsoPlugin =
-    pkgs.runCommand "jellyfin-plugin-sso"
-      {
-        src = pkgs.fetchurl {
-          url = "https://github.com/9p4/jellyfin-plugin-sso/releases/download/v4.0.0.3/sso-authentication_4.0.0.3.zip";
-          hash = "sha256-3glRJVvsTtZGA3ZB5+CqEhCzoAoUFAZUgIe+2ZTLm90=";
-        };
-        nativeBuildInputs = [ pkgs.unzip ];
-      }
-      ''
-        mkdir -p "$out"
-        unzip "$src" -d "$out"
-      '';
-
-  jellyfinSsoXml = pkgs.writeText "jellyfin-sso-config.xml" ''
-    <?xml version="1.0" encoding="utf-8"?>
-    <PluginConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-      <SSOConfigs>
-        <OIDProviderConfig>
-          <OIDEndpoint>https://auth.${domain}</OIDEndpoint>
-          <OIDClientID>@CLIENT_ID@</OIDClientID>
-          <OIDSecret>@CLIENT_SECRET@</OIDSecret>
-          <Enabled>true</Enabled>
-          <EnableAllFolders>true</EnableAllFolders>
-          <EnableAuthorization>false</EnableAuthorization>
-          <EnableAllUsers>true</EnableAllUsers>
-          <SetDefaultProvider>true</SetDefaultProvider>
-          <EnableFolderRoles>false</EnableFolderRoles>
-        </OIDProviderConfig>
-      </SSOConfigs>
-      <BrandingOptions>
-        <Options>
-          <Provider>oidc</Provider>
-          <DefaultProvider>PocketID</DefaultProvider>
-        </Options>
-      </BrandingOptions>
-    </PluginConfiguration>
-  '';
+  vaapiDevice = config.my.configs.hardware.renderDevice;
 
   jellyfinConfigSeeds = pkgs.runCommand "jellyfin-config-seeds" { } ''
     mkdir -p $out
@@ -116,8 +73,9 @@ let
       -e 's|@JELLYFIN_URL@|${jellyfinUrl}|g' \
       -e 's|@JELLYFIN_PORT@|${toString portJellyfin}|g' \
       ${./data/jellyfin-network.xml} > $out/network.xml
-    # encoding.xml: VAAPI-Konfiguration für Intel iHD (i3-9100, Gen 9)
-    cp ${./data/jellyfin-encoding.xml} $out/encoding.xml
+    ${pkgs.gnused}/bin/sed \
+      -e 's|@VAAPI_DEVICE@|${vaapiDevice}|g' \
+      ${./data/jellyfin-encoding.xml} > $out/encoding.xml
     # dlna.xml: DLNA-Server deaktiviert (kein Discovery nötig hinter Caddy)
     cp ${./data/jellyfin-dlna.xml} $out/dlna.xml
     # branding.xml: kein Splashscreen, Login-Disclaimer
@@ -126,6 +84,14 @@ let
 in
 {
   config = lib.mkMerge [
+    {
+      assertions = lib.optionals cfgJellyfin.enable [
+        {
+          assertion = vaapiDevice != "";
+          message = "[jellyfin] my.configs.hardware.renderDevice muss gesetzt sein (VA-API QuickSync).";
+        }
+      ];
+    }
     (lib.mkIf cfgJellyfin.enable (
       lib.mkMerge [
         {
@@ -154,46 +120,22 @@ in
             "d /mnt/fast_pool/metadata/jellyfin 0750 jellyfin media -"
           ];
 
-          systemd.services.jellyfin.preStart = lib.mkBefore (
-            ''
-              mkdir -p /var/lib/jellyfin/config
-              for seed in system.xml network.xml encoding.xml dlna.xml branding.xml; do
-                if [ ! -f "/var/lib/jellyfin/config/$seed" ]; then
-                  install -m 0640 -o jellyfin -g jellyfin \
-                    ${jellyfinConfigSeeds}/$seed /var/lib/jellyfin/config/$seed
-                fi
-              done
-            ''
-            +
-              # SSO-Plugin installieren (idempotent via Versionspfad)
-              ''
-                PLUGIN_DIR="/var/lib/jellyfin/plugins/sso-authentication_4.0.0.3"
-                if [ ! -d "$PLUGIN_DIR" ]; then
-                  install -d -m 0755 -o jellyfin -g jellyfin "$PLUGIN_DIR"
-                  find ${jellyfinSsoPlugin} -maxdepth 3 \( -name "*.dll" -o -name "meta.json" \) | \
-                    while read -r f; do
-                      install -m 0644 -o jellyfin -g jellyfin "$f" "$PLUGIN_DIR/"
-                    done
-                fi
-
-                # SSO-Konfiguration aus Secrets (nur wenn /var/lib/secrets/jellyfin-oidc.env existiert)
-                if [ -f /var/lib/secrets/jellyfin-oidc.env ]; then
-                  _JF_ID=$(grep -m1 '^ND_OIDCCLIENTID=' /var/lib/secrets/jellyfin-oidc.env | cut -d= -f2-)
-                  _JF_SECRET=$(grep -m1 '^ND_OIDCCLIENTSECRET=' /var/lib/secrets/jellyfin-oidc.env | cut -d= -f2-)
-                  install -d -m 0750 -o jellyfin -g jellyfin \
-                    /var/lib/jellyfin/config/PluginConfiguration
-                  ${pkgs.gnused}/bin/sed \
-                    -e "s|@CLIENT_ID@|$_JF_ID|g" \
-                    -e "s|@CLIENT_SECRET@|$_JF_SECRET|g" \
-                    ${jellyfinSsoXml} | \
-                    ${pkgs.coreutils}/bin/tee \
-                      /var/lib/jellyfin/config/PluginConfiguration/SSO-Auth.xml > /dev/null
-                  chown jellyfin:jellyfin /var/lib/jellyfin/config/PluginConfiguration/SSO-Auth.xml
-                  chmod 0640 /var/lib/jellyfin/config/PluginConfiguration/SSO-Auth.xml
-                  unset _JF_ID _JF_SECRET
-                fi
-              ''
-          );
+          systemd.services.jellyfin.preStart = lib.mkBefore ''
+            mkdir -p /var/lib/jellyfin/config
+            SEED_DIR=${jellyfinConfigSeeds}
+            for seed in system.xml network.xml encoding.xml dlna.xml branding.xml; do
+              src="$SEED_DIR/$seed"
+              dst="/var/lib/jellyfin/config/$seed"
+              if [ ! -f "$src" ]; then
+                echo "jellyfin: missing seed $seed" >&2
+                exit 1
+              fi
+              if [ ! -f "$dst" ] || ! ${pkgs.diffutils}/bin/cmp -s "$src" "$dst"; then
+                install -m 0640 -o jellyfin -g jellyfin "$src" "$dst"
+                echo "jellyfin: synced config seed $seed"
+              fi
+            done
+          '';
 
           # Cleanup-Timer: alle 5 min, adaptiv nach RAM-Auslastung
           # Normal (<65%): >90 min  |  Druck (65–80%): >15 min  |  Notfall (>80%): alles

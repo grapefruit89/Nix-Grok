@@ -117,18 +117,18 @@ in
     };
 
   # ── Tier 3 — Observability ──────────────────────────────────────────────────
-  # 3% des RAM für Loki: Log-Retention-Index + Write-Ahead-Log skalieren mit RAM.
-  # Mindestens 1 GB: unter 1 GB wird Lokis Chunk-Cache zu klein (frequent disk flushes).
-  # Auf q958 (32 GB): max=1 GB, high=1 GB — entspricht bisheriger Konfiguration.
+  # Loki: auf 16-GB-Hosts enger (768M), ab 24 GB wieder RAM-skaliert.
   loki =
     _:
     let
       maxGB = lib.max 1 (lib.floor (ramGB * 0.03));
+      maxStr = if ramGB <= 16 then "768M" else gb maxGB;
+      highStr = if ramGB <= 16 then "512M" else gb (high75 maxGB);
     in
     mkServiceLimits {
       oomScore = 300;
-      memoryMax = gb maxGB;
-      memoryHigh = gb (high75 maxGB);
+      memoryMax = maxStr;
+      memoryHigh = highStr;
     };
 
   # Vector/Grafana: feste Limits — Log-Shipper und Dashboard haben bekannte Footprints.

@@ -1,0 +1,243 @@
+#! /nix/store/cgjr3kj3hs7ngznyws5qfg16c8scpys0-bash-interactive-5.3p9/bin/bash
+export PATH=/nix/store/s04d6wm3kqjdgr7zdhlk214f6a2291ks-jq-1.8.1-bin/bin:/nix/store/pg8x7s8zcby4d15bibg8195w1a79j5aw-gptfdisk-1.0.10/bin:/nix/store/cfjm0s2jnlaiz9y3byvfa0fc6fp2la20-systemd-minimal-260.1/bin:/nix/store/9hxjs92injxfjszmxiikxyj0kgmh720j-parted-3.7/bin:/nix/store/zca0hp2i6c5yxbaxpl6x76mxc2b0aiqm-util-linux-2.42-bin/bin:/nix/store/gn94gpcp5q08x4v6g8mvw8v4r65rcjzk-gnugrep-3.12/bin:/nix/store/4pqi7n9k6has11i9f78w26warl572gkv-dosfstools-4.2/bin:/nix/store/m9ikfq217vhz47kbadsm3cg3vhirb49i-e2fsprogs-1.47.3-bin/bin:/nix/store/pa0x6m662kr9vr875fcp1cl9wwkswsa8-coreutils-full-9.11/bin:/nix/store/cgjr3kj3hs7ngznyws5qfg16c8scpys0-bash-interactive-5.3p9/bin:/nix/store/zca0hp2i6c5yxbaxpl6x76mxc2b0aiqm-util-linux-2.42-bin/bin:/nix/store/m9ikfq217vhz47kbadsm3cg3vhirb49i-e2fsprogs-1.47.3-bin/bin:/nix/store/cb9gjph4clscpdwd246fh38ah6n55bdl-mdadm-4.4/bin:/nix/store/d7yna3llxynv2gxdbvydzzj5mplf3mxm-zfs-user-2.4.2/bin:/nix/store/rj7sbsckq3iqnkj8h4mdyg7cas8cqnc5-lvm2-2.03.39-bin/bin:/nix/store/cgjr3kj3hs7ngznyws5qfg16c8scpys0-bash-interactive-5.3p9/bin:/nix/store/s04d6wm3kqjdgr7zdhlk214f6a2291ks-jq-1.8.1-bin/bin:/nix/store/kgxafhycw2kybbqih759ykc2043qyi5j-gnused-4.9/bin:/nix/store/wp1cshqv98i8abs8rcx91s54igqgll0f-gawk-5.4.0/bin:/nix/store/pa0x6m662kr9vr875fcp1cl9wwkswsa8-coreutils-full-9.11/bin:$PATH
+if [ "$1" != "--yes-wipe-all-disks" ]; then
+  echo "WARNING: This will destroy all data on the disks defined in disko.devices, which are:"
+  echo
+  # shellcheck disable=SC2043,2041
+  for dev in /dev/sda; do
+    echo "  - $dev"
+  done
+  echo
+  echo "    (If you want to skip this dialogue, pass --yes-wipe-all-disks)"
+  echo
+  echo "Are you sure you want to wipe the devices listed above?"
+  read -rp "Type 'yes' to continue, anything else to abort: " confirmation
+
+  if [ "$confirmation" != "yes" ]; then
+    echo "Aborted."
+    exit 1
+  fi
+fi
+
+umount -Rv "/mnt" || :
+
+# shellcheck disable=SC2043,2041
+for dev in /dev/sda; do
+  $BASH /nix/store/94pqsnzjf0qivgnqhsn8dkyhay03l335-disk-deactivate/disk-deactivate "$dev"
+done
+
+set -efux
+
+disko_devices_dir=$(mktemp -d)
+trap 'rm -rf "$disko_devices_dir"' EXIT
+mkdir -p "$disko_devices_dir"
+
+( # disk tierA /dev/sda   #
+  destroy=1
+  device=/dev/sda
+  imageName=tierA
+  imageSize=2G
+  name=tierA
+  type=disk
+  
+  ( # gpt  /dev/sda   #
+    device=/dev/sda
+    efiGptPartitionFirst=1
+    type=gpt
+    
+    if ! blkid "/dev/sda" >&2; then
+      sgdisk --clear "/dev/sda"
+    fi
+    # try to create the partition, if it fails, try to change the type and name
+    if ! sgdisk --align-end  \
+    --new=1:0:+512M \
+     --partition-guid="1:R" \
+    --change-name="1:disk-tierA-NIXBOOT" \
+    --typecode=1:EF00 \
+    --attributes=1:=:0 \
+     \
+    "/dev/sda" \
+    
+    then
+      sgdisk --partition-guid="1:R" \
+    --change-name="1:disk-tierA-NIXBOOT" \
+    --typecode=1:EF00 \
+    --attributes=1:=:0 \
+     \
+    "/dev/sda" \
+    
+    fi
+    # ensure /dev/disk/by-path/..-partN exists before continuing
+    partprobe "/dev/sda" || : # sometimes partprobe fails, but the partitions are still up2date
+    udevadm trigger --subsystem-match=block
+    udevadm settle --timeout 120
+    # try to create the partition, if it fails, try to change the type and name
+    if ! sgdisk --align-end  \
+    --new=2:0:-0 \
+     --partition-guid="2:R" \
+    --change-name="2:disk-tierA-NIXPERSIST" \
+    --typecode=2:8300 \
+    --attributes=2:=:0 \
+     \
+    "/dev/sda" \
+    
+    then
+      sgdisk --partition-guid="2:R" \
+    --change-name="2:disk-tierA-NIXPERSIST" \
+    --typecode=2:8300 \
+    --attributes=2:=:0 \
+     \
+    "/dev/sda" \
+    
+    fi
+    # ensure /dev/disk/by-path/..-partN exists before continuing
+    partprobe "/dev/sda" || : # sometimes partprobe fails, but the partitions are still up2date
+    udevadm trigger --subsystem-match=block
+    udevadm settle --timeout 120
+    
+    
+    
+    
+    
+    ( # filesystem  /dev/disk/by-partlabel/disk-tierA-NIXBOOT vfat /boot #
+      device=/dev/disk/by-partlabel/disk-tierA-NIXBOOT
+      declare -a extraArgs=(-n NIXBOOT)
+      format=vfat
+      declare -a mountOptions=('fmask=0022' 'dmask=0022')
+      mountpoint=/boot
+      type=filesystem
+      
+      if ! (blkid "/dev/disk/by-partlabel/disk-tierA-NIXBOOT" | grep -q 'TYPE='); then
+        mkfs.vfat \
+          -n NIXBOOT \
+          "/dev/disk/by-partlabel/disk-tierA-NIXBOOT"
+      fi
+      
+      
+    )
+    
+    ( # filesystem  /dev/disk/by-partlabel/disk-tierA-NIXPERSIST ext4 / #
+      device=/dev/disk/by-partlabel/disk-tierA-NIXPERSIST
+      declare -a extraArgs=(-L NIXPERSIST)
+      format=ext4
+      declare -a mountOptions=(defaults noatime)
+      mountpoint=/
+      type=filesystem
+      
+      if ! (blkid "/dev/disk/by-partlabel/disk-tierA-NIXPERSIST" | grep -q 'TYPE='); then
+        mkfs.ext4 \
+          -L NIXPERSIST \
+          "/dev/disk/by-partlabel/disk-tierA-NIXPERSIST"
+      fi
+      
+      
+    )
+    
+    
+    
+    
+  )
+  
+  
+)
+
+
+set -efux
+# first create the necessary devices
+(
+  destroy=1
+  device=/dev/sda
+  imageName=tierA
+  imageSize=2G
+  name=tierA
+  type=disk
+  
+  (
+    device=/dev/sda
+    efiGptPartitionFirst=1
+    type=gpt
+    
+    
+    
+  )
+  
+  
+)
+
+
+# and then mount the filesystems in dependency order
+(
+  destroy=1
+  device=/dev/sda
+  imageName=tierA
+  imageSize=2G
+  name=tierA
+  type=disk
+  
+  (
+    device=/dev/sda
+    efiGptPartitionFirst=1
+    type=gpt
+    
+    (
+      device=/dev/disk/by-partlabel/disk-tierA-NIXPERSIST
+      declare -a extraArgs=(-L NIXPERSIST)
+      format=ext4
+      declare -a mountOptions=(defaults noatime)
+      mountpoint=/
+      type=filesystem
+      
+      if ! findmnt "/dev/disk/by-partlabel/disk-tierA-NIXPERSIST" "/mnt/" >/dev/null 2>&1; then
+        mount "/dev/disk/by-partlabel/disk-tierA-NIXPERSIST" "/mnt/" \
+          -t "ext4" \
+          -o defaults -o noatime \
+          -o X-mount.mkdir
+      fi
+      
+      
+    )
+    
+    
+  )
+  
+  
+)
+(
+  destroy=1
+  device=/dev/sda
+  imageName=tierA
+  imageSize=2G
+  name=tierA
+  type=disk
+  
+  (
+    device=/dev/sda
+    efiGptPartitionFirst=1
+    type=gpt
+    
+    (
+      device=/dev/disk/by-partlabel/disk-tierA-NIXBOOT
+      declare -a extraArgs=(-n NIXBOOT)
+      format=vfat
+      declare -a mountOptions=('fmask=0022' 'dmask=0022')
+      mountpoint=/boot
+      type=filesystem
+      
+      if ! findmnt "/dev/disk/by-partlabel/disk-tierA-NIXBOOT" "/mnt/boot" >/dev/null 2>&1; then
+        mount "/dev/disk/by-partlabel/disk-tierA-NIXBOOT" "/mnt/boot" \
+          -t "vfat" \
+          -o 'fmask=0022' -o 'dmask=0022' \
+          -o X-mount.mkdir
+      fi
+      
+      
+    )
+    
+    
+  )
+  
+  
+)
+
+
+

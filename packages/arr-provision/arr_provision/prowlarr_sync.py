@@ -4,9 +4,17 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import sys
 
 from arr_provision.common import http_json, read_key_file, title_case_service, wait_for_url
+
+_VPN_DISABLED_TASKS = (
+    "NzbDrone.Core.Update.Commands.ApplicationUpdateCheckCommand",
+    "NzbDrone.Core.IndexerVersions.IndexerDefinitionUpdateCommand",
+)
+# Minutes — ~1 year; Prowlarr API erlaubt kein Task-PUT, DB-Interval ist der Weg.
+_VPN_DISABLED_INTERVAL_MIN = 525600
 
 
 def _register_indexer(api: str, headers: dict, indexer: dict) -> None:
@@ -93,6 +101,36 @@ def _trigger_application_sync(api: str, headers: dict) -> None:
         print(f"Prowlarr application sync command failed (HTTP {status})", file=sys.stderr)
 
 
+def _tune_vpn_sandbox(api_v1: str, headers: dict) -> None:
+    status, host_cfg = http_json("GET", f"{api_v1}/config/host", headers=headers)
+    if status >= 400 or not isinstance(host_cfg, dict):
+        print(f"Prowlarr host config GET failed (HTTP {status})", file=sys.stderr)
+    elif host_cfg.get("updateMechanism") != "external" or host_cfg.get("updateAutomatically"):
+        host_cfg["updateMechanism"] = "external"
+        host_cfg["updateAutomatically"] = False
+        put_status, _ = http_json("PUT", f"{api_v1}/config/host", headers=headers, body=host_cfg)
+        if put_status < 400:
+            print("Prowlarr: updateMechanism → external (VPN sandbox)")
+        else:
+            print(f"Prowlarr host config PUT failed (HTTP {put_status})", file=sys.stderr)
+
+    db_path = os.environ.get("PROWLARR_DB", "/var/lib/prowlarr/prowlarr.db")
+    try:
+        con = sqlite3.connect(db_path)
+        for type_name in _VPN_DISABLED_TASKS:
+            cur = con.execute(
+                "UPDATE ScheduledTasks SET Interval = ? WHERE TypeName = ? AND Interval < ?",
+                (_VPN_DISABLED_INTERVAL_MIN, type_name, _VPN_DISABLED_INTERVAL_MIN),
+            )
+            if cur.rowcount:
+                short = type_name.rsplit(".", maxsplit=1)[-1]
+                print(f"Prowlarr: stretched scheduled task interval ({short})")
+        con.commit()
+        con.close()
+    except OSError as exc:
+        print(f"Prowlarr DB tune skipped: {exc}", file=sys.stderr)
+
+
 def _register_backup_indexer(app: dict, backup: dict) -> None:
     from arr_provision.common import arr_api_base, title_case_service
 
@@ -165,6 +203,11 @@ def sync_prowlarr() -> int:
         return 0
 
     api_v1 = f"{api}/api/v1"
+
+    if os.environ.get("PROWLARR_VPN_SANDBOX", "0") == "1":
+        print("=== Prowlarr: VPN sandbox tuning ===")
+        _tune_vpn_sandbox(api_v1, headers)
+
     print("=== Prowlarr: indexer registration ===")
     for indexer in indexers:
         _register_indexer(api_v1, headers, indexer)

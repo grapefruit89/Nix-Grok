@@ -1,0 +1,64 @@
+{
+  "schema": "disko-deprecation-manifest/v1",
+  "host": "q958",
+  "description": "Nach disko-Reinstall: KI prüft mit scripts/disko-verify-active.sh, dann scripts/disko-prune-deprecated.sh",
+  "prerequisites": {
+    "dr_command": "scripts/disko-q958.sh install (NICHT disko — ADR-3024)",
+    "profile_flag": "storage.tierA.diskoManaged = true in machines/q958/profile.nix",
+    "generation_limit": "boot.generationLimit = 5-7 nach 512M ESP (ADR-3024)",
+    "flake_modules": "disko.nixosModules.disko + diskoConfigurations.q958 in flake (via disko-enabled.nix)",
+    "verify_script": "scripts/disko-verify-active.sh exit 0",
+    "human_gate": "sudo nixos-rebuild-safe dry muss grün sein vor prune apply"
+  },
+  "deprecations": [
+    {
+      "id": "hardware-filesystems-legacy",
+      "file": "machines/q958/hardware.nix",
+      "marker": "hardware-filesystems-legacy",
+      "summary": "fileSystems /boot und / — disko-Modul liefert Mounts wenn diskoManaged",
+      "replaced_by": "machines/q958/disko.nix + disko-enabled.nix"
+    },
+    {
+      "id": "storage-relabel-tier-a",
+      "file": "machines/q958/storage.nix",
+      "marker": "storage-relabel-tier-a",
+      "summary": "relabelTierALabels — disko setzt NIXBOOT/NIXPERSIST bei Formatierung",
+      "replaced_by": "machines/q958/disko.nix extraArgs -n/-L"
+    },
+    {
+      "id": "profile-persist-disk-by-label",
+      "file": "machines/q958/profile.nix",
+      "marker": "profile-persist-disk-by-label",
+      "summary": "tierA.persist.disk by-label Pfad — optional nach disko (impermanence nutzt weiterhin Label)",
+      "replaced_by": "disko partlabel oder by-label bleibt gültig",
+      "optional": true
+    }
+  ],
+  "scope": {
+    "disko_replaces": [
+      "Tier-A Partitionierung (GPT)",
+      "Formatierung (vfat ESP + ext4 root)",
+      "Initiale FS-Labels NIXBOOT/NIXPERSIST",
+      "GPT-Partlabels disk-tierA-*",
+      "Install-Mounts (/boot, /) via disko-Modul",
+      "DR-Doku und disko-q958.sh Wrapper"
+    ],
+    "disko_does_not_replace": [
+      "Tier-B/C Hotplug und Pending-Watcher",
+      "MergerFS (singleDisk=false Pfad)",
+      "Storage-Mover Hysterese",
+      "Restic-Policy und Excludes",
+      "relabelTierALabels (nur Legacy — wird gepruned)"
+    ],
+    "switch_flag": "storage.tierA.diskoManaged",
+    "switch_module": "machines/q958/disko-switch.nix"
+  },
+  "never_delete": [
+    "machines/q958/disko.nix",
+    "machines/q958/disko-enabled.nix",
+    "scripts/disko-q958.sh",
+    "scripts/disko-verify-active.sh",
+    "scripts/disko-prune-deprecated.sh",
+    "machines/q958/disko-deprecations.json"
+  ]
+}

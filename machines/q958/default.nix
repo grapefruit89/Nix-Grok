@@ -28,6 +28,7 @@ let
 in
 {
   imports = [
+    ./disko-switch.nix
     ./hardware.nix
     ../../modules/00-core
     ../../modules/20-security
@@ -106,6 +107,7 @@ in
       hardware = {
         ramGB = p.hardware.ramGB;
         nixStoreGB = p.hardware.nixStoreGB;
+        renderDevice = "/dev/dri/renderD128";
       };
       server = {
         lanIP = p.network.lan.ip;
@@ -174,7 +176,6 @@ in
           "cast"
         ];
         smlightHost = "SLZB-06M.local";
-        renderDevice = "/dev/dri/renderD128";
       };
       voice-assistant = {
         enable = true;

@@ -179,6 +179,8 @@ in
           PROWLARR_HOST = prowlarrHost;
           PROWLARR_PORT = toString ports.prowlarr;
           PROWLARR_KEY_FILE = "/var/lib/secrets/prowlarr_api_key";
+          PROWLARR_DB = "/var/lib/prowlarr/prowlarr.db";
+          PROWLARR_VPN_SANDBOX = if config.my.services.usenet-confinement.enable then "1" else "0";
           HOST_BRIDGE = hostBridgeAddr;
           SYNC_LEVEL = cfgSync.syncLevel;
           INDEXERS_JSON = indexersJson;

@@ -72,6 +72,7 @@ meta:
 |-----|-------|--------|-------|
 | [3022](3022-no-raid-distance-parity.md) | Keine lokale Redundanz — Geografische Distanz statt RAID | accepted | 2026-06-30 |
 | [3023](3023-backup-philosophy.md) | Backup-Philosophie — Nur Unwiederbringliches sichern | accepted | 2026-06-30 |
+| [3024](3024-disko-tier-a-provisioning.md) | disko Tier-A q958 — CLI-Modi, ESP 512M, Legacy-Prune | accepted | 2026-07-12 |
 
 ### 50-media — Media-Stack
 

@@ -42,6 +42,17 @@ nix run github:nix-community/disko -- script …   # NIEMALS — führt destroy/
 Sicher: `disko-q958.sh plan` (nur `--dry-run`, kein Schreiben). Details: [EMERGENCY-RECOVERY.md](docs/EMERGENCY-RECOVERY.md#guards--damit-das-nie-wieder-passiert).
 
 
+## Kaltstart — curl ohne Secrets (neue Hardware)
+
+Gleiche Config wie q958, Platzhalter-Secrets, externe Werte danach im **secrets-portal**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/grapefruit89/Nix-Grok/main/scripts/cold-start-q958.sh | sudo bash
+```
+
+Details: [`docs/guides/GUIDE-cold-start.md`](docs/guides/GUIDE-cold-start.md)
+
+
 ## Schnellstart (q958)
 
 ```bash

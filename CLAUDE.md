@@ -131,8 +131,7 @@ aktuellen HEAD ein Dry-Build-Flag gesetzt ist.
 - **Unified Port=UID=FolderPrefix Schema** implementiert (ADR-011):
   ID = Port = UID = Ordner-Präfix (4-stellig). Quellen: `lib/uid-registry.nix`,
   `lib/server-map.nix`, `modules/00-core/01-core.nix`.
-- **NixOS-Docs MCP** (`scripts/nixos-docs-mcp.py`): FTS5 auf `/var/lib/nixos-docs-mcp/nixos_docs.sqlite` — zentral in `mcp/lib.nix`
-  Hybrid-RRF-Suche auf `data/nixos_docs.sqlite`. Nach rebuild aktivieren
+ - **NixOS-Docs MCP** (`nixos-docs`): FTS5 auf `nixos_docs.sqlite` — verdrahtet in `modules/80-agents/mcp.nix`
 
 ## Dev-System-Philosophie — maximal progressiv
 
@@ -202,7 +201,6 @@ wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
   `packages/grok-cli/`, Flake-Wiring in `flake.nix`, Block in
   `users/moritz/home.nix` — alles deaktiviert aber noch vorhanden.
   Aufräumen sobald der Mensch grünes Licht gibt.
-  — `scripts/nixos-docs-mcp.py` existiert, braucht noch systemd-Service-Definition.
 - ***arr-UID-Migration** noch ausstehend: `scripts/migrate-arr-uids.sh` einmalig
   nach dem nächsten switch ausführen (chown auf `/persist/var/lib/{sonarr,...}`).
 
@@ -213,6 +211,9 @@ wischen, kein Backup, keine Rückfrage. Ausnahmen: `/data/media`, `/etc/nixos`.
 > - `lib.*`-Funktion / `builtins.*` → **Noogle** (Argumente-Reihenfolge ändert sich zwischen Versionen!)
 > - Caddy, Jellyfin-API, systemd-Optionen, externe Bibliotheken → **Context7**
 > - Fehlermeldung aus externem Paket/Modul → **GitHub-MCP** (Issues/PRs durchsuchen, bevor debuggt wird)
+> - **Vor** `modules/`/`lib/`-Änderung → **nixos-docs** (`search_chunks`, `list_doc_links`, `get_meta`)
+> - journalctl/systemd-Fehler auf q958 → **nixos-docs** `triage_error` (ADR `error_pattern`)
+> - Eigene ADRs/Guides/Runbooks → **nixos-docs** (nicht blind `rg` über /etc/nixos)
 >
 > Keine Ausnahmen. „Ich weiß das aus Training" ist kein gültiger Grund. Falsche
 > Annahmen aus Training kosten mehr Zeit als ein MCP-Call.
@@ -265,6 +266,30 @@ Nutze `mcp__claude_ai_Context7__resolve-library-id` + `query-docs` für:
 Ablauf: erst `resolve-library-id` mit dem Library-Namen, dann `query-docs` mit
 der Library-ID und der spezifischen Frage.
 
+### Agent-Nix-Werkzeuge — Shell + MCP
+
+**Entscheidungsbaum (immer in dieser Reihenfolge):**
+
+| Frage | Werkzeug |
+|-------|----------|
+| ADR, Guide, Modul-Meta, `error_pattern` in *diesem* Repo | **nixos-docs MCP** (`search_chunks`, `get_meta`, `triage_error`) |
+| nixpkgs-Paket / upstream `services.*`-Option existiert? | **nixos MCP** (`action: info/search`) |
+| `lib.*` / `builtins.*` | **nixos MCP** Noogle |
+| Was ist auf q958 **tatsächlich evaluiert**? (`config.*`) | **nixos-docs MCP** `eval_config` oder Shell: `nix-agent-query.sh config <attr>` |
+| Options-Doku in der Shell (Fallback) | **nixos-docs MCP** `query_manix` oder Shell: `nix-agent-query.sh options <query>` |
+| Externe Lib-Doku (Caddy, Jellyfin API, …) | **Context7 MCP** |
+| Upstream-Bug / bekannte Issues | **GitHub MCP** |
+
+**Shell-CLI für alle Agenten** (Grok, Claude Code, Antigravity):
+
+```bash
+/etc/nixos/scripts/nix-agent-query.sh options services.openssh
+/etc/nixos/scripts/nix-agent-query.sh config my.rollout.stufe
+/etc/nixos/scripts/nix-agent-query.sh config services.caddy.enable
+```
+
+Alias nach switch: `nquery`.
+
 ### GitHub-MCP (Issue-Recherche vor jeder Fehlerbehebung)
 Nutze den GitHub-MCP-Server fuer NixOS/nixpkgs Issues bevor du einen Fehler in einem
 Nixpkgs-Paket, NixOS-Modul oder Home-Manager-Modul manuell debuggst.
@@ -300,6 +325,18 @@ bereits — stattdessen `Read`/`Edit`/`Write`-Tools nutzen. Die Shell-Aliases gr
 interaktive Bash-Sitzungen, nicht für Bash-Tools-Aufrufe durch Claude Code.
 
 **Nach einem `nixos-rebuild switch`** immer `nvd` ausführen, um den Diff anzuzeigen.
+
+## disko (Tier A q958)
+
+- **DR:** `disko-q958.sh install` — **nie** `disko` (deprecated, exit 2). Aliases: `disko-install`, `disko-plan`.
+- **CLI upstream:** `--mode destroy,format,mount` statt `--mode disko` ([ADR-3024](docs/adr/3024-disko-tier-a-provisioning.md)).
+- **Nach Reinstall:** ESP 512M → `generationLimit` 5–7; `diskoManaged = true`; dann verify → prune.
+
+## disko Legacy-Prune (nur nach Reinstall)
+
+Wenn `storage.tierA.diskoManaged = true` und disko-Platte aktiv: **niemals** Legacy-Marker
+manuell löschen. Immer zuerst `sudo /etc/nixos/scripts/disko-verify-active.sh`, dann
+`disko-prune-deprecated.sh check` / `apply`. Details: `AGENTS.md` + `machines/q958/disko-deprecations.json`.
 
 ## Harte Grenzen — gelten für JEDEN Agenten hier, ausnahmslos
 

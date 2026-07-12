@@ -7,7 +7,7 @@
   <ThrottleDelaySeconds>180</ThrottleDelaySeconds>
   <!-- Intel UHD 630 (i3-9100 / Coffee Lake Gen 9) — VAAPI via iHD-Treiber -->
   <HardwareAccelerationType>vaapi</HardwareAccelerationType>
-  <VaapiDevice>/dev/dri/renderD128</VaapiDevice>
+  <VaapiDevice>@VAAPI_DEVICE@</VaapiDevice>
   <EnableVppTonemapping>false</EnableVppTonemapping>
   <EnableTonemapping>false</EnableTonemapping>
   <TonemappingAlgorithm>bt2390</TonemappingAlgorithm>

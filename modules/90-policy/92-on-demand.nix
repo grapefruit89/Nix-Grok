@@ -31,6 +31,14 @@ in
         Backend-Port = Public-Port + Offset. Caddy/Gatus bleiben auf Public-Port.
       '';
     };
+
+    idleTimeoutSec = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 1800;
+      description = ''
+        Stop idle on-demand backends after this many seconds without established connections.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {

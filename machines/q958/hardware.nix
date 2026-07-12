@@ -3,10 +3,13 @@
 #   layer: 2
 #   role: machine
 #   purpose: Boot/Root-FS und Kernel-Module an Tier-A aus profile.nix
+#   docs:
+#     - docs/adr/3024-disko-tier-a-provisioning.md
 #   tags:
 #     - hardware
 #     - tier-a
 # ---
+# Legacy fileSystems: entfernbar nach disko-Reinstall + diskoManaged=true + prune (Phase 3)
 {
   config,
   lib,
@@ -17,6 +20,7 @@ let
   p = import ./profile.nix;
   boot = p.storage.tierA.boot;
   persist = p.storage.tierA.persist;
+  diskoManaged = p.storage.tierA.diskoManaged or false;
 in
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
@@ -29,7 +33,9 @@ in
     extraModulePackages = [ ];
   };
 
-  fileSystems."/boot" = {
+  # DEPRECATED-DISKO-START: hardware-filesystems-legacy
+  # Runtime-Mounts per FS-Label (Legacy-Platte). Nach disko-Reinstall: disko-enabled.nix
+  fileSystems."/boot" = lib.mkIf (!diskoManaged) {
     device = "/dev/disk/by-label/${boot.label}";
     inherit (boot) fsType;
     options = [
@@ -38,10 +44,11 @@ in
     ];
   };
 
-  fileSystems."/" = {
+  fileSystems."/" = lib.mkIf (!diskoManaged) {
     device = "/dev/disk/by-label/${persist.label}";
     inherit (persist) fsType;
   };
+  # DEPRECATED-DISKO-END: hardware-filesystems-legacy
 
   swapDevices = [ ];
 

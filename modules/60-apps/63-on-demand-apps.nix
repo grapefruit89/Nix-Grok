@@ -25,6 +25,7 @@ let
   onDemand = import ../../lib/on-demand-http.nix {
     inherit lib pkgs;
     internalOffset = cfg.internalOffset;
+    idleTimeoutSec = cfg.idleTimeoutSec;
   };
 
   svc = config.my.services;
@@ -51,10 +52,12 @@ let
       enable,
       publicPort,
       backend,
+      idleStop ? false,
     }:
     lib.mkIf (cfg.enable && enable) (
       lib.mkMerge [
         (onDemand.mkProxy { inherit name publicPort; })
+        (lib.mkIf idleStop (onDemand.mkIdleStop { inherit name publicPort; }))
         backend
       ]
     );
@@ -63,6 +66,7 @@ in
   config = lib.mkMerge [
     (mkWrapped {
       name = "shiori";
+      idleStop = true;
       enable = svc.shiori.enable;
       publicPort = ports.shiori;
       backend =
@@ -142,6 +146,7 @@ in
 
     (mkWrapped {
       name = "filebrowser";
+      idleStop = true;
       enable = svc.filebrowser.enable;
       publicPort = ports.filebrowser;
       backend =
@@ -206,6 +211,7 @@ in
       name = "open-webui";
       enable = svc.open-webui.enable;
       publicPort = ports.open-webui;
+      idleStop = true;
       backend =
         let
           owCfg = config.services.open-webui;
@@ -264,6 +270,7 @@ in
 
     (mkWrapped {
       name = "libreseerr";
+      idleStop = true;
       enable = svc.libreseerr.enable;
       publicPort = ports.libreseerr;
       backend =

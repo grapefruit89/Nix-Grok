@@ -184,7 +184,7 @@ Sonderannotationen (das wäre NIXMETA und damit verboten).
    (`lib/service-factory.nix`) nutzen statt eigenes systemd-Hardening
    zu schreiben.
 5. Vor jedem Push: `nixos-rebuild dry-build --impure` muss grün sein.
-6. Hygiene-Trio (`statix → deadnix → nixfmt`) läuft regelmäßig, nie
+6. Hygiene (`statix → deadnix → nixfmt → module-graph`) läuft regelmäßig, nie
    ungeprüft, niemals automatisch gefolgt von einem Push.
 7. **`nixos-rebuild switch` und `git push` sind ausschließlich
    menschliche Aktionen.** Eine KI führt beides nie selbst aus — auch
@@ -198,3 +198,26 @@ Sonderannotationen (das wäre NIXMETA und damit verboten).
    Partitionierung/Formatierung aus. Nur `disko-q958.sh plan` (`--dry-run`) oder
    `vm` auf dem Live-System. Destruktives disko nur vom **NixOS Live-USB** oder
    nach bewusster Neuinstallation (Stufe 3). Notfall: [`docs/EMERGENCY-RECOVERY.md`](docs/EMERGENCY-RECOVERY.md).
+10. **Vor** Änderungen in `modules/` oder `lib/`: **nixos-docs MCP** — `search_chunks` → `list_doc_links` → `search_nix`; evaluierte Werte: `eval_config`; Options-Fallback: `query_manix`. Shell: `/etc/nixos/scripts/nix-agent-query.sh`. Bei Fehlern zuerst `triage_error`.
+11. **nixos-MCP** = nixpkgs live; **nixos-docs** = dieses Repo. Evaluierte Werte: `eval_config` / `nix-agent-query.sh config`.
+
+## disko Phase 3 — Legacy-Code nach Reinstall entfernen
+
+**disko CLI:** Nur `scripts/disko-q958.sh` — Subbefehl `install` (nicht `disko`, exit 2).
+`plan` = sicher (Store-Skript). **Niemals** `disko script` auf Live-System.
+Aliases: `disko-plan`, `disko-install`, `disko-vm`. Switch: `disko-switch.nix`. ADR-3024 + GUIDE-disko-learning.
+
+Nach disko-Reinstall auf q958 (`disko-q958.sh install` + `nixos-install`):
+
+1. `machines/q958/profile.nix` → `storage.tierA.diskoManaged = true`
+2. `sudo nixos-rebuild-safe dry` muss grün sein
+3. **KI-Workflow (Pflicht vor Löschen):**
+   - `sudo /etc/nixos/scripts/disko-verify-active.sh` — exit 0 erforderlich
+   - `sudo /etc/nixos/scripts/disko-prune-deprecated.sh check` — zeigt Marker-Blöcke
+   - `sudo /etc/nixos/scripts/disko-prune-deprecated.sh apply` — entfernt nur bei bestandenem verify
+4. Erneut `sudo nixos-rebuild-safe dry`
+
+Manifest: `machines/q958/disko-deprecations.json`. Marker in `.nix`:
+`# DEPRECATED-DISKO-START: <id>` … `# DEPRECATED-DISKO-END: <id>`.
+
+**Niemals löschen ohne verify:** `disko.nix`, `disko-enabled.nix`, die drei disko-Skripte, das Manifest.
