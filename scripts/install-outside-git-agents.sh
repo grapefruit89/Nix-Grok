@@ -28,7 +28,6 @@ install_agents() {
 install_agents /home/moritz
 install_agents /home/moritz/bin
 install_agents /home/moritz/nixos
-install_agents "${ROOT}/stage-nixos"
 
 if [[ -f "$SECRETS_TEMPLATE" ]]; then
   install_agents /home/moritz/secrets "$SECRETS_TEMPLATE"
