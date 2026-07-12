@@ -17,6 +17,7 @@
 #     - single-source-of-truth
 # ---
 let
+  jarvisProfile = import ../../users/jarvis/profile.nix;
   localPath =
     if builtins.pathExists ./profile.local.nix then
       ./profile.local.nix
@@ -311,9 +312,7 @@ in
   security = {
     sovereignUnlock = {
       sshPort = 2222;
-      authorizedKeys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJRDbyFjT4SEL8yxNwZuEBPORD82qlJJhdr2r4qz1vCX"
-      ];
+      authorizedKeys = jarvisProfile.authorizedKeys;
     };
     firewall = {
       lanCidrs = [
