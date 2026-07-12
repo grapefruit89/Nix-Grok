@@ -66,7 +66,7 @@ in
   };
 
   isoImage = {
-    fileName = "${c.usb.isoLabel}.iso";
+    isoName = "${c.usb.isoLabel}.iso";
     volumeID = c.usb.isoLabel;
     makeUsbBootable = true;
     contents = [
