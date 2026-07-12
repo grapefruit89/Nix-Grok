@@ -34,6 +34,19 @@ meta:
 
 ---
 
+## SSH — Standard, nicht optional
+
+Vom **Hauptrechner** (kein TTY am q958 nötig):
+
+```bash
+ssh root@192.168.2.73
+# Passwort: recover
+journalctl -fu q958-auto-recover.service
+```
+
+SSH startet **automatisch** vor dem Recovery-Service. MOTD zeigt dieselben Befehle.
+
+
 ## Architektur
 
 ```

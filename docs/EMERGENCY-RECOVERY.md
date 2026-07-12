@@ -25,6 +25,22 @@ meta:
 
 ## Was ist passiert? (Wann, Wo, Wieso)
 
+## Mehrschichtiger Schutz (nach Rebuild aktiv)
+
+| Schicht | Was | Wann aktiv |
+|---------|-----|------------|
+| 1 | `nix`-Wrapper blockiert `disko script/destroy` | `nixos-rebuild switch` |
+| 2 | `scripts/nix` vor echtem nix in PATH | Stufe ≥ 1 |
+| 3 | `disko-q958.sh` verweigert destroy auf Live-System | Marker-Datei |
+| 4 | `.live-system-no-destructive-disko` **chattr +i** | `disko-defense` Modul |
+| 5 | Tägliche `/etc/nixos`-Schattenkopie | `/var/lib/q958-config-shadow/` |
+| 6 | ext4 **Backup-Superblöcke** (natürliche Schattenkopie) | Dateisystem |
+| 7 | Recovery-ISO: nur `recover`, `install` braucht `INSTALL_CONFIRM=destroy` | Live-USB |
+| 8 | `RECOVERY_DISK_BY_ID` — falsche Platte = Abbruch | Manifest |
+
+**Ursache des Unfalls:** `nix run github:nix-community/disko -- script` — disko führt generiertes Shell-Skript **sofort** mit `destroy,format,mount` aus. Kein Dry-Run. Auf dem **laufenden** System. Schicht 1–4 existierten damals noch nicht bzw. waren nicht aktiviert.
+
+
 | | |
 |---|---|
 | **Wann** | 2026-07-12 |

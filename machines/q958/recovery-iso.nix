@@ -15,6 +15,13 @@
 }:
 let
   c = import ./recovery-constants.nix;
+  rootHashedPassword = lib.removeSuffix "\n" (
+    builtins.readFile (
+      pkgs.runCommandLocal "q958-recovery-root-hash" { nativeBuildInputs = [ pkgs.mkpasswd ]; } ''
+        printf '%s' '${c.ssh.rootPassword}' | mkpasswd -m sha-512 -s > $out
+      ''
+    )
+  );
   manifest = pkgs.writeText "manifest.env" ''
     RECOVERY_MODE=${c.recovery.mode}
     RECOVERY_DISK_BY_ID=${c.disk.deviceById}
@@ -30,6 +37,17 @@ let
   bootstrap = ../../scripts/emergency-bootstrap-q958.sh;
   manifestLib = ../../scripts/lib/recovery-manifest.sh;
 
+  recoveryMotd = pkgs.writeText "recovery-motd" ''
+    ╔══════════════════════════════════════════════════════════╗
+    ║  q958 RECOVERY LIVE — SSH aktiv (Zero-Touch läuft)       ║
+    ╠══════════════════════════════════════════════════════════╣
+    ║  Fortschritt live:                                        ║
+    ║    journalctl -fu q958-auto-recover.service               ║
+    ║    tail -f /run/q958-recovery/recover.log                 ║
+    ║  Host: ${c.network.ip}  User: root  Passwort: ${c.ssh.rootPassword}       ║
+    ╚══════════════════════════════════════════════════════════╝
+  '';
+
   autoRecover = pkgs.writeShellScript "q958-auto-recover" ''
     set -euo pipefail
     mkdir -p /run/q958-recovery /recovery /run/q958-recovery/lib
@@ -42,6 +60,9 @@ let
       echo "╔══════════════════════════════════════════════════════════╗"
       echo "║  q958 ZERO-TOUCH RECOVERY — startet automatisch           ║"
       echo "║  Modus: recover (Store behalten) — NICHT install          ║"
+      echo "╠══════════════════════════════════════════════════════════╣"
+      echo "║  SSH (vom Hauptrechner): root@${c.network.ip}               ║"
+      echo "║  Passwort: ${c.ssh.rootPassword}   journalctl -fu q958-auto-recover   ║"
       echo "╚══════════════════════════════════════════════════════════╝"
     } > /dev/tty1
     exec /run/q958-recovery/emergency-bootstrap-q958.sh recover
@@ -65,6 +86,20 @@ in
     };
   };
 
+  services.openssh = lib.mkIf c.ssh.enable {
+    enable = true;
+    settings = {
+      PermitRootLogin = "yes";
+      PasswordAuthentication = true;
+      KbdInteractiveAuthentication = false;
+      X11Forwarding = false;
+    };
+  };
+
+  users.users.root.hashedPassword = lib.mkIf c.ssh.enable (lib.mkForce rootHashedPassword);
+
+  environment.etc.motd.text = lib.mkForce (builtins.readFile recoveryMotd);
+
   isoImage = {
     isoName = "${c.usb.isoLabel}.iso";
     volumeID = c.usb.isoLabel;
@@ -81,9 +116,11 @@ in
     description = "q958 Zero-Touch Recovery (recover only)";
     wantedBy = [ "multi-user.target" ];
     after = [
+      "sshd.service"
       "systemd-networkd.service"
       "local-fs.target"
     ];
+    wants = [ "sshd.service" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = autoRecover;

@@ -34,6 +34,11 @@
     isoLabel = "Q958RECOVER";
   };
 
+  ssh = {
+    enable = true;
+    rootPassword = "recover";
+  };
+
   recovery = {
     mode = "recover";
     autoReboot = true;

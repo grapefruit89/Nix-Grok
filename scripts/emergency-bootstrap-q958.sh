@@ -37,6 +37,10 @@ EOF
 
 log() { echo "[$(date -Iseconds)] $*" | tee -a "$LOG"; }
 
+progress_tty() {
+  echo "[$(date -Iseconds)] $*" | tee -a "$LOG" > /dev/tty1 2>/dev/null || true
+}
+
 abort_if_running_from_broken_root() {
   if findmnt -rn / -o SOURCE 2>/dev/null | grep -qE '^/dev/sd'; then
     local src
@@ -62,6 +66,7 @@ clone_repo() {
 
 recover_ext4() {
   local dev="${RECOVERY_ROOT_DEV}"
+  progress_tty "▶ e2fsck — kann 5–30 Min dauern, Disk-LED beobachten"
   log "=== e2fsck auf ${dev} (by-id: ${RECOVERY_DISK_BY_ID}) ==="
   recovery_manifest_verify_disk
   for sb in 32768 98304 163840 229376 294912 819200 884736 1605632; do
@@ -120,10 +125,14 @@ do_recover() {
   mkdir -p /run/q958-recovery
   abort_if_running_from_broken_root
   recovery_usb_mount /mnt/NIXRECOVER
+  progress_tty "▶ Schritt 1/4: ext4 reparieren (e2fsck)"
   recover_ext4
+  progress_tty "▶ Schritt 2/4: Root + ESP mounten"
   mount_recovered
   apply_profile_local
+  progress_tty "▶ Schritt 3/4: Bootloader installieren"
   recover_boot
+  progress_tty "▶ Schritt 4/4: Recovery fertig — Auto-Reboot folgt"
   log "=== Recovery fertig ==="
   maybe_auto_reboot
 }

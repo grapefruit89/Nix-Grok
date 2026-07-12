@@ -25,5 +25,6 @@
     ./09-network-routing.nix
     ./09-nix-tools.nix
     ./11-repo-guard.nix
+    ./12-disko-defense.nix
   ];
 }
