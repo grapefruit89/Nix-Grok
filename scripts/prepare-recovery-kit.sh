@@ -11,11 +11,6 @@ set -euo pipefail
 ROOT="/etc/nixos"
 CONSTANTS="${ROOT}/machines/q958/recovery-constants.nix"
 KIT_ENV="${RECOVERY_KIT_ENV:-${ROOT}/machines/q958/recovery-kit.env}"
-DATA_DEV="${RECOVERY_DATA_DEV:-}"
-ISO_DEV="${RECOVERY_ISO_DEV:-}"
-BUILD_ISO="${RECOVERY_BUILD_ISO:-0}"
-FLASH_ISO="${RECOVERY_FLASH_ISO:-0}"
-YES="${RECOVERY_YES:-0}"
 
 usage() {
   cat <<EOF
@@ -51,6 +46,11 @@ EOF
 
 [[ -f "$KIT_ENV" ]] && { set -a; # shellcheck source=/dev/null
   source "$KIT_ENV"; set +a; }
+YES="${RECOVERY_YES:-0}"
+DATA_DEV="${RECOVERY_DATA_DEV:-}"
+ISO_DEV="${RECOVERY_ISO_DEV:-}"
+BUILD_ISO="${RECOVERY_BUILD_ISO:-0}"
+FLASH_ISO="${RECOVERY_FLASH_ISO:-0}"
 
 [[ "$YES" == "1" ]] || {
   echo "FEHLER: RECOVERY_YES=1 fehlt — bewusste Freigabe erforderlich" >&2
