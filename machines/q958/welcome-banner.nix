@@ -10,6 +10,7 @@
 # ---
 {
   lib,
+  pkgs,
   ...
 }:
 let
@@ -40,24 +41,37 @@ let
     Notfall-Recovery: /etc/nixos/docs/EMERGENCY-RECOVERY.md
     Kaltstart:        /etc/nixos/docs/guides/GUIDE-cold-start.md
   '';
-in
-{
-  # TTY vor Login (physische Konsole)
-  environment.etc.issue.text = lib.mkForce bannerShort;
-  environment.etc."issue.net".text = lib.mkForce bannerShort;
 
-  # Nach Login (SSH + Konsole)
-  environment.etc.motd.text = lib.mkForce bannerFull;
-
-  # SSH Pre-auth Banner (sichtbar vor Key-Auth)
-  services.openssh.settings.Banner = lib.mkDefault "/etc/ssh/banner";
-  environment.etc."ssh/banner".text = lib.mkForce bannerShort;
-
-  # Zusätzlich: interaktive Shell (falls motd übersprungen)
-  programs.bash.interactiveShellInit = lib.mkOrder 500 ''
+  showMotdSnippet = ''
     if [[ -z "''${Q958_WELCOME_SHOWN:-}" && -t 1 ]]; then
       export Q958_WELCOME_SHOWN=1
       cat /etc/motd 2>/dev/null || true
     fi
   '';
+in
+{
+  # MOTD-Datei (Quelle für SSH, Login-Shell, TTY-Service)
+  environment.etc.motd.text = lib.mkForce bannerFull;
+
+  # SSH: Pre-auth + nach Login
+  environment.etc."issue.net".text = lib.mkForce bannerShort;
+  services.openssh.settings.Banner = lib.mkDefault "/etc/ssh/banner";
+  environment.etc."ssh/banner".text = lib.mkForce bannerShort;
+
+  # Physische Konsole: root-Autologin auf tty1 (access.nix) — kein Login-Prompt,
+  # daher /etc/issue wirkungslos. Stattdessen Login-Shell + einmaliger Boot-Print.
+  programs.bash.loginShellInit = lib.mkOrder 500 showMotdSnippet;
+  programs.bash.interactiveShellInit = lib.mkOrder 500 showMotdSnippet;
+
+  systemd.services.q958-welcome-tty = {
+    description = "Prominenter Setup-Hinweis auf physischer Konsole (tty1)";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "getty@tty1.service" ];
+    requires = [ "getty@tty1.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.coreutils}/bin/sh -c '${pkgs.coreutils}/bin/cat /etc/motd > /dev/tty1'";
+      RemainAfterExit = true;
+    };
+  };
 }
