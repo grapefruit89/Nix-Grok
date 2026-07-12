@@ -70,3 +70,9 @@ repos:
         entry: sudo /etc/nixos/scripts/nixos-rebuild-safe.sh dry
         always_run: true
         pass_filenames: false
+      - id: outside-repo-audit
+        name: outside-repo-audit (NixOS-Artefakte nur in /etc/nixos)
+        language: system
+        entry: bash /etc/nixos/scripts/audit-outside-repo.sh check
+        always_run: true
+        pass_filenames: false

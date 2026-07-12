@@ -86,6 +86,8 @@ ls /nix/var/nix/profiles/ | grep '^system-' | wc -l
 
 **Schritt-für-Schritt inkl. SSH vom Hauptrechner:** [`docs/guides/GUIDE-recovery-live-ssh.md`](guides/GUIDE-recovery-live-ssh.md)
 
+**Ohne langen curl (zweiter USB, vor dem Reboot vorbereiten):** `sudo bash /etc/nixos/scripts/prepare-recovery-usb.sh` → am Live-USB: `bash /mnt/recover`
+
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/grapefruit89/Nix-Grok/emergency/disko-accident-2026-07-12/scripts/emergency-bootstrap-q958.sh | sudo bash

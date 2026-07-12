@@ -38,6 +38,7 @@ in
   my.core = {
     kernel-slim.enable = erstAb 1;
     nix-tuning.enable = erstAb 1;
+    repo-guard.enable = erstAb 1;
     zram-swap.enable = erstAb 1;
   };
 

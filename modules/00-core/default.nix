@@ -24,5 +24,6 @@
     ./08-ports.nix
     ./09-network-routing.nix
     ./09-nix-tools.nix
+    ./11-repo-guard.nix
   ];
 }
