@@ -14,7 +14,6 @@ MODE="${1:-check}" # check | check-all | list | quarantine-home
 # Nur persistente Pfade (pre-commit). /tmp = Agent-Scratch, separat.
 PERSISTENT_ROOTS=(
   /home/moritz
-  "${ROOT}/stage-nixos"
 )
 
 PRUNE=(

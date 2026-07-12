@@ -6,7 +6,6 @@ TRAPS=(
   /home/moritz/AGENTS.md
   /home/moritz/bin/AGENTS.md
   /home/moritz/secrets/AGENTS.md
-  "${ROOT}/stage-nixos/AGENTS.md"
 )
 bash "${ROOT}/scripts/install-outside-git-agents.sh"
 for f in "${TRAPS[@]}"; do
