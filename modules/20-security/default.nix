@@ -15,5 +15,6 @@
     ./2027-hardened-core.nix
     ./2028-oauth2-proxy.nix
     ./2029-secrets-portal.nix
+    ./2030-access-policy.nix
   ];
 }

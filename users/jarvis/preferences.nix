@@ -2,7 +2,7 @@
 # meta:
 #   layer: 4
 #   role: user
-#   purpose: Locale, Zeitzone, Sprache für moritz
+#   purpose: Locale, Zeitzone, Sprache für jarvis
 #   tags:
 #     - locale
 # ---

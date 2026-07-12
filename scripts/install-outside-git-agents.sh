@@ -25,12 +25,12 @@ install_agents() {
   echo "OK: ${dir}/AGENTS.md"
 }
 
-install_agents /home/moritz
-install_agents /home/moritz/bin
-install_agents /home/moritz/nixos
+install_agents /home/jarvis
+install_agents /home/jarvis/bin
+install_agents /home/jarvis/nixos
 
 if [[ -f "$SECRETS_TEMPLATE" ]]; then
-  install_agents /home/moritz/secrets "$SECRETS_TEMPLATE"
+  install_agents /home/jarvis/secrets "$SECRETS_TEMPLATE"
 fi
 
 echo "Fertig. Kanonisches Repo: ${ROOT}"

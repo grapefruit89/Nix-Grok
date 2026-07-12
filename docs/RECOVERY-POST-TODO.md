@@ -16,22 +16,18 @@ meta:
 
 ## Sofort nach erfolgreichem Boot von Festplatte
 
-- [ ] `ssh moritz@192.168.2.73` — geht SSH?
+- [ ] `ssh jarvis@192.168.2.73` — geht SSH? (Key-only)
 - [ ] `sudo nixos-rebuild-safe.sh switch` — aktiviert Guards, welcome-banner, disko-defense
 - [ ] `systemctl status q958-auto-recover` — darf **nicht** laufen (war nur Live-ISO)
 - [ ] `sudo dumpe2fs /dev/sda2 | head -5` — primärer Superblock OK?
 - [ ] `ls /nix/var/nix/profiles/system-* | wc -l` — Generationen noch da?
 - [ ] USB-Stick **raus** lassen bis q958 stabil bootet
 
-## Identity-Refactor (eigenes Ticket)
+## Identity (jarvis — erledigt in Git @ nächster Commit)
 
-- [ ] `moritz` → **`jarvis`** (oder finaler Kurzname) — Nix + `usermod -l`
-- [ ] `users/moritz/` → `users/jarvis/`
+- [ ] **Einmalig auf Platte:** `sudo usermod -l jarvis -d /home/jarvis -m moritz` (Nix definiert schon `jarvis`)
+- [ ] `users/jarvis/` — prüfen: `id jarvis`, `ls /home/jarvis`
 - [ ] Locale/Domain in `users/jarvis/preferences.nix` + `profile.nix`
-- [ ] `machines/q958/default.nix` — dynamisch `identity.user`
-- [ ] `nixos`-Break-Glass-User **entfernen** (nur `jarvis` + root-tty)
-- [ ] Trap-Skripte `/home/moritz` → `/home/jarvis`
-- [ ] Docs: `ssh jarvis@…` statt moritz
 
 ## Impermanence (Stufe 9, später)
 
@@ -47,7 +43,7 @@ meta:
 
 ## Optional / Nice
 
-- [ ] `git pull` auf q958 — auf `origin/main` @ `c4e030c` oder neuer
+- [ ] `git pull` auf q958 — auf `origin/main` oder neuer
 - [ ] `emergency/disko-accident-2026-07-12` Branch löschen
 - [ ] Zweiter USB `NIXRECOVER` mit profile.local-Spiegel
 
@@ -56,6 +52,6 @@ meta:
 ## Wenn Recovery fehlschlägt
 
 1. **Nicht** `disko install` / `mkfs.ext4`
-2. USB wieder booten — `recover` ist idempotent
-3. SSH: `root@192.168.2.73` / `recover` → `journalctl -fu q958-auto-recover`
+2. USB wieder booten — Recovery ist idempotent
+3. SSH: `ssh jarvis@192.168.2.73` (Key-only, kein Passwort) → `journalctl -fu q958-auto-recover`
 4. Diese Datei auf GitHub lesen — Plan B steht hier

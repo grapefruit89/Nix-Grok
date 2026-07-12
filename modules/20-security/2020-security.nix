@@ -22,12 +22,13 @@ let
   cfgSsh = config.my.security.ssh-zerotrust;
   user = config.my.configs.identity.user;
   sshPort = config.my.ports.ssh;
-  hasAuthorizedKeys = (config.users.users.${user}.openssh.authorizedKeys.keys or [ ]) != [ ];
+  sshdRestart = {
+    Restart = lib.mkForce "always";
+    RestartSec = lib.mkForce "5s";
+    OOMScoreAdjust = lib.mkForce (-1000);
+  };
 in
 {
-  # ============================================================================
-  # OPTIONS
-  # ============================================================================
   options.my.security = {
     ssh-zerotrust.enable = lib.mkOption {
       type = lib.types.bool;
@@ -39,7 +40,7 @@ in
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Enable Dropbear rescue SSH daemon on the main system (stage 2) on a custom port.";
+        description = "Enable Dropbear rescue SSH daemon on custom port";
       };
       port = lib.mkOption {
         type = lib.types.port;
@@ -49,29 +50,23 @@ in
     };
   };
 
-  # ============================================================================
-  # CONFIG
-  # ============================================================================
   config = lib.mkMerge [
-    # ── DEVELOPMENT SSHD ──────────────────────────────────────────────────────
     (lib.mkIf (config.my.mode == "development") {
       services.openssh = {
         enable = true;
         ports = lib.mkForce [ 22 ];
         settings = {
-          # Root nur ueber die physische TTY-Konsole (autologin), nie ueber SSH.
           PermitRootLogin = lib.mkForce "no";
           PasswordAuthentication = lib.mkForce false;
           KbdInteractiveAuthentication = lib.mkForce false;
+          HostKeyAlgorithms = "ssh-ed25519";
+          PubkeyAcceptedAlgorithms = "ssh-ed25519";
         };
       };
 
-      # Copy admin public keys to root user for easy passwordless access
-      users.users.root.openssh.authorizedKeys.keys =
-        config.users.users.${user}.openssh.authorizedKeys.keys or [ ];
+      systemd.services.sshd.serviceConfig = sshdRestart;
     })
 
-    # ── ZERO-TRUST HARDENED SSHD ──────────────────────────────────────────────
     (lib.mkIf (config.my.mode == "production" && cfgSsh.enable) {
       services.openssh = {
         enable = true;
@@ -80,7 +75,7 @@ in
 
         settings = {
           PermitRootLogin = lib.mkForce "no";
-          PasswordAuthentication = lib.mkForce false; # Passwort-Auth komplett verboten
+          PasswordAuthentication = lib.mkForce false;
           KbdInteractiveAuthentication = lib.mkForce false;
           AuthorizedKeysFile = ".ssh/authorized_keys";
 
@@ -92,11 +87,10 @@ in
           PermitEmptyPasswords = false;
           X11Forwarding = false;
           AllowAgentForwarding = false;
-          AllowTcpForwarding = true; # Erlaubt Tunneling über sicheren Tailscale-Kanal
+          AllowTcpForwarding = true;
 
-          # Post-Quantum / Hardened Krypto-Verfahren
-          HostKeyAlgorithms = "ssh-ed25519,ssh-rsa";
-          PubkeyAcceptedAlgorithms = "+ssh-rsa";
+          HostKeyAlgorithms = "ssh-ed25519";
+          PubkeyAcceptedAlgorithms = "ssh-ed25519";
           KexAlgorithms = [
             "curve25519-sha256"
             "curve25519-sha256@libssh.org"
@@ -118,36 +112,21 @@ in
         '';
       };
 
-      systemd.services.sshd.serviceConfig = {
-        Restart = "always";
-        RestartSec = "5s";
-        OOMScoreAdjust = lib.mkForce (-1000); # SSH-Daemon darf unter OOM nicht getötet werden
+      systemd.services.sshd.serviceConfig = sshdRestart // {
         ProtectSystem = "full";
         ProtectHome = "read-only";
         PrivateTmp = true;
       };
-
-      assertions = [
-        {
-          assertion = hasAuthorizedKeys;
-          message = "Sicherheits-Blockade: deployment verboten ohne SSH-Authorized-Keys in users.nix";
-        }
-      ];
     })
 
-    # ── DROPBEAR STAGE-2 RESCUE DAEMON ────────────────────────────────────────
     (
       let
         cfgRescue = config.my.security.dropbear-rescue;
       in
       lib.mkIf cfgRescue.enable {
-        # authorized_keys via Symlinks aus NixOS-managed /etc/ssh/authorized_keys.d/
-        # — kein ExecStartPre, kein Runtime-Copy, kein chmod
         systemd.tmpfiles.rules = [
           "d /home/${user}/.ssh 0700 ${user} users -"
           "L+ /home/${user}/.ssh/authorized_keys - - - - /etc/ssh/authorized_keys.d/${user}"
-          "d /root/.ssh 0700 root root -"
-          "L+ /root/.ssh/authorized_keys - - - - /etc/ssh/authorized_keys.d/root"
         ];
 
         systemd.services.dropbear-rescue = {

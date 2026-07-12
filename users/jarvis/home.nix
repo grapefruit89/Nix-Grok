@@ -2,7 +2,7 @@
 # meta:
 #   layer: 4
 #   role: user
-#   purpose: Home-Manager für moritz — Grok CLI, MCP, Dotfiles
+#   purpose: Home-Manager für jarvis — Grok CLI, MCP, Dotfiles
 #   tags:
 #     - home-manager
 #     - grok

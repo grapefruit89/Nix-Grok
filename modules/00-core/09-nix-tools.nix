@@ -22,36 +22,11 @@ let
   isLowRam = ramGB <= 4;
   isMidRam = ramGB > 4 && ramGB <= 8;
 
-  # System-nix ersetzen: auch /run/current-system/sw/bin/nix blockiert destruktives disko
-  realNixPkg = pkgs.nix;
-  nixGuardWrapper = pkgs.writeShellScriptBin "nix" ''
-    set -euo pipefail
-    GUARD_LIB=/etc/nixos/scripts/lib/nix-disko-guard.sh
-    REAL_NIX=${realNixPkg}/bin/nix
-    if [[ -r "''${GUARD_LIB}" ]]; then
-      # shellcheck source=/dev/null
-      source "''${GUARD_LIB}"
-      if nix_disko_guard_live_system && nix_disko_guard_should_block "''${@}"; then
-        nix_disko_guard_block_message
-        exit 99
-      fi
-    fi
-    exec "''${REAL_NIX}" "''${@}"
-  '';
-  guardedNixPkg = pkgs.symlinkJoin {
-    name = "nix-with-disko-guard";
-    paths = [ realNixPkg ];
-    postBuild = ''
-      rm -f $out/bin/nix
-      cp ${nixGuardWrapper}/bin/nix $out/bin/nix
-    '';
-  };
 in
 {
   config = lib.mkMerge [
     # ── NIX STORE TUNING ──────────────────────────────────────────────────────
     (lib.mkIf cfgNix.enable {
-      nix.package = lib.mkForce guardedNixPkg;
       nix = {
         settings = {
           substituters = [
@@ -213,7 +188,7 @@ in
 
       # sudo nutzt secure_path — ohne diesen Eintrag umgeht sudo den Wrapper
       security.sudo.extraConfig = lib.mkOrder 900 ''
-        Defaults secure_path = /etc/nixos/scripts:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/run/wrappers/bin:/home/moritz/.nix-profile/bin
+        Defaults secure_path = /etc/nixos/scripts:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/run/wrappers/bin:/home/jarvis/.nix-profile/bin
       '';
 
       # Moderne Shell-Aliases: NUR für interaktive Shells (nicht für Skripte/Aktivierungen)

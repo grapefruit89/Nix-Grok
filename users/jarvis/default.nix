@@ -2,12 +2,12 @@
 # meta:
 #   layer: 4
 #   role: user
-#   purpose: System-User moritz — parallel zu admin, gleiche Rechte
+#   purpose: System-User jarvis — einziger SSH-User, Key-only, wheel
 #   tags:
 #     - user
-#     - moritz
+#     - jarvis
 # ---
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 let
   u = import ./profile.nix;
 in
@@ -19,6 +19,12 @@ in
     inherit (u) description;
     inherit (u) extraGroups;
     shell = pkgs.${u.shell};
+    hashedPassword = lib.mkForce "!";
     openssh.authorizedKeys.keys = u.authorizedKeys;
+  };
+
+  users.users.root = {
+    hashedPassword = lib.mkForce "!";
+    openssh.authorizedKeys.keys = lib.mkForce [ ];
   };
 }

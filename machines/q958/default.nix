@@ -14,7 +14,7 @@
 }:
 let
   p = import ./profile.nix;
-  moritzUser = import ../../users/moritz/profile.nix;
+  primaryUser = import ../../users/jarvis/profile.nix;
   zigbeeSocket = "socket://${p.iot.zigbeeCoordinator.host}:${toString p.iot.zigbeeCoordinator.port}";
   localPath =
     if builtins.pathExists ./profile.local.nix then
@@ -40,7 +40,7 @@ in
     ../../modules/50-media
     ../../modules/60-apps
     ../../modules/70-home-automation
-    ../../users/moritz/default.nix
+    ../../users/jarvis/default.nix
     ./kernel-slim.nix
     ./access.nix
     ./network.nix
@@ -61,7 +61,7 @@ in
     useGlobalPkgs = true;
     useUserPackages = true;
     backupFileExtension = "hm-bak";
-    users.${moritzUser.name} = import ../../users/moritz/home.nix;
+    users.${primaryUser.name} = import ../../users/jarvis/home.nix;
   };
 
   networking.hostName = p.system.hostName;
@@ -102,7 +102,7 @@ in
 
     configs = {
       identity = {
-        user = moritzUser.name;
+        user = primaryUser.name;
         domain = p.domain.effective;
       };
       hardware = {

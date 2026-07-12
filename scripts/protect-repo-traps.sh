@@ -3,9 +3,9 @@
 set -euo pipefail
 ROOT="/etc/nixos"
 TRAPS=(
-  /home/moritz/AGENTS.md
-  /home/moritz/bin/AGENTS.md
-  /home/moritz/secrets/AGENTS.md
+  /home/jarvis/AGENTS.md
+  /home/jarvis/bin/AGENTS.md
+  /home/jarvis/secrets/AGENTS.md
 )
 bash "${ROOT}/scripts/install-outside-git-agents.sh"
 for f in "${TRAPS[@]}"; do

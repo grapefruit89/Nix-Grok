@@ -21,8 +21,8 @@ let
   lan = p.network.lan;
   secretsDir = p.secrets.dir;
   secretPath = name: "${secretsDir}/${p.secrets.files.${name}}";
-  moritzUser = import ../../users/moritz/profile.nix;
-  blockyAllowlist = import ../../lib/blocky-allowlist.nix { user = moritzUser; };
+  primaryUser = import ../../users/jarvis/profile.nix;
+  blockyAllowlist = import ../../lib/blocky-allowlist.nix { user = primaryUser; };
   dnsPort = config.my.network.protocol.dns;
 in
 {

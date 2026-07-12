@@ -15,13 +15,6 @@
 }:
 let
   c = import ./recovery-constants.nix;
-  rootHashedPassword = lib.removeSuffix "\n" (
-    builtins.readFile (
-      pkgs.runCommandLocal "q958-recovery-root-hash" { nativeBuildInputs = [ pkgs.mkpasswd ]; } ''
-        printf '%s' '${c.ssh.rootPassword}' | mkpasswd -m sha-512 -s > $out
-      ''
-    )
-  );
   manifest = pkgs.writeText "manifest.env" ''
     RECOVERY_MODE=${c.recovery.mode}
     RECOVERY_DISK_BY_ID=${c.disk.deviceById}
@@ -39,12 +32,10 @@ let
 
   recoveryMotd = pkgs.writeText "recovery-motd" ''
     ╔══════════════════════════════════════════════════════════╗
-    ║  q958 RECOVERY LIVE — SSH aktiv (Zero-Touch läuft)       ║
+    ║  q958 RECOVERY LIVE — SSH Key-only (Zero-Touch läuft)    ║
     ╠══════════════════════════════════════════════════════════╣
-    ║  Fortschritt live:                                        ║
-    ║    journalctl -fu q958-auto-recover.service               ║
-    ║    tail -f /run/q958-recovery/recover.log                 ║
-    ║  Host: ${c.network.ip}  User: root  Passwort: ${c.ssh.rootPassword}       ║
+    ║  ssh ${c.ssh.user}@${c.network.ip}  (ed25519-Key)         ║
+    ║  journalctl -fu q958-auto-recover.service                 ║
     ╚══════════════════════════════════════════════════════════╝
   '';
 
@@ -61,8 +52,8 @@ let
       echo "║  q958 ZERO-TOUCH RECOVERY — startet automatisch           ║"
       echo "║  Modus: recover (Store behalten) — NICHT install          ║"
       echo "╠══════════════════════════════════════════════════════════╣"
-      echo "║  SSH (vom Hauptrechner): root@${c.network.ip}               ║"
-      echo "║  Passwort: ${c.ssh.rootPassword}   journalctl -fu q958-auto-recover   ║"
+      echo "║  SSH: ${c.ssh.user}@${c.network.ip} (Key-only, kein Passwort)  ║"
+      echo "║  journalctl -fu q958-auto-recover                         ║"
       echo "╚══════════════════════════════════════════════════════════╝"
     } > /dev/tty1
     exec /run/q958-recovery/emergency-bootstrap-q958.sh recover
@@ -86,17 +77,33 @@ in
     };
   };
 
+  users.users.${c.ssh.user} = {
+    isNormalUser = true;
+    group = "users";
+    extraGroups = [ "wheel" ];
+    hashedPassword = "!";
+    openssh.authorizedKeys.keys = c.ssh.authorizedKeys;
+  };
+
+  users.users.root = {
+    hashedPassword = "!";
+    openssh.authorizedKeys.keys = lib.mkForce [ ];
+  };
+
   services.openssh = lib.mkIf c.ssh.enable {
     enable = true;
     settings = {
-      PermitRootLogin = "yes";
-      PasswordAuthentication = true;
-      KbdInteractiveAuthentication = false;
+      PermitRootLogin = lib.mkForce "no";
+      PasswordAuthentication = lib.mkForce false;
+      KbdInteractiveAuthentication = lib.mkForce false;
       X11Forwarding = false;
     };
   };
 
-  users.users.root.hashedPassword = lib.mkIf c.ssh.enable (lib.mkForce rootHashedPassword);
+  systemd.services.sshd.serviceConfig = {
+    Restart = lib.mkForce "always";
+    RestartSec = lib.mkForce "5s";
+  };
 
   environment.etc.motd.text = lib.mkForce (builtins.readFile recoveryMotd);
 

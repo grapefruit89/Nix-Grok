@@ -13,7 +13,7 @@ MODE="${1:-check}" # check | check-all | list | quarantine-home
 
 # Nur persistente Pfade (pre-commit). /tmp = Agent-Scratch, separat.
 PERSISTENT_ROOTS=(
-  /home/moritz
+  /home/jarvis
 )
 
 PRUNE=(
@@ -29,19 +29,19 @@ PRUNE=(
   -o -path "${ROOT}/tools/*"
   -o -path "${ROOT}/flake.nix"
   -o -path "${ROOT}/flake.lock"
-  -o -path '/home/moritz/secrets/*'
-  -o -path '/home/moritz/.cache/*'
-  -o -path '/home/moritz/.local/*'
-  -o -path '/home/moritz/.archive*/*'
-  -o -path '/home/moritz/.grok/sessions/*'
-  -o -path '/home/moritz/.grok/marketplace-cache/*'
-  -o -path '/home/moritz/.grok/bundled/*'
-  -o -path '/home/moritz/.grok/docs/*'
-  -o -path '/home/moritz/.claude/*'
-  -o -path '/home/moritz/.cursor/*'
-  -o -path '/home/moritz/.outside-repo-quarantine/*'
-  -o -path '/home/moritz/.npm/*'
-  -o -path '/home/moritz/.nix-profile/*'
+  -o -path '/home/jarvis/secrets/*'
+  -o -path '/home/jarvis/.cache/*'
+  -o -path '/home/jarvis/.local/*'
+  -o -path '/home/jarvis/.archive*/*'
+  -o -path '/home/jarvis/.grok/sessions/*'
+  -o -path '/home/jarvis/.grok/marketplace-cache/*'
+  -o -path '/home/jarvis/.grok/bundled/*'
+  -o -path '/home/jarvis/.grok/docs/*'
+  -o -path '/home/jarvis/.claude/*'
+  -o -path '/home/jarvis/.cursor/*'
+  -o -path '/home/jarvis/.outside-repo-quarantine/*'
+  -o -path '/home/jarvis/.npm/*'
+  -o -path '/home/jarvis/.nix-profile/*'
 )
 
 PATTERNS=(
@@ -102,10 +102,10 @@ echo "→ Nach ${ROOT} verschieben + committen, oder: audit-outside-repo.sh quar
 [[ "$MODE" == "list" || "$MODE" == "check-all" ]] && exit 0
 
 if [[ "$MODE" == "quarantine-home" ]]; then
-  q="/home/moritz/.outside-repo-quarantine/$(date +%Y%m%d-%H%M%S)"
+  q="/home/jarvis/.outside-repo-quarantine/$(date +%Y%m%d-%H%M%S)"
   mkdir -p "$q"
   for f in "${persistent[@]}"; do
-    [[ "$f" == /home/moritz/* ]] || continue
+    [[ "$f" == /home/jarvis/* ]] || continue
     rel="${f#/}"
     mkdir -p "$q/$(dirname "$rel")"
     mv "$f" "$q/$rel"

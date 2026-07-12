@@ -36,7 +36,8 @@
 
   ssh = {
     enable = true;
-    rootPassword = "recover";
+    user = (import ../../users/jarvis/profile.nix).name;
+    authorizedKeys = (import ../../users/jarvis/profile.nix).authorizedKeys;
   };
 
   recovery = {
