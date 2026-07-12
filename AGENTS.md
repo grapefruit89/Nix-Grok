@@ -200,6 +200,10 @@ Sonderannotationen (das wäre NIXMETA und damit verboten).
    nach bewusster Neuinstallation (Stufe 3). Notfall: [`docs/EMERGENCY-RECOVERY.md`](docs/EMERGENCY-RECOVERY.md).
 10. **Vor** Änderungen in `modules/` oder `lib/`: **nixos-docs MCP** — `search_chunks` → `list_doc_links` → `search_nix`; evaluierte Werte: `eval_config`; Options-Fallback: `query_manix`. Shell: `/etc/nixos/scripts/nix-agent-query.sh`. Bei Fehlern zuerst `triage_error`.
 11. **nixos-MCP** = nixpkgs live; **nixos-docs** = dieses Repo. Evaluierte Werte: `eval_config` / `nix-agent-query.sh config`.
+12. **NixOS-Arbeit nur in `/etc/nixos`:** Keine `.nix`/`.sh`/Docs/Patches in
+   `/home/moritz`, `/tmp` oder anderen Pfaden außerhalb des Repos. Trap-Ordner haben
+   `AGENTS.md` — dort nicht schreiben. Template: `docs/templates/AGENTS-outside-git.md`,
+   Installer: `scripts/install-outside-git-agents.sh`.
 
 ## disko Phase 3 — Legacy-Code nach Reinstall entfernen
 

@@ -84,6 +84,9 @@ ls /nix/var/nix/profiles/ | grep '^system-' | wc -l
 
 **Voraussetzung:** [NixOS Minimal ISO](https://nixos.org/download.html) auf USB, q958 davon booten.
 
+**Schritt-für-Schritt inkl. SSH vom Hauptrechner:** [`docs/guides/GUIDE-recovery-live-ssh.md`](guides/GUIDE-recovery-live-ssh.md)
+
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/grapefruit89/Nix-Grok/emergency/disko-accident-2026-07-12/scripts/emergency-bootstrap-q958.sh | sudo bash
 ```

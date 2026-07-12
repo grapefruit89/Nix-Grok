@@ -13,6 +13,8 @@ meta:
 
 NixOS-Flake für den Fujitsu Q958 Homelab-Server. Architektur und Regeln: [`AGENTS.md`](AGENTS.md).
 
+KI-Agenten: NixOS-Code **nur** unter `/etc/nixos` — [`docs/templates/AGENTS-outside-git.md`](docs/templates/AGENTS-outside-git.md).
+
 ---
 
 ## Notfall — disko-Unfall / q958 bootet nicht

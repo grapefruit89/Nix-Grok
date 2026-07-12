@@ -50,6 +50,7 @@ in
     ./dev-mode.nix
     ./rollout.nix
     ./boot-baseline.nix
+    ./welcome-banner.nix
   ];
 
   nixpkgs.config.allowUnfree = true;
