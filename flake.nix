@@ -109,6 +109,11 @@
             ./machines/q958/disko-vm-minimal.nix
           ];
         };
+
+        q958-recovery-iso = nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [ ./machines/q958/recovery-iso.nix ];
+        };
       };
     };
 }

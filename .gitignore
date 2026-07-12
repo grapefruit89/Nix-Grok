@@ -76,3 +76,4 @@ packages/*/node_modules/.nix-defexpr/
 *.bak
 *.bak[0-9]
 .config/fish/completions/grok.fish
+machines/q958/recovery-kit.env

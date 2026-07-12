@@ -1,4 +1,6 @@
 ---
+
+> **Zero-Touch (empfohlen):** [GUIDE-recovery-zero-touch.md](GUIDE-recovery-zero-touch.md) — Custom-ISO, kein Tippen.
 meta:
   role: doc
   purpose: Recovery vom Live-USB — Schritt für Schritt inkl. SSH vom Hauptrechner

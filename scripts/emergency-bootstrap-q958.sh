@@ -2,81 +2,87 @@
 # ---
 # meta:
 #   role: script
-#   purpose: Live-USB Ein-Kommando-Wiederherstellung q958 (Recovery oder Neuinstall)
+#   purpose: Live-USB Wiederherstellung q958 — deklarativ via manifest.env
 #   docs:
 #     - docs/EMERGENCY-RECOVERY.md
-#   tags:
-#     - emergency
-#     - disko
-#     - dr
+#     - docs/guides/GUIDE-recovery-zero-touch.md
 # ---
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/lib/recovery-manifest.sh"
+
 REPO_URL="${REPO_URL:-https://github.com/grapefruit89/Nix-Grok.git}"
-BRANCH="${BRANCH:-emergency/disko-accident-2026-07-12}"
+BRANCH="${BRANCH:-master}"
 MNT="/mnt"
 ROOT="${MNT}/etc/nixos"
-MODE="${1:-menu}"
+MODE="${1:-${RECOVERY_MODE:-recover}}"
+LOG="/run/q958-recovery/recover.log"
 
 usage() {
   cat <<EOF
-emergency-bootstrap-q958 — Live-USB Wiederherstellung
+emergency-bootstrap-q958 — Live-USB Wiederherstellung (deklarativ)
 
 Usage:
-  emergency-bootstrap-q958.sh recover   # ext4 reparieren + Boot wiederherstellen (Daten behalten)
-  emergency-bootstrap-q958.sh install   # disko Neuformat + nixos-install (DATEN WEG)
-  emergency-bootstrap-q958.sh menu      # Interaktiv (Default)
+  emergency-bootstrap-q958.sh recover   # ext4 reparieren + Boot (Daten behalten)
+  emergency-bootstrap-q958.sh install   # Neuformat — NUR mit INSTALL_CONFIRM=destroy
 
-Voraussetzung: NixOS Minimal ISO, Netz ODER zweiter USB mit Repo-Klon.
-Secrets: profile.local.nix separat auf USB bereitlegen!
+Manifest (optional, sonst Defaults):
+  /recovery/manifest.env | /mnt/NIXRECOVER/manifest.env | RECOVERY_MANIFEST=...
 
-One-liner (nach Push):
-  curl -fsSL https://raw.githubusercontent.com/grapefruit89/Nix-Grok/${BRANCH}/scripts/emergency-bootstrap-q958.sh | sudo bash
+Zero-Touch: Custom Recovery-ISO startet recover automatisch.
 EOF
 }
 
+log() { echo "[$(date -Iseconds)] $*" | tee -a "$LOG"; }
+
 abort_if_running_from_broken_root() {
-  if findmnt -rn / -o SOURCE 2>/dev/null | grep -q '/dev/sda'; then
-    echo "FEHLER: Von kaputtem Root gebootet — bitte NixOS Live-USB starten!" >&2
-    exit 1
+  if findmnt -rn / -o SOURCE 2>/dev/null | grep -qE '^/dev/sd'; then
+    local src
+    src="$(findmnt -rn / -o SOURCE)"
+    if [[ "$src" == "${RECOVERY_ROOT_DEV}"* ]] || [[ "$src" == "${RECOVERY_DISK_BY_ID}"* ]]; then
+      echo "FEHLER: Von kaputtem Root gebootet — NixOS Recovery-ISO/USB starten!" >&2
+      exit 1
+    fi
   fi
 }
 
 clone_repo() {
   if [[ -d "${ROOT}" ]] && [[ -f "${ROOT}/flake.nix" ]]; then
-    echo "Repo bereits unter ${ROOT}"
+    log "Repo bereits unter ${ROOT}"
     return 0
   fi
   mkdir -p "${MNT}"
   if [[ ! -d "${ROOT}/.git" ]]; then
-    echo "Klone ${REPO_URL} (${BRANCH})…"
+    log "Klone ${REPO_URL} (${BRANCH})…"
     git clone --branch "${BRANCH}" --depth 1 "${REPO_URL}" "${ROOT}"
   fi
 }
 
 recover_ext4() {
-  local dev="${1:-/dev/sda2}"
-  echo "=== Recovery: e2fsck auf ${dev} ==="
-  echo "Versuche Backup-Superblöcke (ext4)…"
+  local dev="${RECOVERY_ROOT_DEV}"
+  log "=== e2fsck auf ${dev} (by-id: ${RECOVERY_DISK_BY_ID}) ==="
+  recovery_manifest_verify_disk
   for sb in 32768 98304 163840 229376 294912 819200 884736 1605632; do
-    echo "--- e2fsck -b ${sb} ${dev} ---"
+    log "e2fsck -b ${sb} ${dev}"
     if e2fsck -b "${sb}" -y "${dev}"; then
-      echo "OK: Reparatur mit Superblock ${sb}"
+      log "OK: Superblock ${sb}"
       return 0
     fi
   done
-  echo "FEHLER: e2fsck mit allen bekannten Backup-Superblöcken fehlgeschlagen" >&2
+  echo "FEHLER: e2fsck — alle Backup-Superblöcke fehlgeschlagen" >&2
   return 1
 }
 
 mount_recovered() {
-  mount "${1:-/dev/sda2}" "${MNT}"
+  mount "${RECOVERY_ROOT_DEV}" "${MNT}"
   mkdir -p "${MNT}/boot"
-  if ! blkid "${2:-/dev/sda1}" | grep -q TYPE=; then
-    echo "Formatiere ESP ${2:-/dev/sda1}…"
-    mkfs.vfat -n NIXBOOT "${2:-/dev/sda1}"
+  if ! blkid "${RECOVERY_ESP_DEV}" 2>/dev/null | grep -q TYPE=; then
+    log "ESP ${RECOVERY_ESP_DEV} → vfat ${RECOVERY_ESP_LABEL}"
+    mkfs.vfat -n "${RECOVERY_ESP_LABEL}" "${RECOVERY_ESP_DEV}"
   fi
-  mount "${2:-/dev/sda1}" "${MNT}/boot"
+  mount "${RECOVERY_ESP_DEV}" "${MNT}/boot"
 }
 
 recover_boot() {
@@ -86,56 +92,82 @@ recover_boot() {
     echo "FEHLER: Kein system-Profil unter ${MNT}/nix/var/nix/profiles/system" >&2
     exit 1
   fi
-  echo "Stelle Bootloader wieder her von: ${sys}"
+  log "Bootloader von ${sys}"
   NIXOS_INSTALL_BOOTLOADER=1 nixos-enter --root "${MNT}" -- bash -c \
     "nix-env -p /nix/var/nix/profiles/system --set ${sys} && /run/current-system/bin/switch-to-configuration boot"
 }
 
-do_recover() {
-  abort_if_running_from_broken_root
-  recover_ext4 /dev/sda2
-  mount_recovered /dev/sda2 /dev/sda1
-  clone_repo
-  if [[ -f /media/moritz/profile.local.nix ]]; then
-    cp /media/moritz/profile.local.nix "${ROOT}/machines/q958/" || true
+apply_profile_local() {
+  local dest="${ROOT}/machines/q958/profile.local.nix"
+  if [[ -n "${RECOVERY_PROFILE_LOCAL:-}" && -f "${RECOVERY_PROFILE_LOCAL}" ]]; then
+    mkdir -p "$(dirname "$dest")"
+    cp "${RECOVERY_PROFILE_LOCAL}" "$dest"
+    log "profile.local.nix von USB übernommen"
   fi
-  recover_boot
-  echo "=== Recovery fertig — reboot ==="
 }
 
-ensure_profile_local() {
-  local dest="${ROOT}/machines/q958/profile.local.nix"
-  local example="${ROOT}/machines/q958/profile.local.nix.example"
-  if [[ -f /media/moritz/profile.local.nix ]]; then
-    cp /media/moritz/profile.local.nix "${dest}"
-    echo "profile.local.nix von USB übernommen"
-  elif [[ -f "${dest}" ]]; then
-    :
-  elif [[ -f "${example}" ]]; then
-    cp "${example}" "${dest}"
-    echo "profile.local.nix aus .example erstellt (Platzhalter)"
-  else
-    echo "WARNUNG: profile.local.nix fehlt — nixos-install wird scheitern" >&2
-  fi
+maybe_auto_reboot() {
+  [[ "${RECOVERY_AUTO_REBOOT}" == "1" ]] || return 0
+  log "Auto-Reboot in ${RECOVERY_REBOOT_DELAY_SEC}s — USB-Sticks entfernen wenn möglich"
+  for ((i = RECOVERY_REBOOT_DELAY_SEC; i > 0; i -= 5)); do
+    echo "RECOVERY FERTIG — reboot in ${i}s (USB raus)" > /dev/tty1 2>/dev/null || true
+    sleep 5
+  done
+  reboot
+}
+
+do_recover() {
+  mkdir -p /run/q958-recovery
+  abort_if_running_from_broken_root
+  recovery_usb_mount /mnt/NIXRECOVER
+  recover_ext4
+  mount_recovered
+  apply_profile_local
+  recover_boot
+  log "=== Recovery fertig ==="
+  maybe_auto_reboot
 }
 
 do_install() {
+  if [[ "${INSTALL_CONFIRM:-}" != "destroy" ]]; then
+    echo "FEHLER: install blockiert — INSTALL_CONFIRM=destroy erforderlich" >&2
+    exit 2
+  fi
   abort_if_running_from_broken_root
   clone_repo
   ensure_profile_local
   "${ROOT}/scripts/disko-q958.sh" install
   nixos-install --flake "${ROOT}#q958" --impure --no-root-passwd
-  echo "=== Install fertig — reboot ==="
+  log "=== Install fertig ==="
 }
+
+ensure_profile_local() {
+  local dest="${ROOT}/machines/q958/profile.local.nix"
+  local example="${ROOT}/machines/q958/profile.local.nix.example"
+  if [[ -n "${RECOVERY_PROFILE_LOCAL:-}" && -f "${RECOVERY_PROFILE_LOCAL}" ]]; then
+    cp "${RECOVERY_PROFILE_LOCAL}" "${dest}"
+  elif [[ -f "${dest}" ]]; then
+    :
+  elif [[ -f "${example}" ]]; then
+    cp "${example}" "${dest}"
+  else
+    echo "WARNUNG: profile.local.nix fehlt" >&2
+  fi
+}
+
+recovery_manifest_load
 
 case "$MODE" in
   recover) do_recover ;;
   install) do_install ;;
   menu)
-    echo "1) recover — Daten behalten (empfohlen wenn ext4 reparierbar)"
-    echo "2) install  — Neuformat (alle Daten auf sda weg)"
-    read -rp "Wahl [1/2]: " c
-    [[ "$c" == "2" ]] && do_install || do_recover
+    if [[ -t 0 ]]; then
+      echo "1) recover  2) install"
+      read -rp "Wahl [1/2]: " c
+      [[ "$c" == "2" ]] && do_install || do_recover
+    else
+      do_recover
+    fi
     ;;
   help | -h | --help) usage ;;
   *) usage; exit 1 ;;
