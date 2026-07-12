@@ -193,3 +193,8 @@ Sonderannotationen (das wäre NIXMETA und damit verboten).
 8. Root ist nur über die physische TTY-Konsole erreichbar (Autologin,
    kein Passwort). SSH ist ausschließlich für `moritz`, ausschließlich
    per Key — kein Passwort, nirgendwo, niemals.
+9. **disko auf laufendem q958:** `nix run github:nix-community/disko -- script`
+   (und jeder Modus mit `destroy`/`format`) ist **verboten** — führt sofort
+   Partitionierung/Formatierung aus. Nur `disko-q958.sh plan` (`--dry-run`) oder
+   `vm` auf dem Live-System. Destruktives disko nur vom **NixOS Live-USB** oder
+   nach bewusster Neuinstallation (Stufe 3). Notfall: [`docs/EMERGENCY-RECOVERY.md`](docs/EMERGENCY-RECOVERY.md).

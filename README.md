@@ -13,6 +13,35 @@ meta:
 
 NixOS-Flake für den Fujitsu Q958 Homelab-Server. Architektur und Regeln: [`AGENTS.md`](AGENTS.md).
 
+---
+
+## Notfall — disko-Unfall / q958 bootet nicht
+
+> **2026-07-12:** `nix run github:nix-community/disko -- script` auf **laufendem** q958
+> ausgeführt → ESP kaputt, ext4-Superblock beschädigt, **aber `/nix/store` + Generationen
+> sehr wahrscheinlich noch auf der Platte.** Nicht rebooten bis Recovery durch ist.
+
+**Vollständige Anleitung:** [`docs/EMERGENCY-RECOVERY.md`](docs/EMERGENCY-RECOVERY.md)
+
+### Ein Befehl (NixOS Live-USB)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/grapefruit89/Nix-Grok/emergency/disko-accident-2026-07-12/scripts/emergency-bootstrap-q958.sh | sudo bash
+```
+
+→ **`recover`** wählen (empfohlen): `e2fsck` + ESP + Bootloader → **gleiche Generationen**.
+
+→ **`install`** nur wenn `recover` scheitert — **löscht alle Daten** auf sda.
+
+### Verboten auf laufendem q958
+
+```bash
+nix run github:nix-community/disko -- script …   # NIEMALS — führt destroy/format aus
+```
+
+Sicher: `disko-q958.sh plan` (nur `--dry-run`, kein Schreiben). Details: [EMERGENCY-RECOVERY.md](docs/EMERGENCY-RECOVERY.md#guards--damit-das-nie-wieder-passiert).
+
+
 ## Schnellstart (q958)
 
 ```bash
