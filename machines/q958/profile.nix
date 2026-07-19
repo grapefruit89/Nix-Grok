@@ -204,7 +204,22 @@ in
       bus = "sata";
       boot = {
         label = "NIXBOOT";
-        espSize = "512M";
+        # 512M -> 1G (2026-07-19, beim Reinstall nach dem disko-Unfall).
+        #
+        # WICHTIG zur Rechnung (siehe auch boot.generationLimit unten):
+        # Generationen mit DEMSELBEN Kernel teilen sich Kernel+initrd auf der ESP
+        # (Ablage nach Store-Hash unter EFI/nixos/). 15 Rollbacks bei einem Kernel
+        # kosten also ~50-100 MB, nicht 15x davon. Der Verbrauch waechst mit der
+        # Zahl UNTERSCHIEDLICHER Kernel/initrd-Paare, nicht mit generationLimit.
+        #
+        # Warum trotzdem 1G: Ueber Monate sammeln sich reale Kernel-Bumps und
+        # initrd-Aenderungen an. 512M reicht fuer den Normalfall, wird aber bei
+        # ~6-8 verschiedenen Kernel-Paaren eng -- und ein volles ESP bricht den
+        # nixos-rebuild switch mitten im Systemwechsel ab (ENOSPC). Die 512 MB
+        # Mehrverbrauch sind auf 512 GB gerade 0,1 %.
+        #
+        # Nachtraeglich vergroessern = neu partitionieren. Deshalb JETZT.
+        espSize = "1G";
         fsType = "vfat";
         fmask = "0022";
         dmask = "0022";

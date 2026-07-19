@@ -15,6 +15,8 @@
 {
   imports = [
     ./1090-host-network.nix
+    ./1091-ddclient.nix
+    ./1092-mdns.nix
     ./1002-blocky.nix
     ./1003-gateway.nix
     ./1094-ingress.nix
