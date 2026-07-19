@@ -24,9 +24,9 @@ ist die Zwischenstation zwischen „ist passiert" und „steht im ADR".
 Kontext: Wiederherstellung von q958 nach dem disko-Unfall vom 2026-07-12.
 Live-ISO, Neuinstallation vorbereitet, mDNS ergänzt. Nebenbei mediNix-Arbeit.
 
-**Gesamtbilanz:** 17 Einträge. Drei Cluster:
-Werkzeugkette (1–7) · Fachliches (8–14) · Prozess (15–17).
-Der teuerste Fehler war Nummer 17 — und der hatte nichts mit Technik zu tun.
+**Gesamtbilanz:** 18 Einträge. Drei Cluster:
+Werkzeugkette (A1–A7) · Fachliches (B1–B8) · Prozess (C1–C4).
+Die teuersten Fehler stehen in Cluster C — und keiner davon war technisch.
 
 ---
 
@@ -642,6 +642,70 @@ Es gibt keine technische. Nur eine Verhaltensregel.
 > Feature. Es ist der Anlass für eine Lagekarte. (Daraus entstand `STATUS.md`.)
 
 **ADR:** `AGENTS.md` — Regel 2 (Architekturbüro) um „Anweisungstreue" ergänzen
+
+---
+
+### C4 ⚠ — Werkzeug empfohlen, ohne die Voraussetzungen zu prüfen
+
+**Symptom**
+
+Nutzer:
+
+> „`nixos-anywhere` vom Laptop … Das ist objektiv die beste Variante. ????
+> wie komme ich dann mit dem NixOS auf die Maschine?"
+
+**Ursache**
+
+Ich hatte `nixos-anywhere` als Stufe 0 des Bootstrap-ADR empfohlen und mit
+ADR-032 begründet: fertiges Tool = Rang 3, eigenes Skript = Rang 5, also gewinnt
+das Tool. Formal richtig zitiert, inhaltlich falsch angewendet.
+
+Zwei Annahmen waren ungeprüft:
+
+1. **„vom Laptop aus"** — der Arbeitsrechner läuft Windows und hat kein Nix.
+   nixos-anywhere braucht Nix auf der **steuernden** Seite. Nach der Rückfrage
+   gemessen: eine WSL-NixOS-Instanz existiert (Nix 2.34.7, Flakes aktiv) — es
+   ginge also, aber über eine Zusatzschicht statt einer Vereinfachung.
+2. **Das Problem existierte gar nicht.** nixos-anywhere stellt ein
+   SSH-erreichbares Linux mit Nix auf dem Ziel her. Die gebootete Live-ISO **ist
+   das bereits** — `192.168.2.73:22` war die ganze Sitzung über erreichbar. Ich
+   habe ein Werkzeug empfohlen, um an den Punkt zu kommen, an dem wir standen.
+
+Der Denkfehler im Kern: ADR-032 entscheidet, **womit** man ein Problem löst.
+Es sagt nichts darüber, **ob** man es hat. Ich habe eine Rangfolge auf eine
+Situation angewendet, ohne zu prüfen, ob die Situation vorliegt.
+
+**Lösung**
+
+ADR-3025 auf vier Stufen umgebaut, sortiert **nach Zugangsweg statt nach
+Eleganz**:
+
+| Situation | Stufe |
+|-----------|-------|
+| Stick steckt, ich sitze davor | 0 — SSH in die Live-ISO |
+| Stick steckt, nichts tippen | 2 — ISO-Menü |
+| Fremde Kiste, kein Stick | 1 — Einzeiler |
+| Kein physischer Zugang | 3 — nixos-anywhere |
+
+Die verworfene Rangfolge steht als eigener Abschnitt **im ADR selbst** — nicht
+stillschweigend ersetzt, damit die Fehlargumentation nicht in sechs Monaten
+erneut überzeugend wirkt.
+
+**Regel**
+
+> Eine Werkzeugempfehlung ist erst vollständig, wenn die **Voraussetzungen des
+> Werkzeugs gegen die gemessene Umgebung** geprüft sind. Konkret: *Was läuft auf
+> der steuernden Maschine? In welchem Zustand ist das Ziel jetzt gerade?*
+>
+> Warnsignal an mir selbst: **„objektiv die beste Variante"**. Objektiv gilt nur
+> bei gleichem Problem und gleichen Voraussetzungen. Sobald ich das Wort
+> benutze, ohne beides gemessen zu haben, ist es eine Behauptung, keine Analyse.
+>
+> Zweitens: Ein Werkzeug, das den **Ist-Zustand herstellt**, ist kein
+> Fortschritt. Vor jeder Empfehlung: *Wo stehen wir gerade, und was genau fehlt
+> von hier bis zum Ziel?*
+
+**ADR:** `3025` — Abschnitt „Verworfene Rangfolge" (bereits eingetragen)
 
 ---
 

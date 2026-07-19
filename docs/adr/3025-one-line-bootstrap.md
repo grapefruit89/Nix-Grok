@@ -53,41 +53,78 @@ Zwei Befehle. Der Rest ist Nix.
 
 ## Entscheidung
 
-Drei Stufen, **absteigend nach Empfehlung**. Stufe 0 ist die eigentliche Antwort;
-Stufe 1 ist der gewünschte Komfort; Stufe 2 ist die Kür.
+Vier Stufen. **Welche gilt, hängt davon ab, wie du an die Maschine kommst** —
+nicht davon, welche technisch eleganter ist. Das ist der Punkt, den ein früherer
+Entwurf dieses ADR falsch hatte (siehe „Verworfene Rangfolge" am Ende).
+
+| Situation | Stufe |
+|-----------|-------|
+| Ich sitze davor / Stick steckt drin | **0 — SSH in die Live-ISO** |
+| Ich will gar nichts tippen, Stick steckt drin | **2 — ISO-Menü** |
+| Fremde Kiste, kein Stick zur Hand | **1 — Einzeiler** |
+| Kein physischer Zugang (Hoster) | **3 — nixos-anywhere** |
 
 ---
 
-## Stufe 0 — Ohne Skript: `nixos-anywhere` *(empfohlen)*
+## Stufe 0 — SSH in die laufende Live-ISO *(der Normalfall)*
 
-Es gibt bereits ein Werkzeug, das genau das tut, und zwar **von deinem Laptop aus**,
-ohne dass du am Zielrechner etwas tippst:
+Wenn die Installer-ISO gebootet ist, ist SSH **bereits offen und der Key liegt
+drin** (so ist `iso.nix` gebaut). Damit ist nichts weiter nötig:
+
+```bash
+ssh nixos@192.168.2.73          # oder root@ — beide Keys sind hinterlegt
+
+sudo /etc/nixos/scripts/disko-q958.sh plan      # Trockenlauf, schreibt nichts
+sudo /etc/nixos/scripts/disko-q958.sh install   # ZERSTOEREND
+sudo nixos-install --flake /etc/nixos#q958 --impure --no-root-passwd
+```
+
+**Das ist die ganze Installation.** Kein zusätzliches Werkzeug, kein Skript, kein
+Webserver, keine zweite Nix-Umgebung. Du tippst auf deiner eigenen Tastatur, weil
+du per SSH von deinem Arbeitsrechner draufgehst — das Tastaturlayout auf der
+Konsole ist damit egal.
+
+> **Warum das die Standardantwort ist:** Sobald die ISO läuft, ist der schwierige
+> Teil bereits erledigt. Alles, was danach kommt, sind zwei Befehle. Jede weitere
+> Werkzeugschicht löst ein Problem, das an dieser Stelle nicht mehr existiert.
+
+**Voraussetzung:** Stick gebootet, Netzwerk per DHCP, IP bekannt (Router-Oberfläche,
+oder nach Stufe 2 direkt auf dem Bildschirm).
+
+---
+
+## Stufe 3 — `nixos-anywhere` *(nur ohne physischen Zugang)*
 
 ```bash
 nix run github:nix-community/nixos-anywhere -- \
   --flake github:grapefruit89/Nix-Grok#q958 \
-  root@192.168.2.73
+  root@<ip>
 ```
 
-Was dabei passiert: nixos-anywhere verbindet sich per SSH mit dem Live-System,
-lädt einen Kexec-Installer nach, führt disko aus, installiert und rebootet.
+nixos-anywhere verbindet sich mit einem **beliebigen laufenden Linux**, lädt einen
+Kexec-Installer nach, führt disko aus, installiert und rebootet.
 
-**Warum das die beste Variante ist:**
+**Wofür es gedacht ist:** Ein Server bei einem Hoster, in den du keinen USB-Stick
+stecken kannst. Rescue-Debian rein, ein Befehl, NixOS raus. Dafür ist es
+hervorragend.
 
-| Punkt | Bedeutung |
-|-------|-----------|
-| **Kein Code von uns** | Kein Skript, das wir pflegen, hosten und absichern müssen |
-| **Kein `curl \| bash`** | Der Flake ist per Git-Hash festgenagelt, nicht ein Text von einem Webserver |
-| **Vom Laptop aus** | Tastatur, Copy-Paste, Terminal-Historie — nicht auf einer Konsole mit `de-latin1` |
-| **Upstream gewartet** | nix-community, nicht wir |
-| **Läuft auch remote** | Derselbe Befehl funktioniert später gegen einen Hetzner-Server |
+**Warum es hier meistens *nicht* passt** — zwei Voraussetzungen, die in unserem
+Setup unangenehm sind:
 
-Nach ADR-032 (*OS-native-first*) ist das Rangstufe 3 — „eigenständiges
-spezialisiertes Tool". Ein selbstgeschriebenes Skript wäre Rangstufe 5.
-**Die Rangfolge sagt eindeutig: Stufe 0.**
+1. **Nix auf der steuernden Maschine.** Der Arbeitsrechner läuft Windows und hat
+   kein Nix. Es gibt eine WSL-NixOS-Instanz (Nix 2.34.7, Flakes aktiv,
+   2026-07-19 geprüft) — damit ginge es, aber über eine zusätzliche Schicht.
+2. **Es löst ein Problem, das wir nicht haben.** nixos-anywhere stellt genau den
+   Zustand her, in dem die gebootete Live-ISO ohnehin schon ist: SSH-erreichbares
+   Linux mit Nix. Es davorzusetzen heißt, den Umweg zu gehen, um am
+   Ausgangspunkt anzukommen.
 
-**Voraussetzung:** Auf dem Ziel läuft ein SSH-erreichbares Linux mit root-Key.
-Genau das liefert unsere ISO (siehe Stufe 2) bereits ab Boot.
+> **Merksatz:** nixos-anywhere ersetzt den USB-Stick. Wenn der Stick schon steckt,
+> ersetzt es nichts.
+
+**Wann es hier trotzdem relevant wird:** sobald ein zweiter Rechner oder ein
+gemieteter Server dazukommt. Dann ist q958 selbst die steuernde Maschine — mit
+Nix an Bord und ohne WSL-Umweg.
 
 ---
 
@@ -198,7 +235,7 @@ Was es **nicht** wegdiskutiert: Wer GitHub-Zugriff oder den Cloudflare-Account
 
 > **Regel:** Der Einzeiler ist für die eigene Kiste im eigenen LAN. Für alles
 > andere — fremde Hardware, Server beim Hoster, Maschinen mit Daten — gilt
-> Stufe 0. Dort ist der Flake-Hash die Vertrauensanker, nicht ein Webserver.
+> Stufe 0 bzw. 3. Dort ist der Flake-Hash der Vertrauensanker, nicht ein Webserver.
 
 Wer es strenger will, kann jederzeit:
 
@@ -272,14 +309,19 @@ Drei Wege, in dieser Reihenfolge:
 
 ## Was das für heute bedeutet
 
-Der anstehende q958-Reinstall ist der erste echte Testfall. Reihenfolge:
+Der anstehende q958-Reinstall ist der erste echte Testfall — und er läuft
+**Stufe 0**, weil die Live-ISO bereits gebootet und `192.168.2.73:22`
+erreichbar ist.
 
-1. **Heute** von Hand — `disko-q958.sh plan`, dann `install`. Der Weg muss
-   einmal manuell funktionieren, bevor er automatisiert wird. Ein Skript, das
-   einen ungetesteten Ablauf automatisiert, automatisiert einen Fehler.
+1. **Heute** von Hand über SSH — `disko-q958.sh plan`, dann `install`,
+   dann `nixos-install`. Der Weg muss einmal manuell funktionieren, bevor er
+   automatisiert wird. Ein Skript, das einen ungetesteten Ablauf automatisiert,
+   automatisiert einen Fehler.
 2. **Danach** wird genau dieser verifizierte Ablauf zu `scripts/bootstrap.sh` —
    nicht vorher, und ohne Erweiterungen.
-3. **Dann** Worker + ISO-Integration.
+3. **Dann** Worker + ISO-Integration (Stufe 1 und 2).
+4. **Stufe 3** wird erst interessant, wenn eine Maschine ohne physischen Zugang
+   dazukommt. Dann ist q958 selbst der Steuerrechner.
 
 ---
 
@@ -287,18 +329,51 @@ Der anstehende q958-Reinstall ist der erste echte Testfall. Reihenfolge:
 
 **Positiv**
 
-- Der Einzeiler existiert und ist trotzdem 40 statt 800 Zeilen
+- Der Normalfall braucht **gar kein neues Werkzeug** — zwei Befehle über SSH
+- Der Einzeiler existiert trotzdem, und ist 40 statt 800 Zeilen
 - `get.m7c5.de` ist Doku und Quelle zugleich
-- Stufe 0 bleibt für alles Ernste verfügbar und braucht keine Wartung
 - Der Rettungs-Stick kann installieren, ohne Netz
+- Stufe 3 bleibt dokumentiert für den Fall, dass sie gebraucht wird
 
 **Negativ / offen**
 
+- Vier Stufen sind erklärungsbedürftig — deshalb die Tabelle ganz oben
 - Ein weiterer öffentlicher Endpunkt, der gewartet sein will
 - `curl | bash` bleibt ein Kompromiss — bewusst eingegangen, oben begründet
 - Secrets bleiben manuell, bis die TPM2-Migration steht
-- Der Worker koppelt die Installation an Cloudflare-Verfügbarkeit
-  (Stufe 0 und Stufe 2 sind davon unabhängig — deshalb bleiben beide bestehen)
+- Der Worker koppelt Stufe 1 an Cloudflare-Verfügbarkeit
+  (Stufen 0, 2 und 3 sind davon unabhängig — deshalb bleiben sie bestehen)
+
+---
+
+## Verworfene Rangfolge *(Korrektur am eigenen Entwurf, 2026-07-19)*
+
+Die erste Fassung dieses ADR führte `nixos-anywhere` als „Stufe 0, objektiv beste
+Variante" und begründete das mit ADR-032 (*OS-native-first*): fertiges Tool =
+Rang 3, eigenes Skript = Rang 5, also gewinnt das Tool.
+
+**Das war ein Fehlschluss.** Die Rangfolge in ADR-032 entscheidet, *womit* man
+ein Problem löst — nicht, *ob* man es hat. Sie setzt voraus, dass es das Problem
+überhaupt gibt.
+
+Zwei ungeprüfte Annahmen steckten darin:
+
+1. **„vom Laptop aus"** — der Arbeitsrechner ist Windows und hat kein Nix.
+   nixos-anywhere braucht Nix auf der steuernden Seite. (Eine WSL-NixOS-Instanz
+   existiert, Nix 2.34.7 — aber das ist eine Zusatzschicht, kein Vorteil.)
+2. **Das Problem existierte nicht.** nixos-anywhere stellt ein SSH-erreichbares
+   Linux mit Nix auf dem Ziel her. Die gebootete Live-ISO *ist* das bereits.
+
+Aufgefallen ist es durch die Rückfrage: *„wie komme ich dann mit dem NixOS auf
+die Maschine?"* — eine Frage, die die Empfehlung sofort als unvollständig
+entlarvt hat.
+
+> **Generalisierte Regel:** Eine Werkzeugempfehlung ist erst vollständig, wenn
+> die **Voraussetzungen des Werkzeugs gegen die tatsächliche Umgebung geprüft**
+> sind. „Rang 3 schlägt Rang 5" gilt nur bei gleichem Problem. Ein Werkzeug, das
+> den Ist-Zustand herstellt, ist kein Fortschritt.
+>
+> Ausformuliert in `docs/SUNDAY-LEARNINGS.md`, Eintrag C4.
 
 ---
 
@@ -309,4 +384,5 @@ Der anstehende q958-Reinstall ist der erste echte Testfall. Reihenfolge:
 | **Großes Bash-Installskript nach CasaOS-Vorbild** | Verschiebt Logik aus dem Flake in unwartbares, nicht reproduzierbares Bash. Widerspricht „Declarative Core + Surgical Glue" direkt. |
 | **Eigener Installer-Webservice** | Massiv mehr Angriffsfläche und Wartung für null Zusatznutzen gegenüber einem statischen Worker. |
 | **Nur die ISO, kein Einzeiler** | Deckt den Fall „fremde Maschine, kein Stick zur Hand" nicht ab. |
-| **`nix-shell`-Installer statt `curl`** | Setzt Nix auf dem Zielsystem voraus — hat man da schon Nix, nimmt man direkt Stufe 0. |
+| **`nix-shell`-Installer statt `curl`** | Setzt Nix auf dem Zielsystem voraus — hat man da schon Nix, ist man bereits in Stufe 0. |
+| **nixos-anywhere als Standardweg** | Siehe „Verworfene Rangfolge". Ersetzt den USB-Stick; wenn der steckt, ersetzt es nichts. |
