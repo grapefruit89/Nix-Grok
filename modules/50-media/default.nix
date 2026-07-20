@@ -1,16 +1,27 @@
 # ---
 # id: "grapefruitMedia"
 # domain: "50"
-# status: "active"
+# status: "deprecated"
 # layer: 3
-# purpose: "Optionen + zentrales Config-Skelett des grapefruitMedia Standalone-Moduls"
+# purpose: "STILLGELEGTE Kopie — gepflegt wird github.com/grapefruit89/mediNix"
 # provides: [grapefruitMedia options, users.groups.media]
 # requires: []
-# tags: [media, options, module-root]
+# tags: [media, options, module-root, stillgelegt]
 # docs:
+#   - modules/50-media/STILLGELEGT.md
 #   - modules/50-media/README.md
-#   - modules/50-media/claude-review.md
 # ---
+#
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  ⛔  STILLGELEGT — hier nichts mehr ändern                             ║
+# ║                                                                        ║
+# ║  Gepflegt wird ausschliesslich:                                        ║
+# ║      https://github.com/grapefruit89/mediNix                           ║
+# ║                                                                        ║
+# ║  Dieser Ordner ist eine eingefrorene Kopie (Stand 2026-07-20).         ║
+# ║  Bewusst nicht geloescht — Begruendung und Umstellungsweg stehen in    ║
+# ║  ./STILLGELEGT.md                                                      ║
+# ╚════════════════════════════════════════════════════════════════════════╝
 { config, lib, pkgs, ... }:
 let
   cfg = config.grapefruitMedia;
