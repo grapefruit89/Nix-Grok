@@ -38,6 +38,7 @@ in
     ../../modules/90-policy
     ../../modules/10-network
     ../../modules/50-media
+    ../../modules/50-media/compat-my.nix # Adapter my.* -> grapefruitMedia.* (Review K1)
     ../../modules/60-apps
     ../../modules/70-home-automation
     ../../users/jarvis/default.nix

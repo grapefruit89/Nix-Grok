@@ -60,9 +60,17 @@ let
     import upstream_errors
     import sso_redirect
 
-    @jellyfin_client header_regexp X-Emby-Authorization (?i)MediaBrowser
+    @jellyfin_auth_header header_regexp X-Emby-Authorization (?i)MediaBrowser
+    @jellyfin_api_paths path /system/info/public /emby/system/info/public /Users/AuthenticateByName /emby/Users/AuthenticateByName /dlna/* /socket/*
+    @jellyfin_ua header User-Agent *Jellyfin* *Kodi* *Roku* *Infuse* *AppleTV* *FindMySync* *NativeHost*
 
-    handle @jellyfin_client {
+    handle @jellyfin_auth_header {
+      ${streamingBackend port}
+    }
+    handle @jellyfin_api_paths {
+      ${streamingBackend port}
+    }
+    handle @jellyfin_ua {
       ${streamingBackend port}
     }
 

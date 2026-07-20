@@ -125,37 +125,10 @@ in
   my.core.rebuild-watchdog.enable = erstAb 1;
   my.disk-health.enable = erstAb 3;
   my.disk-health.hdIdle.enable = erstAb 3;
-  my.media.sync = {
-    # locale, downloadClients, prowlarr auto-aktiviert via mkDefault true in den Modulen
-    prowlarr = {
-      indexers = lib.optionals (stufe >= 6) [
-        {
-          name = "TreasureMaps";
-          baseUrl = "https://treasure-maps.com";
-          apiKeyFile = "/var/lib/secrets/treasuremaps_api_key";
-        }
-      ];
-      backupIndexers = lib.optionals (stufe >= 6) [
-        {
-          name = "TreasureMaps (Backup)";
-          baseUrl = "https://treasure-maps.com";
-          apiKeyFile = "/var/lib/secrets/treasuremaps_api_key";
-          categories = [
-            5000
-            5100
-            5140
-            2000
-            2100
-            2140
-          ];
-          targetApps = [
-            "sonarr"
-            "radarr"
-          ];
-        }
-      ];
-    };
-  };
+  # ADR-5034 (docs/adr/5034-scope-cut-arr-provision.md): my.media.sync (56-arr-sync)
+  # Scope-Cut -- Prowlarr/Download-Client/Jellyfin-Provisionierung einmalig manuell im UI.
+  # Recyclarr (grapefruitMedia.recyclarr) uebernimmt Quality-Profile via Trash Guides.
+  # TreasureMaps-Konfiguration in ADR-5034 #treasuremaps aufbewahrt.
 
   my.ports.ssh =
     if stufe >= 9 then lib.mkForce p.network.productionSshPort else lib.mkForce p.network.sshPort;

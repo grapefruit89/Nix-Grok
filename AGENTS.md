@@ -12,6 +12,40 @@ meta:
 
 # Projektregeln — /etc/nixos
 
+## Regel 1 — Git: ausschließlich `main`. Keine Branches. Ausnahmslos.
+
+**Es gibt genau einen Branch: `main`.** Nicht „bevorzugt", nicht „meistens" —
+ausschließlich.
+
+Verboten, auch wenn es fachlich sinnvoll erscheint:
+
+- `git checkout -b`, `git switch -c` — kein Feature-Branch, kein Fix-Branch,
+  kein `wip/`, kein `emergency/`
+- Pull Requests als Arbeitsweise (Issues und Discussions sind erwünscht, PRs nicht)
+- Vorschläge wie „lass uns das auf einem Branch ausprobieren"
+
+**Begründung — nicht technisch, sondern menschlich:** Der Mensch, dem dieses
+Repo gehört, verliert bei mehreren Branches den Überblick. Ein Agent, der einen
+Branch anlegt, erzeugt genau die Verwirrung, die diese Regel verhindern soll.
+Der technische Vorteil eines Branches ist hier kleiner als der Schaden.
+
+**Stattdessen:**
+
+| Situation | Vorgehen |
+|-----------|----------|
+| Änderung ist riskant | Erst `nixos-rebuild dry-build`, dann committen |
+| Änderung ist unfertig | Nicht committen — im Arbeitsverzeichnis liegen lassen |
+| Etwas ausprobieren | Kopie unter `/tmp`, nicht im Repo |
+| Rückgängig machen | `git revert` — ein neuer Commit auf `main`, kein Branch |
+| Alten Stand ansehen | `git show <sha>:<pfad>` — kein Auschecken |
+
+**Wenn ein Branch bereits existiert** (z. B. `emergency/…` aus der
+Vergangenheit): stehen lassen, nicht darauf arbeiten, nicht davon abzweigen.
+Nur `main` ist die Wahrheit.
+
+`git push` weiterhin **nur nach ausdrücklicher Zustimmung im Chat**
+(siehe „Harte Grenzen" in `CLAUDE.md`).
+
 ## Architektur (6 Schichten)
 
 | # | Pfad | Rolle |

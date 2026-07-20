@@ -58,7 +58,19 @@ in
           customDNS = {
             mapping = {
               "${config.my.configs.identity.domain}" = config.my.configs.server.lanIP;
-            };
+            } // (
+              let
+                enableMap = import ../../lib/service-enable.nix { inherit lib; };
+                enabledServices = lib.filterAttrs (name: entry: 
+                  (entry.subdomain or null) != null && 
+                  (entry.zone != "loopback") && 
+                  enableMap.enabled config name
+                ) config.my.services.spec;
+              in
+              lib.mapAttrs' (name: entry: 
+                lib.nameValuePair "${entry.subdomain}.local" config.my.configs.server.lanIP
+              ) enabledServices
+            );
             filterUnmappedTypes = false;
           };
 
